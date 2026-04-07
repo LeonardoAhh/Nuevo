@@ -5,15 +5,24 @@ import { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "light" | "dark"
 type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
+type FontSize = "small" | "medium" | "large"
+
+const FONT_SIZE_MAP: Record<FontSize, string> = {
+  small: "14px",
+  medium: "16px",
+  large: "18px",
+}
 
 type ThemeContextType = {
   theme: Theme
   accentColor: AccentColor
   customColor: string
+  fontSize: FontSize
   isColorLight: (hex?: string) => boolean
   setTheme: (theme: Theme) => void
   setAccentColor: (color: AccentColor) => void
   setCustomColor: (color: string) => void
+  setFontSize: (size: FontSize) => void
   toggleTheme: () => void
 }
 
@@ -124,14 +133,16 @@ function isColorLight(hex?: string): boolean {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [accentColor, setAccentColor] = useState<AccentColor>("blue")
-  const [customColor, setCustomColor] = useState<string>("#3b82f6") // Default to a blue color
+  const [customColor, setCustomColor] = useState<string>("#3b82f6")
+  const [fontSize, setFontSize] = useState<FontSize>("medium")
 
-  // Initialize theme and accent color from localStorage or system preference
+  // Initialize from localStorage or system preference
   useEffect(() => {
     try {
       const storedTheme = localStorage.getItem("theme") as Theme | null
       const storedAccentColor = localStorage.getItem("accentColor") as AccentColor | null
       const storedCustomColor = localStorage.getItem("customColor") as string | null
+      const storedFontSize = localStorage.getItem("fontSize") as FontSize | null
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
 
       if (storedTheme) {
@@ -146,6 +157,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
       if (storedCustomColor && /^#[0-9A-Fa-f]{6}$/.test(storedCustomColor)) {
         setCustomColor(storedCustomColor)
+      }
+
+      if (storedFontSize && storedFontSize in FONT_SIZE_MAP) {
+        setFontSize(storedFontSize)
       }
     } catch (error) {
       console.error("Error initializing theme from localStorage:", error)
@@ -165,6 +180,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       console.error("Error updating theme:", error)
     }
   }, [theme])
+
+  // Aplicar font size al elemento raíz
+  useEffect(() => {
+    try {
+      document.documentElement.style.fontSize = FONT_SIZE_MAP[fontSize]
+      localStorage.setItem("fontSize", fontSize)
+    } catch (error) {
+      console.error("Error updating font size:", error)
+    }
+  }, [fontSize])
 
   // Update CSS variables when accent color or custom color changes
   useEffect(() => {
@@ -213,10 +238,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         theme,
         accentColor,
         customColor,
+        fontSize,
         isColorLight,
         setTheme,
         setAccentColor,
         setCustomColor,
+        setFontSize,
         toggleTheme,
       }}
     >

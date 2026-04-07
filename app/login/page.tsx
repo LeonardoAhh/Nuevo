@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import LoginForm from "@/components/login-form"
 import { ThemeProvider } from "@/theme-context"
 
@@ -17,19 +18,10 @@ export default function LoginPage() {
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
           </div>
 
-          <LoginForm />
+          <Suspense>
+            <LoginForm />
+          </Suspense>
 
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{" "}
-              <a
-                href="/signup"
-                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                Sign up
-              </a>
-            </p>
-          </div>
         </div>
       </div>
     </ThemeProvider>

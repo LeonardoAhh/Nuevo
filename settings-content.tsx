@@ -1,23 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useRef } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Bell,
-  CreditCard,
-  Globe,
-  Key,
-  Laptop,
   Moon,
   Palette,
-  Shield,
   Sun,
   User,
-  Users,
-  Zap,
   Plus,
   Check,
   Paintbrush,
   AlertCircle,
+  Upload,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +32,10 @@ import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ColorPicker } from "@/components/color-picker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useProfile, useSkills, useUser, useNotificationPreferences } from "@/lib/hooks"
+import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
+import { supabase } from "@/lib/supabase/client"
+import { AuthForm } from "@/components/auth-form"
 
 type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
 
@@ -55,9 +56,138 @@ const colorOptions: ColorOption[] = [
 
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("profile")
-  const { theme, accentColor, customColor, setTheme, setAccentColor, setCustomColor, isColorLight } = useTheme()
+  const { theme, accentColor, customColor, fontSize, setTheme, setAccentColor, setCustomColor, setFontSize, isColorLight } = useTheme()
   const [showSavedMessage, setShowSavedMessage] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [newSkill, setNewSkill] = useState("")
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Hook para usuario autenticado
+  const { user, loading: userLoading } = useUser()
+
+  // Hooks para API
+  const { profile, loading: profileLoading, error: profileError, updateProfile, uploadAvatar } = useProfile(user?.id)
+  const { skills, loading: skillsLoading, error: skillsError, addSkill, removeSkill } = useSkills(user?.id)
+  const { preferences: notifPrefs, saving: notifSaving, updatePreference, savePreferences } = useNotificationPreferences(user?.id)
+
+  // Formulario unificado de perfil
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    formState: { errors: profileErrors, isSubmitting: isSubmittingProfile },
+    reset: resetProfile,
+    setValue: setProfileValue,
+    watch: watchProfile,
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      displayName: "",
+      email: "",
+      language: "en",
+      dateFormat: "mm-dd-yyyy",
+    },
+  })
+
+  // Sincronizar formulario cuando se carga el perfil
+  React.useEffect(() => {
+    if (profile) {
+      resetProfile({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        displayName: profile.displayName,
+        email: profile.email,
+        language: profile.language || "en",
+        dateFormat: profile.dateFormat || "mm-dd-yyyy",
+      })
+    }
+  }, [profile, resetProfile])
+
+  // Funciones para manejar formularios
+  const onSubmitProfile = async (data: ProfileFormData) => {
+    try {
+      setSaveError(null)
+      const result = await updateProfile(data)
+      if (result.success) {
+        setShowSavedMessage(true)
+        setTimeout(() => setShowSavedMessage(false), 3000)
+      } else {
+        setSaveError(result.error || "Failed to save profile")
+      }
+    } catch (error) {
+      setSaveError("An unexpected error occurred")
+    }
+  }
+
+  const handleSaveNotifications = async () => {
+    const result = await savePreferences()
+    if (result.success) {
+      setShowSavedMessage(true)
+      setTimeout(() => setShowSavedMessage(false), 3000)
+    } else {
+      setSaveError(result.error || "Failed to save notification preferences")
+    }
+  }
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      setIsUploadingAvatar(true)
+      setSaveError(null)
+
+      const result = await uploadAvatar(file)
+
+      if (result.success) {
+        setShowSavedMessage(true)
+        setTimeout(() => setShowSavedMessage(false), 3000)
+      } else {
+        setSaveError(result.error || "Failed to upload avatar")
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      setSaveError("An unexpected error occurred")
+    } finally {
+      setIsUploadingAvatar(false)
+      // Limpiar el input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const handleAddSkill = async () => {
+    if (!newSkill.trim()) return
+
+    try {
+      const result = await addSkill(newSkill.trim())
+      if (result.success) {
+        setNewSkill("")
+        setShowSavedMessage(true)
+        setTimeout(() => setShowSavedMessage(false), 3000)
+      } else {
+        setSaveError(result.error || "Failed to add skill")
+      }
+    } catch (error) {
+      console.error("Error adding skill:", error)
+      setSaveError("An unexpected error occurred")
+    }
+  }
+
+  const handleRemoveSkill = async (skill: string) => {
+    try {
+      const result = await removeSkill(skill)
+      if (!result.success) {
+        setSaveError(result.error || "Failed to remove skill")
+      }
+    } catch (error) {
+      console.error("Error removing skill:", error)
+      setSaveError("An unexpected error occurred")
+    }
+  }
 
   // Direct application of theme changes
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -87,6 +217,11 @@ export default function SettingsContent() {
     }
   }
 
+  // Si no hay usuario autenticado, mostrar formulario de login
+  if (!user && !userLoading) {
+    return <AuthForm />
+  }
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
@@ -99,36 +234,58 @@ export default function SettingsContent() {
       </div>
 
       <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2">
-          <TabsTrigger value="profile" className="text-xs sm:text-sm">
-            <User className="mr-2 h-4 w-4" />
-            Profile
+        <TabsList className="flex w-full">
+          <TabsTrigger value="profile" className="flex-1 text-xs sm:text-sm">
+            <User className="mr-1 sm:mr-2 h-4 w-4" />
+            <span>Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="account" className="text-xs sm:text-sm">
-            <Users className="mr-2 h-4 w-4" />
-            Account
+          <TabsTrigger value="notifications" className="flex-1 text-xs sm:text-sm">
+            <Bell className="mr-1 sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Notifications</span>
+            <span className="sm:hidden">Notifs</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-xs sm:text-sm">
-            <Bell className="mr-2 h-4 w-4" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security" className="text-xs sm:text-sm">
-            <Shield className="mr-2 h-4 w-4" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="text-xs sm:text-sm">
-            <Palette className="mr-2 h-4 w-4" />
-            Appearance
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className="text-xs sm:text-sm">
-            <Zap className="mr-2 h-4 w-4" />
-            Integrations
+          <TabsTrigger value="appearance" className="flex-1 text-xs sm:text-sm">
+            <Palette className="mr-1 sm:mr-2 h-4 w-4" />
+            <span>Appearance</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Profile Settings */}
         <TabsContent value="profile" className="space-y-4">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          {/* Loading State */}
+          {(userLoading || profileLoading) && (
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Loading profile...</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Success/Error Messages */}
+          {showSavedMessage && (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+              <Check className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                Profile updated successfully!
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {(saveError || profileError || skillsError) && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {saveError || profileError || skillsError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!profileLoading && !userLoading && (
+            <>
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="dark:text-white">Profile Information</CardTitle>
               <CardDescription className="dark:text-gray-400">
@@ -138,365 +295,186 @@ export default function SettingsContent() {
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src="/diverse-group-city.png" alt="Profile" />
-                  <AvatarFallback>JK</AvatarFallback>
+                  <AvatarImage src={profile?.avatar || "/diverse-group-city.png"} alt="Profile" />
+                  <AvatarFallback>
+                    {profile ? `${profile.firstName[0]}${profile.lastName[0]}` : "JK"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                    Change Avatar
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="dark:border-gray-600 dark:text-gray-200"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Upload className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Change Avatar
+                      </>
+                    )}
                   </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     JPG, GIF or PNG. Max size 2MB. Square image recommended.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first-name" className="dark:text-gray-200">
-                    First Name
-                  </Label>
-                  <Input
-                    id="first-name"
-                    defaultValue="Jovine"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="last-name" className="dark:text-gray-200">
-                    Last Name
-                  </Label>
-                  <Input
-                    id="last-name"
-                    defaultValue="Klef"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="display-name" className="dark:text-gray-200">
-                    Display Name
-                  </Label>
-                  <Input
-                    id="display-name"
-                    defaultValue="Jovine Klef"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="dark:text-gray-200">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue="jovine.klef@example.com"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio" className="dark:text-gray-200">
-                  Bio
-                </Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Write a short bio about yourself..."
-                  defaultValue="Product designer and developer based in New York. I enjoy creating user-centric, delightful, and human experiences."
-                  className="min-h-[120px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Brief description for your profile. URLs are hyperlinked.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website" className="dark:text-gray-200">
-                  Website
-                </Label>
-                <Input
-                  id="website"
-                  type="url"
-                  placeholder="https://example.com"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" className="dark:border-gray-600 dark:text-gray-200">
-                Cancel
-              </Button>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Professional Information</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Update your professional details and skills.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="job-title" className="dark:text-gray-200">
-                    Job Title
-                  </Label>
-                  <Input
-                    id="job-title"
-                    defaultValue="Senior Product Designer"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company" className="dark:text-gray-200">
-                    Company
-                  </Label>
-                  <Input
-                    id="company"
-                    defaultValue="Veselty Inc."
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location" className="dark:text-gray-200">
-                    Location
-                  </Label>
-                  <Input
-                    id="location"
-                    defaultValue="New York, USA"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone" className="dark:text-gray-200">
-                    Timezone
-                  </Label>
-                  <Select defaultValue="america-new_york">
-                    <SelectTrigger id="timezone" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                      <SelectItem value="america-new_york">Eastern Time (US & Canada)</SelectItem>
-                      <SelectItem value="america-chicago">Central Time (US & Canada)</SelectItem>
-                      <SelectItem value="america-denver">Mountain Time (US & Canada)</SelectItem>
-                      <SelectItem value="america-los_angeles">Pacific Time (US & Canada)</SelectItem>
-                      <SelectItem value="europe-london">London</SelectItem>
-                      <SelectItem value="europe-paris">Paris</SelectItem>
-                      <SelectItem value="asia-tokyo">Tokyo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="dark:text-gray-200">Skills</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="px-3 py-1 dark:bg-gray-700 dark:text-gray-200">
-                    UI Design
-                  </Badge>
-                  <Badge variant="secondary" className="px-3 py-1 dark:bg-gray-700 dark:text-gray-200">
-                    UX Research
-                  </Badge>
-                  <Badge variant="secondary" className="px-3 py-1 dark:bg-gray-700 dark:text-gray-200">
-                    Prototyping
-                  </Badge>
-                  <Badge variant="secondary" className="px-3 py-1 dark:bg-gray-700 dark:text-gray-200">
-                    Figma
-                  </Badge>
-                  <Badge variant="secondary" className="px-3 py-1 dark:bg-gray-700 dark:text-gray-200">
-                    React
-                  </Badge>
-                  <Button variant="outline" size="sm" className="h-7 px-3 py-1 dark:border-gray-600 dark:text-gray-200">
-                    + Add Skill
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" className="dark:border-gray-600 dark:text-gray-200">
-                Cancel
-              </Button>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-
-        {/* Account Settings */}
-        <TabsContent value="account" className="space-y-4">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Account Information</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Manage your account details and preferences.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="dark:text-gray-200">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    defaultValue="jovineklef"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account-email" className="dark:text-gray-200">
-                    Email
-                  </Label>
-                  <Input
-                    id="account-email"
-                    type="email"
-                    defaultValue="jovine.klef@example.com"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="language" className="dark:text-gray-200">
-                    Language
-                  </Label>
-                  <Select defaultValue="en">
-                    <SelectTrigger id="language" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                      <SelectItem value="ja">Japanese</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date-format" className="dark:text-gray-200">
-                    Date Format
-                  </Label>
-                  <Select defaultValue="mm-dd-yyyy">
-                    <SelectTrigger
-                      id="date-format"
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              <form id="profile-form" onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name" className="dark:text-gray-200">
+                      First Name *
+                    </Label>
+                    <Input
+                      id="first-name"
+                      {...registerProfile("firstName")}
+                      className={cn(
+                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        profileErrors.firstName && "border-red-500"
+                      )}
+                    />
+                    {profileErrors.firstName && (
+                      <p className="text-sm text-red-500">{profileErrors.firstName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name" className="dark:text-gray-200">
+                      Last Name *
+                    </Label>
+                    <Input
+                      id="last-name"
+                      {...registerProfile("lastName")}
+                      className={cn(
+                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        profileErrors.lastName && "border-red-500"
+                      )}
+                    />
+                    {profileErrors.lastName && (
+                      <p className="text-sm text-red-500">{profileErrors.lastName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="display-name" className="dark:text-gray-200">
+                      Display Name *
+                    </Label>
+                    <Input
+                      id="display-name"
+                      {...registerProfile("displayName")}
+                      className={cn(
+                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        profileErrors.displayName && "border-red-500"
+                      )}
+                    />
+                    {profileErrors.displayName && (
+                      <p className="text-sm text-red-500">{profileErrors.displayName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="dark:text-gray-200">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={user?.email || ""}
+                      readOnly
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed opacity-70"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      El email se gestiona desde tu proveedor de autenticación.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="language" className="dark:text-gray-200">
+                      Language
+                    </Label>
+                    <Select
+                      value={watchProfile("language")}
+                      onValueChange={(val) => setProfileValue("language", val)}
                     >
-                      <SelectValue placeholder="Select date format" />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                      <SelectItem value="mm-dd-yyyy">MM/DD/YYYY</SelectItem>
-                      <SelectItem value="dd-mm-yyyy">DD/MM/YYYY</SelectItem>
-                      <SelectItem value="yyyy-mm-dd">YYYY/MM/DD</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger id="language" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="ja">Japanese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date-format" className="dark:text-gray-200">
+                      Date Format
+                    </Label>
+                    <Select
+                      value={watchProfile("dateFormat")}
+                      onValueChange={(val) => setProfileValue("dateFormat", val)}
+                    >
+                      <SelectTrigger id="date-format" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <SelectValue placeholder="Select date format" />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                        <SelectItem value="mm-dd-yyyy">MM/DD/YYYY</SelectItem>
+                        <SelectItem value="dd-mm-yyyy">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="yyyy-mm-dd">YYYY/MM/DD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
+
+              </form>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" className="dark:border-gray-600 dark:text-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                className="dark:border-gray-600 dark:text-gray-200"
+                onClick={() => resetProfile()}
+                disabled={isSubmittingProfile}
+              >
                 Cancel
               </Button>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Billing Information</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Manage your billing details and subscription.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                <div className="flex items-center gap-4">
-                  <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
-                    <CreditCard className="h-6 w-6 dark:text-gray-300" />
-                  </div>
-                  <div>
-                    <p className="font-medium dark:text-gray-200">Pro Plan</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">$29/month, renews on Aug 15, 2023</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                  Change Plan
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="dark:text-gray-200">Payment Method</Label>
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <svg
-                        className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect width="20" height="14" x="2" y="5" rx="2" />
-                        <line x1="2" x2="22" y1="10" y2="10" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">Visa ending in 4242</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Expires 12/24</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="dark:text-gray-300">
-                    Edit
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="dark:text-gray-200">Billing Address</Label>
-                <div className="p-4 border rounded-lg dark:border-gray-700">
-                  <p className="font-medium dark:text-gray-200">Jovine Klef</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">123 Main St, Apt 4B</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">New York, NY 10001</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">United States</p>
-                  <Button variant="link" className="p-0 h-auto mt-2 dark:text-blue-400">
-                    Edit Address
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" className="dark:border-gray-600 dark:text-gray-200">
-                View Billing History
+              <Button
+                type="submit"
+                form="profile-form"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={isSubmittingProfile || profileLoading}
+              >
+                {isSubmittingProfile ? "Saving..." : "Save Changes"}
               </Button>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Update Billing</Button>
             </CardFooter>
           </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-red-600">Danger Zone</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Irreversible and destructive actions that affect your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border border-red-200 dark:border-red-900/30 rounded-lg">
-                <div>
-                  <p className="font-medium dark:text-gray-200">Delete Account</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Permanently delete your account and all of your content.
-                  </p>
-                </div>
-                <Button variant="destructive">Delete Account</Button>
-              </div>
-            </CardContent>
-          </Card>
+            </>
+          )}
         </TabsContent>
+
 
         {/* Notification Settings */}
         <TabsContent value="notifications" className="space-y-4">
+          {showSavedMessage && (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+              <Check className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                Notification preferences saved!
+              </AlertDescription>
+            </Alert>
+          )}
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="dark:text-white">Notification Preferences</CardTitle>
@@ -515,7 +493,10 @@ export default function SettingsContent() {
                         Receive emails about product updates and features.
                       </p>
                     </div>
-                    <Switch />
+                    <Switch
+                      checked={notifPrefs.emailProductUpdates}
+                      onCheckedChange={(v) => updatePreference("emailProductUpdates", v)}
+                    />
                   </div>
                   <Separator className="dark:bg-gray-700" />
                   <div className="flex items-center justify-between">
@@ -525,7 +506,10 @@ export default function SettingsContent() {
                         Receive emails when someone comments on your posts.
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={notifPrefs.emailComments}
+                      onCheckedChange={(v) => updatePreference("emailComments", v)}
+                    />
                   </div>
                   <Separator className="dark:bg-gray-700" />
                   <div className="flex items-center justify-between">
@@ -535,7 +519,10 @@ export default function SettingsContent() {
                         Receive emails when someone mentions you.
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={notifPrefs.emailMentions}
+                      onCheckedChange={(v) => updatePreference("emailMentions", v)}
+                    />
                   </div>
                   <Separator className="dark:bg-gray-700" />
                   <div className="flex items-center justify-between">
@@ -545,7 +532,10 @@ export default function SettingsContent() {
                         Receive emails about new products, features, and more.
                       </p>
                     </div>
-                    <Switch />
+                    <Switch
+                      checked={notifPrefs.emailMarketing}
+                      onCheckedChange={(v) => updatePreference("emailMarketing", v)}
+                    />
                   </div>
                 </div>
               </div>
@@ -560,7 +550,10 @@ export default function SettingsContent() {
                         Receive push notifications when someone comments on your posts.
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={notifPrefs.pushComments}
+                      onCheckedChange={(v) => updatePreference("pushComments", v)}
+                    />
                   </div>
                   <Separator className="dark:bg-gray-700" />
                   <div className="flex items-center justify-between">
@@ -570,7 +563,10 @@ export default function SettingsContent() {
                         Receive push notifications when someone mentions you.
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={notifPrefs.pushMentions}
+                      onCheckedChange={(v) => updatePreference("pushMentions", v)}
+                    />
                   </div>
                   <Separator className="dark:bg-gray-700" />
                   <div className="flex items-center justify-between">
@@ -580,165 +576,21 @@ export default function SettingsContent() {
                         Receive push notifications when you receive a direct message.
                       </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={notifPrefs.pushDirectMessages}
+                      onCheckedChange={(v) => updatePreference("pushDirectMessages", v)}
+                    />
                   </div>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Preferences</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-
-        {/* Security Settings */}
-        <TabsContent value="security" className="space-y-4">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Password</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Change your password to keep your account secure.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password" className="dark:text-gray-200">
-                  Current Password
-                </Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password" className="dark:text-gray-200">
-                  New Password
-                </Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="dark:text-gray-200">
-                  Confirm New Password
-                </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Update Password</Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Two-Factor Authentication</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Add an extra layer of security to your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base dark:text-gray-200">Two-Factor Authentication</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Secure your account with two-factor authentication.
-                  </p>
-                </div>
-                <Switch />
-              </div>
-              <Separator className="dark:bg-gray-700" />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base dark:text-gray-200">Authenticator App</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Use an authenticator app to generate one-time codes.
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                  Setup
-                </Button>
-              </div>
-              <Separator className="dark:bg-gray-700" />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base dark:text-gray-200">SMS Authentication</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Receive one-time codes via SMS to verify your identity.
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                  Setup
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Sessions</CardTitle>
-              <CardDescription className="dark:text-gray-400">Manage your active sessions and devices.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
-                      <Laptop className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">MacBook Pro - New York</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Current session • Last active: Just now
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                    Current
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
-                      <Globe className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">Chrome - Windows</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Last active: 2 days ago</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                    Sign Out
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
-                      <Globe className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">Safari - iPhone</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Last active: 5 days ago</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="text-red-500 dark:border-gray-600 dark:text-red-400">
-                Sign Out All Other Sessions
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={handleSaveNotifications}
+                disabled={notifSaving}
+              >
+                {notifSaving ? "Saving..." : "Save Preferences"}
               </Button>
             </CardFooter>
           </Card>
@@ -850,7 +702,7 @@ export default function SettingsContent() {
 
               <div className="space-y-2">
                 <Label className="dark:text-gray-200">Font Size</Label>
-                <Select defaultValue="medium">
+                <Select value={fontSize} onValueChange={(v) => setFontSize(v as "small" | "medium" | "large")}>
                   <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                     <SelectValue placeholder="Select font size" />
                   </SelectTrigger>
@@ -937,159 +789,6 @@ export default function SettingsContent() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Integrations Settings */}
-        <TabsContent value="integrations" className="space-y-4">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Connected Services</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Manage third-party services connected to your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <svg
-                        className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">Facebook</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Connected on Aug 12, 2023</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                    Disconnect
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <svg
-                        className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">Twitter</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Connected on Jul 28, 2023</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                    Disconnect
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
-                      <svg
-                        className="h-6 w-6 text-black dark:text-gray-300"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">GitHub</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Not connected</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                    Connect
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <svg
-                        className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium dark:text-gray-200">LinkedIn</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Not connected</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                    Connect
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader>
-              <CardTitle className="dark:text-white">API Access</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Manage API keys and access tokens for developers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="dark:text-gray-200">API Keys</Label>
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div>
-                    <p className="font-medium dark:text-gray-200">Primary API Key</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Created on Aug 1, 2023</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                      <Key className="h-4 w-4 mr-1" /> View Key
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                      Revoke
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="dark:text-gray-200">Webhooks</Label>
-                <div className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700">
-                  <div>
-                    <p className="font-medium dark:text-gray-200">Event Notifications</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">https://example.com/webhook</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="dark:border-gray-600 dark:text-gray-200">
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-500 dark:border-gray-600">
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="h-4 w-4" /> Create New API Key
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>

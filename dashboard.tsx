@@ -2,30 +2,24 @@
 
 import { useState, useEffect, type ReactNode } from "react"
 import {
-  Bell,
-  CheckSquare,
   ChevronDown,
+  Package,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  FolderKanban,
   Info,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
-  Package,
-  PieChart,
+  UserPlus,
   Plus,
   Search,
   Settings,
-  ShoppingCart,
   Users,
-  MessageSquareText,
+  Filter,
   AlertCircle,
   Moon,
   Sun,
   X,
-  Share,
-  BarChart2,
   Menu,
   MoreHorizontal,
 } from "lucide-react"
@@ -46,7 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "./theme-context"
-import { MailIcon, UserIcon } from "lucide-react"
+import { useUser, useProfile } from "@/lib/hooks"
 
 // Custom scrollbar styles
 const scrollbarStyles = `
@@ -88,8 +82,9 @@ interface DashboardProps {
 export default function Dashboard({ content }: DashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentPath, setCurrentPath] = useState("")
-  const [unreadNotifications, setUnreadNotifications] = useState(3)
   const { theme, toggleTheme } = useTheme()
+  const { user } = useUser()
+  const { profile } = useProfile(user?.id)
 
   // Add state variables for mobile sidebar at the top of the component
   const [isMobileView, setIsMobileView] = useState(false)
@@ -141,7 +136,7 @@ export default function Dashboard({ content }: DashboardProps) {
                   <Package size={16} />
                 </div>
                 <div>
-                  <div className="font-semibold dark:text-white">Veselty Inc.</div>
+                  <div className="font-semibold dark:text-white">VIÑOPLASTIC</div>
                 </div>
               </>
             )}
@@ -161,13 +156,10 @@ export default function Dashboard({ content }: DashboardProps) {
         </div>
 
         <div className="flex-1 overflow-auto scrollbar-thin">
-          {!sidebarCollapsed && (
-            <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">MAIN MENU</div>
-          )}
           <div className="space-y-1 p-2">
             <Button
               variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/" ? "border-l-4 border-blue-500" : ""}`}
+              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/" ? "border-l-4 border-primary" : ""}`}
               asChild
             >
               <a href="/">
@@ -177,93 +169,32 @@ export default function Dashboard({ content }: DashboardProps) {
             </Button>
             <Button
               variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/portfolio" ? "border-l-4 border-blue-500" : ""}`}
+              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/capacitacion" ? "border-l-4 border-primary" : ""}`}
               asChild
             >
-              <a href="/portfolio">
-                <FolderKanban size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-                {!sidebarCollapsed && <span>Portfolio</span>}
+              <a href="/capacitacion">
+                <GraduationCap size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
+                {!sidebarCollapsed && <span>Capacitación</span>}
               </a>
             </Button>
             <Button
               variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/tasks" ? "border-l-4 border-blue-500" : ""}`}
+              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/nuevo-ingreso" ? "border-l-4 border-primary" : ""}`}
               asChild
             >
-              <a href="/tasks">
-                <CheckSquare size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-                {!sidebarCollapsed && <span>Tasks</span>}
-              </a>
-            </Button>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/chat" ? "border-l-4 border-blue-500" : ""}`}
-              asChild
-            >
-              <a href="/chat">
-                <MessageSquareText size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-                {!sidebarCollapsed && <span>AI Chat</span>}
-              </a>
-            </Button>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/products" ? "border-l-4 border-blue-500" : ""}`}
-              asChild
-            >
-              <a href="/products">
-                <ShoppingCart size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-                {!sidebarCollapsed && <span>Products</span>}
-              </a>
-            </Button>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/customers" ? "border-l-4 border-blue-500" : ""}`}
-              asChild
-            >
-              <a href="/customers">
-                <Users size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-                {!sidebarCollapsed && <span>Customers</span>}
+              <a href="/nuevo-ingreso">
+                <UserPlus size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
+                {!sidebarCollapsed && <span>Nuevo Ingreso</span>}
               </a>
             </Button>
           </div>
 
-          {!sidebarCollapsed && (
-            <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 mt-4">OTHER</div>
-          )}
-          <div className="space-y-1 p-2">
-            <Button variant="ghost" className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"}`}>
-              <MailIcon size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-              {!sidebarCollapsed && <span>Email</span>}
-            </Button>
-            <Button variant="ghost" className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"}`}>
-              <PieChart size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-              {!sidebarCollapsed && <span>Analytics</span>}
-            </Button>
-            <Button variant="ghost" className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"}`}>
-              <Share size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-              {!sidebarCollapsed && <span>Integration</span>}
-            </Button>
-            <Button variant="ghost" className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"}`}>
-              <BarChart2 size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-              {!sidebarCollapsed && <span>Performance</span>}
-            </Button>
-          </div>
-
-          {!sidebarCollapsed && (
-            <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 mt-4">ACCOUNT</div>
-          )}
-          <div className="space-y-1 p-2">
-            <Button variant="ghost" className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"}`}>
-              <UserIcon size={18} className={`${!sidebarCollapsed ? "mr-2" : "mx-auto"}`} />
-              {!sidebarCollapsed && <span>Account</span>}
-            </Button>
-          </div>
         </div>
 
         <div className="p-4 border-t dark:border-gray-700">
           <Button
             variant="ghost"
-            className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/settings" ? "border-l-4 border-blue-500" : ""}`}
+            className={`w-full justify-start ${!sidebarCollapsed ? "" : "px-2"} ${currentPath === "/settings" ? "border-l-4 border-primary" : ""}`}
             asChild
           >
             <a href="/settings">
@@ -275,13 +206,29 @@ export default function Dashboard({ content }: DashboardProps) {
           {!sidebarCollapsed && (
             <div className="flex items-center gap-3 mt-4 p-2 border dark:border-gray-700 rounded-md">
               <Avatar>
-                <AvatarImage src="/diverse-group-city.png" />
-                <AvatarFallback>JK</AvatarFallback>
+                <AvatarImage src={profile?.avatar || undefined} />
+                <AvatarFallback>
+                  {profile
+                    ? `${profile.firstName[0]}${profile.lastName[0] || ""}`.toUpperCase()
+                    : user?.email?.[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <div className="font-medium text-sm dark:text-white">Jovine Klef</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm dark:text-white truncate">
+                  {profile?.displayName || user?.email?.split("@")[0] || "Usuario"}
+                </div>
               </div>
-              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Logout">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-red-500 hover:text-red-600"
+                title="Cerrar sesión"
+                onClick={async () => {
+                  const { supabase } = await import('@/lib/supabase/client')
+                  await supabase.auth.signOut()
+                  window.location.href = '/login'
+                }}
+              >
                 <LogOut size={16} />
               </Button>
             </div>
@@ -303,7 +250,7 @@ export default function Dashboard({ content }: DashboardProps) {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search"
+                placeholder=""
                 className="w-full pl-8 pr-4 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
               />
               <div className="absolute right-2.5 top-2.5 text-xs text-gray-400 hidden sm:block">F⌘</div>
@@ -321,86 +268,6 @@ export default function Dashboard({ content }: DashboardProps) {
               {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell size={20} />
-                  {unreadNotifications > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 dark:bg-gray-800 dark:border-gray-700">
-                <DropdownMenuLabel className="flex items-center justify-between">
-                  <span className="dark:text-white">Notifications</span>
-                  {unreadNotifications > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-blue-500 h-auto p-0"
-                      onClick={() => setUnreadNotifications(0)}
-                    >
-                      Mark all as read
-                    </Button>
-                  )}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="dark:border-gray-700" />
-                <div className="max-h-80 overflow-y-auto">
-                  <DropdownMenuItem className="flex items-start gap-2 p-3 cursor-default dark:text-gray-200 dark:focus:bg-gray-700">
-                    <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                      <Package size={16} className="text-blue-500 dark:text-blue-300" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm flex items-center justify-between">
-                        <span>New order received</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">2m ago</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Order #12345 has been placed for $230.00
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-start gap-2 p-3 cursor-default dark:text-gray-200 dark:focus:bg-gray-700">
-                    <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-full">
-                      <Users size={16} className="text-orange-500 dark:text-orange-300" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm flex items-center justify-between">
-                        <span>New customer registered</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">1h ago</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Jane Cooper has created a new account
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-start gap-2 p-3 cursor-default dark:text-gray-200 dark:focus:bg-gray-700">
-                    <div className="bg-red-100 dark:bg-red-900 p-2 rounded-full">
-                      <AlertCircle size={16} className="text-red-500 dark:text-red-300" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm flex items-center justify-between">
-                        <span>Low inventory alert</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">5h ago</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Product "Bikini Shorts" is running low on stock
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-                </div>
-                <DropdownMenuSeparator className="dark:border-gray-700" />
-                <DropdownMenuItem className="text-center text-sm text-blue-500 cursor-pointer dark:text-blue-400 dark:focus:bg-gray-700">
-                  View all notifications
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm px-2 sm:px-4">
-              Export
-              <LogOut size={16} className="ml-1 sm:ml-2" />
-            </Button>
           </div>
         </header>
 

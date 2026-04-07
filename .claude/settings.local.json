@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node test-supabase.js)",
+      "Bash(cmd /c \"cd \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && node test-supabase.js 2>&1\")",
+      "Bash(cmd /c \"cd \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && node test-supabase.js\")",
+      "Bash(powershell -Command \"Set-Location 'c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo'; node test-supabase.js\")",
+      "Bash(powershell -Command \"Get-Command node -ErrorAction SilentlyContinue; where.exe node 2>&1; \\(Get-ItemProperty HKLM:\\\\SOFTWARE\\\\nodejs -ErrorAction SilentlyContinue\\).InstallPath\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\' -Filter 'node.exe' -Recurse -ErrorAction SilentlyContinue -Depth 5 | Select-Object -First 5 FullName\")",
+      "Bash(cmd /c \"set PATH=C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS;%PATH% && node test-supabase.js\")",
+      "Bash(cmd /c \"\\\\\"C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS\\\\node.exe\\\\\" \\\\\"C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\test-supabase.js\\\\\"\")",
+      "Bash(\"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/NODE JS/node.exe\" \"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/test-supabase.js\")",
+      "Bash(cmd /c \"set PATH=%CD%\\\\NODE JS;%PATH% && npm list @supabase/ssr 2>nul\")",
+      "Bash(cmd /c \"set PATH=%CD%\\\\NODE JS;%PATH% && npm install @supabase/ssr\")",
+      "Bash(cmd /c \"set PATH=%CD%\\\\NODE JS;%PATH% && npm install @supabase/ssr 2>&1\")",
+      "Bash(\"NODE JS/npm.cmd\" install @supabase/ssr)",
+      "Bash(npm run:*)",
+      "Bash(cmd.exe /c \"cd \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && npm run build 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && npm run build\")",
+      "Bash(powershell.exe -Command \"Set-Location 'c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo'; npm run build 2>&1\")",
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\nodejs\\\\npm.cmd' --version\")",
+      "Bash(cmd /c \"cd /d \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && set PATH=%CD%\\\\NODE JS;%PATH% && npm run build\")",
+      "Bash(cmd /c \"set PATH=c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS;%PATH% && cd /d \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && npm run build\")",
+      "Bash(cmd /c \"\\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\build_check.bat\\\\\"\")"
+    ]
+  }
+}
