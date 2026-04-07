@@ -21,7 +21,9 @@
       "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\nodejs\\\\npm.cmd' --version\")",
       "Bash(cmd /c \"cd /d \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && set PATH=%CD%\\\\NODE JS;%PATH% && npm run build\")",
       "Bash(cmd /c \"set PATH=c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS;%PATH% && cd /d \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && npm run build\")",
-      "Bash(cmd /c \"\\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\build_check.bat\\\\\"\")"
+      "Bash(cmd /c \"\\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\build_check.bat\\\\\"\")",
+      "Bash(\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS\\\\npm.cmd\" --version)",
+      "Bash(\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\NODE JS\\\\npm.cmd\" run build)"
     ]
   }
 }
