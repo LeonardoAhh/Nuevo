@@ -23,6 +23,9 @@ import {
   Clock,
   XCircle,
   Trash2,
+  UserPlus,
+  Plus,
+  Minus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,6 +49,7 @@ import type {
   Department, Position, Course, ImportPreview,
   CourseMatch, HistorialPreview, EmployeeCourse, Employee, EmployeeProgress,
 } from "@/lib/hooks"
+import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -78,11 +82,10 @@ const NEW_COURSE_VALUE = '__new__'
 export default function CapacitacionContent() {
   const {
     importing, importError,
-    matchingHistorial, matchError,
     parseJSON, importData,
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
-    parseHistorial, importHistorial, clearHistorial,
+    clearHistorial, createEmployeeManual, addCoursesToEmployee,
   } = useCapacitacion()
 
   // ── Estado: Importar catálogo ─────────────────────────────────────────────
@@ -110,17 +113,6 @@ export default function CapacitacionContent() {
   const [positionCourses, setPositionCourses] = useState<{ course: { name: string }; order_index: number }[]>([])
   const [loadingDialog, setLoadingDialog] = useState(false)
 
-  // ── Estado: Historial – upload ────────────────────────────────────────────
-  const [historialText, setHistorialText] = useState("")
-  const [historialParseError, setHistorialParseError] = useState<string | null>(null)
-  const [historialPreview, setHistorialPreview] = useState<HistorialPreview | null>(null)
-  const [resolvedMatches, setResolvedMatches] = useState<CourseMatch[]>([])
-  const [historialImportSuccess, setHistorialImportSuccess] = useState(false)
-  const [showExactList, setShowExactList] = useState(false)
-  const [showImportForm, setShowImportForm] = useState(false)
-  const historialFileRef = useRef<HTMLInputElement>(null)
-  const importFormRef = useRef<HTMLDivElement>(null)
-
   // ── Estado: Historial – empleados ─────────────────────────────────────────
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loadingEmployees, setLoadingEmployees] = useState(false)
@@ -133,16 +125,129 @@ export default function CapacitacionContent() {
   const [empDialogTab, setEmpDialogTab] = useState<'requeridos' | 'historial'>('requeridos')
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
 
-  // ── Memo: conteo de empleados por curso en el preview ────────────────────
-  const empCountByRawName = useMemo(() => {
-    if (!historialPreview) return new Map<string, number>()
-    const map = new Map<string, number>()
-    for (const r of historialPreview.rawRecords) {
-      const name = r['CURSO TOMADO']?.trim()
-      if (name) map.set(name, (map.get(name) ?? 0) + 1)
+  // ── Estado: Nuevo empleado dialog ─────────────────────────────────────────
+  type NewEmpCourseRow = { course_id: string; course_name: string; fecha_aplicacion: string; calificacion: string }
+  const EMPTY_EMP = { numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '' }
+  const [newEmpOpen, setNewEmpOpen] = useState(false)
+  const [newEmpStep, setNewEmpStep] = useState<1 | 2>(1)
+  const [newEmpForm, setNewEmpForm] = useState(EMPTY_EMP)
+  const [newEmpCourseRows, setNewEmpCourseRows] = useState<NewEmpCourseRow[]>([])
+  const [newEmpSaving, setNewEmpSaving] = useState(false)
+  const [newEmpError, setNewEmpError] = useState<string | null>(null)
+  const [newEmpSuccess, setNewEmpSuccess] = useState(false)
+
+  const newEmpAreas   = newEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[newEmpForm.departamento]?.areas   ?? []) : []
+  const newEmpPuestos = newEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[newEmpForm.departamento]?.puestos ?? []) : []
+
+  const resetNewEmp = () => {
+    setNewEmpStep(1); setNewEmpForm(EMPTY_EMP); setNewEmpCourseRows([]); setNewEmpError(null)
+  }
+
+  const handleNewEmpNext = () => {
+    if (!newEmpForm.nombre.trim()) { setNewEmpError('El nombre del empleado es requerido'); return }
+    setNewEmpError(null); setNewEmpStep(2)
+    if (courses.length === 0) loadCoursesData()
+  }
+
+  const handleSaveNewEmp = async () => {
+    setNewEmpSaving(true); setNewEmpError(null)
+    const result = await createEmployeeManual(
+      {
+        numero:        newEmpForm.numero.trim() || null,
+        nombre:        newEmpForm.nombre.trim(),
+        puesto:        newEmpForm.puesto || null,
+        departamento:  newEmpForm.departamento || null,
+        area:          newEmpForm.area || null,
+        turno:         newEmpForm.turno || null,
+        fecha_ingreso: newEmpForm.fecha_ingreso || null,
+        jefe_directo:  newEmpForm.jefe_directo || null,
+      },
+      newEmpCourseRows
+        .filter(r => r.course_id)
+        .map(r => ({
+          course_id:        r.course_id,
+          course_name:      r.course_name,
+          fecha_aplicacion: r.fecha_aplicacion || null,
+          calificacion:     r.calificacion ? (parseInt(r.calificacion) || null) : null,
+        }))
+    )
+    setNewEmpSaving(false)
+    if (result.success) {
+      setNewEmpOpen(false); resetNewEmp(); setNewEmpSuccess(true); loadEmployees()
+    } else {
+      setNewEmpError(result.error ?? 'Error al guardar')
     }
-    return map
-  }, [historialPreview])
+  }
+
+  const addCourseRow = () =>
+    setNewEmpCourseRows(prev => [...prev, { course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
+
+  const removeCourseRow = (i: number) =>
+    setNewEmpCourseRows(prev => prev.filter((_, idx) => idx !== i))
+
+  const updateCourseRow = (i: number, field: keyof NewEmpCourseRow, value: string) =>
+    setNewEmpCourseRows(prev => prev.map((r, idx) => {
+      if (idx !== i) return r
+      if (field === 'course_id') {
+        const course = courses.find(c => c.id === value)
+        return { ...r, course_id: value, course_name: course?.name ?? '' }
+      }
+      return { ...r, [field]: value }
+    }))
+
+  // ── Estado: Agregar cursos a empleado existente ────────────────────────────
+  const [addCoursesDlgOpen, setAddCoursesDlgOpen] = useState(false)
+  const [addCoursesDlgEmp, setAddCoursesDlgEmp] = useState<Employee | null>(null)
+  const [addCoursesRows, setAddCoursesRows] = useState<NewEmpCourseRow[]>([{ course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
+  const [addCoursesSaving, setAddCoursesSaving] = useState(false)
+  const [addCoursesError, setAddCoursesError] = useState<string | null>(null)
+  const [addCoursesSuccess, setAddCoursesSuccess] = useState(false)
+
+  const openAddCoursesDlg = (emp: Employee) => {
+    setAddCoursesDlgEmp(emp)
+    setAddCoursesRows([{ course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
+    setAddCoursesError(null)
+    setAddCoursesDlgOpen(true)
+    if (courses.length === 0) loadCoursesData()
+  }
+
+  const handleSaveAddCourses = async () => {
+    if (!addCoursesDlgEmp) return
+    const valid = addCoursesRows.filter(r => r.course_id)
+    if (valid.length === 0) { setAddCoursesError('Selecciona al menos un curso'); return }
+    setAddCoursesSaving(true); setAddCoursesError(null)
+    const result = await addCoursesToEmployee(
+      addCoursesDlgEmp.id,
+      valid.map(r => ({
+        course_id: r.course_id,
+        course_name: r.course_name,
+        fecha_aplicacion: r.fecha_aplicacion || null,
+        calificacion: r.calificacion ? (parseInt(r.calificacion) || null) : null,
+      }))
+    )
+    setAddCoursesSaving(false)
+    if (result.success) {
+      setAddCoursesDlgOpen(false); setAddCoursesSuccess(true)
+    } else {
+      setAddCoursesError(result.error ?? 'Error al guardar')
+    }
+  }
+
+  const addAddCoursesRow = () =>
+    setAddCoursesRows(prev => [...prev, { course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
+
+  const removeAddCoursesRow = (i: number) =>
+    setAddCoursesRows(prev => prev.filter((_, idx) => idx !== i))
+
+  const updateAddCoursesRow = (i: number, field: keyof NewEmpCourseRow, value: string) =>
+    setAddCoursesRows(prev => prev.map((r, idx) => {
+      if (idx !== i) return r
+      if (field === 'course_id') {
+        const course = courses.find(c => c.id === value)
+        return { ...r, course_id: value, course_name: course?.name ?? '' }
+      }
+      return { ...r, [field]: value }
+    }))
 
   // ── Handlers: Importar catálogo ───────────────────────────────────────────
   const handleParse = useCallback(() => {
@@ -220,63 +325,12 @@ export default function CapacitacionContent() {
     c.name.toLowerCase().includes(courseSearch.toLowerCase())
   )
 
-  // ── Handlers: Historial – upload ──────────────────────────────────────────
-  const handleHistorialFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string
-      setHistorialText(text); setHistorialParseError(null); setHistorialPreview(null)
-    }
-    reader.readAsText(file)
-    if (historialFileRef.current) historialFileRef.current.value = ""
-  }
-
-  const handleParseHistorial = async () => {
-    setHistorialParseError(null); setHistorialPreview(null); setHistorialImportSuccess(false)
-    try {
-      const parsed = JSON.parse(historialText)
-      const arr = Array.isArray(parsed) ? parsed : [parsed]
-      if (arr.length === 0) throw new Error("El JSON está vacío")
-      const prev = await parseHistorial(arr)
-      setHistorialPreview(prev)
-      setResolvedMatches(prev.matches.map(m => ({ ...m })))
-    } catch (err) {
-      setHistorialParseError(err instanceof Error ? err.message : "JSON inválido")
-    }
-  }
-
-  const handleUpdateMatch = (rawName: string, update: Partial<CourseMatch>) => {
-    setResolvedMatches(prev => prev.map(m => m.rawName === rawName ? { ...m, ...update } : m))
-  }
-
-  const handleImportHistorial = async () => {
-    if (!historialPreview) return
-    const result = await importHistorial(historialPreview, resolvedMatches)
-    if (result.success) {
-      setHistorialImportSuccess(true)
-      setHistorialPreview(null)
-      setHistorialText("")
-      setResolvedMatches([])
-      setShowImportForm(false)
-      loadEmployees()
-    }
-  }
-
   const handleClearHistorial = async () => {
     const result = await clearHistorial()
     if (result.success) {
       setConfirmClearOpen(false)
       setEmployees([])
-      setHistorialImportSuccess(false)
     }
-  }
-
-  const handleResetHistorial = () => {
-    setHistorialText(""); setHistorialPreview(null)
-    setHistorialParseError(null); setHistorialImportSuccess(false)
-    setResolvedMatches([]); setShowImportForm(false)
   }
 
   // ── Handlers: Empleados ───────────────────────────────────────────────────
@@ -315,10 +369,6 @@ export default function CapacitacionContent() {
   )
 
   // ── Grupos de matches ─────────────────────────────────────────────────────
-  const exactMatches      = resolvedMatches.filter(m => m.status === 'exact' || m.status === 'alias')
-  const approxMatches     = resolvedMatches.filter(m => m.status === 'approximate')
-  const unknownMatches    = resolvedMatches.filter(m => m.status === 'unknown')
-
   // ─────────────────────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────────────────────
@@ -483,375 +533,117 @@ export default function CapacitacionContent() {
         <TabsContent value="historial">
           <div className="space-y-4">
 
-            {/* Éxito de importación */}
-            {historialImportSuccess && (
+            {/* Alertas de éxito */}
+            {(newEmpSuccess || addCoursesSuccess) && (
               <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800 dark:text-green-200">
-                  Historial importado correctamente. Los alias se guardaron para futuras importaciones.
+                  {newEmpSuccess ? 'Empleado registrado correctamente.' : 'Cursos guardados correctamente.'}
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* ── Sub-tab: Lista de empleados ───────────────────────────────── */}
-            {!historialPreview && (
-              <Card className="dark:bg-gray-800 dark:border-gray-700">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
-                    <CardTitle className="dark:text-white">Empleados</CardTitle>
-                    <CardDescription className="dark:text-gray-400">
-                      Registro de cursos tomados por empleado.
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="hidden gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                      onClick={() => setConfirmClearOpen(true)}
-                    >
-                      <Trash2 className="h-4 w-4" /> Borrar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2 dark:border-gray-600 dark:text-gray-200"
-                      onClick={() => {
-                        setHistorialImportSuccess(false)
-                        setHistorialText("")
-                        setShowImportForm(true)
-                        setTimeout(() => importFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
-                      }}
-                    >
-                      <Upload className="h-4 w-4" /> Importar
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder=""
-                      value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-                      className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                    />
-                  </div>
-                  {loadingEmployees ? (
-                    <div className="flex justify-center py-12">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                    </div>
-                  ) : filteredEmployees.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                      {employees.length === 0
-                        ? "No hay empleados registrados. Importa el historial de cursos."
-                        : "No se encontraron empleados con esa búsqueda."}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                            <TableHead className="dark:text-gray-400">Empleado</TableHead>
-                            <TableHead className="dark:text-gray-400 hidden sm:table-cell">Puesto</TableHead>
-                            <TableHead className="dark:text-gray-400 hidden md:table-cell">Departamento</TableHead>
-                            <TableHead className="dark:text-gray-400 text-right">Cursos</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredEmployees.map(emp => (
-                            <TableRow key={emp.id} className="dark:border-gray-700 hover:dark:bg-gray-700/50 cursor-pointer"
-                              onClick={() => handleViewEmployee(emp)}>
-                              <TableCell className="font-medium dark:text-gray-200">{emp.nombre}</TableCell>
-                              <TableCell className="dark:text-gray-400 text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                {emp.departamento && (
-                                  <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300 text-xs">
-                                    {emp.departamento}
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700">
-                                  Ver <ChevronRight className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {filteredEmployees.length} de {employees.length} empleados
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* ── Sub-sección: Upload de historial ──────────────────────────── */}
-            {!historialPreview && showImportForm && (
-              <Card ref={importFormRef} className="dark:bg-gray-800 dark:border-gray-700">
-                <CardHeader>
-                  <CardTitle className="dark:text-white">Importar historial de cursos</CardTitle>
+            {/* ── Lista de empleados ────────────────────────────────────────── */}
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="dark:text-white">Empleados</CardTitle>
                   <CardDescription className="dark:text-gray-400">
-                    JSON con campos <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">NOMBRE</code>,{" "}
-                    <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">CURSO TOMADO</code>,{" "}
-                    <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">FECHA DE APLICACIÓN</code>,{" "}
-                    <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">CALIFICACIÓN</code>, etc.
-                    Los nombres de cursos se compararán automáticamente contra el catálogo.
+                    Registro de cursos tomados por empleado.
                   </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {(historialParseError || matchError) && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{historialParseError || matchError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div
-                    className="border-2 border-dashed dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors"
-                    onClick={() => historialFileRef.current?.click()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="hidden gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    onClick={() => setConfirmClearOpen(true)}
                   >
-                    <FileJson className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-                    <p className="text-sm font-medium dark:text-gray-200">Arrastra un archivo JSON o haz clic para seleccionar</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Solo archivos .json</p>
-                    <input ref={historialFileRef} type="file" accept=".json,application/json"
-                      onChange={handleHistorialFileUpload} className="hidden" />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Separator className="flex-1 dark:bg-gray-700" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">o pega el JSON</span>
-                    <Separator className="flex-1 dark:bg-gray-700" />
-                  </div>
-
-                  <textarea
-                    value={historialText}
-                    onChange={e => { setHistorialText(e.target.value); setHistorialParseError(null) }}
-                    placeholder='[{ "NOMBRE": "...", "CURSO TOMADO": "...", "FECHA DE APLICACIÓN": "...", "CALIFICACIÓN": "..." }]'
-                    rows={6}
-                    className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-
-                  <div className="flex gap-2 justify-end">
-                    {historialText && (
-                      <Button variant="outline" onClick={handleResetHistorial} className="gap-2 dark:border-gray-600 dark:text-gray-200">
-                        <RotateCcw className="h-4 w-4" /> Limpiar
-                      </Button>
-                    )}
-                    <Button onClick={handleParseHistorial} disabled={!historialText.trim() || matchingHistorial} className="gap-2">
-                      {matchingHistorial ? (
-                        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Analizando...</>
-                      ) : (
-                        <><Search className="h-4 w-4" /> Analizar y comparar</>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* ── Sub-sección: Revisión de matches ──────────────────────────── */}
-            {historialPreview && (
-              <div className="space-y-4">
-                {/* Resumen */}
-                <Card className="dark:bg-gray-800 dark:border-gray-700">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-wrap gap-4 items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium dark:text-gray-200">
-                          {historialPreview.totalRecords} registros · {historialPreview.uniqueEmployees} empleados · {historialPreview.matches.length} cursos únicos
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { status: 'exact' as const,       count: exactMatches.length },
-                            { status: 'approximate' as const, count: approxMatches.length },
-                            { status: 'unknown' as const,     count: unknownMatches.length },
-                          ].filter(g => g.count > 0).map(g => (
-                            <StatusBadge key={g.status} status={g.status} />
-                          ))}
-                          {approxMatches.length === 0 && unknownMatches.length === 0 && (
-                            <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                              ✓ Todos los cursos mapeados automáticamente
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={handleResetHistorial}
-                        className="gap-2 dark:border-gray-600 dark:text-gray-200">
-                        <X className="h-4 w-4" /> Cancelar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Aproximados */}
-                {approxMatches.length > 0 && (
-                  <Card className="dark:bg-gray-800 dark:border-gray-700 border-yellow-200 dark:border-yellow-800">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base dark:text-white flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                        Coincidencias aproximadas ({approxMatches.length})
-                      </CardTitle>
-                      <CardDescription className="dark:text-gray-400">
-                        El sistema sugiere un curso del catálogo. Confirma o reasigna según corresponda.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {approxMatches.map(match => {
-                        const resolved = resolvedMatches.find(m => m.rawName === match.rawName)!
-                        const empCount = empCountByRawName.get(match.rawName) ?? 0
-                        return (
-                          <div key={match.rawName}
-                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border dark:border-gray-700 bg-yellow-50/50 dark:bg-yellow-900/10">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium dark:text-gray-200 truncate" title={match.rawName}>
-                                {match.rawName}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {Math.round(match.confidence * 100)}% similar a &ldquo;{match.suggestedCourseName}&rdquo; · {empCount} {empCount === 1 ? 'empleado' : 'empleados'}
-                              </p>
-                            </div>
-                            <Select
-                              value={resolved.createNew ? NEW_COURSE_VALUE : (resolved.resolvedCourseId ?? NEW_COURSE_VALUE)}
-                              onValueChange={v => handleUpdateMatch(match.rawName,
-                                v === NEW_COURSE_VALUE
-                                  ? { createNew: true, resolvedCourseId: null }
-                                  : { createNew: false, resolvedCourseId: v }
-                              )}
-                            >
-                              <SelectTrigger className="w-full sm:w-72 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
-                                <SelectItem value={NEW_COURSE_VALUE} className="text-primary font-medium">
-                                  + Crear como nuevo curso
-                                </SelectItem>
-                                <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                                {historialPreview.catalogSnapshot.map(c => (
-                                  <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Desconocidos */}
-                {unknownMatches.length > 0 && (
-                  <Card className="dark:bg-gray-800 dark:border-gray-700 border-red-200 dark:border-red-800">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base dark:text-white flex items-center gap-2">
-                        <HelpCircle className="h-4 w-4 text-red-500" />
-                        Sin coincidencia en catálogo ({unknownMatches.length})
-                      </CardTitle>
-                      <CardDescription className="dark:text-gray-400">
-                        Por defecto se crearán como nuevos cursos. Puedes asignarlos a un curso existente.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {unknownMatches.map(match => {
-                        const resolved = resolvedMatches.find(m => m.rawName === match.rawName)!
-                        const empCount = empCountByRawName.get(match.rawName) ?? 0
-                        return (
-                          <div key={match.rawName}
-                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border dark:border-gray-700 bg-red-50/50 dark:bg-red-900/10">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium dark:text-gray-200 truncate" title={match.rawName}>
-                                {match.rawName}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {empCount} {empCount === 1 ? 'empleado' : 'empleados'}
-                              </p>
-                            </div>
-                            <Select
-                              value={resolved.createNew ? NEW_COURSE_VALUE : (resolved.resolvedCourseId ?? NEW_COURSE_VALUE)}
-                              onValueChange={v => handleUpdateMatch(match.rawName,
-                                v === NEW_COURSE_VALUE
-                                  ? { createNew: true, resolvedCourseId: null }
-                                  : { createNew: false, resolvedCourseId: v }
-                              )}
-                            >
-                              <SelectTrigger className="w-full sm:w-72 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
-                                <SelectItem value={NEW_COURSE_VALUE} className="text-primary font-medium">
-                                  + Crear como nuevo curso
-                                </SelectItem>
-                                <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                                {historialPreview.catalogSnapshot.map(c => (
-                                  <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Exactos / alias (colapsables) */}
-                {exactMatches.length > 0 && (
-                  <Card className="dark:bg-gray-800 dark:border-gray-700 border-green-200 dark:border-green-800">
-                    <button
-                      className="w-full text-left"
-                      onClick={() => setShowExactList(v => !v)}
-                    >
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base dark:text-white flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            Mapeados automáticamente ({exactMatches.length})
-                          </span>
-                          {showExactList ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                        </CardTitle>
-                      </CardHeader>
-                    </button>
-                    {showExactList && (
-                      <CardContent className="pt-0 space-y-1">
-                        {exactMatches.map(match => (
-                          <div key={match.rawName} className="flex items-center justify-between gap-3 py-1.5 px-2 rounded dark:hover:bg-gray-700/40">
-                            <span className="text-sm dark:text-gray-300 truncate">{match.rawName}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <StatusBadge status={match.status} />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">→ {match.suggestedCourseName}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </CardContent>
-                    )}
-                  </Card>
-                )}
-
-                {/* Errores */}
-                {importError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{importError}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Botón confirmar */}
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={handleResetHistorial} className="gap-2 dark:border-gray-600 dark:text-gray-200">
-                    <RotateCcw className="h-4 w-4" /> Cancelar
+                    <Trash2 className="h-4 w-4" /> Borrar
                   </Button>
-                  <Button onClick={handleImportHistorial} disabled={importing} className="gap-2">
-                    {importing ? (
-                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
-                    ) : (
-                      <><Upload className="h-4 w-4" /> Confirmar e importar</>
-                    )}
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => { setNewEmpSuccess(false); resetNewEmp(); setNewEmpOpen(true) }}
+                  >
+                    <UserPlus className="h-4 w-4" /> Nuevo empleado
                   </Button>
                 </div>
-              </div>
-            )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    value={empSearch} onChange={e => setEmpSearch(e.target.value)}
+                    className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  />
+                </div>
+                {loadingEmployees ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                  </div>
+                ) : filteredEmployees.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    {employees.length === 0
+                      ? "Sin empleados registrados. Usa el botón \"Nuevo empleado\" para agregar."
+                      : "No se encontraron empleados con esa búsqueda."}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
+                          <TableHead className="dark:text-gray-400">Empleado</TableHead>
+                          <TableHead className="dark:text-gray-400 hidden sm:table-cell">Puesto</TableHead>
+                          <TableHead className="dark:text-gray-400 hidden md:table-cell">Departamento</TableHead>
+                          <TableHead className="dark:text-gray-400 text-right">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredEmployees.map(emp => (
+                          <TableRow key={emp.id} className="dark:border-gray-700 hover:dark:bg-gray-700/50">
+                            <TableCell className="font-medium dark:text-gray-200">{emp.nombre}</TableCell>
+                            <TableCell className="dark:text-gray-400 text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {emp.departamento && (
+                                <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300 text-xs">
+                                  {emp.departamento}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1 text-xs dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  onClick={() => openAddCoursesDlg(emp)}
+                                >
+                                  <BookOpen className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Cursos</span>
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  onClick={() => handleViewEmployee(emp)}
+                                >
+                                  Ver <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {filteredEmployees.length} de {employees.length} empleados
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -1002,6 +794,340 @@ export default function CapacitacionContent() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* ── Dialog: Agregar cursos a empleado ────────────────────────────── */}
+      <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) setAddCoursesError(null); setAddCoursesDlgOpen(open) }}>
+        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              Agregar cursos
+            </DialogTitle>
+            <DialogDescription className="dark:text-gray-400">
+              {addCoursesDlgEmp?.nombre}
+              {addCoursesDlgEmp?.puesto ? ` · ${addCoursesDlgEmp.puesto}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {addCoursesError && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{addCoursesError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2 overflow-y-auto">
+            {loadingCourses ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {addCoursesRows.map((row, i) => (
+                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 space-y-1">
+                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Curso</label>
+                          <Select value={row.course_id} onValueChange={v => updateAddCoursesRow(i, 'course_id', v)}>
+                            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                              {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {addCoursesRows.length > 1 && (
+                          <button
+                            onClick={() => removeAddCoursesRow(i)}
+                            className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Fecha aplicación</label>
+                          <Input type="date"
+                            value={row.fecha_aplicacion}
+                            onChange={e => updateAddCoursesRow(i, 'fecha_aplicacion', e.target.value)}
+                            className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Calificación</label>
+                          <Input type="number" min="0" max="100"
+                            value={row.calificacion}
+                            onChange={e => updateAddCoursesRow(i, 'calificacion', e.target.value)}
+                            className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" size="sm" onClick={addAddCoursesRow}
+                  className="w-full gap-2 dark:border-gray-600 dark:text-gray-200">
+                  <Plus className="h-4 w-4" /> Agregar otro curso
+                </Button>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setAddCoursesDlgOpen(false)}
+              className="dark:border-gray-600 dark:text-gray-200">
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveAddCourses} disabled={addCoursesSaving} className="gap-2">
+              {addCoursesSaving
+                ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                : 'Guardar cursos'
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Nuevo Empleado ───────────────────────────────────────── */}
+      <Dialog open={newEmpOpen} onOpenChange={open => { if (!open) resetNewEmp(); setNewEmpOpen(open) }}>
+        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Nuevo empleado
+            </DialogTitle>
+            <DialogDescription className="dark:text-gray-400">
+              Paso {newEmpStep} de 2 — {newEmpStep === 1 ? 'Datos del empleado' : 'Cursos tomados (opcional)'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Indicador de pasos */}
+          <div className="flex items-center gap-2 mb-1">
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
+          </div>
+
+          {newEmpError && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{newEmpError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* ── Paso 1: Datos ─────────────────────────────────────────────── */}
+          {newEmpStep === 1 && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">N.N</label>
+                  <Input
+                    value={newEmpForm.numero}
+                    onChange={e => setNewEmpForm(f => ({ ...f, numero: e.target.value }))}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Fecha de ingreso</label>
+                  <Input type="date"
+                    value={newEmpForm.fecha_ingreso}
+                    onChange={e => setNewEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Nombre completo <span className="text-red-500">*</span></label>
+                <Input
+                  value={newEmpForm.nombre}
+                  onChange={e => setNewEmpForm(f => ({ ...f, nombre: e.target.value }))}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Departamento</label>
+                <Select
+                  value={newEmpForm.departamento}
+                  onValueChange={v => setNewEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Área</label>
+                  <Select
+                    value={newEmpForm.area}
+                    onValueChange={v => setNewEmpForm(f => ({ ...f, area: v }))}
+                    disabled={newEmpAreas.length === 0}
+                  >
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                      {newEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Turno</label>
+                  <Select
+                    value={newEmpForm.turno}
+                    onValueChange={v => setNewEmpForm(f => ({ ...f, turno: v }))}
+                  >
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Puesto</label>
+                <Select
+                  value={newEmpForm.puesto}
+                  onValueChange={v => setNewEmpForm(f => ({ ...f, puesto: v }))}
+                  disabled={newEmpPuestos.length === 0}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {newEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jefe directo</label>
+                <Select
+                  value={newEmpForm.jefe_directo}
+                  onValueChange={v => setNewEmpForm(f => ({ ...f, jefe_directo: v }))}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* ── Paso 2: Cursos ────────────────────────────────────────────── */}
+          {newEmpStep === 2 && (
+            <div className="space-y-3 overflow-y-auto max-h-[60dvh] pr-1">
+              {loadingCourses ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                </div>
+              ) : (
+                <>
+                  {newEmpCourseRows.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                      Sin cursos agregados. Puedes guardar así o agregar cursos tomados.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {newEmpCourseRows.map((row, i) => (
+                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Curso</label>
+                              <Select
+                                value={row.course_id}
+                                onValueChange={v => updateCourseRow(i, 'course_id', v)}
+                              >
+                                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                                  {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <button
+                              onClick={() => removeCourseRow(i)}
+                              className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Fecha aplicación</label>
+                              <Input type="date"
+                                value={row.fecha_aplicacion}
+                                onChange={e => updateCourseRow(i, 'fecha_aplicacion', e.target.value)}
+                                className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Calificación</label>
+                              <Input type="number" min="0" max="100"
+                                value={row.calificacion}
+                                onChange={e => updateCourseRow(i, 'calificacion', e.target.value)}
+                                className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button variant="outline" size="sm" onClick={addCourseRow}
+                    className="w-full gap-2 dark:border-gray-600 dark:text-gray-200">
+                    <Plus className="h-4 w-4" /> Agregar curso
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
+            {newEmpStep === 1 ? (
+              <>
+                <Button variant="outline" onClick={() => { resetNewEmp(); setNewEmpOpen(false) }}
+                  className="dark:border-gray-600 dark:text-gray-200">
+                  Cancelar
+                </Button>
+                <Button onClick={handleNewEmpNext}>
+                  Siguiente →
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setNewEmpStep(1)}
+                  className="dark:border-gray-600 dark:text-gray-200">
+                  ← Anterior
+                </Button>
+                <Button onClick={handleSaveNewEmp} disabled={newEmpSaving} className="gap-2">
+                  {newEmpSaving
+                    ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                    : 'Guardar'
+                  }
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Dialog: Confirmación borrar historial ─────────────────────────── */}
       <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>

@@ -109,9 +109,13 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end sm:gap-2",
+      // sticky al fondo del área scrollable del dialog
+      "sticky bottom-0 -mx-6 px-6 pt-3 mt-4",
+      "bg-background/95 backdrop-blur-sm",
+      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2",
       className,
     )}
+    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
     {...props}
   />
 )

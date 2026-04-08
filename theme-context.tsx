@@ -18,11 +18,13 @@ type ThemeContextType = {
   accentColor: AccentColor
   customColor: string
   fontSize: FontSize
+  reducedMotion: boolean
   isColorLight: (hex?: string) => boolean
   setTheme: (theme: Theme) => void
   setAccentColor: (color: AccentColor) => void
   setCustomColor: (color: string) => void
   setFontSize: (size: FontSize) => void
+  setReducedMotion: (v: boolean) => void
   toggleTheme: () => void
 }
 
@@ -135,6 +137,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [accentColor, setAccentColor] = useState<AccentColor>("blue")
   const [customColor, setCustomColor] = useState<string>("#3b82f6")
   const [fontSize, setFontSize] = useState<FontSize>("medium")
+  const [reducedMotion, setReducedMotion] = useState<boolean>(false)
 
   // Initialize from localStorage or system preference
   useEffect(() => {
@@ -143,7 +146,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const storedAccentColor = localStorage.getItem("accentColor") as AccentColor | null
       const storedCustomColor = localStorage.getItem("customColor") as string | null
       const storedFontSize = localStorage.getItem("fontSize") as FontSize | null
+      const storedReducedMotion = localStorage.getItem("reducedMotion")
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
       if (storedTheme) {
         setTheme(storedTheme)
@@ -162,6 +167,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (storedFontSize && storedFontSize in FONT_SIZE_MAP) {
         setFontSize(storedFontSize)
       }
+
+      const rm = storedReducedMotion !== null ? storedReducedMotion === "true" : prefersReducedMotion
+      setReducedMotion(rm)
     } catch (error) {
       console.error("Error initializing theme from localStorage:", error)
     }
@@ -190,6 +198,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       console.error("Error updating font size:", error)
     }
   }, [fontSize])
+
+  // Aplicar reduced motion
+  useEffect(() => {
+    try {
+      if (reducedMotion) {
+        document.documentElement.classList.add("reduce-motion")
+      } else {
+        document.documentElement.classList.remove("reduce-motion")
+      }
+      localStorage.setItem("reducedMotion", String(reducedMotion))
+    } catch (error) {
+      console.error("Error updating reduced motion:", error)
+    }
+  }, [reducedMotion])
 
   // Update CSS variables when accent color or custom color changes
   useEffect(() => {
@@ -239,11 +261,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         accentColor,
         customColor,
         fontSize,
+        reducedMotion,
         isColorLight,
         setTheme,
         setAccentColor,
         setCustomColor,
         setFontSize,
+        setReducedMotion,
         toggleTheme,
       }}
     >

@@ -665,6 +665,92 @@ export function useCapacitacion() {
     }
   }
 
+  // ── Agregar cursos a un empleado existente ───────────────────────────────
+
+  const addCoursesToEmployee = async (
+    employeeId: string,
+    employeeCourses: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
+  ): Promise<{ success: boolean; error?: string }> => {
+    setImporting(true)
+    setImportError(null)
+    try {
+      const records = employeeCourses
+        .filter(c => c.course_id)
+        .map(c => ({
+          employee_id: employeeId,
+          course_id: c.course_id,
+          raw_course_name: c.course_name,
+          fecha_aplicacion: c.fecha_aplicacion,
+          calificacion: c.calificacion,
+        }))
+      if (records.length === 0) return { success: true }
+      const { error } = await supabase
+        .from('employee_courses')
+        .upsert(records, { onConflict: 'employee_id,raw_course_name', ignoreDuplicates: false })
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al agregar cursos'
+      setImportError(msg)
+      return { success: false, error: msg }
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // ── Crear empleado manualmente con cursos ────────────────────────────────
+
+  const createEmployeeManual = async (
+    employee: {
+      numero: string | null
+      nombre: string
+      puesto: string | null
+      departamento: string | null
+      area: string | null
+      turno: string | null
+      fecha_ingreso: string | null
+      jefe_directo: string | null
+    },
+    employeeCourses: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
+  ): Promise<{ success: boolean; error?: string }> => {
+    setImporting(true)
+    setImportError(null)
+    try {
+      const { data: empData, error: empError } = await supabase
+        .from('employees')
+        .upsert([employee], { onConflict: 'nombre' })
+        .select('id')
+      if (empError) throw new Error(empError.message)
+      const employeeId = empData?.[0]?.id
+      if (!employeeId) throw new Error('No se obtuvo el ID del empleado')
+
+      if (employeeCourses.length > 0) {
+        const records = employeeCourses
+          .filter(c => c.course_id)
+          .map(c => ({
+            employee_id: employeeId,
+            course_id: c.course_id,
+            raw_course_name: c.course_name,
+            fecha_aplicacion: c.fecha_aplicacion,
+            calificacion: c.calificacion,
+          }))
+        if (records.length > 0) {
+          const { error: ecError } = await supabase
+            .from('employee_courses')
+            .upsert(records, { onConflict: 'employee_id,raw_course_name', ignoreDuplicates: true })
+          if (ecError) throw new Error(ecError.message)
+        }
+      }
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al crear empleado'
+      setImportError(msg)
+      return { success: false, error: msg }
+    } finally {
+      setImporting(false)
+    }
+  }
+
   return {
     importing,
     importError,
@@ -685,5 +771,7 @@ export function useCapacitacion() {
     parseHistorial,
     importHistorial,
     clearHistorial,
+    createEmployeeManual,
+    addCoursesToEmployee,
   }
 }

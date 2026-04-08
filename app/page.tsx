@@ -3,14 +3,9 @@
 import Dashboard from "../dashboard"
 import CapacitacionChart from "@/components/capacitacion-chart"
 import DashboardAlertas from "@/components/dashboard-alertas"
-import { ThemeProvider } from "@/theme-context"
 
 export default function Page() {
-  return (
-    <ThemeProvider>
-      <Dashboard content={<DashboardContent />} />
-    </ThemeProvider>
-  )
+  return <Dashboard content={<DashboardContent />} />
 }
 
 function DashboardContent() {

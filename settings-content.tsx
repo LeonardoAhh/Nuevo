@@ -56,7 +56,7 @@ const colorOptions: ColorOption[] = [
 
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("profile")
-  const { theme, accentColor, customColor, fontSize, setTheme, setAccentColor, setCustomColor, setFontSize, isColorLight } = useTheme()
+  const { theme, accentColor, customColor, fontSize, reducedMotion, setTheme, setAccentColor, setCustomColor, setFontSize, setReducedMotion, isColorLight } = useTheme()
   const [showSavedMessage, setShowSavedMessage] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [newSkill, setNewSkill] = useState("")
@@ -721,7 +721,10 @@ export default function SettingsContent() {
                     Reduce the amount of animation and motion effects.
                   </p>
                 </div>
-                <Switch />
+                <Switch
+                  checked={reducedMotion}
+                  onCheckedChange={setReducedMotion}
+                />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
