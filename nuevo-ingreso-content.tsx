@@ -110,7 +110,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
         <DialogHeader>
           <DialogTitle className="dark:text-white flex items-center gap-2">
             <Pencil className="h-4 w-4 text-primary" />
@@ -591,7 +591,7 @@ export default function NuevoIngresoContent() {
               onChange={e => { setJsonText(e.target.value); setParseError(null) }}
               placeholder='[{ "N.N": "...", "Nombre": "...", "Fecha Ingreso": "46043", ... }]'
               rows={7}
-              className="w-full rounded-md border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
             />
 
             <div className="flex gap-2 justify-end">

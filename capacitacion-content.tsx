@@ -398,7 +398,7 @@ export default function CapacitacionContent() {
                     : "No se encontraron puestos con ese filtro."}
                 </div>
               ) : (
-                <div className="rounded-md border dark:border-gray-700 overflow-hidden">
+                <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
@@ -547,7 +547,7 @@ export default function CapacitacionContent() {
                         : "No se encontraron empleados con esa búsqueda."}
                     </div>
                   ) : (
-                    <div className="rounded-md border dark:border-gray-700 overflow-hidden">
+                    <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
                       <Table>
                         <TableHeader>
                           <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
@@ -631,7 +631,7 @@ export default function CapacitacionContent() {
                     onChange={e => { setHistorialText(e.target.value); setHistorialParseError(null) }}
                     placeholder='[{ "NOMBRE": "...", "CURSO TOMADO": "...", "FECHA DE APLICACIÓN": "...", "CALIFICACIÓN": "..." }]'
                     rows={6}
-                    className="w-full rounded-md border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
                   />
 
                   <div className="flex gap-2 justify-end">
@@ -907,7 +907,7 @@ export default function CapacitacionContent() {
                   onChange={e => { setJsonText(e.target.value); setPreview(null); setParseError(null) }}
                   placeholder='[{ "position": "...", "department": "...", "requiredCourses_1": "..." }]'
                   rows={8}
-                  className="w-full rounded-md border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
                 />
 
                 <div className="flex gap-2 justify-end">
@@ -963,7 +963,7 @@ export default function CapacitacionContent() {
                     <p className="text-sm font-medium dark:text-gray-200 mb-2">
                       Puestos (mostrando {Math.min(5, preview.positions.length)} de {preview.positions.length})
                     </p>
-                    <div className="rounded-md border dark:border-gray-700 overflow-hidden">
+                    <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
                       <Table>
                         <TableHeader>
                           <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
@@ -1005,7 +1005,7 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Confirmación borrar historial ─────────────────────────── */}
       <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-        <DialogContent className="max-w-sm dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-sm dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="dark:text-white flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-red-500" />
@@ -1049,7 +1049,7 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Cursos requeridos del puesto ──────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="dark:text-white">{selectedPosition?.name}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
@@ -1065,7 +1065,7 @@ export default function CapacitacionContent() {
               No hay cursos registrados para este puesto.
             </p>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+            <div className="space-y-2">
               {positionCourses.map((pc, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
                   <span className="text-xs font-mono text-gray-400 w-5 text-right shrink-0">{pc.order_index}</span>
@@ -1080,7 +1080,7 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Progreso del empleado ─────────────────────────────────── */}
       <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
-        <DialogContent className="max-w-xl dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-xl dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="dark:text-white">{selectedEmployee?.nombre}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
@@ -1173,7 +1173,7 @@ export default function CapacitacionContent() {
                         : "Este puesto no tiene cursos requeridos registrados."}
                     </p>
                   ) : (
-                    <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+                    <div className="space-y-1.5">
                       {empProgress.courses.map((c) => (
                         <div
                           key={c.courseId}
@@ -1223,7 +1223,7 @@ export default function CapacitacionContent() {
                       No hay cursos registrados para este empleado.
                     </p>
                   ) : (
-                    <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+                    <div className="space-y-1.5">
                       {empCourses.map((ec, idx) => (
                         <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
                           <div className="flex items-center gap-3 min-w-0">
