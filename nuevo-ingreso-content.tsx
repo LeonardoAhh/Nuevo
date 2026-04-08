@@ -265,6 +265,13 @@ export default function NuevoIngresoContent() {
     const matchRG       = filterRG === 'all' || r.rg_rec_048 === filterRG
     const matchTurno    = filterTurno === 'all' || r.turno === filterTurno
     return matchSearch && matchDept && matchContrato && matchRG && matchTurno
+  }).sort((a, b) => {
+    const na = a.numero ? parseInt(a.numero, 10) : Infinity
+    const nb = b.numero ? parseInt(b.numero, 10) : Infinity
+    if (isNaN(na) && isNaN(nb)) return (a.numero ?? '').localeCompare(b.numero ?? '')
+    if (isNaN(na)) return 1
+    if (isNaN(nb)) return -1
+    return na - nb
   })
 
   // KPIs
@@ -452,6 +459,11 @@ export default function NuevoIngresoContent() {
                       {/* Fila superior: nombre + RG pill */}
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="min-w-0">
+                          {r.numero && (
+                            <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 leading-none mb-0.5">
+                              #{r.numero}
+                            </p>
+                          )}
                           <p className="font-semibold text-sm dark:text-gray-200 leading-tight">{r.nombre}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{r.puesto}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</p>
@@ -492,6 +504,7 @@ export default function NuevoIngresoContent() {
                 <Table>
                   <TableHeader>
                     <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
+                      <TableHead className="dark:text-gray-400 w-[90px]">N.N</TableHead>
                       <TableHead className="dark:text-gray-400 min-w-[180px]">Empleado</TableHead>
                       <TableHead className="dark:text-gray-400 hidden md:table-cell">Ingreso</TableHead>
                       <TableHead className="dark:text-gray-400 text-center">Eval. 1er mes</TableHead>
@@ -512,6 +525,11 @@ export default function NuevoIngresoContent() {
                           className="dark:border-gray-700 hover:dark:bg-gray-700/40 cursor-pointer"
                           onClick={() => handleEdit(r)}
                         >
+                          <TableCell>
+                            <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                              {r.numero ?? '—'}
+                            </span>
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium dark:text-gray-200 text-sm leading-tight">{r.nombre}</div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{r.puesto}</div>
