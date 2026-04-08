@@ -1173,33 +1173,31 @@ export default function CapacitacionContent() {
                         : "Este puesto no tiene cursos requeridos registrados."}
                     </p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 pb-2">
                       {empProgress.courses.map((c) => (
                         <div
                           key={c.courseId}
-                          className={`flex items-center justify-between gap-3 p-2.5 rounded-lg border
+                          className={`flex items-center gap-2.5 p-2.5 rounded-lg border
                             ${c.status === 'aprobado'  ? 'bg-green-50  dark:bg-green-900/10  border-green-200 dark:border-green-800' : ''}
                             ${c.status === 'reprobado' ? 'bg-red-50    dark:bg-red-900/10    border-red-200   dark:border-red-800'   : ''}
                             ${c.status === 'pendiente' ? 'bg-gray-50   dark:bg-gray-900/40   border-gray-200  dark:border-gray-700'  : ''}
                           `}
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
-                            {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-red-500   shrink-0" />}
-                            {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-gray-400   shrink-0" />}
-                            <div className="min-w-0">
-                              <p className="text-sm dark:text-gray-200 leading-tight truncate">{c.courseName}</p>
-                              {c.fechaAplicacion && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {c.fechaAplicacion.split('-').reverse().join('/')}
-                                </p>
-                              )}
-                            </div>
+                          {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                          {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-red-500   shrink-0" />}
+                          {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-gray-400   shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm dark:text-gray-200 leading-tight truncate">{c.courseName}</p>
+                            {c.fechaAplicacion && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {c.fechaAplicacion.split('-').reverse().join('/')}
+                              </p>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="shrink-0">
                             {c.calificacion != null ? (
                               <Badge
-                                className={`text-xs font-bold
+                                className={`text-xs font-bold min-w-[2.5rem] justify-center
                                   ${c.status === 'aprobado'  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border border-green-300 dark:border-green-700' : ''}
                                   ${c.status === 'reprobado' ? 'bg-red-100   text-red-700   dark:bg-red-900/40   dark:text-red-300   border border-red-300   dark:border-red-700'  : ''}
                                 `}
@@ -1207,7 +1205,7 @@ export default function CapacitacionContent() {
                                 {c.calificacion}
                               </Badge>
                             ) : (
-                              <span className="text-xs text-gray-400 dark:text-gray-500">Pendiente</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500 w-16 text-right block">—</span>
                             )}
                           </div>
                         </div>
@@ -1223,26 +1221,24 @@ export default function CapacitacionContent() {
                       No hay cursos registrados para este empleado.
                     </p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 pb-2">
                       {empCourses.map((ec, idx) => (
-                        <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-sm dark:text-gray-200 truncate leading-tight">
-                                {ec.course?.name ?? ec.raw_course_name}
+                        <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+                          <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm dark:text-gray-200 truncate leading-tight">
+                              {ec.course?.name ?? ec.raw_course_name}
+                            </p>
+                            {ec.fecha_aplicacion && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {ec.fecha_aplicacion.split('-').reverse().join('/')}
                               </p>
-                              {ec.fecha_aplicacion && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {ec.fecha_aplicacion.split('-').reverse().join('/')}
-                                </p>
-                              )}
-                            </div>
+                            )}
                           </div>
                           {ec.calificacion != null && (
                             <Badge
                               variant={ec.calificacion >= 70 ? "default" : "destructive"}
-                              className="shrink-0 text-xs"
+                              className="shrink-0 text-xs min-w-[2.5rem] justify-center"
                             >
                               {ec.calificacion}
                             </Badge>

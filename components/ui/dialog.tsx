@@ -74,7 +74,10 @@ const DialogContent = React.forwardRef<
       {/* Área scrollable */}
       <div
         className="flex-1 overflow-y-auto overscroll-contain px-6 pt-4 sm:pt-6"
-        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+        style={{
+          paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+          scrollbarGutter: "stable",
+        }}
       >
         {children}
       </div>
