@@ -124,9 +124,8 @@ export default function Dashboard({ content }: DashboardProps) {
     <div className="flex flex-col md:flex-row h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <div
-        className={`bg-white dark:bg-gray-800 border-r dark:border-gray-700 ${sidebarCollapsed ? "w-20" : "w-64"} transition-all duration-300 flex flex-col ${
-          isMobileView ? "fixed z-50 h-screen shadow-lg" : ""
-        } ${isMobileView && !showMobileSidebar ? "-translate-x-full" : ""}`}
+        className={`bg-white dark:bg-gray-800 border-r dark:border-gray-700 ${sidebarCollapsed ? "w-20" : "w-64"} transition-all duration-300 flex flex-col ${isMobileView ? "fixed z-50 h-screen shadow-lg" : ""
+          } ${isMobileView && !showMobileSidebar ? "-translate-x-full" : ""}`}
       >
         <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-3">

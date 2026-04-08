@@ -1,36 +1,33 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
-  Search, Upload, FileJson, RotateCcw, CheckCircle2,
-  AlertCircle, Clock, AlertTriangle, ChevronRight,
-  FileText, UserPlus, CalendarClock, XCircle, Pencil,
-  CalendarCheck, Info,
+  Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
+  XCircle, Pencil, CalendarCheck, Info, UserPlus, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useNuevoIngreso, formatDate, daysFromToday, evalStatus } from "@/lib/hooks"
+import { Label } from "@/components/ui/label"
+import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, addDays } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG, EvalStatus } from "@/lib/hooks"
-import type { RawNuevoIngresoRecord } from "@/lib/hooks/useNuevoIngreso"
+import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA, ESCOLARIDAD } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.ElementType; classes: string }> = {
-  completada: { label: 'Completada', icon: CheckCircle2,  classes: 'text-green-600 dark:text-green-400' },
-  proxima:    { label: 'Próxima',    icon: AlertTriangle, classes: 'text-yellow-500 dark:text-yellow-400' },
-  hoy:        { label: 'Hoy',        icon: CalendarCheck, classes: 'text-orange-500 dark:text-orange-400' },
-  vencida:    { label: 'Vencida',    icon: XCircle,       classes: 'text-red-500 dark:text-red-400' },
-  pendiente:  { label: 'Pendiente',  icon: Clock,         classes: 'text-gray-400 dark:text-gray-500' },
+  completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-green-600 dark:text-green-400' },
+  proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-yellow-500 dark:text-yellow-400' },
+  hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-orange-500 dark:text-orange-400' },
+  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-red-500 dark:text-red-400' },
+  pendiente: { label: 'Pendiente', icon: Clock, classes: 'text-gray-400 dark:text-gray-500' },
 }
 
 function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion: number | null }) {
@@ -43,10 +40,9 @@ function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion
       <Icon className="h-4 w-4" />
       <span className="text-xs font-medium">{formatDate(fecha)}</span>
       {calificacion != null && (
-        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-          calificacion >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                             : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-        }`}>{calificacion}</span>
+        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${calificacion >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+          }`}>{calificacion}</span>
       )}
       {calificacion == null && diff !== null && diff >= 0 && (
         <span className="text-xs opacity-70">{diff === 0 ? 'hoy' : `en ${diff}d`}</span>
@@ -62,7 +58,7 @@ function ContratoTerminoBadge({ fecha }: { fecha: string | null }) {
   const diff = daysFromToday(fecha)
   if (diff === null) return <span className="text-xs text-gray-400">—</span>
   const urgent = diff <= 10
-  const past   = diff < 0
+  const past = diff < 0
   return (
     <div className={`text-xs font-medium ${past ? 'text-red-500' : urgent ? 'text-orange-500' : 'text-gray-600 dark:text-gray-400'}`}>
       <div>{formatDate(fecha)}</div>
@@ -74,7 +70,7 @@ function ContratoTerminoBadge({ fecha }: { fecha: string | null }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dialog de edición
+// Dialog de edición (existente)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface EditDialogProps {
@@ -91,12 +87,12 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
   useEffect(() => {
     if (record) {
       setForm({
-        escolaridad:         record.escolaridad ?? '',
+        escolaridad: record.escolaridad ?? '',
         eval_1_calificacion: record.eval_1_calificacion ?? undefined,
         eval_2_calificacion: record.eval_2_calificacion ?? undefined,
         eval_3_calificacion: record.eval_3_calificacion ?? undefined,
-        tipo_contrato:       record.tipo_contrato,
-        rg_rec_048:          record.rg_rec_048,
+        tipo_contrato: record.tipo_contrato,
+        rg_rec_048: record.rg_rec_048,
       })
     }
   }, [record])
@@ -122,18 +118,14 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Escolaridad */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium dark:text-gray-200">Escolaridad</label>
             <Input
               value={form.escolaridad ?? ''}
               onChange={e => set('escolaridad', e.target.value)}
-              placeholder=""
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
-
-          {/* Evaluaciones */}
           <div className="grid grid-cols-3 gap-3">
             {([
               { label: '1er mes', key: 'eval_1_calificacion' as const, fecha: record.eval_1_fecha },
@@ -146,50 +138,31 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
                   <span className="block text-gray-400 font-normal">{formatDate(fecha)}</span>
                 </label>
                 <Input
-                  type="number"
-                  min={0}
-                  max={100}
+                  type="number" min={0} max={100}
                   value={form[key] ?? ''}
                   onChange={e => set(key, e.target.value === '' ? null : parseInt(e.target.value))}
-                  placeholder=""
                   className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                 />
               </div>
             ))}
           </div>
-
-          {/* Tipo contrato */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium dark:text-gray-200">Tipo de contrato</label>
-            <Select
-              value={form.tipo_contrato ?? record.tipo_contrato}
-              onValueChange={v => set('tipo_contrato', v as TipoContrato)}
-            >
-              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                <SelectValue />
-              </SelectTrigger>
+            <Select value={form.tipo_contrato ?? record.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"><SelectValue /></SelectTrigger>
               <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                 <SelectItem value="A prueba">A prueba</SelectItem>
                 <SelectItem value="Indeterminado">Indeterminado</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {/* RG-REC-048 */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium dark:text-gray-200">
               RG-REC-048
-              <span className="ml-2 text-xs font-normal text-gray-400">
-                Vence: {formatDate(record.fecha_vencimiento_rg)}
-              </span>
+              <span className="ml-2 text-xs font-normal text-gray-400">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
             </label>
-            <Select
-              value={form.rg_rec_048 ?? record.rg_rec_048}
-              onValueChange={v => set('rg_rec_048', v as EstadoRG)}
-            >
-              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-                <SelectValue />
-              </SelectTrigger>
+            <Select value={form.rg_rec_048 ?? record.rg_rec_048} onValueChange={v => set('rg_rec_048', v as EstadoRG)}>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"><SelectValue /></SelectTrigger>
               <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                 <SelectItem value="Pendiente">Pendiente</SelectItem>
                 <SelectItem value="Entregado">Entregado</SelectItem>
@@ -199,14 +172,11 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}
-            className="dark:border-gray-600 dark:text-gray-200">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="dark:border-gray-600 dark:text-gray-200">
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
-            {saving
-              ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
-              : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
+            {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -215,28 +185,309 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Dialog de creación de nuevo empleado
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface NuevoEmpleadoForm {
+  numero: string
+  nombre: string
+  puesto: string
+  departamento: string
+  area: string
+  turno: string
+  fecha_ingreso: string
+  curp: string
+  escolaridad: string
+  jefe_area: string
+  tipo_contrato: TipoContrato
+}
+
+const FORM_INICIAL: NuevoEmpleadoForm = {
+  numero: '', nombre: '', puesto: '', departamento: '', area: '',
+  turno: '', fecha_ingreso: new Date().toISOString().split('T')[0],
+  curp: '', escolaridad: '', jefe_area: '',
+  tipo_contrato: 'A prueba',
+}
+
+// Campo de formulario reutilizable — definido en el módulo para evitar re-creación en cada render
+function FormField({
+  id, label, required = false, children,
+}: { id: string; label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-medium dark:text-gray-200">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </Label>
+      {children}
+    </div>
+  )
+}
+
+interface NuevoEmpleadoDialogProps {
+  open: boolean
+  saving: boolean
+  onClose: () => void
+  onCreate: (data: Omit<NuevoIngreso, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+}
+
+function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoDialogProps) {
+  const [form, setForm] = useState<NuevoEmpleadoForm>(FORM_INICIAL)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  // Resetear al abrir
+  useEffect(() => {
+    if (open) { setForm(FORM_INICIAL); setFormError(null) }
+  }, [open])
+
+  const set = (key: keyof NuevoEmpleadoForm, value: string) =>
+    setForm(prev => ({ ...prev, [key]: value }))
+
+  const departamentos = Object.keys(CATALOGO_ORGANIZACIONAL)
+  const areasDisponibles = form.departamento ? (CATALOGO_ORGANIZACIONAL[form.departamento]?.areas || []) : []
+  const puestosDisponibles = form.departamento ? (CATALOGO_ORGANIZACIONAL[form.departamento]?.puestos || []) : []
+
+  const setDepartamento = (v: string) => {
+    setForm(prev => ({
+      ...prev,
+      departamento: v,
+      area: '',
+      puesto: ''
+    }))
+  }
+
+  const handleCreate = async () => {
+    if (!form.nombre.trim()) { setFormError('El nombre es obligatorio.'); return }
+    if (!form.departamento) { setFormError('El departamento es obligatorio.'); return }
+    if (!form.area) { setFormError('El área es obligatoria.'); return }
+    if (!form.puesto) { setFormError('El puesto es obligatorio.'); return }
+    if (!form.turno) { setFormError('El turno es obligatorio.'); return }
+    if (!form.fecha_ingreso.trim()) { setFormError('La fecha de ingreso es obligatoria.'); return }
+    setFormError(null)
+
+    const fi = form.fecha_ingreso
+    const data: Omit<NuevoIngreso, 'id' | 'created_at' | 'updated_at'> = {
+      numero: form.numero.trim() || null,
+      nombre: form.nombre.trim().toUpperCase(),
+      puesto: form.puesto.trim() || null,
+      departamento: form.departamento.trim() || null,
+      area: form.area.trim() || null,
+      turno: form.turno.trim() || null,
+      fecha_ingreso: fi,
+      curp: form.curp.trim() || null,
+      escolaridad: form.escolaridad.trim() || null,
+      jefe_area: form.jefe_area.trim() || null,
+      eval_1_fecha: addDays(fi, 30),
+      eval_1_calificacion: null,
+      eval_2_fecha: addDays(fi, 60),
+      eval_2_calificacion: null,
+      eval_3_fecha: addDays(fi, 80),
+      eval_3_calificacion: null,
+      termino_contrato: addDays(fi, 90),
+      tipo_contrato: form.tipo_contrato,
+      rg_rec_048: 'Pendiente',
+      fecha_vencimiento_rg: addDays(fi, 91),
+    }
+    await onCreate(data)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
+        <DialogHeader>
+          <DialogTitle className="dark:text-white flex items-center gap-2">
+            <UserPlus className="h-5 w-5 text-amber-500" />
+            Nuevo Empleado
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Formulario para registrar a un nuevo trabajador en el sistema.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-1">
+          {formError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Fila 1: N.N + Nombre */}
+          <div className="grid grid-cols-[100px_1fr] gap-3">
+            <FormField id="numero" label="N.N">
+              <Input id="numero" value={form.numero}
+                onChange={e => set('numero', e.target.value)}
+                placeholder="001"
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+            </FormField>
+            <FormField id="nombre" label="Nombre completo" required>
+              <Input id="nombre" value={form.nombre}
+                onChange={e => set('nombre', e.target.value)}
+                placeholder="PÉREZ GARCÍA JUAN"
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+            </FormField>
+          </div>
+
+          {/* Fila 2: Departamento + Área */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField id="departamento" label="Departamento" required>
+              <Select value={form.departamento} onValueChange={setDepartamento}>
+                <SelectTrigger id="departamento" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder="Selecciona..." />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FormField>
+
+            <FormField id="area" label="Área" required>
+              <Select value={form.area} onValueChange={v => set('area', v)} disabled={!form.departamento}>
+                <SelectTrigger id="area" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {areasDisponibles.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+
+          {/* Fila 3: Puesto + Turno */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField id="puesto" label="Puesto" required>
+              <Select value={form.puesto} onValueChange={v => set('puesto', v)} disabled={!form.departamento}>
+                <SelectTrigger id="puesto" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {puestosDisponibles.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FormField>
+
+            <FormField id="turno" label="Turno" required>
+              <Select value={form.turno} onValueChange={v => set('turno', v)}>
+                <SelectTrigger id="turno" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder="Selecciona..." />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+
+          {/* Fila 4: Fecha ingreso + Tipo contrato */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField id="fecha_ingreso" label="Fecha de ingreso" required>
+              <Input id="fecha_ingreso" type="date"
+                value={form.fecha_ingreso}
+                onChange={e => set('fecha_ingreso', e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+            </FormField>
+            <FormField id="tipo_contrato" label="Tipo de contrato">
+              <Select value={form.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
+                <SelectTrigger id="tipo_contrato" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="A prueba">A prueba</SelectItem>
+                  <SelectItem value="Indeterminado">Indeterminado</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+
+          {/* Fila 5: CURP + Escolaridad + Jefe */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <FormField id="curp" label="CURP">
+              <Input id="curp" value={form.curp}
+                onChange={e => set('curp', e.target.value.toUpperCase())}
+                placeholder="PELJ900101HDFRZN09"
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+            </FormField>
+            <FormField id="escolaridad" label="Escolaridad">
+              <Select value={form.escolaridad} onValueChange={v => set('escolaridad', v)}>
+                <SelectTrigger id="escolaridad" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder="Selecciona..." />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {ESCOLARIDAD.map(e => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+            <FormField id="jefe_area" label="Jefe de área">
+              <Select value={form.jefe_area} onValueChange={v => set('jefe_area', v)}>
+                <SelectTrigger id="jefe_area" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder="Selecciona..." />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                  {JEFES_DE_AREA.map(j => (
+                    <SelectItem key={j} value={j}>{j}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+          </div>
+
+          {/* Preview fechas calculadas */}
+          {form.fecha_ingreso && (
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 p-3">
+              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Fechas calculadas automáticamente</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                {[
+                  { label: 'Eval. 1er mes', days: 30 },
+                  { label: 'Eval. 2o mes', days: 60 },
+                  { label: 'Eval. 3er mes', days: 80 },
+                  { label: 'Término / RG', days: 90 },
+                ].map(({ label, days }) => (
+                  <div key={label} className="text-center">
+                    <p className="text-amber-600 dark:text-amber-500 font-medium">{label}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{formatDate(addDays(form.fecha_ingreso, days))}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving} className="gap-2 dark:border-gray-600 dark:text-gray-200">
+            <X className="h-4 w-4" /> Cancelar
+          </Button>
+          <Button onClick={handleCreate} disabled={saving || !form.nombre.trim()} className="gap-2">
+            {saving
+              ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+              : <><UserPlus className="h-4 w-4" /> Crear Empleado</>}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function NuevoIngresoContent() {
-  const { loading, saving, error, fetchAll, importRecords, updateRecord } = useNuevoIngreso()
+  const { loading, saving, error, fetchAll, updateRecord, createRecord } = useNuevoIngreso()
 
-  const [records, setRecords]           = useState<NuevoIngreso[]>([])
-  const [search, setSearch]             = useState('')
-  const [filterDept, setFilterDept]     = useState('all')
+  const [records, setRecords] = useState<NuevoIngreso[]>([])
+  const [search, setSearch] = useState('')
+  const [filterDept, setFilterDept] = useState('all')
   const [filterContrato, setFilterContrato] = useState('all')
-  const [filterRG, setFilterRG]         = useState('all')
-  const [filterTurno, setFilterTurno]   = useState('all')
-  const [editRecord, setEditRecord]     = useState<NuevoIngreso | null>(null)
-  const [editOpen, setEditOpen]         = useState(false)
+  const [filterRG, setFilterRG] = useState('all')
+  const [filterTurno, setFilterTurno] = useState('all')
+  const [editRecord, setEditRecord] = useState<NuevoIngreso | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
 
-  // Import
-  const [jsonText, setJsonText]         = useState('')
-  const [parseError, setParseError]     = useState<string | null>(null)
-  const [importSuccess, setImportSuccess] = useState(false)
-  const [showImportForm, setShowImportForm] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const importRef    = useRef<HTMLDivElement>(null)
+  // Nuevo empleado dialog
+  const [nuevoOpen, setNuevoOpen] = useState(false)
+  const [createSuccess, setCreateSuccess] = useState(false)
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
@@ -246,7 +497,7 @@ export default function NuevoIngresoContent() {
 
   // Opciones únicas para filtros
   const departments = Array.from(new Set(records.map(r => r.departamento).filter(Boolean))).sort() as string[]
-  const turnos      = Array.from(new Set(records.map(r => r.turno).filter(Boolean))).sort() as string[]
+  const turnos = Array.from(new Set(records.map(r => r.turno).filter(Boolean))).sort() as string[]
 
   // Filtrado
   const filtered = records.filter(r => {
@@ -260,10 +511,10 @@ export default function NuevoIngresoContent() {
       (r.curp ?? '').toLowerCase().includes(q) ||
       (r.jefe_area ?? '').toLowerCase().includes(q) ||
       (r.turno ?? '').toLowerCase().includes(q)
-    const matchDept     = filterDept === 'all' || r.departamento === filterDept
+    const matchDept = filterDept === 'all' || r.departamento === filterDept
     const matchContrato = filterContrato === 'all' || r.tipo_contrato === filterContrato
-    const matchRG       = filterRG === 'all' || r.rg_rec_048 === filterRG
-    const matchTurno    = filterTurno === 'all' || r.turno === filterTurno
+    const matchRG = filterRG === 'all' || r.rg_rec_048 === filterRG
+    const matchTurno = filterTurno === 'all' || r.turno === filterTurno
     return matchSearch && matchDept && matchContrato && matchRG && matchTurno
   }).sort((a, b) => {
     const na = a.numero ? parseInt(a.numero, 10) : Infinity
@@ -288,37 +539,6 @@ export default function NuevoIngresoContent() {
   }).length
   const rgPendientes = records.filter(r => r.rg_rec_048 === 'Pendiente').length
 
-  // Import handlers
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      setJsonText(ev.target?.result as string)
-      setParseError(null)
-    }
-    reader.readAsText(file)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-
-  const handleImport = async () => {
-    setParseError(null)
-    try {
-      const parsed = JSON.parse(jsonText)
-      const arr = Array.isArray(parsed) ? parsed : [parsed]
-      if (arr.length === 0) throw new Error('El JSON está vacío')
-      const result = await importRecords(arr as RawNuevoIngresoRecord[])
-      if (result.success) {
-        setImportSuccess(true)
-        setJsonText('')
-        setShowImportForm(false)
-        load()
-      }
-    } catch (err) {
-      setParseError(err instanceof Error ? err.message : 'JSON inválido')
-    }
-  }
-
   const handleEdit = (record: NuevoIngreso) => {
     setEditRecord(record)
     setEditOpen(true)
@@ -330,6 +550,16 @@ export default function NuevoIngresoContent() {
       setEditOpen(false)
       setEditRecord(null)
       load()
+    }
+  }
+
+  const handleCreate = async (data: Omit<NuevoIngreso, 'id' | 'created_at' | 'updated_at'>) => {
+    const result = await createRecord(data)
+    if (result.success) {
+      setNuevoOpen(false)
+      setCreateSuccess(true)
+      load()
+      setTimeout(() => setCreateSuccess(false), 4000)
     }
   }
 
@@ -346,25 +576,20 @@ export default function NuevoIngresoContent() {
         </div>
         <Button
           size="sm"
-          variant="outline"
-          className="gap-2 dark:border-gray-600 dark:text-gray-200 self-start sm:self-auto"
-          onClick={() => {
-            setShowImportForm(true)
-            setImportSuccess(false)
-            setTimeout(() => importRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-          }}
+          className="gap-2 self-start sm:self-auto"
+          onClick={() => setNuevoOpen(true)}
         >
-          <Upload className="h-4 w-4" /> Importar
+          <UserPlus className="h-4 w-4" /> Nuevo Empleado
         </Button>
       </div>
 
 
       {/* Alertas */}
-      {importSuccess && (
+      {createSuccess && (
         <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800 dark:text-green-200">
-            Datos importados correctamente.
+            Empleado creado correctamente.
           </AlertDescription>
         </Alert>
       )}
@@ -468,13 +693,12 @@ export default function NuevoIngresoContent() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{r.puesto}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</p>
                         </div>
-                        <div className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                          r.rg_rec_048 === 'Entregado'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                            : rgUrgente
-                              ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                        }`}>
+                        <div className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          : rgUrgente
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                          }`}>
                           {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                           RG
                         </div>
@@ -553,23 +777,21 @@ export default function NuevoIngresoContent() {
                           <TableCell className="hidden md:table-cell">
                             <Badge
                               variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
-                              className={`text-xs whitespace-nowrap ${
-                                r.tipo_contrato === 'Indeterminado'
-                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                                  : 'dark:bg-gray-700 dark:text-gray-300'
-                              }`}
+                              className={`text-xs whitespace-nowrap ${r.tipo_contrato === 'Indeterminado'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                : 'dark:bg-gray-700 dark:text-gray-300'
+                                }`}
                             >
                               {r.tipo_contrato}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                              r.rg_rec_048 === 'Entregado'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                : rgUrgente
-                                  ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                            }`}>
+                            <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                              : rgUrgente
+                                ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                              }`}>
                               {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                               {r.rg_rec_048}
                             </div>
@@ -603,72 +825,13 @@ export default function NuevoIngresoContent() {
         ))}
       </div>
 
-      {/* Formulario de importación */}
-      {showImportForm && (
-        <Card ref={importRef} className="dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div>
-              <CardTitle className="dark:text-white">Importar JSON</CardTitle>
-              <CardDescription className="dark:text-gray-400">
-                Estructura con{' '}
-                <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">Nombre</code>,{' '}
-                <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">Fecha Ingreso</code>,{' '}
-                <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">Tipo de Contrato</code>, etc.
-                La fecha de ingreso puede ser número serial de Excel o DD/MM/YYYY.
-              </CardDescription>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => setShowImportForm(false)}
-              className="shrink-0 dark:text-gray-400">
-              <XCircle className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {parseError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{parseError}</AlertDescription>
-              </Alert>
-            )}
-
-            <div
-              className="border-2 border-dashed dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <FileJson className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm font-medium dark:text-gray-200">Arrastra un archivo JSON o haz clic para seleccionar</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Solo archivos .json</p>
-              <input ref={fileInputRef} type="file" accept=".json,application/json"
-                onChange={handleFileUpload} className="hidden" />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Separator className="flex-1 dark:bg-gray-700" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">o pega el JSON</span>
-              <Separator className="flex-1 dark:bg-gray-700" />
-            </div>
-
-            <textarea
-              value={jsonText}
-              onChange={e => { setJsonText(e.target.value); setParseError(null) }}
-              placeholder='[{ "N.N": "...", "Nombre": "...", "Fecha Ingreso": "46043", ... }]'
-              rows={7}
-              className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => { setJsonText(''); setParseError(null); setShowImportForm(false) }}
-                className="gap-2 dark:border-gray-600 dark:text-gray-200">
-                <RotateCcw className="h-4 w-4" /> Cancelar
-              </Button>
-              <Button onClick={handleImport} disabled={!jsonText.trim() || saving} className="gap-2">
-                {saving
-                  ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
-                  : <><Upload className="h-4 w-4" /> Importar</>}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Dialog de creación de nuevo empleado */}
+      <NuevoEmpleadoDialog
+        open={nuevoOpen}
+        saving={saving}
+        onClose={() => setNuevoOpen(false)}
+        onCreate={handleCreate}
+      />
 
       {/* Dialog de edición */}
       <EditDialog
