@@ -437,89 +437,132 @@ export default function NuevoIngresoContent() {
                 : 'No se encontraron empleados con ese filtro.'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                    <TableHead className="dark:text-gray-400 min-w-[180px]">Empleado</TableHead>
-                    <TableHead className="dark:text-gray-400 hidden md:table-cell">Ingreso</TableHead>
-                    <TableHead className="dark:text-gray-400 text-center">Eval. 1er mes</TableHead>
-                    <TableHead className="dark:text-gray-400 text-center hidden sm:table-cell">Eval. 2do mes</TableHead>
-                    <TableHead className="dark:text-gray-400 text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
-                    <TableHead className="dark:text-gray-400 hidden md:table-cell">Término</TableHead>
-                    <TableHead className="dark:text-gray-400 hidden sm:table-cell">Contrato</TableHead>
-                    <TableHead className="dark:text-gray-400 text-center">RG-REC-048</TableHead>
-                    <TableHead className="dark:text-gray-400 text-right">Acción</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(r => {
-                    const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
-                    const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
-                    return (
-                      <TableRow
-                        key={r.id}
-                        className="dark:border-gray-700 hover:dark:bg-gray-700/40 cursor-pointer"
-                        onClick={() => handleEdit(r)}
-                      >
-                        <TableCell>
-                          <div className="font-medium dark:text-gray-200 text-sm leading-tight">{r.nombre}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{r.puesto}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500 md:hidden mt-0.5">{r.departamento}</div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="text-sm dark:text-gray-300">{formatDate(r.fecha_ingreso)}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</div>
-                        </TableCell>
-                        <TableCell className="text-center">
+            <>
+              {/* ── Móvil: tarjetas ──────────────────────────────────────── */}
+              <div className="sm:hidden divide-y dark:divide-gray-700">
+                {filtered.map(r => {
+                  const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
+                  const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
+                  return (
+                    <div
+                      key={r.id}
+                      className="p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/40"
+                      onClick={() => handleEdit(r)}
+                    >
+                      {/* Fila superior: nombre + RG pill */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm dark:text-gray-200 leading-tight">{r.nombre}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{r.puesto}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</p>
+                        </div>
+                        <div className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                          r.rg_rec_048 === 'Entregado'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                            : rgUrgente
+                              ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                        }`}>
+                          {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                          RG
+                        </div>
+                      </div>
+                      {/* Fila inferior: 3 evaluaciones en línea */}
+                      <div className="flex gap-2">
+                        <div className="flex-1 flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">1er mes</span>
                           <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
-                        </TableCell>
-                        <TableCell className="text-center hidden sm:table-cell">
+                        </div>
+                        <div className="flex-1 flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">2do mes</span>
                           <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
-                        </TableCell>
-                        <TableCell className="text-center hidden lg:table-cell">
+                        </div>
+                        <div className="flex-1 flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">3er mes</span>
                           <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <ContratoTerminoBadge fecha={r.termino_contrato} />
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge
-                            variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
-                            className={`text-xs whitespace-nowrap ${
-                              r.tipo_contrato === 'Indeterminado'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                                : 'dark:bg-gray-700 dark:text-gray-300'
-                            }`}
-                          >
-                            {r.tipo_contrato}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                            r.rg_rec_048 === 'Entregado'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                              : rgUrgente
-                                ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                          }`}>
-                            {r.rg_rec_048 === 'Entregado'
-                              ? <CheckCircle2 className="h-3 w-3" />
-                              : <Clock className="h-3 w-3" />}
-                            {r.rg_rec_048}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700">
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* ── Desktop: tabla ───────────────────────────────────────── */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
+                      <TableHead className="dark:text-gray-400 min-w-[180px]">Empleado</TableHead>
+                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Ingreso</TableHead>
+                      <TableHead className="dark:text-gray-400 text-center">Eval. 1er mes</TableHead>
+                      <TableHead className="dark:text-gray-400 text-center hidden md:table-cell">Eval. 2do mes</TableHead>
+                      <TableHead className="dark:text-gray-400 text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
+                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Término</TableHead>
+                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Contrato</TableHead>
+                      <TableHead className="dark:text-gray-400 text-center">RG-REC-048</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map(r => {
+                      const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
+                      const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
+                      return (
+                        <TableRow
+                          key={r.id}
+                          className="dark:border-gray-700 hover:dark:bg-gray-700/40 cursor-pointer"
+                          onClick={() => handleEdit(r)}
+                        >
+                          <TableCell>
+                            <div className="font-medium dark:text-gray-200 text-sm leading-tight">{r.nombre}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{r.puesto}</div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="text-sm dark:text-gray-300">{formatDate(r.fecha_ingreso)}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
+                          </TableCell>
+                          <TableCell className="text-center hidden md:table-cell">
+                            <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
+                          </TableCell>
+                          <TableCell className="text-center hidden lg:table-cell">
+                            <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <ContratoTerminoBadge fecha={r.termino_contrato} />
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Badge
+                              variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
+                              className={`text-xs whitespace-nowrap ${
+                                r.tipo_contrato === 'Indeterminado'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                  : 'dark:bg-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              {r.tipo_contrato}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                              r.rg_rec_048 === 'Entregado'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                : rgUrgente
+                                  ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                            }`}>
+                              {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                              {r.rg_rec_048}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
