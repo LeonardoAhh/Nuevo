@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  manifest: "/manifest.webmanifest",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
