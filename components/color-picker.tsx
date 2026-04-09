@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { Check, RefreshCw } from "lucide-react"
-import { useTheme } from "@/theme-context"
+import { useTheme } from "@/components/theme-context"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

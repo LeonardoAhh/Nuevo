@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import LoginForm from "@/components/login-form"
-import { ThemeProvider } from "@/theme-context"
+import { ThemeProvider } from "@/components/theme-context"
 
 export const metadata: Metadata = {
   title: "Login | Dashboard",

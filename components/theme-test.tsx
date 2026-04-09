@@ -1,6 +1,6 @@
 "use client"
 
-import { useTheme } from "@/theme-context"
+import { useTheme } from "@/components/theme-context"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 

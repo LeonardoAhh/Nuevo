@@ -13,6 +13,7 @@ import {
   GraduationCap,
   FileText,
   ShieldAlert,
+  Pencil,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,8 +43,10 @@ type DialogTipo =
 
 interface EvalItem {
   id: string
+  dbId: string
   nombre: string
   departamento: string | null
+  turno: string | null
   fecha: string
   diasDiff: number
 }
@@ -85,33 +88,32 @@ interface MetricaProps {
   label: string
   valor: number
   colorValor: string
-  colorFondo: string
+  colorBorder: string
   onClick: () => void
   loading: boolean
 }
 
-function Metrica({ icono, label, valor, colorValor, colorFondo, onClick, loading }: MetricaProps) {
+function Metrica({ icono, label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
   return (
     <button
       onClick={onClick}
       disabled={loading || valor === 0}
       className={`
-        group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl border transition-all duration-200
-        ${colorFondo}
+        group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-primary/10 dark:bg-primary/20 transition-all duration-200
         ${valor > 0 && !loading
           ? "cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
           : "cursor-default opacity-75"
         }
       `}
     >
-      <span className={`flex-shrink-0 p-1.5 rounded-lg ${colorValor} bg-white/60 dark:bg-black/20`}>
+      <span className="flex-shrink-0 p-1.5 rounded-lg text-primary bg-primary/5 dark:bg-primary/10">
         {icono}
       </span>
       <div className="flex flex-col flex-1 min-w-0">
         {loading ? (
           <div className="h-6 w-8 bg-current/10 rounded animate-pulse" />
         ) : (
-          <span className={`text-xl font-bold leading-none ${colorValor}`}>{valor}</span>
+          <span className="text-xl font-bold leading-none text-gray-900 dark:text-white">{valor}</span>
         )}
         <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight truncate">{label}</span>
       </div>
@@ -130,7 +132,7 @@ function SeccionHeader({ icono, label }: { icono: React.ReactNode; label: string
   return (
     <div className="flex items-center gap-1.5 mb-2">
       {icono}
-      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+      <span className="text-xs font-semibold text-primary dark:text-primary-foreground uppercase tracking-wide">
         {label}
       </span>
     </div>
@@ -148,34 +150,79 @@ interface FilaEvalProps {
   colorBadge: string
   colorBorde: string
   badgeLabel: string
+  onCalificar: (dbId: string, calificacion: number) => Promise<void>
 }
 
-function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeLabel }: FilaEvalProps) {
+function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeLabel, onCalificar }: FilaEvalProps) {
+  const [editando, setEditando] = useState(false)
+  const [calStr, setCalStr]     = useState("")
+  const [saving, setSaving]     = useState(false)
+
+  async function handleGuardar() {
+    const cal = parseInt(calStr, 10)
+    if (isNaN(cal) || cal < 0 || cal > 100) return
+    setSaving(true)
+    try { await onCalificar(item.dbId, cal) } finally { setSaving(false) }
+  }
+
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
-      {/* Avatar */}
-      <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
-        {item.nombre.charAt(0).toUpperCase()}
+    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
+          {item.nombre.charAt(0).toUpperCase()}
+        </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-sm dark:text-white leading-tight truncate">{item.nombre}</p>
+            <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+            {[item.departamento, item.turno].filter(Boolean).join(" · ") || "Sin departamento"}
+          </p>
+          <div className="flex items-center justify-between mt-2">
+            <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
+              {badgeLabel}
+            </span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-semibold text-sm dark:text-white leading-tight truncate">
-            {item.nombre}
-          </p>
-          <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
+      {/* Acción rápida: calificar */}
+      {!editando ? (
+        <button
+          onClick={() => setEditando(true)}
+          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          <Pencil size={11} /> Calificar
+        </button>
+      ) : (
+        <div className="ml-12 flex items-center gap-2 flex-wrap">
+          <input
+            type="number" min={0} max={100} placeholder="0 – 100"
+            value={calStr}
+            onChange={e => setCalStr(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") handleGuardar(); if (e.key === "Escape") { setEditando(false); setCalStr("") } }}
+            autoFocus
+            className="w-24 text-xs border dark:border-gray-600 rounded-md px-2 py-1 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <button
+            onClick={handleGuardar}
+            disabled={saving || calStr === ""}
+            className="text-xs font-medium bg-primary text-primary-foreground px-2.5 py-1 rounded-md disabled:opacity-50 hover:bg-primary/90 transition-colors"
+          >
+            {saving ? "…" : "Guardar"}
+          </button>
+          <button
+            onClick={() => { setEditando(false); setCalStr("") }}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          >
+            Cancelar
+          </button>
         </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-          {item.departamento ?? "Sin departamento"}
-        </p>
-        <div className="flex items-center justify-between mt-2">
-          <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
-            {badgeLabel}
-          </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -190,52 +237,71 @@ interface FilaFechaProps {
   colorBadge: string
   colorDias: string
   colorBorde: string
+  onEntregado?:     (id: string) => Promise<void>
+  onIndeterminado?: (id: string) => Promise<void>
 }
 
-function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde }: FilaFechaProps) {
+function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEntregado, onIndeterminado }: FilaFechaProps) {
+  const [saving, setSaving] = useState(false)
+
+  async function handleEntregado() {
+    setSaving(true)
+    try { await onEntregado!(item.id) } finally { setSaving(false) }
+  }
+
+  async function handleIndeterminado() {
+    setSaving(true)
+    try { await onIndeterminado!(item.id) } finally { setSaving(false) }
+  }
+
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
-      {/* Avatar */}
-      <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
-        {item.nombre.charAt(0).toUpperCase()}
+    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
+          {item.nombre.charAt(0).toUpperCase()}
+        </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-sm dark:text-white leading-tight truncate">{item.nombre}</p>
+            <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+            {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
+          </p>
+          <div className="flex items-center justify-between mt-2">
+            <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
+              {item.etiqueta}
+            </span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-semibold text-sm dark:text-white leading-tight truncate">
-            {item.nombre}
-          </p>
-          <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
-        </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-          {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
-        </p>
-        <div className="flex items-center justify-between mt-2">
-          <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
-            {item.etiqueta}
-          </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
-        </div>
-      </div>
+      {/* Acción rápida: marcar entregado (RG) */}
+      {onEntregado && (
+        <button
+          onClick={handleEntregado}
+          disabled={saving}
+          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+        >
+          <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar entregado"}
+        </button>
+      )}
+
+      {/* Acción rápida: marcar como indeterminado (Término de Contrato) */}
+      {onIndeterminado && (
+        <button
+          onClick={handleIndeterminado}
+          disabled={saving}
+          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+        >
+          <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar como Indeterminado"}
+        </button>
+      )}
     </div>
   )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: lista con estado vacío
-// ─────────────────────────────────────────────────────────────────────────────
-
-function Lista({ children, vacio }: { children: React.ReactNode[]; vacio: string }) {
-  if (children.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500 gap-2">
-        <CheckCircle2 className="h-8 w-8 opacity-40" />
-        <p className="text-sm">{vacio}</p>
-      </div>
-    )
-  }
-  return <div className="space-y-2">{children}</div>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -260,8 +326,10 @@ function clasificarEval(
 
     const item: EvalItem = {
       id: `${r.id}-${sufijo}`,
+      dbId: r.id,
       nombre: r.nombre,
       departamento: r.departamento,
+      turno: r.turno,
       fecha,
       diasDiff: diff,
     }
@@ -344,6 +412,7 @@ export default function DashboardAlertas() {
       const _termVenc: FechaItem[] = []
       const _termProx: FechaItem[] = []
       for (const r of registros) {
+        if (r.tipo_contrato === "Indeterminado") continue
         const fecha = r.termino_contrato
         if (!fecha) continue
         const diff = daysFromToday(fecha)
@@ -424,7 +493,7 @@ export default function DashboardAlertas() {
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
             <CardTitle className="text-base font-semibold dark:text-white flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-primary" />
               Alertas de Vencimiento
             </CardTitle>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -440,72 +509,68 @@ export default function DashboardAlertas() {
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-3 pt-0">
+        <CardContent className="grid grid-cols-1 gap-3 pt-0 lg:grid-cols-2 xl:grid-cols-3">
 
           {/* ── Eval 1er Mes ──────────────────────────────────────────────── */}
           <Seccion
-            icono={<GraduationCap className="h-3.5 w-3.5 text-gray-400" />}
+            icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
             label="Evaluación 1er Mes"
             vencidas={n(eval1Venc)}   colorV="text-red-600 dark:text-red-400"
-            fondoV="bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-800/30"
+            bordeV="border-red-100 dark:border-red-800/30"
             porVencer={n(eval1Prox)}  colorP="text-amber-600 dark:text-amber-400"
-            fondoP="bg-amber-50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-800/30"
+            bordeP="border-amber-100 dark:border-amber-800/30"
             umbrales={EVAL_UMBRAL_DIAS}
             onVencidas={() => setDialogTipo("eval1_vencidas")}
             onPorVencer={() => setDialogTipo("eval1_por_vencer")}
             loading={loading}
           />
-          <hr className="border-gray-100 dark:border-gray-700" />
           {/* ── Eval 2° Mes ───────────────────────────────────────────────── */}
           <Seccion
-            icono={<GraduationCap className="h-3.5 w-3.5 text-gray-400" />}
+            icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
             label="Evaluación 2° Mes"
             vencidas={n(eval2Venc)}   colorV="text-red-600 dark:text-red-400"
-            fondoV="bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-800/30"
+            bordeV="border-red-100 dark:border-red-800/30"
             porVencer={n(eval2Prox)}  colorP="text-amber-600 dark:text-amber-400"
-            fondoP="bg-amber-50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-800/30"
+            bordeP="border-amber-100 dark:border-amber-800/30"
             umbrales={EVAL_UMBRAL_DIAS}
             onVencidas={() => setDialogTipo("eval2_vencidas")}
             onPorVencer={() => setDialogTipo("eval2_por_vencer")}
             loading={loading}
           />
-          <hr className="border-gray-100 dark:border-gray-700" />
           {/* ── Eval 3er Mes ──────────────────────────────────────────────── */}
           <Seccion
-            icono={<GraduationCap className="h-3.5 w-3.5 text-gray-400" />}
+            icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
             label="Evaluación 3er Mes"
             vencidas={n(eval3Venc)}   colorV="text-red-600 dark:text-red-400"
-            fondoV="bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-800/30"
+            bordeV="border-red-100 dark:border-red-800/30"
             porVencer={n(eval3Prox)}  colorP="text-amber-600 dark:text-amber-400"
-            fondoP="bg-amber-50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-800/30"
+            bordeP="border-amber-100 dark:border-amber-800/30"
             umbrales={EVAL_UMBRAL_DIAS}
             onVencidas={() => setDialogTipo("eval3_vencidas")}
             onPorVencer={() => setDialogTipo("eval3_por_vencer")}
             loading={loading}
           />
-          <hr className="border-gray-100 dark:border-gray-700" />
           {/* ── RG-REC-048 ────────────────────────────────────────────────── */}
           <Seccion
-            icono={<ShieldAlert className="h-3.5 w-3.5 text-gray-400" />}
+            icono={<ShieldAlert className="h-3.5 w-3.5 text-primary" />}
             label="RG-REC-048"
             vencidas={n(rgVenc)}     colorV="text-purple-600 dark:text-purple-400"
-            fondoV="bg-purple-50 border-purple-100 dark:bg-purple-900/10 dark:border-purple-800/30"
+            bordeV="border-purple-100 dark:border-purple-800/30"
             porVencer={n(rgProx)}    colorP="text-violet-600 dark:text-violet-400"
-            fondoP="bg-violet-50 border-violet-100 dark:bg-violet-900/10 dark:border-violet-800/30"
+            bordeP="border-violet-100 dark:border-violet-800/30"
             umbrales={RG_UMBRAL_DIAS}
             onVencidas={() => setDialogTipo("rg_vencidas")}
             onPorVencer={() => setDialogTipo("rg_por_vencer")}
             loading={loading}
           />
-          <hr className="border-gray-100 dark:border-gray-700" />
           {/* ── Término de Contrato ───────────────────────────────────────── */}
           <Seccion
-            icono={<FileText className="h-3.5 w-3.5 text-gray-400" />}
+            icono={<FileText className="h-3.5 w-3.5 text-primary" />}
             label="Término de Contrato"
             vencidas={n(termVenc)}   colorV="text-orange-600 dark:text-orange-400"
-            fondoV="bg-orange-50 border-orange-100 dark:bg-orange-900/10 dark:border-orange-800/30"
+            bordeV="border-orange-100 dark:border-orange-800/30"
             porVencer={n(termProx)}  colorP="text-blue-600 dark:text-blue-400"
-            fondoP="bg-blue-50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-800/30"
+            bordeP="border-blue-100 dark:border-blue-800/30"
             umbrales={TERMINO_UMBRAL_DIAS}
             onVencidas={() => setDialogTipo("termino_vencidos")}
             onPorVencer={() => setDialogTipo("termino_por_vencer")}
@@ -526,8 +591,8 @@ export default function DashboardAlertas() {
 
       <Dialog open={dialogTipo !== null} onOpenChange={(open) => !open && setDialogTipo(null)}>
         {dialogActivo && (
-          <DialogContent className="sm:max-w-lg dark:bg-gray-900 dark:border-gray-700">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-lg dark:bg-gray-900 dark:border-gray-700 flex flex-col max-h-[85vh]">
+            <DialogHeader className="shrink-0">
               <DialogTitle className="flex items-center gap-2 dark:text-white">
                 {dialogActivo.icono}
                 {dialogActivo.titulo}
@@ -535,80 +600,114 @@ export default function DashboardAlertas() {
               <DialogDescription>{dialogActivo.descripcion}</DialogDescription>
             </DialogHeader>
 
-            {/* ── Evaluaciones ──────────────────────────────────────────── */}
-            {dialogTipo === "eval1_vencidas" && (
-              <ListaEvals items={eval1Venc} vencida vacio="No hay evaluaciones de 1er mes vencidas" />
-            )}
-            {dialogTipo === "eval1_por_vencer" && (
-              <ListaEvals items={eval1Prox} vencida={false} vacio="No hay evaluaciones de 1er mes por vencer" />
-            )}
-            {dialogTipo === "eval2_vencidas" && (
-              <ListaEvals items={eval2Venc} vencida vacio="No hay evaluaciones de 2° mes vencidas" />
-            )}
-            {dialogTipo === "eval2_por_vencer" && (
-              <ListaEvals items={eval2Prox} vencida={false} vacio="No hay evaluaciones de 2° mes por vencer" />
-            )}
-            {dialogTipo === "eval3_vencidas" && (
-              <ListaEvals items={eval3Venc} vencida vacio="No hay evaluaciones de 3er mes vencidas" />
-            )}
-            {dialogTipo === "eval3_por_vencer" && (
-              <ListaEvals items={eval3Prox} vencida={false} vacio="No hay evaluaciones de 3er mes por vencer" />
-            )}
+            {/* Lista scrolleable */}
+            <div className="overflow-y-auto flex-1 pr-1 -mr-1">
 
-            {/* ── RG-REC-048 ────────────────────────────────────────────── */}
-            {dialogTipo === "rg_vencidas" && (
-              <Lista vacio="No hay RG-REC-048 pendientes vencidos">
-                {rgVenc.map((item) => (
-                  <FilaFecha key={item.id} item={item}
-                    colorAvatar="bg-purple-500"
-                    colorBadge="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                    colorDias="text-purple-600 dark:text-purple-400"
-                    colorBorde="border-purple-400"
-                  />
-                ))}
-              </Lista>
-            )}
-            {dialogTipo === "rg_por_vencer" && (
-              <Lista vacio="No hay RG-REC-048 próximos a vencer">
-                {rgProx.map((item) => (
-                  <FilaFecha key={item.id} item={item}
-                    colorAvatar="bg-violet-500"
-                    colorBadge="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
-                    colorDias="text-violet-600 dark:text-violet-400"
-                    colorBorde="border-violet-400"
-                  />
-                ))}
-              </Lista>
-            )}
+              {/* ── Evaluaciones ────────────────────────────────────────── */}
+              {dialogTipo === "eval1_vencidas" && (
+                <ListaEvals items={eval1Venc} vencida vacio="No hay evaluaciones de 1er mes vencidas"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_1_calificacion: cal }).eq("id", dbId)
+                    setEval1Venc(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
+              {dialogTipo === "eval1_por_vencer" && (
+                <ListaEvals items={eval1Prox} vencida={false} vacio="No hay evaluaciones de 1er mes por vencer"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_1_calificacion: cal }).eq("id", dbId)
+                    setEval1Prox(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
+              {dialogTipo === "eval2_vencidas" && (
+                <ListaEvals items={eval2Venc} vencida vacio="No hay evaluaciones de 2° mes vencidas"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_2_calificacion: cal }).eq("id", dbId)
+                    setEval2Venc(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
+              {dialogTipo === "eval2_por_vencer" && (
+                <ListaEvals items={eval2Prox} vencida={false} vacio="No hay evaluaciones de 2° mes por vencer"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_2_calificacion: cal }).eq("id", dbId)
+                    setEval2Prox(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
+              {dialogTipo === "eval3_vencidas" && (
+                <ListaEvals items={eval3Venc} vencida vacio="No hay evaluaciones de 3er mes vencidas"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_3_calificacion: cal }).eq("id", dbId)
+                    setEval3Venc(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
+              {dialogTipo === "eval3_por_vencer" && (
+                <ListaEvals items={eval3Prox} vencida={false} vacio="No hay evaluaciones de 3er mes por vencer"
+                  onCalificar={async (dbId, cal) => {
+                    await supabase.from("nuevo_ingreso").update({ eval_3_calificacion: cal }).eq("id", dbId)
+                    setEval3Prox(prev => prev.filter(i => i.dbId !== dbId))
+                  }}
+                />
+              )}
 
-            {/* ── Término de Contrato ───────────────────────────────────── */}
-            {dialogTipo === "termino_vencidos" && (
-              <Lista vacio="No hay términos de contrato vencidos">
-                {termVenc.map((item) => (
-                  <FilaFecha key={item.id} item={item}
-                    colorAvatar="bg-orange-500"
-                    colorBadge="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                    colorDias="text-orange-600 dark:text-orange-400"
-                    colorBorde="border-orange-400"
-                  />
-                ))}
-              </Lista>
-            )}
-            {dialogTipo === "termino_por_vencer" && (
-              <Lista vacio="No hay términos de contrato próximos a vencer">
-                {termProx.map((item) => (
-                  <FilaFecha key={item.id} item={item}
-                    colorAvatar="bg-blue-500"
-                    colorBadge="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    colorDias="text-blue-600 dark:text-blue-400"
-                    colorBorde="border-blue-400"
-                  />
-                ))}
-              </Lista>
-            )}
+              {/* ── RG-REC-048 ──────────────────────────────────────────── */}
+              {dialogTipo === "rg_vencidas" && (
+                <ListaFechasPorDepto items={rgVenc} vacio="No hay RG-REC-048 pendientes vencidos"
+                  colorAvatar="bg-purple-500"
+                  colorBadge="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                  colorDias="text-purple-600 dark:text-purple-400"
+                  colorBorde="border-purple-400"
+                  onEntregado={async (id) => {
+                    await supabase.from("nuevo_ingreso").update({ rg_rec_048: "Entregado" }).eq("id", id)
+                    setRgVenc(prev => prev.filter(i => i.id !== id))
+                  }}
+                />
+              )}
+              {dialogTipo === "rg_por_vencer" && (
+                <ListaFechasPorDepto items={rgProx} vacio="No hay RG-REC-048 próximos a vencer"
+                  colorAvatar="bg-violet-500"
+                  colorBadge="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                  colorDias="text-violet-600 dark:text-violet-400"
+                  colorBorde="border-violet-400"
+                  onEntregado={async (id) => {
+                    await supabase.from("nuevo_ingreso").update({ rg_rec_048: "Entregado" }).eq("id", id)
+                    setRgProx(prev => prev.filter(i => i.id !== id))
+                  }}
+                />
+              )}
+
+              {/* ── Término de Contrato ─────────────────────────────────── */}
+              {dialogTipo === "termino_vencidos" && (
+                <ListaFechasPorDepto items={termVenc} vacio="No hay términos de contrato vencidos"
+                  colorAvatar="bg-orange-500"
+                  colorBadge="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                  colorDias="text-orange-600 dark:text-orange-400"
+                  colorBorde="border-orange-400"
+                  onIndeterminado={async (id) => {
+                    await supabase.from("nuevo_ingreso").update({ tipo_contrato: "Indeterminado" }).eq("id", id)
+                    setTermVenc(prev => prev.filter(i => i.id !== id))
+                  }}
+                />
+              )}
+              {dialogTipo === "termino_por_vencer" && (
+                <ListaFechasPorDepto items={termProx} vacio="No hay términos de contrato próximos a vencer"
+                  colorAvatar="bg-blue-500"
+                  colorBadge="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  colorDias="text-blue-600 dark:text-blue-400"
+                  colorBorde="border-blue-400"
+                  onIndeterminado={async (id) => {
+                    await supabase.from("nuevo_ingreso").update({ tipo_contrato: "Indeterminado" }).eq("id", id)
+                    setTermProx(prev => prev.filter(i => i.id !== id))
+                  }}
+                />
+              )}
+            </div>
 
             {/* Footer */}
-            <div className="pt-2 border-t dark:border-gray-700">
+            <div className="shrink-0 pt-2 border-t dark:border-gray-700">
               <a
                 href="/nuevo-ingreso"
                 className="flex items-center justify-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -632,8 +731,8 @@ export default function DashboardAlertas() {
 interface SeccionProps {
   icono: React.ReactNode
   label: string
-  vencidas: number;  colorV: string; fondoV: string
-  porVencer: number; colorP: string; fondoP: string
+  vencidas: number;  colorV: string; bordeV: string
+  porVencer: number; colorP: string; bordeP: string
   umbrales: number
   onVencidas: () => void
   onPorVencer: () => void
@@ -642,20 +741,20 @@ interface SeccionProps {
 
 function Seccion({
   icono, label,
-  vencidas, colorV, fondoV,
-  porVencer, colorP, fondoP,
+  vencidas, colorV, bordeV,
+  porVencer, colorP, bordeP,
   umbrales, onVencidas, onPorVencer, loading,
 }: SeccionProps) {
   return (
-    <div>
+    <div className="rounded-2xl border border-primary/10 bg-primary/5 dark:border-primary/20 dark:bg-primary/10 p-4">
       <SeccionHeader icono={icono} label={label} />
-      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
         <Metrica
           icono={<XCircle size={16} />}
           label="Vencidas"
           valor={vencidas}
           colorValor={colorV}
-          colorFondo={fondoV}
+          colorBorder={bordeV}
           onClick={onVencidas}
           loading={loading}
         />
@@ -664,7 +763,7 @@ function Seccion({
           label={`Por vencer (${umbrales}d)`}
           valor={porVencer}
           colorValor={colorP}
-          colorFondo={fondoP}
+          colorBorder={bordeP}
           onClick={onPorVencer}
           loading={loading}
         />
@@ -674,10 +773,47 @@ function Seccion({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Utilidad: agrupar por departamento
+// ─────────────────────────────────────────────────────────────────────────────
+
+function agruparPorDepto<T extends { departamento: string | null }>(items: T[]): [string, T[]][] {
+  const map = new Map<string, T[]>()
+  for (const item of items) {
+    const key = item.departamento?.trim() || "Sin departamento"
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(item)
+  }
+  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componente: encabezado de departamento dentro del dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DeptoHeader({ nombre, count }: { nombre: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 pt-1 pb-0.5">
+      <span className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 truncate">
+        {nombre}
+      </span>
+      <span className="flex-shrink-0 text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full px-1.5 py-0.5">
+        {count}
+      </span>
+      <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700/60" />
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Listas especializadas
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ListaEvals({ items, vencida, vacio }: { items: EvalItem[]; vencida: boolean; vacio: string }) {
+function ListaEvals({ items, vencida, vacio, onCalificar }: {
+  items: EvalItem[]
+  vencida: boolean
+  vacio: string
+  onCalificar: (dbId: string, calificacion: number) => Promise<void>
+}) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500 gap-2">
@@ -686,20 +822,75 @@ function ListaEvals({ items, vencida, vacio }: { items: EvalItem[]; vencida: boo
       </div>
     )
   }
+
+  const grupos = agruparPorDepto(items)
+
   return (
-    <div className="space-y-2">
-      {items.map((item) => (
-        <FilaEval
-          key={item.id}
-          item={item}
-          colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
-          colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
-          colorBadge={vencida
-            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
-          colorBorde={vencida ? "border-red-400" : "border-amber-400"}
-          badgeLabel={vencida ? "Vencida" : "Por vencer"}
-        />
+    <div className="space-y-3">
+      {grupos.map(([depto, miembros]) => (
+        <div key={depto}>
+          <DeptoHeader nombre={depto} count={miembros.length} />
+          <div className="space-y-2 mt-1.5">
+            {miembros.map((item) => (
+              <FilaEval
+                key={item.id}
+                item={item}
+                colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
+                colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
+                colorBadge={vencida
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
+                colorBorde={vencida ? "border-red-400" : "border-amber-400"}
+                badgeLabel={vencida ? "Vencida" : "Por vencer"}
+                onCalificar={onCalificar}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ListaFechasPorDepto({
+  items, vacio,
+  colorAvatar, colorBadge, colorDias, colorBorde,
+  onEntregado, onIndeterminado,
+}: {
+  items: FechaItem[]; vacio: string
+  colorAvatar: string; colorBadge: string; colorDias: string; colorBorde: string
+  onEntregado?:     (id: string) => Promise<void>
+  onIndeterminado?: (id: string) => Promise<void>
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500 gap-2">
+        <CheckCircle2 className="h-8 w-8 opacity-40" />
+        <p className="text-sm">{vacio}</p>
+      </div>
+    )
+  }
+
+  const grupos = agruparPorDepto(items)
+
+  return (
+    <div className="space-y-3">
+      {grupos.map(([depto, miembros]) => (
+        <div key={depto}>
+          <DeptoHeader nombre={depto} count={miembros.length} />
+          <div className="space-y-2 mt-1.5">
+            {miembros.map((item) => (
+              <FilaFecha key={item.id} item={item}
+                colorAvatar={colorAvatar}
+                colorBadge={colorBadge}
+                colorDias={colorDias}
+                colorBorde={colorBorde}
+                onEntregado={onEntregado}
+                onIndeterminado={onIndeterminado}
+              />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   )

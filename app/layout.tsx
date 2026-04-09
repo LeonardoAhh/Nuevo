@@ -1,7 +1,8 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import Script from "next/script"
 import "@/app/globals.css"
-import { ThemeProvider } from "../theme-context"
+import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
 
 export const viewport: Viewport = {
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head />
       <body suppressHydrationWarning>
         {/* Apply theme settings synchronously before React hydrates to avoid FOUC */}
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{
   var c={"blue":"221.2 83.2% 53.3%","purple":"262.1 83.3% 57.8%","green":"142.1 76.2% 36.3%","orange":"24.6 95% 53.1%","pink":"339 90.6% 51.8%","yellow":"47.9 95.8% 53.1%"};

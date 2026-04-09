@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { Button, type ButtonProps } from "@/components/ui/button"
-import { useTheme } from "@/theme-context"
+import { useTheme } from "@/components/theme-context"
 import { cn } from "@/lib/utils"
 
 interface ThemedButtonProps extends ButtonProps {

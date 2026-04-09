@@ -1,8 +1,13 @@
 "use client"
 
-import Dashboard from "@/dashboard"
-import CapacitacionContent from "@/capacitacion-content"
+import Dashboard from "@/components/dashboard"
+import CapacitacionContent from "@/components/content/capacitacion"
 
 export default function CapacitacionPage() {
-  return <Dashboard content={<CapacitacionContent />} />
+  return (
+    <Dashboard
+      pageTitle="Capacitación"
+      content={<CapacitacionContent />}
+    />
+  )
 }

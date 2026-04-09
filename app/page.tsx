@@ -1,22 +1,20 @@
 "use client"
 
-import Dashboard from "../dashboard"
+import Dashboard from "@/components/dashboard"
 import CapacitacionChart from "@/components/capacitacion-chart"
 import DashboardAlertas from "@/components/dashboard-alertas"
+import HeroDashboard from "@/components/hero-dashboard"
 
 export default function Page() {
-  return <Dashboard content={<DashboardContent />} />
+  return <Dashboard pageTitle="Dashboard" content={<DashboardContent />} />
 }
 
 function DashboardContent() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold dark:text-white">Dashboard</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-          Seguimiento de capacitación y alertas operativas
-        </p>
-      </div>
+
+      {/* Hero principal */}
+      <HeroDashboard />
 
       {/* Widget de alertas de vencimiento */}
       <DashboardAlertas />

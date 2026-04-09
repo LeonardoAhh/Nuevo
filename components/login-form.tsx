@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "lucide-react"
-import { useTheme } from "@/theme-context"
+import { useTheme } from "@/components/theme-context"
 import { supabase } from "@/lib/supabase/client"
 
 export default function LoginForm() {

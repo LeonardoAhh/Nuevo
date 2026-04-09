@@ -1,8 +1,13 @@
 "use client"
 
-import Dashboard from "@/dashboard"
-import SettingsContent from "@/settings-content"
+import Dashboard from "@/components/dashboard"
+import SettingsContent from "@/components/content/settings"
 
 export default function SettingsPage() {
-  return <Dashboard content={<SettingsContent />} />
+  return (
+    <Dashboard
+      pageTitle="Ajustes"
+      content={<SettingsContent />}
+    />
+  )
 }
