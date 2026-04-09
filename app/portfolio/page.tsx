@@ -1,6 +1,6 @@
 "use client"
 
-import Dashboard from "@/components/dashboard"
+import Dashboard from "@/components/Dashboard"
 import PortfolioContent from "@/components/content/portfolio"
 
 export default function PortfolioPage() {

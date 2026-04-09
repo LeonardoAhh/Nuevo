@@ -3,6 +3,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 import {
   Car,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Info,
@@ -19,6 +20,8 @@ import {
   X,
   Menu,
   MoreHorizontal,
+  Package,
+  TrendingUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -210,6 +213,23 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                 {!showExpandedSidebar && <TooltipContent side="right">Nuevo Ingreso</TooltipContent>}
               </Tooltip>
             </TooltipProvider>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/promociones" ? "border-l-4 border-primary bg-primary/10" : ""}`}
+                    asChild
+                  >
+                    <a href="/promociones">
+                      <TrendingUp size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
+                      {showExpandedSidebar && <span>Promociones</span>}
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                {!showExpandedSidebar && <TooltipContent side="right">Promociones</TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
         </div>
@@ -358,17 +378,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                 ) : null}
               </div>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end w-full sm:w-auto">
-              <div className="relative w-full sm:w-[320px]">
-                <Search className="absolute left-2 top-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input
-                  type="search"
-                  placeholder="Buscar..."
-                  className="w-full pl-8 pr-4 py-1.5 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-                <div className="absolute right-2 top-2 text-xs text-gray-400 hidden sm:block">F⌘</div>
-              </div>
-            </div>
+
           </div>
         </header>
 

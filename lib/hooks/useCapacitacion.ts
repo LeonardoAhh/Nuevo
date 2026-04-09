@@ -665,6 +665,43 @@ export function useCapacitacion() {
     }
   }
 
+  // ── Borrar empleado de todo el sistema ───────────────────────────────────
+
+  const deleteEmployee = async (
+    employeeId: string,
+    numero: string | null
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // 1. datos_promocion (linked by numero, no FK cascade)
+      if (numero) {
+        const { error: dpErr } = await supabase
+          .from('datos_promocion')
+          .delete()
+          .eq('numero', numero)
+        if (dpErr) throw new Error(dpErr.message)
+
+        // 2. nuevo_ingreso (linked by numero, no FK cascade)
+        const { error: niErr } = await supabase
+          .from('nuevo_ingreso')
+          .delete()
+          .eq('numero', numero)
+        if (niErr) throw new Error(niErr.message)
+      }
+
+      // 3. employees (cascades: employee_courses, evaluaciones_desempeño)
+      const { error: empErr } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', employeeId)
+      if (empErr) throw new Error(empErr.message)
+
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al borrar empleado'
+      return { success: false, error: msg }
+    }
+  }
+
   // ── Agregar cursos a un empleado existente ───────────────────────────────
 
   const addCoursesToEmployee = async (
@@ -751,6 +788,32 @@ export function useCapacitacion() {
     }
   }
 
+  const updateEmployee = async (
+    employeeId: string,
+    data: {
+      numero: string | null
+      nombre: string
+      puesto: string | null
+      departamento: string | null
+      area: string | null
+      turno: string | null
+      fecha_ingreso: string | null
+      jefe_directo: string | null
+    }
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update(data)
+        .eq('id', employeeId)
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al actualizar empleado'
+      return { success: false, error: msg }
+    }
+  }
+
   return {
     importing,
     importError,
@@ -771,7 +834,9 @@ export function useCapacitacion() {
     parseHistorial,
     importHistorial,
     clearHistorial,
+    deleteEmployee,
     createEmployeeManual,
+    updateEmployee,
     addCoursesToEmployee,
   }
 }

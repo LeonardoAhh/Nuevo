@@ -1,6 +1,6 @@
 "use client"
 
-import Dashboard from "@/components/dashboard"
+import Dashboard from "@/components/Dashboard"
 import CapacitacionContent from "@/components/content/capacitacion"
 
 export default function CapacitacionPage() {

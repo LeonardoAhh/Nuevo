@@ -27,7 +27,10 @@
       "Bash(rerun: b1:*)",
       "Bash(npx tsc:*)",
       "Bash(cmd /c \"cd \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && findstr /r /s \\\\\"ThemeProvider\\\\\" app\\\\*.tsx 2>NUL\")",
-      "Bash(cmd /c \"type \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\app\\\\capacitacion\\\\page.tsx\\\\\"\")"
+      "Bash(cmd /c \"type \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\app\\\\capacitacion\\\\page.tsx\\\\\"\")",
+      "Bash(grep -E \"\\\\.\\(json|ts|tsx\\)$\")",
+      "Bash(npx shadcn@latest add progress --yes)",
+      "Bash(cmd /c \"npx tsc --noEmit --project tsconfig.json 2>&1\")"
     ]
   }
 }

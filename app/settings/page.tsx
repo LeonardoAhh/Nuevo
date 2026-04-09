@@ -1,6 +1,6 @@
 "use client"
 
-import Dashboard from "@/components/dashboard"
+import Dashboard from "@/components/Dashboard"
 import SettingsContent from "@/components/content/settings"
 
 export default function SettingsPage() {

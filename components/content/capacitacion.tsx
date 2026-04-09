@@ -23,6 +23,7 @@ import {
   Clock,
   XCircle,
   Trash2,
+  Pencil,
   UserPlus,
   Plus,
   Minus,
@@ -85,7 +86,7 @@ export default function CapacitacionContent() {
     parseJSON, importData,
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
-    clearHistorial, createEmployeeManual, addCoursesToEmployee,
+    clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee, addCoursesToEmployee,
   } = useCapacitacion()
 
   // ── Estado: Importar catálogo ─────────────────────────────────────────────
@@ -124,6 +125,59 @@ export default function CapacitacionContent() {
   const [loadingEmpCourses, setLoadingEmpCourses] = useState(false)
   const [empDialogTab, setEmpDialogTab] = useState<'requeridos' | 'historial'>('requeridos')
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
+  const [deleteEmpTarget, setDeleteEmpTarget] = useState<Employee | null>(null)
+  const [deletingEmp, setDeletingEmp] = useState(false)
+  const [deleteEmpError, setDeleteEmpError] = useState<string | null>(null)
+
+  // ── Estado: Editar empleado dialog ────────────────────────────────────────
+  const [editEmpOpen, setEditEmpOpen] = useState(false)
+  const [editEmpTarget, setEditEmpTarget] = useState<Employee | null>(null)
+  const [editEmpForm, setEditEmpForm] = useState({ numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '' })
+  const [editEmpSaving, setEditEmpSaving] = useState(false)
+  const [editEmpError, setEditEmpError] = useState<string | null>(null)
+
+  const openEditEmpDlg = (emp: Employee) => {
+    setEditEmpTarget(emp)
+    setEditEmpForm({
+      numero:        emp.numero ?? '',
+      nombre:        emp.nombre,
+      departamento:  emp.departamento ?? '',
+      area:          emp.area ?? '',
+      puesto:        emp.puesto ?? '',
+      turno:         emp.turno ?? '',
+      fecha_ingreso: emp.fecha_ingreso ?? '',
+      jefe_directo:  emp.jefe_directo ?? '',
+    })
+    setEditEmpError(null)
+    setEditEmpOpen(true)
+  }
+
+  const handleSaveEditEmp = async () => {
+    if (!editEmpTarget) return
+    if (!editEmpForm.nombre.trim()) { setEditEmpError('El nombre es requerido'); return }
+    setEditEmpSaving(true); setEditEmpError(null)
+    const result = await updateEmployee(editEmpTarget.id, {
+      numero:        editEmpForm.numero.trim() || null,
+      nombre:        editEmpForm.nombre.trim(),
+      puesto:        editEmpForm.puesto || null,
+      departamento:  editEmpForm.departamento || null,
+      area:          editEmpForm.area || null,
+      turno:         editEmpForm.turno || null,
+      fecha_ingreso: editEmpForm.fecha_ingreso || null,
+      jefe_directo:  editEmpForm.jefe_directo || null,
+    })
+    setEditEmpSaving(false)
+    if (result.success) {
+      setEditEmpOpen(false)
+      setEditEmpTarget(null)
+      loadEmployees()
+    } else {
+      setEditEmpError(result.error ?? 'Error al guardar')
+    }
+  }
+
+  const editEmpAreas   = editEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[editEmpForm.departamento]?.areas   ?? []) : []
+  const editEmpPuestos = editEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[editEmpForm.departamento]?.puestos ?? []) : []
 
   // ── Estado: Nuevo empleado dialog ─────────────────────────────────────────
   type NewEmpCourseRow = { course_id: string; course_name: string; fecha_aplicacion: string; calificacion: string }
@@ -616,9 +670,26 @@ export default function CapacitacionContent() {
                                   variant="ghost"
                                   size="sm"
                                   className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  onClick={() => openEditEmpDlg(emp)}
+                                  title="Editar empleado"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
                                   onClick={() => handleViewEmployee(emp)}
                                 >
                                   Ver <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  onClick={() => { setDeleteEmpError(null); setDeleteEmpTarget(emp) }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1156,6 +1227,213 @@ export default function CapacitacionContent() {
                 <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Borrando...</>
               ) : (
                 <><Trash2 className="h-4 w-4" /> Sí, borrar todo</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Editar Empleado ──────────────────────────────────────── */}
+      <Dialog open={editEmpOpen} onOpenChange={open => { if (!open) { setEditEmpOpen(false); setEditEmpTarget(null) } }}>
+        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-primary" />
+              Editar empleado
+            </DialogTitle>
+            <DialogDescription className="dark:text-gray-400">
+              Modifica los datos de <strong className="dark:text-gray-200">{editEmpTarget?.nombre}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          {editEmpError && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{editEmpError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">N.N</label>
+                <Input
+                  value={editEmpForm.numero}
+                  onChange={e => setEditEmpForm(f => ({ ...f, numero: e.target.value }))}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Fecha de ingreso</label>
+                <Input type="date"
+                  value={editEmpForm.fecha_ingreso}
+                  onChange={e => setEditEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Nombre completo <span className="text-red-500">*</span></label>
+              <Input
+                value={editEmpForm.nombre}
+                onChange={e => setEditEmpForm(f => ({ ...f, nombre: e.target.value }))}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Departamento</label>
+                <Select
+                  value={editEmpForm.departamento}
+                  onValueChange={v => setEditEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Área</label>
+                <Select
+                  value={editEmpForm.area}
+                  onValueChange={v => setEditEmpForm(f => ({ ...f, area: v }))}
+                  disabled={editEmpAreas.length === 0}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {editEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Puesto</label>
+              <Select
+                value={editEmpForm.puesto}
+                onValueChange={v => setEditEmpForm(f => ({ ...f, puesto: v }))}
+                disabled={editEmpPuestos.length === 0}
+              >
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  {editEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Turno</label>
+                <Select
+                  value={editEmpForm.turno}
+                  onValueChange={v => setEditEmpForm(f => ({ ...f, turno: v }))}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectItem value="1">1er turno</SelectItem>
+                    <SelectItem value="2">2do turno</SelectItem>
+                    <SelectItem value="3">3er turno</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jefe directo</label>
+                <Select
+                  value={editEmpForm.jefe_directo}
+                  onValueChange={v => setEditEmpForm(f => ({ ...f, jefe_directo: v }))}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
+              disabled={editEmpSaving}
+              className="dark:border-gray-600 dark:text-gray-200"
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEditEmp} disabled={editEmpSaving} className="gap-2">
+              {editEmpSaving
+                ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                : <><Pencil className="h-4 w-4" /> Guardar cambios</>
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Confirmar borrar empleado individual ────────────────────────── */}
+      <Dialog open={!!deleteEmpTarget} onOpenChange={(o) => { if (!o) setDeleteEmpTarget(null) }}>
+        <DialogContent className="sm:max-w-sm dark:bg-gray-800 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-500" />
+              Eliminar empleado
+            </DialogTitle>
+            <DialogDescription className="dark:text-gray-400">
+              Se eliminará a <strong className="dark:text-gray-200">{deleteEmpTarget?.nombre}</strong> y
+              todos sus datos del sistema: cursos, evaluaciones de desempeño, datos de promoción y nuevo ingreso.
+              Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteEmpError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{deleteEmpError}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteEmpTarget(null)}
+              disabled={deletingEmp}
+              className="dark:border-gray-600 dark:text-gray-200"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deletingEmp}
+              className="gap-2"
+              onClick={async () => {
+                if (!deleteEmpTarget) return
+                setDeletingEmp(true)
+                setDeleteEmpError(null)
+                const result = await deleteEmployee(deleteEmpTarget.id, deleteEmpTarget.numero)
+                setDeletingEmp(false)
+                if (result.success) {
+                  setEmployees(prev => prev.filter(e => e.id !== deleteEmpTarget.id))
+                  setDeleteEmpTarget(null)
+                } else {
+                  setDeleteEmpError(result.error ?? 'Error al eliminar')
+                }
+              }}
+            >
+              {deletingEmp ? (
+                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Eliminando...</>
+              ) : (
+                <><Trash2 className="h-4 w-4" /> Sí, eliminar</>
               )}
             </Button>
           </DialogFooter>
