@@ -561,7 +561,7 @@ function PromoverDialog({
   const { regla } = empleado
 
   const hoy = new Date().toISOString().split("T")[0]
-  const [fechaInicio, setFechaInicio] = useState(hoy)
+  const [fechaInicio, setFechaInicio] = useState(empleado.fechaIngresoPuesto || hoy)
   const [calExamen, setCalExamen] = useState(
     empleado.calificacionExamen != null ? String(empleado.calificacionExamen) : ""
   )

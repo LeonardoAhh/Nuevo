@@ -1341,9 +1341,7 @@ export default function CapacitacionContent() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="1">1er turno</SelectItem>
-                    <SelectItem value="2">2do turno</SelectItem>
-                    <SelectItem value="3">3er turno</SelectItem>
+                    {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

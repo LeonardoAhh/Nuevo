@@ -34,11 +34,7 @@ export default function PromocionesPage() {
   return (
     <Dashboard
       pageTitle="Promociones"
-      content={
-        <div className="px-6 pt-2 pb-6">
-          <PromocionesWrapper />
-        </div>
-      }
+      content={<PromocionesWrapper />}
     />
   )
 }
