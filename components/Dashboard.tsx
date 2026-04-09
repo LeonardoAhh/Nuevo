@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, type ReactNode } from "react"
+import { useState, useEffect, useLayoutEffect, type ReactNode } from "react"
 import {
   Car,
   ChevronDown,
@@ -22,6 +22,7 @@ import {
   MoreHorizontal,
   Package,
   TrendingUp,
+  ChevronsUpDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,6 +32,14 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { useTheme } from "@/components/theme-context"
 import { useUser, useProfile } from "@/lib/hooks"
@@ -87,9 +96,24 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const showExpandedSidebar = isMobileView || !sidebarCollapsed
 
-  useEffect(() => {
-    const persisted = localStorage.getItem("sidebarCollapsed") === "true"
-    setSidebarCollapsed(persisted)
+  const avatarFallback =
+    profile
+      ? `${profile.firstName?.[0] ?? ""}${profile.lastName?.[0] ?? ""}`.toUpperCase() || "U"
+      : user?.email?.[0]?.toUpperCase() ?? "U"
+
+  const displayName =
+    profile?.displayName || user?.email?.split("@")[0] || "Usuario"
+
+  const handleLogout = async () => {
+    const { supabase } = await import("@/lib/supabase/client")
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }
+
+  // Leer valores reales antes del primer paint (sin mismatch, sin flash)
+  useLayoutEffect(() => {
+    setSidebarCollapsed(localStorage.getItem("sidebarCollapsed") === "true")
+    setIsMobileView(window.innerWidth < 768)
   }, [])
 
   // Add a useEffect to set the path after component mounts
@@ -131,9 +155,9 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
     <div className="flex flex-col md:flex-row h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <div
-        className={`bg-white dark:bg-gray-800 border-r dark:border-gray-700 ${isMobileView ? "w-64" : sidebarCollapsed ? "w-20" : "w-64"} transition-all duration-300 flex flex-col ${isMobileView ? "fixed z-50 h-screen shadow-lg" : ""} ${isMobileView && !showMobileSidebar ? "-translate-x-full" : ""}`}
+        className={`bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all duration-300 flex flex-col max-md:fixed max-md:z-50 max-md:h-screen max-md:shadow-lg max-md:w-64 max-md:-translate-x-full ${showMobileSidebar ? "max-md:translate-x-0" : ""} ${sidebarCollapsed ? "md:w-20" : "md:w-64"}`}
       >
-        <div className="p-2 min-h-[50px] border-b dark:border-gray-700 flex items-center justify-between">
+        <div className="p-2 h-[50px] border-b dark:border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {showExpandedSidebar && (
               <>
@@ -234,122 +258,104 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
 
         </div>
 
-        <div className="p-4 border-t dark:border-gray-700">
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/settings" ? "border-l-4 border-primary bg-primary/10" : ""}`}
-                  asChild
-                >
-                  <a href="/settings">
-                    <Settings size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
-                    {showExpandedSidebar && <span>Configuración</span>}
-                  </a>
-                </Button>
-              </TooltipTrigger>
-              {!showExpandedSidebar && <TooltipContent side="right">Configuración</TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
+        {/* Sidebar Bottom — User Menu */}
+        <div className="p-2 border-t dark:border-gray-700">
+          <DropdownMenu>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    {showExpandedSidebar ? (
+                      <button
+                        className="w-full flex items-center gap-3 rounded-md px-2 py-2 text-sm
+                                   hover:bg-accent hover:text-accent-foreground
+                                   focus-visible:outline-none focus-visible:ring-2
+                                   focus-visible:ring-ring transition-colors"
+                      >
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={profile?.avatar || undefined} />
+                          <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                        </Avatar>
+                        <span className="flex-1 min-w-0 text-left">
+                          <span className="block font-medium text-sm truncate dark:text-white">
+                            {displayName}
+                          </span>
+                        </span>
+                        <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
+                      </button>
+                    ) : (
+                      <button
+                        className="flex items-center justify-center w-full py-2
+                                   rounded-md hover:bg-accent hover:text-accent-foreground
+                                   focus-visible:outline-none focus-visible:ring-2
+                                   focus-visible:ring-ring transition-colors"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={profile?.avatar || undefined} />
+                          <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                        </Avatar>
+                      </button>
+                    )}
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                {!showExpandedSidebar && (
+                  <TooltipContent side="right">{displayName}</TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
 
-          {showExpandedSidebar ? (
-            <div className="flex items-center gap-3 mt-4 p-2 border dark:border-gray-700 rounded-md">
-              <Avatar>
-                <AvatarImage src={profile?.avatar || undefined} />
-                <AvatarFallback>
-                  {profile
-                    ? `${profile.firstName[0]}${profile.lastName[0] || ""}`.toUpperCase()
-                    : user?.email?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm dark:text-white truncate">
-                  {profile?.displayName || user?.email?.split("@")[0] || "Usuario"}
+            <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56">
+              <DropdownMenuLabel asChild>
+                <div className="flex items-center gap-3 px-2 py-2 cursor-default select-none">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={profile?.avatar || undefined} />
+                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold truncate">{displayName}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="h-8 w-8"
-                  title={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
-                >
-                  {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-red-500 hover:text-red-600 h-8 w-8"
-                  title="Cerrar sesión"
-                  onClick={async () => {
-                    const { supabase } = await import('@/lib/supabase/client')
-                    await supabase.auth.signOut()
-                    window.location.href = '/login'
-                  }}
-                >
-                  <LogOut size={16} />
-                </Button>
-              </div>
-            </div>
-          ) : (!isMobileView ? (
-            <div className="flex flex-col items-center gap-2 mt-4">
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Avatar className="cursor-pointer">
-                      <AvatarImage src={profile?.avatar || undefined} />
-                      <AvatarFallback>
-                        {profile
-                          ? `${profile.firstName[0]}${profile.lastName[0] || ""}`.toUpperCase()
-                          : user?.email?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    {profile?.displayName || user?.email?.split("@")[0] || "Usuario"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleTheme}
-                      title={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
-                    >
-                      {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    {theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={async () => {
-                        const { supabase } = await import('@/lib/supabase/client')
-                        await supabase.auth.signOut()
-                        window.location.href = '/login'
-                      }}
-                    >
-                      <LogOut size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Cerrar sesión</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          ) : null)}
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                asChild
+                className={
+                  currentPath === "/settings"
+                    ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
+                    : ""
+                }
+              >
+                <a href="/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Settings size={16} />
+                  <span>Configuración</span>
+                </a>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onSelect={(e) => { e.preventDefault(); toggleTheme() }}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+                <span>Apariencia</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {theme === "light" ? "Oscuro" : "Claro"}
+                </span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onSelect={handleLogout}
+                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <LogOut size={16} />
+                <span>Cerrar sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
