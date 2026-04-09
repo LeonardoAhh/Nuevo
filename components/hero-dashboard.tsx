@@ -4,7 +4,7 @@ import Image from "next/image"
 
 export default function HeroDashboard() {
   return (
-    <div className="hero-dashboard relative w-full rounded-2xl overflow-hidden" style={{ height: "340px" }}>
+    <div className="hero-dashboard relative w-full rounded-2xl overflow-hidden h-[200px] sm:h-[280px] md:h-[340px]">
       {/* Imagen de fondo con animación Ken Burns */}
       <div className="hero-image-wrapper absolute inset-0">
         <Image

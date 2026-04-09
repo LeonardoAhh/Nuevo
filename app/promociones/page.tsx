@@ -7,7 +7,7 @@ import { usePromociones } from "@/lib/hooks/usePromociones"
 function PromocionesWrapper() {
   const { empleados, loading, error, recargar } = usePromociones()
 
-  if (loading) {
+  if (loading && empleados.length === 0) {
     return (
       <div className="flex items-center justify-center py-20 text-gray-400">
         <svg className="animate-spin mr-2 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

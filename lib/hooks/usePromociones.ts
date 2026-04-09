@@ -203,6 +203,7 @@ export function usePromociones() {
           area:             emp.area ?? undefined,
           turno:            emp.turno ?? undefined,
           fechaIngresoPuesto: String(datos?.fecha_inicio_puesto ?? emp.fecha_ingreso ?? ""),
+          fechaExamenGuardada: datos?.fecha_examen ? String(datos.fecha_examen) : undefined,
           calificacionExamen: datos?.ultima_calificacion_examen != null
             ? Number(datos.ultima_calificacion_examen)
             : undefined,

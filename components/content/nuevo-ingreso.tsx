@@ -126,7 +126,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
               className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {([
               { label: '1er mes', key: 'eval_1_calificacion' as const, fecha: record.eval_1_fecha },
               { label: '2do mes', key: 'eval_2_calificacion' as const, fecha: record.eval_2_fecha },
@@ -141,7 +141,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
                   type="number" min={0} max={100}
                   value={form[key] ?? ''}
                   onChange={e => set(key, e.target.value === '' ? null : parseInt(e.target.value))}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                 />
               </div>
             ))}
@@ -383,7 +383,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
               <Input id="fecha_ingreso" type="date"
                 value={form.fecha_ingreso}
                 onChange={e => set('fecha_ingreso', e.target.value)}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
             </FormField>
             <FormField id="tipo_contrato" label="Tipo de contrato">
               <Select value={form.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>

@@ -103,6 +103,7 @@ export interface EmpleadoPromocion {
   area?: string
   turno?: string
   fechaIngresoPuesto: string
+  fechaExamenGuardada?: string    // Última fecha de examen guardada
   calificacionExamen?: number     // Última calificación de examen teórico
   intentosExamen?: number
   cursosRequeridos: CursoRequerido[]
@@ -507,7 +508,7 @@ function CapturarDesempeñoDialog({
               placeholder="Ej. 85"
               value={calificacion}
               onChange={(e) => setCalificacion(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
             />
           </div>
           <div className="space-y-1.5">
@@ -517,7 +518,7 @@ function CapturarDesempeñoDialog({
               placeholder="Ej. 2026-Q1"
               value={periodo}
               onChange={(e) => setPeriodo(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
             />
           </div>
         </div>
@@ -560,11 +561,11 @@ function PromoverDialog({
   const { regla } = empleado
 
   const hoy = new Date().toISOString().split("T")[0]
-  const [fechaInicio, setFechaInicio] = useState(empleado.fechaIngresoPuesto || "")
+  const [fechaInicio, setFechaInicio] = useState(hoy)
   const [calExamen, setCalExamen] = useState(
     empleado.calificacionExamen != null ? String(empleado.calificacionExamen) : ""
   )
-  const [fechaExamen, setFechaExamen] = useState("")
+  const [fechaExamen, setFechaExamen] = useState(empleado.fechaExamenGuardada || "")
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -590,6 +591,7 @@ function PromoverDialog({
             {
               numero:                     empleado.numero,
               fecha_inicio_puesto:        fechaInicio || null,
+              fecha_examen:               fechaExamen || null,
               ultima_calificacion_examen: calExamen !== "" ? parseFloat(calExamen) : null,
               intentos_examen:            (empleado.intentosExamen ?? 0) + (calExamen !== "" ? 1 : 0),
               updated_at:                 new Date().toISOString(),
@@ -679,7 +681,7 @@ function PromoverDialog({
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
               />
             </div>
             <div className="space-y-1.5">
@@ -688,7 +690,7 @@ function PromoverDialog({
                 type="date"
                 value={fechaExamen}
                 onChange={(e) => setFechaExamen(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
               />
             </div>
           </div>
@@ -709,7 +711,7 @@ function PromoverDialog({
               placeholder="Ej. 85"
               value={calExamen}
               onChange={(e) => setCalExamen(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
             />
           </div>
         </div>
@@ -748,6 +750,8 @@ function PromoverDialog({
                       .upsert(
                         {
                           numero:                     empleado.numero,
+                          fecha_inicio_puesto:        fechaInicio || null,
+                          fecha_examen:               fechaExamen || null,
                           ultima_calificacion_examen: parseFloat(calExamen),
                           intentos_examen:            (empleado.intentosExamen ?? 0) + 1,
                           updated_at:                 new Date().toISOString(),
@@ -1121,7 +1125,7 @@ export default function PromocionesContent({
             className="pl-8 h-9 w-full"
           />
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2">
         <Select value={filtroDept} onValueChange={setFiltroDept}>
           <SelectTrigger className="h-9 w-full sm:w-[170px] text-xs sm:text-sm">
             <SelectValue placeholder="Depto." />

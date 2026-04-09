@@ -230,3 +230,51 @@ input[type="color"]::-webkit-color-swatch {
 .dark ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(75, 75, 75, 0.7);
 }
+
+/* ─── Print: Generador de Exámenes ─────────────────────── */
+@media print {
+  /* Ocultar todo usando visibility para no romper el árbol del DOM */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Mostrar el área de impresión y todos sus descendientes */
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+
+  /* Posicionar el área de impresión en la esquina superior izquierda */
+  .print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 12mm 14mm !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  /* Forzar blanco y negro */
+  .examen-print-root,
+  .examen-print-root * {
+    color: black !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Evitar cortes dentro de preguntas */
+  .examen-print-root .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  @page {
+    size: Letter portrait;
+    margin: 0;
+  }
+}

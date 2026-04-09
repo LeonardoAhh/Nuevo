@@ -279,7 +279,7 @@ export default function SettingsContent() {
                       id="first-name"
                       {...registerProfile("firstName")}
                       className={cn(
-                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
                         profileErrors.firstName && "border-red-500"
                       )}
                     />
@@ -295,7 +295,7 @@ export default function SettingsContent() {
                       id="last-name"
                       {...registerProfile("lastName")}
                       className={cn(
-                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
                         profileErrors.lastName && "border-red-500"
                       )}
                     />
@@ -311,7 +311,7 @@ export default function SettingsContent() {
                       id="display-name"
                       {...registerProfile("displayName")}
                       className={cn(
-                        "dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
                         profileErrors.displayName && "border-red-500"
                       )}
                     />

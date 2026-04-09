@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Info,
   GraduationCap,
   LayoutDashboard,
@@ -76,6 +77,40 @@ const scrollbarStyles = `
     background-color: rgba(75, 85, 99, 0.7);
   }
 `
+
+interface NavItem {
+  label: string
+  href: string
+  icon: React.ComponentType<{ size?: number; className?: string }>
+}
+
+interface NavSection {
+  sectionLabel: string
+  items: NavItem[]
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    sectionLabel: "General",
+    items: [
+      { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    ],
+  },
+  {
+    sectionLabel: "Contratos",
+    items: [
+      { label: "Nuevo Ingreso", href: "/nuevo-ingreso", icon: UserPlus },
+    ],
+  },
+  {
+    sectionLabel: "Capacitación",
+    items: [
+      { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
+      { label: "Promociones", href: "/promociones", icon: TrendingUp },
+      { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
+    ],
+  },
+]
 
 interface DashboardProps {
   content?: ReactNode
@@ -185,77 +220,42 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         </div>
 
         <div className="flex-1 overflow-auto scrollbar-thin">
-          <div className="space-y-1 p-2">
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/" ? "border-l-4 border-primary bg-primary/10" : ""}`}
-                    asChild
-                  >
-                    <a href="/">
-                      <LayoutDashboard size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
-                      {showExpandedSidebar && <span>Dashboard</span>}
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                {!showExpandedSidebar && <TooltipContent side="right">Dashboard</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/capacitacion" ? "border-l-4 border-primary bg-primary/10" : ""}`}
-                    asChild
-                  >
-                    <a href="/capacitacion">
-                      <GraduationCap size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
-                      {showExpandedSidebar && <span>Capacitación</span>}
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                {!showExpandedSidebar && <TooltipContent side="right">Capacitación</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/nuevo-ingreso" ? "border-l-4 border-primary bg-primary/10" : ""}`}
-                    asChild
-                  >
-                    <a href="/nuevo-ingreso">
-                      <UserPlus size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
-                      {showExpandedSidebar && <span>Nuevo Ingreso</span>}
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                {!showExpandedSidebar && <TooltipContent side="right">Nuevo Ingreso</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === "/promociones" ? "border-l-4 border-primary bg-primary/10" : ""}`}
-                    asChild
-                  >
-                    <a href="/promociones">
-                      <TrendingUp size={18} className={`${showExpandedSidebar ? "mr-2" : "mx-auto"}`} />
-                      {showExpandedSidebar && <span>Promociones</span>}
-                    </a>
-                  </Button>
-                </TooltipTrigger>
-                {!showExpandedSidebar && <TooltipContent side="right">Promociones</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
+          <div className="space-y-3 p-2">
+            {NAV_SECTIONS.map((section, sectionIdx) => (
+              <div key={section.sectionLabel}>
+                {showExpandedSidebar ? (
+                  <div className="px-3 pt-2 pb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {section.sectionLabel}
+                    </span>
+                  </div>
+                ) : (
+                  sectionIdx > 0 && <div className="mx-3 my-1 border-t dark:border-gray-700" />
+                )}
+                <div className="space-y-1">
+                  {section.items.map((item) => (
+                    <TooltipProvider key={item.href} delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start ${showExpandedSidebar ? "" : "px-2"} ${currentPath === item.href ? "border-l-4 border-primary bg-primary/10" : ""}`}
+                            asChild
+                          >
+                            <a href={item.href}>
+                              <item.icon size={18} className={showExpandedSidebar ? "mr-2" : "mx-auto"} />
+                              {showExpandedSidebar && <span>{item.label}</span>}
+                            </a>
+                          </Button>
+                        </TooltipTrigger>
+                        {!showExpandedSidebar && <TooltipContent side="right">{item.label}</TooltipContent>}
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-
         </div>
 
         {/* Sidebar Bottom — User Menu */}
@@ -409,7 +409,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
               </div>
 
               {/* Top Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-gray-500">
@@ -426,7 +426,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                       </TooltipProvider>
                     </CardTitle>
                     <Select defaultValue="this-month">
-                      <SelectTrigger className="h-8 w-[160px]">
+                      <SelectTrigger className="h-8 w-full sm:w-[160px]">
                         <SelectValue placeholder="This month" />
                       </SelectTrigger>
                       <SelectContent>
@@ -546,7 +546,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
               </div>
 
               {/* Analytics and Performance */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
                 <Card className="md:col-span-2">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-gray-500">
@@ -564,7 +564,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Select defaultValue="this-year">
-                        <SelectTrigger className="h-8 w-[120px]">
+                        <SelectTrigger className="h-8 w-full sm:w-[120px]">
                           <SelectValue placeholder="This year" />
                         </SelectTrigger>
                         <SelectContent>

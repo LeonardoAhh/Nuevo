@@ -491,7 +491,7 @@ export default function CapacitacionContent() {
                     : "No se encontraron puestos con ese filtro."}
                 </div>
               ) : (
-                <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
+                <div className="rounded-xl border dark:border-gray-700 overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
@@ -913,7 +913,7 @@ export default function CapacitacionContent() {
                           <Input type="date"
                             value={row.fecha_aplicacion}
                             onChange={e => updateAddCoursesRow(i, 'fecha_aplicacion', e.target.value)}
-                            className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                           />
                         </div>
                         <div className="space-y-1">
@@ -994,7 +994,7 @@ export default function CapacitacionContent() {
                   <Input type="date"
                     value={newEmpForm.fecha_ingreso}
                     onChange={e => setNewEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                   />
                 </div>
               </div>
@@ -1135,7 +1135,7 @@ export default function CapacitacionContent() {
                               <Input type="date"
                                 value={row.fecha_aplicacion}
                                 onChange={e => updateCourseRow(i, 'fecha_aplicacion', e.target.value)}
-                                className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                               />
                             </div>
                             <div className="space-y-1">
@@ -1268,7 +1268,7 @@ export default function CapacitacionContent() {
                 <Input type="date"
                   value={editEmpForm.fecha_ingreso}
                   onChange={e => setEditEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                 />
               </div>
             </div>
