@@ -273,8 +273,6 @@ export default function FlayersContent() {
   const [showIconPicker, setShowIconPicker] = useState(false)
   const [showLayers, setShowLayers] = useState(false)
   const [saveName, setSaveName] = useState("")
-  const shapeBtnRef = useRef<HTMLButtonElement>(null)
-  const iconBtnRef = useRef<HTMLButtonElement>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [zoom, setZoom] = useState(100)
   const [clipboardStyle, setClipboardStyle] = useState<ElementStyle | null>(null)
@@ -734,19 +732,6 @@ export default function FlayersContent() {
     window.addEventListener("click", handler)
     return () => window.removeEventListener("click", handler)
   }, [contextMenu])
-
-  // Close pickers on click outside
-  useEffect(() => {
-    if (!showShapePicker && !showIconPicker) return
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (shapeBtnRef.current?.contains(target) || iconBtnRef.current?.contains(target)) return
-      setShowShapePicker(false)
-      setShowIconPicker(false)
-    }
-    window.addEventListener("click", handler)
-    return () => window.removeEventListener("click", handler)
-  }, [showShapePicker, showIconPicker])
 
   // ── Background ─────────────────────────────────────────────────────────
 
@@ -1736,26 +1721,59 @@ export default function FlayersContent() {
             </Tooltip>
 
             {/* Add shape */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button ref={shapeBtnRef} variant="outline" size="sm" className="h-7 text-xs"
-                  onClick={() => { setShowShapePicker((v) => !v); setShowIconPicker(false) }}>
-                  <Shapes size={14} className="mr-1" /> <span className="hidden sm:inline">Forma</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Añadir forma</TooltipContent>
-            </Tooltip>
+            <div className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs"
+                    onClick={() => { setShowShapePicker((v) => !v); setShowIconPicker(false) }}>
+                    <Shapes size={14} className="mr-1" /> <span className="hidden sm:inline">Forma</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Añadir forma</TooltipContent>
+              </Tooltip>
+              {showShapePicker && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-lg shadow-lg p-2 min-w-[160px] animate-in fade-in-0 zoom-in-95">
+                  {SHAPE_CATALOG.map((s) => (
+                    <button key={s.type}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded hover:bg-accent transition-colors"
+                      onClick={() => addShape(s.type)}>
+                      <span className="text-base w-5 text-center">{s.icon}</span>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Add icon */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button ref={iconBtnRef} variant="outline" size="sm" className="h-7 text-xs"
-                  onClick={() => { setShowIconPicker((v) => !v); setShowShapePicker(false) }}>
-                  <SmilePlus size={14} className="mr-1" /> <span className="hidden sm:inline">Ícono</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Añadir ícono</TooltipContent>
-            </Tooltip>
+            <div className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs"
+                    onClick={() => { setShowIconPicker((v) => !v); setShowShapePicker(false) }}>
+                    <SmilePlus size={14} className="mr-1" /> <span className="hidden sm:inline">Ícono</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Añadir ícono</TooltipContent>
+              </Tooltip>
+              {showIconPicker && (
+                <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded-lg shadow-lg p-3 w-[280px] animate-in fade-in-0 zoom-in-95">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Selecciona un ícono</p>
+                  <div className="grid grid-cols-6 gap-1 max-h-[200px] overflow-y-auto">
+                    {ICON_CATALOG.map((ic) => {
+                      const Ic = ICON_COMPONENTS[ic.key]
+                      return Ic ? (
+                        <button key={ic.key} title={ic.label}
+                          className="p-2 rounded hover:bg-accent transition-colors flex items-center justify-center"
+                          onClick={() => addIcon(ic.key)}>
+                          <Ic size={18} />
+                        </button>
+                      ) : null
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Separator orientation="vertical" className="h-5 hidden sm:block" />
 
@@ -2106,53 +2124,6 @@ export default function FlayersContent() {
           )}
         </div>
       </TooltipProvider>
-
-      {/* ── Shape Picker (portal, fixed) ── */}
-      {showShapePicker && (() => {
-        const rect = shapeBtnRef.current?.getBoundingClientRect()
-        return rect ? (
-          <div
-            className="fixed z-[9999] bg-popover border rounded-lg shadow-lg p-2 min-w-[160px] animate-in fade-in-0 zoom-in-95"
-            style={{ left: rect.left, top: rect.bottom + 4 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {SHAPE_CATALOG.map((s) => (
-              <button key={s.type}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded hover:bg-accent transition-colors"
-                onClick={() => addShape(s.type)}>
-                <span className="text-base w-5 text-center">{s.icon}</span>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        ) : null
-      })()}
-
-      {/* ── Icon Picker (portal, fixed) ── */}
-      {showIconPicker && (() => {
-        const rect = iconBtnRef.current?.getBoundingClientRect()
-        return rect ? (
-          <div
-            className="fixed z-[9999] bg-popover border rounded-lg shadow-lg p-3 w-[280px] animate-in fade-in-0 zoom-in-95"
-            style={{ left: rect.left, top: rect.bottom + 4 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Selecciona un ícono</p>
-            <div className="grid grid-cols-6 gap-1 max-h-[200px] overflow-y-auto">
-              {ICON_CATALOG.map((ic) => {
-                const Ic = ICON_COMPONENTS[ic.key]
-                return Ic ? (
-                  <button key={ic.key} title={ic.label}
-                    className="p-2 rounded hover:bg-accent transition-colors flex items-center justify-center"
-                    onClick={() => addIcon(ic.key)}>
-                    <Ic size={18} />
-                  </button>
-                ) : null
-              })}
-            </div>
-          </div>
-        ) : null
-      })()}
 
       {/* ── Context Menu ── */}
       {contextMenu && (
