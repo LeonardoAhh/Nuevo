@@ -1,0 +1,952 @@
+"use client"
+
+import React, { useState, useRef, useCallback, useEffect } from "react"
+import {
+  Type,
+  Image as ImageIcon,
+  Trash2,
+  Printer,
+  Bold,
+  Italic,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  Minus,
+  Upload,
+  Palette,
+  RefreshCw,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+
+// ─── Tipos ───────────────────────────────────────────────────────────────────
+
+interface ElementStyle {
+  fontSize: number
+  fontFamily: string
+  fontWeight: string
+  fontStyle: string
+  textAlign: "left" | "center" | "right"
+  color: string
+  backgroundColor: string
+  opacity: number
+  borderRadius: number
+}
+
+interface FlayerElement {
+  id: string
+  type: "text" | "image"
+  x: number
+  y: number
+  width: number
+  height: number
+  content: string
+  zIndex: number
+  style: ElementStyle
+}
+
+interface FlayerInfo {
+  folio: string
+  curso: string
+  instructor: string
+  sala: string
+  turno1: string
+  turno2: string
+  turno3: string
+  turno4: string
+  horarioEspecial: string
+}
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const CANVAS_W = 794
+const CANVAS_H = 1123
+
+const FONTS = [
+  { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Roboto", value: "Roboto, sans-serif" },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Playfair Display", value: "'Playfair Display', serif" },
+  { label: "Times New Roman", value: "'Times New Roman', serif" },
+  { label: "Montserrat", value: "Montserrat, sans-serif" },
+  { label: "Oswald", value: "Oswald, sans-serif" },
+]
+
+const DEFAULT_STYLE: ElementStyle = {
+  fontSize: 18,
+  fontFamily: "Inter, sans-serif",
+  fontWeight: "normal",
+  fontStyle: "normal",
+  textAlign: "left",
+  color: "#1a1a1a",
+  backgroundColor: "transparent",
+  opacity: 1,
+  borderRadius: 0,
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10)
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
+export default function FlayersContent() {
+  const [elements, setElements] = useState<FlayerElement[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [canvasBg, setCanvasBg] = useState("#ffffff")
+  const [canvasBgImage, setCanvasBgImage] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [info, setInfo] = useState<FlayerInfo>({
+    folio: "",
+    curso: "",
+    instructor: "",
+    sala: "",
+    turno1: "",
+    turno2: "",
+    turno3: "",
+    turno4: "",
+    horarioEspecial: "",
+  })
+
+  // Drag state
+  const dragging = useRef<{ id: string; ox: number; oy: number } | null>(null)
+  const resizing = useRef<{ id: string; startX: number; startY: number; startW: number; startH: number } | null>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
+
+  // Scale to fit canvas in viewport
+  const [scale, setScale] = useState(1)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const recalc = () => {
+      if (!wrapperRef.current) return
+      const avail = wrapperRef.current.clientWidth - 32
+      setScale(Math.min(1, avail / CANVAS_W))
+    }
+    recalc()
+    window.addEventListener("resize", recalc)
+    return () => window.removeEventListener("resize", recalc)
+  }, [])
+
+  // ── Helpers de elementos ──────────────────────────────────────────────────
+
+  const addText = () => {
+    const el: FlayerElement = {
+      id: uid(),
+      type: "text",
+      x: 60,
+      y: 60,
+      width: 300,
+      height: 50,
+      content: "Texto de ejemplo",
+      zIndex: elements.length + 1,
+      style: { ...DEFAULT_STYLE },
+    }
+    setElements((prev) => [...prev, el])
+    setSelectedId(el.id)
+  }
+
+  const addImage = (file: File, label?: string) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const src = e.target?.result as string
+      const img = new window.Image()
+      img.onload = () => {
+        const maxW = 300
+        const ratio = img.height / img.width
+        const w = Math.min(maxW, img.width)
+        const h = w * ratio
+        const el: FlayerElement = {
+          id: uid(),
+          type: "image",
+          x: 60,
+          y: 60,
+          width: w,
+          height: h,
+          content: src,
+          zIndex: elements.length + 1,
+          style: { ...DEFAULT_STYLE, backgroundColor: "transparent" },
+        }
+        setElements((prev) => [...prev, el])
+        setSelectedId(el.id)
+      }
+      img.src = src
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const deleteSelected = () => {
+    if (!selectedId) return
+    setElements((prev) => prev.filter((e) => e.id !== selectedId))
+    setSelectedId(null)
+  }
+
+  const updateElement = (id: string, patch: Partial<FlayerElement>) => {
+    setElements((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)))
+  }
+
+  const updateStyle = (id: string, patch: Partial<ElementStyle>) => {
+    setElements((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, style: { ...e.style, ...patch } } : e))
+    )
+  }
+
+  const bringForward = () => {
+    if (!selectedId) return
+    const el = elements.find((e) => e.id === selectedId)
+    if (el) updateElement(selectedId, { zIndex: el.zIndex + 1 })
+  }
+
+  const sendBackward = () => {
+    if (!selectedId) return
+    const el = elements.find((e) => e.id === selectedId)
+    if (el) updateElement(selectedId, { zIndex: Math.max(0, el.zIndex - 1) })
+  }
+
+  // ── Insertar info del formulario ──────────────────────────────────────────
+
+  const insertInfo = () => {
+    const lines: string[] = []
+    if (info.folio) lines.push(`Folio: ${info.folio}`)
+    if (info.curso) lines.push(`Curso: ${info.curso}`)
+    if (info.instructor) lines.push(`Instructor: ${info.instructor}`)
+    if (info.sala) lines.push(`Sala: ${info.sala}`)
+    if (info.turno1) lines.push(`Turno 1: ${info.turno1}`)
+    if (info.turno2) lines.push(`Turno 2: ${info.turno2}`)
+    if (info.turno3) lines.push(`Turno 3: ${info.turno3}`)
+    if (info.turno4) lines.push(`Turno 4: ${info.turno4}`)
+    if (info.horarioEspecial) lines.push(`Horario especial: ${info.horarioEspecial}`)
+    if (lines.length === 0) return
+
+    const el: FlayerElement = {
+      id: uid(),
+      type: "text",
+      x: 60,
+      y: 80,
+      width: 650,
+      height: lines.length * 32 + 20,
+      content: lines.join("\n"),
+      zIndex: elements.length + 1,
+      style: { ...DEFAULT_STYLE, fontSize: 20, fontFamily: "Inter, sans-serif" },
+    }
+    setElements((prev) => [...prev, el])
+    setSelectedId(el.id)
+  }
+
+  // ── Drag & Drop ───────────────────────────────────────────────────────────
+
+  const onElementPointerDown = (e: React.PointerEvent, id: string) => {
+    if (editingId === id) return
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const el = elements.find((el) => el.id === id)!
+    dragging.current = { id, ox: e.clientX / scale - el.x, oy: e.clientY / scale - el.y }
+    setSelectedId(id)
+  }
+
+  const onResizePointerDown = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const el = elements.find((el) => el.id === id)!
+    resizing.current = { id, startX: e.clientX, startY: e.clientY, startW: el.width, startH: el.height }
+  }
+
+  const onCanvasPointerMove = (e: React.PointerEvent) => {
+    if (dragging.current) {
+      const { id, ox, oy } = dragging.current
+      const x = Math.max(0, Math.min(CANVAS_W - 20, e.clientX / scale - ox))
+      const y = Math.max(0, Math.min(CANVAS_H - 20, e.clientY / scale - oy))
+      updateElement(id, { x, y })
+    }
+    if (resizing.current) {
+      const { id, startX, startY, startW, startH } = resizing.current
+      const dw = (e.clientX - startX) / scale
+      const dh = (e.clientY - startY) / scale
+      updateElement(id, {
+        width: Math.max(40, startW + dw),
+        height: Math.max(20, startH + dh),
+      })
+    }
+  }
+
+  const onCanvasPointerUp = () => {
+    dragging.current = null
+    resizing.current = null
+  }
+
+  // ── Fondo del canvas ──────────────────────────────────────────────────────
+
+  const onBgImageChange = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => setCanvasBgImage(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  // ── Imprimir ──────────────────────────────────────────────────────────────
+
+  const handlePrint = () => window.print()
+
+  // ── Selected element ──────────────────────────────────────────────────────
+
+  const selected = elements.find((e) => e.id === selectedId) ?? null
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  return (
+    <>
+      {/* Google Fonts */}
+      {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&display=swap"
+      />
+
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body > * { display: none !important; }
+          #flayer-print-root { display: block !important; position: fixed; inset: 0; }
+          #flayer-canvas-print {
+            transform: none !important;
+            width: 794px !important;
+            height: 1123px !important;
+            box-shadow: none !important;
+          }
+        }
+        @media screen {
+          #flayer-print-root { display: contents; }
+        }
+      `}</style>
+
+      <TooltipProvider>
+        <div className="flex flex-col h-full min-h-0 overflow-hidden">
+
+          {/* ── Toolbar ── */}
+          <div className="no-print flex items-center gap-2 px-4 py-2 border-b bg-background flex-shrink-0 flex-wrap">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={addText}>
+                  <Type size={15} className="mr-1" /> Texto
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Añadir bloque de texto</TooltipContent>
+            </Tooltip>
+
+            {/* Imagen */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span><ImageIcon size={15} className="mr-1" /> Imagen</span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0])}
+                  />
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>Añadir imagen</TooltipContent>
+            </Tooltip>
+
+            {/* Logo */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span><Upload size={15} className="mr-1" /> Logo</span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0], "logo")}
+                  />
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>Añadir logo</TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Color de fondo */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="flex items-center gap-1 cursor-pointer border rounded-md px-2 py-1 text-sm hover:bg-accent transition-colors">
+                  <Palette size={15} />
+                  <span>Fondo</span>
+                  <input
+                    type="color"
+                    value={canvasBg}
+                    onChange={(e) => { setCanvasBg(e.target.value); setCanvasBgImage(null) }}
+                    className="w-6 h-5 cursor-pointer rounded border-0 p-0"
+                  />
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>Color de fondo del flyer</TooltipContent>
+            </Tooltip>
+
+            {/* Imagen de fondo */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="cursor-pointer">
+                  <Button variant="outline" size="sm" asChild>
+                    <span><ImageIcon size={15} className="mr-1" /> Fondo imagen</span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && onBgImageChange(e.target.files[0])}
+                  />
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>Imagen de fondo del flyer</TooltipContent>
+            </Tooltip>
+
+            {canvasBgImage && (
+              <Button variant="ghost" size="sm" onClick={() => setCanvasBgImage(null)}>
+                <RefreshCw size={14} className="mr-1" /> Quitar fondo
+              </Button>
+            )}
+
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Borrar */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={deleteSelected} disabled={!selectedId}>
+                  <Trash2 size={15} className="mr-1" /> Borrar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Eliminar elemento seleccionado</TooltipContent>
+            </Tooltip>
+
+            {/* Imprimir */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="default" size="sm" onClick={handlePrint} className="ml-auto">
+                  <Printer size={15} className="mr-1" /> Imprimir
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir / Guardar como PDF</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* ── Body: Left + Canvas + Right ── */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+
+            {/* ── Panel izquierdo — Información ── */}
+            <aside className="no-print w-64 shrink-0 border-r overflow-y-auto p-3 space-y-3 bg-background">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Información del flyer</p>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Folio</Label>
+                <Input
+                  placeholder="Ej. CAP-2024-001"
+                  value={info.folio}
+                  onChange={(e) => setInfo((p) => ({ ...p, folio: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Nombre del curso</Label>
+                <Input
+                  placeholder="Ej. Seguridad Industrial"
+                  value={info.curso}
+                  onChange={(e) => setInfo((p) => ({ ...p, curso: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Instructor</Label>
+                <Input
+                  placeholder="Nombre del instructor"
+                  value={info.instructor}
+                  onChange={(e) => setInfo((p) => ({ ...p, instructor: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Sala / Lugar</Label>
+                <Input
+                  placeholder="Ej. Sala A"
+                  value={info.sala}
+                  onChange={(e) => setInfo((p) => ({ ...p, sala: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <Separator />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Horarios por turno</p>
+
+              {(["turno1", "turno2", "turno3", "turno4"] as const).map((t, i) => (
+                <div key={t} className="space-y-1">
+                  <Label className="text-xs">Turno {i + 1}</Label>
+                  <Input
+                    placeholder="Ej. 06:00 - 14:00"
+                    value={info[t]}
+                    onChange={(e) => setInfo((p) => ({ ...p, [t]: e.target.value }))}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              ))}
+
+              <div className="space-y-1">
+                <Label className="text-xs">Horario especial</Label>
+                <Input
+                  placeholder="Ej. Sábado 08:00 - 12:00"
+                  value={info.horarioEspecial}
+                  onChange={(e) => setInfo((p) => ({ ...p, horarioEspecial: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <Button className="w-full" size="sm" onClick={insertInfo}>
+                <Plus size={14} className="mr-1" /> Insertar info al flyer
+              </Button>
+            </aside>
+
+            {/* ── Canvas central ── */}
+            <div
+              ref={wrapperRef}
+              className="flex-1 min-w-0 overflow-auto bg-muted/40 flex items-start justify-center p-4"
+              onClick={() => setSelectedId(null)}
+            >
+              <div id="flayer-print-root">
+                <div
+                  id="flayer-canvas-print"
+                  ref={canvasRef}
+                  className="relative shadow-xl overflow-hidden select-none"
+                  style={{
+                    width: CANVAS_W,
+                    height: CANVAS_H,
+                    backgroundColor: canvasBg,
+                    backgroundImage: canvasBgImage ? `url(${canvasBgImage})` : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    transformOrigin: "top left",
+                    transform: `scale(${scale})`,
+                    marginBottom: `${CANVAS_H * (scale - 1)}px`,
+                    cursor: dragging.current ? "grabbing" : "default",
+                  }}
+                  onPointerMove={onCanvasPointerMove}
+                  onPointerUp={onCanvasPointerUp}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {[...elements].sort((a, b) => a.zIndex - b.zIndex).map((el) => (
+                    <CanvasElement
+                      key={el.id}
+                      el={el}
+                      isSelected={el.id === selectedId}
+                      isEditing={el.id === editingId}
+                      onPointerDown={(e) => onElementPointerDown(e, el.id)}
+                      onResizePointerDown={(e) => onResizePointerDown(e, el.id)}
+                      onDoubleClick={() => el.type === "text" && setEditingId(el.id)}
+                      onBlur={() => setEditingId(null)}
+                      onChange={(content) => updateElement(el.id, { content })}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Panel derecho — Propiedades ── */}
+            <aside className="no-print w-64 shrink-0 border-l overflow-y-auto p-3 bg-background">
+              {!selected ? (
+                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground text-sm gap-2 py-12">
+                  <Palette size={28} className="opacity-30" />
+                  <p>Selecciona un elemento para editar sus propiedades</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Propiedades — {selected.type === "text" ? "Texto" : "Imagen"}
+                  </p>
+
+                  {/* ─ Propiedades de texto ─ */}
+                  {selected.type === "text" && (
+                    <>
+                      {/* Fuente */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tipografía</Label>
+                        <Select
+                          value={selected.style.fontFamily}
+                          onValueChange={(v) => updateStyle(selected.id, { fontFamily: v })}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FONTS.map((f) => (
+                              <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                                {f.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Tamaño */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">Tamaño</Label>
+                          <span className="text-xs text-muted-foreground">{selected.style.fontSize}px</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateStyle(selected.id, { fontSize: Math.max(8, selected.style.fontSize - 2) })}
+                          >
+                            <Minus size={10} />
+                          </Button>
+                          <Slider
+                            min={8}
+                            max={120}
+                            step={1}
+                            value={[selected.style.fontSize]}
+                            onValueChange={([v]) => updateStyle(selected.id, { fontSize: v })}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateStyle(selected.id, { fontSize: Math.min(120, selected.style.fontSize + 2) })}
+                          >
+                            <Plus size={10} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Bold / Italic / Align */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Estilo y alineación</Label>
+                        <div className="flex gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={selected.style.fontWeight === "bold" ? "default" : "outline"}
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateStyle(selected.id, { fontWeight: selected.style.fontWeight === "bold" ? "normal" : "bold" })}
+                              >
+                                <Bold size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Negrita</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={selected.style.fontStyle === "italic" ? "default" : "outline"}
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateStyle(selected.id, { fontStyle: selected.style.fontStyle === "italic" ? "normal" : "italic" })}
+                              >
+                                <Italic size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Cursiva</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={selected.style.textAlign === "left" ? "default" : "outline"}
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateStyle(selected.id, { textAlign: "left" })}
+                              >
+                                <AlignLeft size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Izquierda</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={selected.style.textAlign === "center" ? "default" : "outline"}
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateStyle(selected.id, { textAlign: "center" })}
+                              >
+                                <AlignCenter size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Centrar</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={selected.style.textAlign === "right" ? "default" : "outline"}
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateStyle(selected.id, { textAlign: "right" })}
+                              >
+                                <AlignRight size={12} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Derecha</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+
+                      {/* Color de texto */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Color de texto</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={selected.style.color}
+                            onChange={(e) => updateStyle(selected.id, { color: e.target.value })}
+                            className="w-8 h-8 cursor-pointer rounded border border-input"
+                          />
+                          <span className="text-xs text-muted-foreground">{selected.style.color}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* ─ Color / fondo del elemento ─ */}
+                  <div className="space-y-1">
+                    <Label className="text-xs">Color de fondo del elemento</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={selected.style.backgroundColor === "transparent" ? "#ffffff" : selected.style.backgroundColor}
+                        onChange={(e) => updateStyle(selected.id, { backgroundColor: e.target.value })}
+                        className="w-8 h-8 cursor-pointer rounded border border-input"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => updateStyle(selected.id, { backgroundColor: "transparent" })}
+                      >
+                        Transparente
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* ─ Opacidad ─ */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Opacidad</Label>
+                      <span className="text-xs text-muted-foreground">{Math.round(selected.style.opacity * 100)}%</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={[selected.style.opacity]}
+                      onValueChange={([v]) => updateStyle(selected.id, { opacity: v })}
+                    />
+                  </div>
+
+                  {/* ─ Border radius ─ */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Redondez</Label>
+                      <span className="text-xs text-muted-foreground">{selected.style.borderRadius}px</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={60}
+                      step={1}
+                      value={[selected.style.borderRadius]}
+                      onValueChange={([v]) => updateStyle(selected.id, { borderRadius: v })}
+                    />
+                  </div>
+
+                  {/* ─ Dimensiones ─ */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Ancho</Label>
+                      <Input
+                        type="number"
+                        value={Math.round(selected.width)}
+                        onChange={(e) => updateElement(selected.id, { width: Number(e.target.value) || selected.width })}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Alto</Label>
+                      <Input
+                        type="number"
+                        value={Math.round(selected.height)}
+                        onChange={(e) => updateElement(selected.id, { height: Number(e.target.value) || selected.height })}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* ─ Orden Z ─ */}
+                  <div className="space-y-1">
+                    <Label className="text-xs">Orden (capas)</Label>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 h-7 text-xs" onClick={bringForward}>
+                        <ChevronUp size={12} className="mr-1" /> Al frente
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 h-7 text-xs" onClick={sendBackward}>
+                        <ChevronDown size={12} className="mr-1" /> Atrás
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <Button variant="destructive" size="sm" className="w-full" onClick={deleteSelected}>
+                    <Trash2 size={13} className="mr-1" /> Eliminar elemento
+                  </Button>
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+      </TooltipProvider>
+    </>
+  )
+}
+
+// ─── Sub-componente: elemento en el canvas ────────────────────────────────────
+
+interface CanvasElementProps {
+  el: FlayerElement
+  isSelected: boolean
+  isEditing: boolean
+  onPointerDown: (e: React.PointerEvent) => void
+  onResizePointerDown: (e: React.PointerEvent) => void
+  onDoubleClick: () => void
+  onBlur: () => void
+  onChange: (content: string) => void
+}
+
+function CanvasElement({
+  el,
+  isSelected,
+  isEditing,
+  onPointerDown,
+  onResizePointerDown,
+  onDoubleClick,
+  onBlur,
+  onChange,
+}: CanvasElementProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus()
+      textareaRef.current.select()
+    }
+  }, [isEditing])
+
+  const boxStyle: React.CSSProperties = {
+    position: "absolute",
+    left: el.x,
+    top: el.y,
+    width: el.width,
+    height: el.height,
+    zIndex: el.zIndex,
+    opacity: el.style.opacity,
+    borderRadius: el.style.borderRadius,
+    backgroundColor: el.style.backgroundColor,
+    outline: isSelected ? "2px solid hsl(var(--primary))" : "2px solid transparent",
+    outlineOffset: 2,
+    cursor: "grab",
+    overflow: "hidden",
+    userSelect: "none",
+  }
+
+  if (el.type === "image") {
+    return (
+      <div style={boxStyle} onPointerDown={onPointerDown} onDoubleClick={onDoubleClick}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={el.content}
+          alt=""
+          draggable={false}
+          style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", borderRadius: el.style.borderRadius }}
+        />
+        {isSelected && <ResizeHandle onPointerDown={onResizePointerDown} />}
+      </div>
+    )
+  }
+
+  // Text element
+  const textStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    fontSize: el.style.fontSize,
+    fontFamily: el.style.fontFamily,
+    fontWeight: el.style.fontWeight,
+    fontStyle: el.style.fontStyle,
+    textAlign: el.style.textAlign,
+    color: el.style.color,
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+    lineHeight: 1.4,
+    padding: "4px 6px",
+    boxSizing: "border-box",
+  }
+
+  return (
+    <div style={boxStyle} onPointerDown={onPointerDown} onDoubleClick={onDoubleClick}>
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={el.content}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            ...textStyle,
+            resize: "none",
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            cursor: "text",
+          }}
+        />
+      ) : (
+        <div style={textStyle}>{el.content}</div>
+      )}
+      {isSelected && <ResizeHandle onPointerDown={onResizePointerDown} />}
+    </div>
+  )
+}
+
+function ResizeHandle({ onPointerDown }: { onPointerDown: (e: React.PointerEvent) => void }) {
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      style={{
+        position: "absolute",
+        right: 0,
+        bottom: 0,
+        width: 14,
+        height: 14,
+        background: "hsl(var(--primary))",
+        borderRadius: "3px 0 4px 0",
+        cursor: "nwse-resize",
+        zIndex: 9999,
+      }}
+    />
+  )
+}

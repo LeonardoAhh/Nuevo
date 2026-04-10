@@ -35,7 +35,7 @@ export default function HeroDashboard() {
           className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-3 opacity-0 hero-fade-up-item"
           style={{ animationDelay: "250ms" }}
         >
-          VIÑOPLASTIC<br className="hidden sm:block" />
+          VIÑOPLASTIC<br />
           <span className="text-blue-400">Planta Querétaro</span>
         </h1>
       </div>
