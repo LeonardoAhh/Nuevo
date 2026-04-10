@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { Check, RefreshCw } from "lucide-react"
-import { useTheme } from "@/components/theme-context"
+import { useTheme, DEFAULT_CUSTOM_COLOR } from "@/components/theme-context"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +41,7 @@ export function ColorPicker({ onColorChange }: ColorPickerProps) {
   }
 
   const handleResetColor = () => {
-    setTempColor("#3b82f6") // Reset to default blue
+    setTempColor(DEFAULT_CUSTOM_COLOR) // Reset to default blue
   }
 
   return (
@@ -91,7 +91,7 @@ export function ColorPicker({ onColorChange }: ColorPickerProps) {
           <div
             className="text-sm font-medium"
             style={{
-              color: useTheme().isColorLight(tempColor) ? "#000000" : "#ffffff",
+              color: useTheme().isColorLight(tempColor) ? "hsl(var(--foreground))" : "hsl(var(--primary-foreground))",
             }}
           >
             Color Preview
@@ -99,7 +99,7 @@ export function ColorPicker({ onColorChange }: ColorPickerProps) {
         </div>
         <Button
           className="hover:bg-opacity-90"
-          style={{ backgroundColor: tempColor, color: useTheme().isColorLight(tempColor) ? "#000000" : "#ffffff" }}
+          style={{ backgroundColor: tempColor, color: useTheme().isColorLight(tempColor) ? "hsl(var(--foreground))" : "hsl(var(--primary-foreground))" }}
         >
           Button Preview
         </Button>

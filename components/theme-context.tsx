@@ -3,9 +3,11 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "light" | "dark"
-type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
-type FontSize = "small" | "medium" | "large"
+export type Theme = "light" | "dark"
+export type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
+export type FontSize = "small" | "medium" | "large"
+
+export const DEFAULT_CUSTOM_COLOR = "#3b82f6"
 
 const FONT_SIZE_MAP: Record<FontSize, string> = {
   small: "14px",
@@ -30,7 +32,7 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-const ACCENT_COLOR_MAP = {
+export const ACCENT_COLOR_MAP: Record<Exclude<AccentColor, "custom">, { primary: string; primaryForeground: string }> = {
   blue: {
     primary: "221.2 83.2% 53.3%",
     primaryForeground: "210 40% 98%",
@@ -135,7 +137,7 @@ function isColorLight(hex?: string): boolean {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [accentColor, setAccentColor] = useState<AccentColor>("blue")
-  const [customColor, setCustomColor] = useState<string>("#3b82f6")
+  const [customColor, setCustomColor] = useState<string>(DEFAULT_CUSTOM_COLOR)
   const [fontSize, setFontSize] = useState<FontSize>("medium")
   const [reducedMotion, setReducedMotion] = useState<boolean>(false)
 

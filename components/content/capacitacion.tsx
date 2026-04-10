@@ -27,6 +27,7 @@ import {
   UserPlus,
   Plus,
   Minus,
+  Layers,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -88,7 +89,7 @@ export default function CapacitacionContent() {
     parseJSON, importData,
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
-    clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee, addCoursesToEmployee,
+    clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee, addCoursesToEmployee, bulkImportCourseRecords,
   } = useCapacitacion()
 
   // ── Estado: Importar catálogo ─────────────────────────────────────────────
@@ -229,7 +230,7 @@ export default function CapacitacionContent() {
     )
     setNewEmpSaving(false)
     if (result.success) {
-      setNewEmpOpen(false); resetNewEmp(); setNewEmpSuccess(true); loadEmployees()
+      setNewEmpOpen(false); resetNewEmp(); setNewEmpSuccess(true); setEmpSearch(''); loadEmployees()
     } else {
       setNewEmpError(result.error ?? 'Error al guardar')
     }
@@ -250,6 +251,26 @@ export default function CapacitacionContent() {
       }
       return { ...r, [field]: value }
     }))
+
+  // ── Estado: Carga masiva de cursos ────────────────────────────────────────
+  type BulkCourseRow = {
+    id: number
+    numero: string
+    employeeId: string | null
+    employeeName: string
+    cursoRaw: string
+    courseId: string | null
+    fecha: string
+    calificacion: string
+  }
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkParseError, setBulkParseError] = useState<string | null>(null)
+  const [bulkRows, setBulkRows] = useState<BulkCourseRow[]>([])
+  const [bulkSaving, setBulkSaving] = useState(false)
+  const [bulkError, setBulkError] = useState<string | null>(null)
+  const [bulkSuccess, setBulkSuccess] = useState<number | null>(null)
+  const bulkFileRef = useRef<HTMLInputElement>(null)
 
   // ── Estado: Agregar cursos a empleado existente ────────────────────────────
   const [addCoursesDlgOpen, setAddCoursesDlgOpen] = useState(false)
@@ -304,6 +325,92 @@ export default function CapacitacionContent() {
       }
       return { ...r, [field]: value }
     }))
+
+  // ── Handlers: Carga masiva de cursos ─────────────────────────────────────
+  const parseBulkJSON = (text: string) => {
+    setBulkParseError(null)
+    try {
+      const parsed = JSON.parse(text)
+      const arr: any[] = Array.isArray(parsed) ? parsed : [parsed]
+      if (arr.length === 0) throw new Error('El JSON está vacío')
+      const rows: BulkCourseRow[] = arr.map((item, i) => {
+        const numero    = String(item.numero ?? item.nn ?? item.NN ?? '').trim()
+        const cursoRaw  = String(item.curso ?? item.course ?? item.Curso ?? '').trim()
+        const fecha     = String(item.fecha ?? item.date ?? item.Fecha ?? '').trim()
+        const calificacion = String(item.calificacion ?? item.Calificacion ?? item.score ?? '').trim()
+        const emp    = employees.find(e => (e.numero ?? '') === numero && numero !== '')
+        const course = courses.find(c => c.name === cursoRaw)
+                    ?? courses.find(c => c.name.toLowerCase() === cursoRaw.toLowerCase())
+        return { id: i, numero, employeeId: emp?.id ?? null, employeeName: emp?.nombre ?? '', cursoRaw, courseId: course?.id ?? null, fecha, calificacion }
+      })
+      setBulkRows(rows)
+    } catch (err) {
+      setBulkParseError(err instanceof Error ? err.message : 'JSON inválido')
+      setBulkRows([])
+    }
+  }
+
+  const handleBulkParse = () => {
+    if (courses.length === 0) loadCoursesData()
+    parseBulkJSON(bulkText)
+  }
+
+  const handleBulkFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const text = ev.target?.result as string
+      setBulkText(text)
+      setBulkParseError(null)
+      setBulkRows([])
+    }
+    reader.readAsText(file)
+    if (bulkFileRef.current) bulkFileRef.current.value = ''
+  }
+
+  const updateBulkRow = (id: number, field: 'numero' | 'fecha' | 'calificacion', value: string) => {
+    setBulkRows(prev => prev.map(r => {
+      if (r.id !== id) return r
+      const updated = { ...r, [field]: value }
+      if (field === 'numero') {
+        const emp = employees.find(e => (e.numero ?? '') === value && value !== '')
+        updated.employeeId = emp?.id ?? null
+        updated.employeeName = emp?.nombre ?? ''
+      }
+      return updated
+    }))
+  }
+
+  const selectBulkRowCourse = (id: number, courseId: string) => {
+    setBulkRows(prev => prev.map(r => {
+      if (r.id !== id) return r
+      const course = courses.find(c => c.id === courseId)
+      return { ...r, courseId: courseId || null, cursoRaw: course?.name ?? r.cursoRaw }
+    }))
+  }
+
+  const handleBulkImport = async () => {
+    const valid = bulkRows.filter(r => r.employeeId && r.courseId)
+    if (valid.length === 0) { setBulkError('No hay registros válidos con empleado y curso resueltos'); return }
+    setBulkSaving(true); setBulkError(null)
+    const records = valid.map(r => ({
+      employee_id:      r.employeeId!,
+      course_id:        r.courseId!,
+      raw_course_name:  r.cursoRaw,
+      fecha_aplicacion: r.fecha || null,
+      calificacion:     r.calificacion ? (parseInt(r.calificacion) || null) : null,
+    }))
+    const result = await bulkImportCourseRecords(records)
+    setBulkSaving(false)
+    if (result.success) {
+      setBulkSuccess(result.inserted)
+      setBulkRows([])
+      setBulkText('')
+    } else {
+      setBulkError(result.error ?? 'Error al importar')
+    }
+  }
 
   // ── Handlers: Importar catálogo ───────────────────────────────────────────
   const handleParse = useCallback(() => {
@@ -418,11 +525,18 @@ export default function CapacitacionContent() {
     }
   }
 
-  const filteredEmployees = employees.filter(e =>
-    e.nombre.toLowerCase().includes(empSearch.toLowerCase()) ||
-    (e.departamento ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
-    (e.puesto ?? '').toLowerCase().includes(empSearch.toLowerCase())
-  )
+  const filteredEmployees = employees
+    .filter(e =>
+      e.nombre.toLowerCase().includes(empSearch.toLowerCase()) ||
+      (e.numero ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
+      (e.departamento ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
+      (e.puesto ?? '').toLowerCase().includes(empSearch.toLowerCase())
+    )
+    .sort((a, b) => {
+      const na = parseInt(a.numero ?? '0', 10)
+      const nb = parseInt(b.numero ?? '0', 10)
+      return nb - na
+    })
 
   // ── Grupos de matches ─────────────────────────────────────────────────────
   // ─────────────────────────────────────────────────────────────────────────
@@ -455,10 +569,10 @@ export default function CapacitacionContent() {
 
         {/* ── TAB: PUESTOS ──────────────────────────────────────────────────── */}
         <TabsContent value="puestos">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="bg-card ">
             <CardHeader>
-              <CardTitle className="dark:text-white">Puestos registrados</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardTitle className="">Puestos registrados</CardTitle>
+              <CardDescription className="">
                 Consulta los puestos y sus cursos requeridos por departamento.
               </CardDescription>
             </CardHeader>
@@ -469,14 +583,14 @@ export default function CapacitacionContent() {
                   <Input
                     placeholder=""
                     value={posSearch} onChange={e => setPosSearch(e.target.value)}
-                    className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    className="pl-9 bg-muted  text-foreground"
                   />
                 </div>
                 <Select value={selectedDept} onValueChange={setSelectedDept}>
-                  <SelectTrigger className="w-full sm:w-56 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="w-full sm:w-56 bg-muted  text-foreground">
                     <SelectValue placeholder="" />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="bg-card ">
                     <SelectItem value="all">Todos los departamentos</SelectItem>
                     {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                   </SelectContent>
@@ -488,32 +602,32 @@ export default function CapacitacionContent() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                 </div>
               ) : filteredPositions.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-muted-foreground">
                   {positions.length === 0
                     ? "No hay puestos cargados. Usa la pestaña Importar para cargar datos."
                     : "No se encontraron puestos con ese filtro."}
                 </div>
               ) : (
-                <div className="rounded-xl border dark:border-gray-700 overflow-x-auto">
+                <div className="rounded-xl border  overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                        <TableHead className="dark:text-gray-400">Puesto</TableHead>
-                        <TableHead className="dark:text-gray-400">Departamento</TableHead>
-                        <TableHead className="dark:text-gray-400 text-right">Acciones</TableHead>
+                      <TableRow className=" bg-background/50">
+                        <TableHead className="">Puesto</TableHead>
+                        <TableHead className="">Departamento</TableHead>
+                        <TableHead className=" text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredPositions.map(pos => (
-                        <TableRow key={pos.id} className="dark:border-gray-700 hover:dark:bg-gray-700/50">
-                          <TableCell className="font-medium dark:text-gray-200">{pos.name}</TableCell>
+                        <TableRow key={pos.id} className=" hover:bg-muted/50">
+                          <TableCell className="font-medium text-foreground">{pos.name}</TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
+                            <Badge variant="secondary" className="bg-muted text-foreground">
                               {(pos.department as any)?.name ?? "—"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
+                            <Button variant="ghost" size="sm" className="gap-1 text-foreground dark:hover:bg-gray-700"
                               onClick={() => handleViewCourses(pos)}>
                               Ver cursos <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -524,7 +638,7 @@ export default function CapacitacionContent() {
                   </Table>
                 </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {filteredPositions.length} de {positions.length} puestos
               </p>
             </CardContent>
@@ -533,10 +647,10 @@ export default function CapacitacionContent() {
 
         {/* ── TAB: CURSOS ───────────────────────────────────────────────────── */}
         <TabsContent value="cursos">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="bg-card ">
             <CardHeader>
-              <CardTitle className="dark:text-white">Catálogo de cursos</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardTitle className="">Catálogo de cursos</CardTitle>
+              <CardDescription className="">
                 Todos los cursos únicos registrados en el sistema.
               </CardDescription>
             </CardHeader>
@@ -546,7 +660,7 @@ export default function CapacitacionContent() {
                 <Input
                   placeholder=""
                   value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
-                  className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="pl-9 bg-muted  text-foreground"
                 />
               </div>
               {loadingCourses ? (
@@ -554,21 +668,21 @@ export default function CapacitacionContent() {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                 </div>
               ) : filteredCourses.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-muted-foreground">
                   {courses.length === 0 ? "No hay cursos registrados. Importa datos primero." : "No se encontraron cursos."}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {filteredCourses.map((course, idx) => (
-                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg border dark:border-gray-700 dark:bg-gray-900/30">
+                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg border  bg-background/30">
                       <span className="text-xs font-mono text-gray-400 w-6 text-right shrink-0">{idx + 1}</span>
                       <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                      <span className="text-sm dark:text-gray-200 leading-tight">{course.name}</span>
+                      <span className="text-sm text-foreground leading-tight">{course.name}</span>
                     </div>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {filteredCourses.length} de {courses.length} cursos
               </p>
             </CardContent>
@@ -590,30 +704,46 @@ export default function CapacitacionContent() {
             )}
 
             {/* ── Lista de empleados ────────────────────────────────────────── */}
-            <Card className="dark:bg-gray-800 dark:border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <div>
-                  <CardTitle className="dark:text-white">Empleados</CardTitle>
-                  <CardDescription className="dark:text-gray-400">
-                    Registro de cursos tomados por empleado.
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="hidden gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                    onClick={() => setConfirmClearOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4" /> Borrar
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => { setNewEmpSuccess(false); resetNewEmp(); setNewEmpOpen(true) }}
-                  >
-                    <UserPlus className="h-4 w-4" /> Nuevo empleado
-                  </Button>
+            <Card className="bg-card ">
+              <CardHeader className="pb-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="">Empleados</CardTitle>
+                    <CardDescription className="">
+                      Registro de cursos tomados por empleado.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="hidden gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      onClick={() => setConfirmClearOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4" /> Borrar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={() => {
+                        setBulkSuccess(null); setBulkError(null); setBulkParseError(null)
+                        setBulkRows([]); setBulkText(''); setBulkOpen(true)
+                        if (courses.length === 0) loadCoursesData()
+                      }}
+                    >
+                      <Layers className="h-4 w-4" />
+                      <span className="hidden sm:inline">Carga masiva</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => { setNewEmpSuccess(false); resetNewEmp(); setNewEmpOpen(true) }}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Nuevo empleado</span>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -621,7 +751,7 @@ export default function CapacitacionContent() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-                    className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    className="pl-9 bg-muted  text-foreground"
                   />
                 </div>
                 {loadingEmployees ? (
@@ -629,68 +759,77 @@ export default function CapacitacionContent() {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                   </div>
                 ) : filteredEmployees.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-12 text-muted-foreground">
                     {employees.length === 0
                       ? "Sin empleados registrados. Usa el botón \"Nuevo empleado\" para agregar."
                       : "No se encontraron empleados con esa búsqueda."}
                   </div>
                 ) : (
-                  <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
+                  <div className="rounded-xl border overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                          <TableHead className="dark:text-gray-400">Empleado</TableHead>
-                          <TableHead className="dark:text-gray-400 hidden sm:table-cell">Puesto</TableHead>
-                          <TableHead className="dark:text-gray-400 hidden md:table-cell">Departamento</TableHead>
-                          <TableHead className="dark:text-gray-400 text-right">Acciones</TableHead>
+                        <TableRow className="bg-background/50">
+                          <TableHead className="w-14 hidden sm:table-cell">N.N.</TableHead>
+                          <TableHead>Empleado</TableHead>
+                          <TableHead className="hidden sm:table-cell">Puesto</TableHead>
+                          <TableHead className="hidden md:table-cell">Departamento</TableHead>
+                          <TableHead className="text-right w-28 sm:w-auto">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredEmployees.map(emp => (
-                          <TableRow key={emp.id} className="dark:border-gray-700 hover:dark:bg-gray-700/50">
-                            <TableCell className="font-medium dark:text-gray-200">{emp.nombre}</TableCell>
-                            <TableCell className="dark:text-gray-400 text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
+                          <TableRow key={emp.id} className="hover:bg-muted/50">
+                            <TableCell className="text-sm text-muted-foreground font-mono hidden sm:table-cell">{emp.numero ?? "—"}</TableCell>
+                            <TableCell className="font-medium text-foreground">
+                              <div className="flex flex-col">
+                                <span>{emp.nombre}</span>
+                                <span className="text-xs text-muted-foreground font-mono sm:hidden">{emp.numero ?? ""}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
                             <TableCell className="hidden md:table-cell">
                               {emp.departamento && (
-                                <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300 text-xs">
+                                <Badge variant="secondary" className="bg-muted text-foreground text-xs">
                                   {emp.departamento}
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
+                            <TableCell className="text-right p-2">
+                              <div className="flex items-center justify-end gap-0.5">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="gap-1 text-xs dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
                                   onClick={() => openAddCoursesDlg(emp)}
+                                  title="Agregar cursos"
                                 >
-                                  <BookOpen className="h-3.5 w-3.5" />
-                                  <span className="hidden sm:inline">Cursos</span>
-                                  <Plus className="h-3 w-3" />
+                                  <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="hidden sm:inline text-xs">+Curso</span>
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  className="h-8 w-8 p-0 text-foreground"
                                   onClick={() => openEditEmpDlg(emp)}
-                                  title="Editar empleado"
+                                  title="Editar"
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="gap-1 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
                                   onClick={() => handleViewEmployee(emp)}
+                                  title="Ver detalle"
                                 >
-                                  Ver <ChevronRight className="h-4 w-4" />
+                                  <ChevronRight className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                                   onClick={() => { setDeleteEmpError(null); setDeleteEmpTarget(emp) }}
+                                  title="Eliminar"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -702,7 +841,7 @@ export default function CapacitacionContent() {
                     </Table>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {filteredEmployees.length} de {employees.length} empleados
                 </p>
               </CardContent>
@@ -728,33 +867,33 @@ export default function CapacitacionContent() {
               </Alert>
             )}
 
-            <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <Card className="bg-card ">
               <CardHeader>
-                <CardTitle className="dark:text-white">Cargar catálogo JSON</CardTitle>
-                <CardDescription className="dark:text-gray-400">
+                <CardTitle className="">Cargar catálogo JSON</CardTitle>
+                <CardDescription className="">
                   Estructura con{" "}
-                  <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">position</code>,{" "}
-                  <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">department</code> y{" "}
-                  <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">requiredCourses_*</code>.
+                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">position</code>,{" "}
+                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">department</code> y{" "}
+                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">requiredCourses_*</code>.
                   Los campos vacíos se ignorarán automáticamente.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div
-                  className="border-2 border-dashed dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors"
+                  className="border-2 border-dashed  rounded-lg p-8 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <FileJson className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-                  <p className="text-sm font-medium dark:text-gray-200">Arrastra un archivo JSON o haz clic para seleccionar</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Solo archivos .json</p>
+                  <FileJson className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground">Arrastra un archivo JSON o haz clic para seleccionar</p>
+                  <p className="text-xs text-muted-foreground mt-1">Solo archivos .json</p>
                   <input ref={fileInputRef} type="file" accept=".json,application/json"
                     onChange={handleFileUpload} className="hidden" />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Separator className="flex-1 dark:bg-gray-700" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">o pega el JSON</span>
-                  <Separator className="flex-1 dark:bg-gray-700" />
+                  <Separator className="flex-1 bg-muted" />
+                  <span className="text-xs text-muted-foreground">o pega el JSON</span>
+                  <Separator className="flex-1 bg-muted" />
                 </div>
 
                 <textarea
@@ -762,12 +901,12 @@ export default function CapacitacionContent() {
                   onChange={e => { setJsonText(e.target.value); setPreview(null); setParseError(null) }}
                   placeholder='[{ "position": "...", "department": "...", "requiredCourses_1": "..." }]'
                   rows={8}
-                  className="w-full rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-xl border  bg-muted text-foreground p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
                 />
 
                 <div className="flex gap-2 justify-end">
                   {(jsonText || preview || importSuccess) && (
-                    <Button variant="outline" onClick={handleReset} className="gap-2 dark:border-gray-600 dark:text-gray-200">
+                    <Button variant="outline" onClick={handleReset} className="gap-2  text-foreground">
                       <RotateCcw className="h-4 w-4" /> Limpiar
                     </Button>
                   )}
@@ -779,13 +918,13 @@ export default function CapacitacionContent() {
             </Card>
 
             {preview && (
-              <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <Card className="bg-card ">
                 <CardHeader>
-                  <CardTitle className="dark:text-white flex items-center gap-2">
+                  <CardTitle className=" flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                     Vista previa de importación
                   </CardTitle>
-                  <CardDescription className="dark:text-gray-400">
+                  <CardDescription className="">
                     Revisa los datos antes de confirmar. Se usará upsert: no se duplicarán registros existentes.
                   </CardDescription>
                 </CardHeader>
@@ -797,43 +936,43 @@ export default function CapacitacionContent() {
                       { label: "Puestos",        value: preview.positions.length,   Icon: Briefcase },
                       { label: "Cursos únicos",  value: preview.courses.length,     Icon: BookOpen },
                     ].map(({ label, value, Icon }) => (
-                      <div key={label} className="rounded-lg border dark:border-gray-700 p-3 text-center">
+                      <div key={label} className="rounded-lg border  p-3 text-center">
                         <Icon className="h-5 w-5 mx-auto mb-1 text-primary" />
-                        <p className="text-xl font-bold dark:text-white">{value}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+                        <p className="text-xl font-bold ">{value}</p>
+                        <p className="text-xs text-muted-foreground">{label}</p>
                       </div>
                     ))}
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium dark:text-gray-200 mb-2">Departamentos detectados</p>
+                    <p className="text-sm font-medium text-foreground mb-2">Departamentos detectados</p>
                     <div className="flex flex-wrap gap-2">
                       {preview.departments.map(d => (
-                        <Badge key={d} variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">{d}</Badge>
+                        <Badge key={d} variant="secondary" className="bg-muted text-foreground">{d}</Badge>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium dark:text-gray-200 mb-2">
+                    <p className="text-sm font-medium text-foreground mb-2">
                       Puestos (mostrando {Math.min(5, preview.positions.length)} de {preview.positions.length})
                     </p>
-                    <div className="rounded-xl border dark:border-gray-700 overflow-hidden">
+                    <div className="rounded-xl border  overflow-hidden">
                       <Table>
                         <TableHeader>
-                          <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                            <TableHead className="dark:text-gray-400">Puesto</TableHead>
-                            <TableHead className="dark:text-gray-400">Departamento</TableHead>
-                            <TableHead className="dark:text-gray-400 text-right">Cursos</TableHead>
+                          <TableRow className=" bg-background/50">
+                            <TableHead className="">Puesto</TableHead>
+                            <TableHead className="">Departamento</TableHead>
+                            <TableHead className=" text-right">Cursos</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {preview.positions.slice(0, 5).map((pos, i) => (
-                            <TableRow key={i} className="dark:border-gray-700">
-                              <TableCell className="font-medium dark:text-gray-200 text-sm">{pos.name}</TableCell>
-                              <TableCell className="dark:text-gray-400 text-sm">{pos.department}</TableCell>
+                            <TableRow key={i} className="">
+                              <TableCell className="font-medium text-foreground text-sm">{pos.name}</TableCell>
+                              <TableCell className=" text-sm">{pos.department}</TableCell>
                               <TableCell className="text-right">
-                                <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">{pos.courses.length}</Badge>
+                                <Badge variant="outline" className=" text-foreground">{pos.courses.length}</Badge>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -860,13 +999,13 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Agregar cursos a empleado ────────────────────────────── */}
       <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) setAddCoursesError(null); setAddCoursesDlgOpen(open) }}>
-        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-lg bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
+            <DialogTitle className=" flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
               Agregar cursos
             </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
+            <DialogDescription className="">
               {addCoursesDlgEmp?.nombre}
               {addCoursesDlgEmp?.puesto ? ` · ${addCoursesDlgEmp.puesto}` : ''}
             </DialogDescription>
@@ -888,15 +1027,15 @@ export default function CapacitacionContent() {
               <>
                 <div className="space-y-2">
                   {addCoursesRows.map((row, i) => (
-                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border  bg-gray-50 bg-background/40">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 space-y-1">
-                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Curso</label>
+                          <label className="text-xs font-medium text-muted-foreground">Curso</label>
                           <Select value={row.course_id} onValueChange={v => updateAddCoursesRow(i, 'course_id', v)}>
-                            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+                            <SelectTrigger className="bg-muted  text-foreground text-sm">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                            <SelectContent className="bg-card  max-h-60">
                               {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
                             </SelectContent>
                           </Select>
@@ -904,7 +1043,7 @@ export default function CapacitacionContent() {
                         {addCoursesRows.length > 1 && (
                           <button
                             onClick={() => removeAddCoursesRow(i)}
-                            className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -912,19 +1051,19 @@ export default function CapacitacionContent() {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Fecha aplicación</label>
+                          <label className="text-xs font-medium text-muted-foreground">Fecha aplicación</label>
                           <Input type="date"
                             value={row.fecha_aplicacion}
                             onChange={e => updateAddCoursesRow(i, 'fecha_aplicacion', e.target.value)}
-                            className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            className="bg-muted text-foreground"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Calificación</label>
+                          <label className="text-xs font-medium text-muted-foreground">Calificación</label>
                           <Input type="number" min="0" max="100"
                             value={row.calificacion}
                             onChange={e => updateAddCoursesRow(i, 'calificacion', e.target.value)}
-                            className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                            className="text-sm bg-muted  text-foreground"
                           />
                         </div>
                       </div>
@@ -932,7 +1071,7 @@ export default function CapacitacionContent() {
                   ))}
                 </div>
                 <Button variant="outline" size="sm" onClick={addAddCoursesRow}
-                  className="w-full gap-2 dark:border-gray-600 dark:text-gray-200">
+                  className="w-full gap-2  text-foreground">
                   <Plus className="h-4 w-4" /> Agregar otro curso
                 </Button>
               </>
@@ -941,7 +1080,7 @@ export default function CapacitacionContent() {
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setAddCoursesDlgOpen(false)}
-              className="dark:border-gray-600 dark:text-gray-200">
+              className=" text-foreground">
               Cancelar
             </Button>
             <Button onClick={handleSaveAddCourses} disabled={isReadOnly || addCoursesSaving} className="gap-2">
@@ -954,23 +1093,232 @@ export default function CapacitacionContent() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Dialog: Carga masiva de cursos ───────────────────────────────── */}
+      <Dialog open={bulkOpen} onOpenChange={open => { if (!open) { setBulkRows([]); setBulkError(null); setBulkParseError(null) } setBulkOpen(open) }}>
+        <DialogContent className="sm:max-w-2xl bg-card">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              Carga masiva de cursos
+            </DialogTitle>
+            <DialogDescription>
+              Importa cursos tomados por múltiples empleados desde un archivo JSON.
+            </DialogDescription>
+          </DialogHeader>
+
+          {bulkSuccess !== null && (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                {bulkSuccess} registros importados correctamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {bulkError && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{bulkError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* ── Fase 1: Entrada JSON ──────────────────────────────────────── */}
+          {bulkRows.length === 0 && bulkSuccess === null && (
+            <div className="space-y-4">
+              <div className="rounded-xl border bg-muted p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Formato esperado:</p>
+                <pre className="text-xs text-foreground font-mono overflow-x-auto whitespace-pre-wrap">{`[
+  { "numero": "1234", "curso": "Seguridad Industrial", "fecha": "2025-03-15", "calificacion": 85 },
+  { "numero": "5678", "curso": "Calidad Total", "fecha": "2025-04-01" }
+]`}</pre>
+              </div>
+
+              {bulkParseError && (
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{bulkParseError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div
+                className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                onClick={() => bulkFileRef.current?.click()}
+              >
+                <FileJson className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">Haz clic para seleccionar un archivo JSON</p>
+                <p className="text-xs text-muted-foreground mt-1">Solo archivos .json</p>
+                <input ref={bulkFileRef} type="file" accept=".json,application/json" onChange={handleBulkFile} className="hidden" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Separator className="flex-1 bg-muted" />
+                <span className="text-xs text-muted-foreground">o pega el JSON</span>
+                <Separator className="flex-1 bg-muted" />
+              </div>
+
+              <textarea
+                value={bulkText}
+                onChange={e => { setBulkText(e.target.value); setBulkParseError(null) }}
+                placeholder='[{ "numero": "1234", "curso": "...", "fecha": "2025-01-01", "calificacion": 90 }]'
+                rows={6}
+                className="w-full rounded-xl border bg-muted text-foreground p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              <div className="flex justify-end">
+                <Button onClick={handleBulkParse} disabled={!bulkText.trim()} className="gap-2">
+                  <Search className="h-4 w-4" /> Previsualizar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Fase 2: Preview editable ──────────────────────────────────── */}
+          {bulkRows.length > 0 && (() => {
+            const validCount = bulkRows.filter(r => r.employeeId && r.courseId).length
+            const invalidCount = bulkRows.length - validCount
+            return (
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 text-sm flex-wrap">
+                  <span className="text-muted-foreground">{bulkRows.length} registros</span>
+                  <span className="text-green-600 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {validCount} válidos
+                  </span>
+                  {invalidCount > 0 && (
+                    <span className="text-yellow-600 font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3.5 w-3.5" /> {invalidCount} con errores
+                    </span>
+                  )}
+                </div>
+
+                <div className="rounded-xl border overflow-hidden">
+                  <div className="overflow-y-auto max-h-72">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-background/50 sticky top-0 z-10">
+                          <TableHead className="w-20">N.N.</TableHead>
+                          <TableHead>Empleado</TableHead>
+                          <TableHead>Curso</TableHead>
+                          <TableHead className="w-32">Fecha</TableHead>
+                          <TableHead className="w-20">Cal.</TableHead>
+                          <TableHead className="w-8 text-center"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bulkRows.map(row => {
+                          const isOk = !!(row.employeeId && row.courseId)
+                          const noEmp = !row.employeeId
+                          return (
+                            <TableRow key={row.id} className={isOk ? '' : 'bg-yellow-50/30 dark:bg-yellow-900/10'}>
+                              <TableCell className="p-1.5">
+                                <Input
+                                  value={row.numero}
+                                  onChange={e => updateBulkRow(row.id, 'numero', e.target.value)}
+                                  className="h-8 font-mono text-xs bg-muted text-foreground"
+                                />
+                              </TableCell>
+                              <TableCell className="p-1.5 max-w-[140px]">
+                                <span className={`text-xs leading-tight block truncate ${noEmp ? 'text-destructive font-medium' : 'text-foreground'}`}>
+                                  {noEmp
+                                    ? (row.numero ? `"${row.numero}" no encontrado` : 'Sin número')
+                                    : row.employeeName}
+                                </span>
+                              </TableCell>
+                              <TableCell className="p-1.5 min-w-[160px]">
+                                <Select value={row.courseId ?? ''} onValueChange={v => selectBulkRowCourse(row.id, v)}>
+                                  <SelectTrigger className="h-8 text-xs bg-muted text-foreground">
+                                    <SelectValue placeholder={row.cursoRaw || 'Selecciona curso'} />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-card max-h-48">
+                                    {courses.map(c => (
+                                      <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {!row.courseId && row.cursoRaw && (
+                                  <p className="text-xs text-yellow-600 mt-0.5 truncate" title={row.cursoRaw}>{row.cursoRaw}</p>
+                                )}
+                              </TableCell>
+                              <TableCell className="p-1.5">
+                                <Input
+                                  type="date"
+                                  value={row.fecha}
+                                  onChange={e => updateBulkRow(row.id, 'fecha', e.target.value)}
+                                  className="h-8 text-xs bg-muted text-foreground"
+                                />
+                              </TableCell>
+                              <TableCell className="p-1.5">
+                                <Input
+                                  type="number" min="0" max="100"
+                                  value={row.calificacion}
+                                  onChange={e => updateBulkRow(row.id, 'calificacion', e.target.value)}
+                                  className="h-8 text-xs bg-muted text-foreground"
+                                />
+                              </TableCell>
+                              <TableCell className="p-1.5 text-center">
+                                {isOk
+                                  ? <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
+                                  : <AlertTriangle className="h-4 w-4 text-yellow-500 mx-auto" />}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <button
+                  className="text-xs text-muted-foreground underline hover:text-foreground"
+                  onClick={() => { setBulkRows([]); setBulkError(null) }}
+                >
+                  ← Volver a editar JSON
+                </button>
+              </div>
+            )
+          })()}
+
+          {(bulkRows.length > 0 || bulkSuccess !== null) && (
+            <DialogFooter className="gap-3 flex-col sm:flex-row">
+              <Button variant="outline" onClick={() => setBulkOpen(false)} className="text-foreground">
+                {bulkSuccess !== null ? 'Cerrar' : 'Cancelar'}
+              </Button>
+              {bulkRows.length > 0 && (() => {
+                const validCount = bulkRows.filter(r => r.employeeId && r.courseId).length
+                return (
+                  <Button
+                    onClick={handleBulkImport}
+                    disabled={isReadOnly || bulkSaving || validCount === 0}
+                    className="gap-2"
+                  >
+                    {bulkSaving
+                      ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
+                      : <><Upload className="h-4 w-4" /> Importar {validCount} registros</>
+                    }
+                  </Button>
+                )
+              })()}
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* ── Dialog: Nuevo Empleado ───────────────────────────────────────── */}
       <Dialog open={newEmpOpen} onOpenChange={open => { if (!open) resetNewEmp(); setNewEmpOpen(open) }}>
-        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-lg bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
+            <DialogTitle className=" flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
               Nuevo empleado
             </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
+            <DialogDescription className="">
               Paso {newEmpStep} de 2 — {newEmpStep === 1 ? 'Datos del empleado' : 'Cursos tomados (opcional)'}
             </DialogDescription>
           </DialogHeader>
 
           {/* Indicador de pasos */}
           <div className="flex items-center gap-2 mb-1">
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-gray-200 bg-muted'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-gray-200 bg-muted'}`} />
           </div>
 
           {newEmpError && (
@@ -985,42 +1333,42 @@ export default function CapacitacionContent() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">N.N</label>
+                  <label className="text-xs font-medium text-muted-foreground">N.N</label>
                   <Input
                     value={newEmpForm.numero}
                     onChange={e => setNewEmpForm(f => ({ ...f, numero: e.target.value }))}
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    className="bg-muted  text-foreground"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Fecha de ingreso</label>
+                  <label className="text-xs font-medium text-muted-foreground">Fecha de ingreso</label>
                   <Input type="date"
                     value={newEmpForm.fecha_ingreso}
                     onChange={e => setNewEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                    className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    className="bg-muted text-foreground"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Nombre completo <span className="text-red-500">*</span></label>
+                <label className="text-xs font-medium text-muted-foreground">Nombre completo <span className="text-destructive">*</span></label>
                 <Input
                   value={newEmpForm.nombre}
                   onChange={e => setNewEmpForm(f => ({ ...f, nombre: e.target.value }))}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="bg-muted  text-foreground"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Departamento</label>
+                <label className="text-xs font-medium text-muted-foreground">Departamento</label>
                 <Select
                   value={newEmpForm.departamento}
                   onValueChange={v => setNewEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
                       <SelectItem key={d} value={d}>{d}</SelectItem>
                     ))}
@@ -1030,30 +1378,30 @@ export default function CapacitacionContent() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Área</label>
+                  <label className="text-xs font-medium text-muted-foreground">Área</label>
                   <Select
                     value={newEmpForm.area}
                     onValueChange={v => setNewEmpForm(f => ({ ...f, area: v }))}
                     disabled={newEmpAreas.length === 0}
                   >
-                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectTrigger className="bg-muted  text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                    <SelectContent className="bg-card  max-h-60">
                       {newEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Turno</label>
+                  <label className="text-xs font-medium text-muted-foreground">Turno</label>
                   <Select
                     value={newEmpForm.turno}
                     onValueChange={v => setNewEmpForm(f => ({ ...f, turno: v }))}
                   >
-                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectTrigger className="bg-muted  text-foreground">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectContent className="bg-card ">
                       {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -1061,31 +1409,31 @@ export default function CapacitacionContent() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Puesto</label>
+                <label className="text-xs font-medium text-muted-foreground">Puesto</label>
                 <Select
                   value={newEmpForm.puesto}
                   onValueChange={v => setNewEmpForm(f => ({ ...f, puesto: v }))}
                   disabled={newEmpPuestos.length === 0}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {newEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jefe directo</label>
+                <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
                 <Select
                   value={newEmpForm.jefe_directo}
                   onValueChange={v => setNewEmpForm(f => ({ ...f, jefe_directo: v }))}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -1103,50 +1451,50 @@ export default function CapacitacionContent() {
               ) : (
                 <>
                   {newEmpCourseRows.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                    <p className="text-sm text-muted-foreground text-center py-4">
                       Sin cursos agregados. Puedes guardar así o agregar cursos tomados.
                     </p>
                   ) : (
                     <div className="space-y-2">
                       {newEmpCourseRows.map((row, i) => (
-                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border  bg-gray-50 bg-background/40">
                           <div className="flex items-start gap-2">
                             <div className="flex-1 space-y-1">
-                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Curso</label>
+                              <label className="text-xs font-medium text-muted-foreground">Curso</label>
                               <Select
                                 value={row.course_id}
                                 onValueChange={v => updateCourseRow(i, 'course_id', v)}
                               >
-                                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+                                <SelectTrigger className="bg-muted  text-foreground text-sm">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                                <SelectContent className="bg-card  max-h-60">
                                   {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
                                 </SelectContent>
                               </Select>
                             </div>
                             <button
                               onClick={() => removeCourseRow(i)}
-                              className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
-                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Fecha aplicación</label>
+                              <label className="text-xs font-medium text-muted-foreground">Fecha aplicación</label>
                               <Input type="date"
                                 value={row.fecha_aplicacion}
                                 onChange={e => updateCourseRow(i, 'fecha_aplicacion', e.target.value)}
-                                className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                className="bg-muted text-foreground"
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Calificación</label>
+                              <label className="text-xs font-medium text-muted-foreground">Calificación</label>
                               <Input type="number" min="0" max="100"
                                 value={row.calificacion}
                                 onChange={e => updateCourseRow(i, 'calificacion', e.target.value)}
-                                className="text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                className="text-sm bg-muted  text-foreground"
                               />
                             </div>
                           </div>
@@ -1155,7 +1503,7 @@ export default function CapacitacionContent() {
                     </div>
                   )}
                   <Button variant="outline" size="sm" onClick={addCourseRow}
-                    className="w-full gap-2 dark:border-gray-600 dark:text-gray-200">
+                    className="w-full gap-2  text-foreground">
                     <Plus className="h-4 w-4" /> Agregar curso
                   </Button>
                 </>
@@ -1163,11 +1511,11 @@ export default function CapacitacionContent() {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
+          <DialogFooter className="gap-3 flex-col sm:flex-row">
             {newEmpStep === 1 ? (
               <>
                 <Button variant="outline" onClick={() => { resetNewEmp(); setNewEmpOpen(false) }}
-                  className="dark:border-gray-600 dark:text-gray-200">
+                  className=" text-foreground">
                   Cancelar
                 </Button>
                 <Button onClick={handleNewEmpNext}>
@@ -1177,7 +1525,7 @@ export default function CapacitacionContent() {
             ) : (
               <>
                 <Button variant="outline" onClick={() => setNewEmpStep(1)}
-                  className="dark:border-gray-600 dark:text-gray-200">
+                  className=" text-foreground">
                   ← Anterior
                 </Button>
                 <Button onClick={handleSaveNewEmp} disabled={isReadOnly || newEmpSaving} className="gap-2">
@@ -1194,14 +1542,14 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Confirmación borrar historial ─────────────────────────── */}
       <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-        <DialogContent className="sm:max-w-sm dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-sm bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-500" />
+            <DialogTitle className=" flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
               Borrar historial
             </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
-              Se eliminarán <strong className="dark:text-gray-200">{employees.length} empleados</strong> y
+            <DialogDescription className="">
+              Se eliminarán <strong className="text-foreground">{employees.length} empleados</strong> y
               todos sus registros de cursos tomados. Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
@@ -1215,7 +1563,7 @@ export default function CapacitacionContent() {
             <Button
               variant="outline"
               onClick={() => setConfirmClearOpen(false)}
-              className="dark:border-gray-600 dark:text-gray-200"
+              className=" text-foreground"
               disabled={importing}
             >
               Cancelar
@@ -1238,14 +1586,14 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Editar Empleado ──────────────────────────────────────── */}
       <Dialog open={editEmpOpen} onOpenChange={open => { if (!open) { setEditEmpOpen(false); setEditEmpTarget(null) } }}>
-        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-lg bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
+            <DialogTitle className=" flex items-center gap-2">
               <Pencil className="h-5 w-5 text-primary" />
               Editar empleado
             </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
-              Modifica los datos de <strong className="dark:text-gray-200">{editEmpTarget?.nombre}</strong>
+            <DialogDescription className="">
+              Modifica los datos de <strong className="text-foreground">{editEmpTarget?.nombre}</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -1259,58 +1607,58 @@ export default function CapacitacionContent() {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">N.N</label>
+                <label className="text-xs font-medium text-muted-foreground">N.N</label>
                 <Input
                   value={editEmpForm.numero}
                   onChange={e => setEditEmpForm(f => ({ ...f, numero: e.target.value }))}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="bg-muted  text-foreground"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Fecha de ingreso</label>
+                <label className="text-xs font-medium text-muted-foreground">Fecha de ingreso</label>
                 <Input type="date"
                   value={editEmpForm.fecha_ingreso}
                   onChange={e => setEditEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                  className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="bg-muted text-foreground"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Nombre completo <span className="text-red-500">*</span></label>
+              <label className="text-xs font-medium text-muted-foreground">Nombre completo <span className="text-destructive">*</span></label>
               <Input
                 value={editEmpForm.nombre}
                 onChange={e => setEditEmpForm(f => ({ ...f, nombre: e.target.value }))}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                className="bg-muted  text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Departamento</label>
+                <label className="text-xs font-medium text-muted-foreground">Departamento</label>
                 <Select
                   value={editEmpForm.departamento}
                   onValueChange={v => setEditEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Área</label>
+                <label className="text-xs font-medium text-muted-foreground">Área</label>
                 <Select
                   value={editEmpForm.area}
                   onValueChange={v => setEditEmpForm(f => ({ ...f, area: v }))}
                   disabled={editEmpAreas.length === 0}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {editEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -1318,16 +1666,16 @@ export default function CapacitacionContent() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Puesto</label>
+              <label className="text-xs font-medium text-muted-foreground">Puesto</label>
               <Select
                 value={editEmpForm.puesto}
                 onValueChange={v => setEditEmpForm(f => ({ ...f, puesto: v }))}
                 disabled={editEmpPuestos.length === 0}
               >
-                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger className="bg-muted  text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                <SelectContent className="bg-card  max-h-60">
                   {editEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -1335,29 +1683,29 @@ export default function CapacitacionContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Turno</label>
+                <label className="text-xs font-medium text-muted-foreground">Turno</label>
                 <Select
                   value={editEmpForm.turno}
                   onValueChange={v => setEditEmpForm(f => ({ ...f, turno: v }))}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="bg-card ">
                     {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Jefe directo</label>
+                <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
                 <Select
                   value={editEmpForm.jefe_directo}
                   onValueChange={v => setEditEmpForm(f => ({ ...f, jefe_directo: v }))}
                 >
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-muted  text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-60">
+                  <SelectContent className="bg-card  max-h-60">
                     {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -1370,7 +1718,7 @@ export default function CapacitacionContent() {
               variant="outline"
               onClick={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
               disabled={editEmpSaving}
-              className="dark:border-gray-600 dark:text-gray-200"
+              className=" text-foreground"
             >
               Cancelar
             </Button>
@@ -1386,14 +1734,14 @@ export default function CapacitacionContent() {
 
       {/* ── Confirmar borrar empleado individual ────────────────────────── */}
       <Dialog open={!!deleteEmpTarget} onOpenChange={(o) => { if (!o) setDeleteEmpTarget(null) }}>
-        <DialogContent className="sm:max-w-sm dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-sm bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-500" />
+            <DialogTitle className=" flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
               Eliminar empleado
             </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
-              Se eliminará a <strong className="dark:text-gray-200">{deleteEmpTarget?.nombre}</strong> y
+            <DialogDescription className="">
+              Se eliminará a <strong className="text-foreground">{deleteEmpTarget?.nombre}</strong> y
               todos sus datos del sistema: cursos, evaluaciones de desempeño, datos de promoción y nuevo ingreso.
               Esta acción no se puede deshacer.
             </DialogDescription>
@@ -1409,7 +1757,7 @@ export default function CapacitacionContent() {
               variant="outline"
               onClick={() => setDeleteEmpTarget(null)}
               disabled={deletingEmp}
-              className="dark:border-gray-600 dark:text-gray-200"
+              className=" text-foreground"
             >
               Cancelar
             </Button>
@@ -1443,10 +1791,10 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Cursos requeridos del puesto ──────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-lg bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white">{selectedPosition?.name}</DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
+            <DialogTitle className="">{selectedPosition?.name}</DialogTitle>
+            <DialogDescription className="">
               {(selectedPosition?.department as any)?.name} · Cursos requeridos
             </DialogDescription>
           </DialogHeader>
@@ -1455,16 +1803,16 @@ export default function CapacitacionContent() {
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
             </div>
           ) : positionCourses.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
+            <p className="text-sm text-muted-foreground py-4 text-center">
               No hay cursos registrados para este puesto.
             </p>
           ) : (
             <div className="space-y-2">
               {positionCourses.map((pc, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 bg-background/40 border ">
                   <span className="text-xs font-mono text-gray-400 w-5 text-right shrink-0">{pc.order_index}</span>
                   <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm dark:text-gray-200">{pc.course.name}</span>
+                  <span className="text-sm text-foreground">{pc.course.name}</span>
                 </div>
               ))}
             </div>
@@ -1474,10 +1822,10 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Progreso del empleado ─────────────────────────────────── */}
       <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
-        <DialogContent className="sm:max-w-xl dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-xl bg-card ">
           <DialogHeader>
-            <DialogTitle className="dark:text-white">{selectedEmployee?.nombre}</DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
+            <DialogTitle className="">{selectedEmployee?.nombre}</DialogTitle>
+            <DialogDescription className="">
               {selectedEmployee?.puesto}{selectedEmployee?.departamento ? ` · ${selectedEmployee.departamento}` : ''}
             </DialogDescription>
           </DialogHeader>
@@ -1490,17 +1838,17 @@ export default function CapacitacionContent() {
             <div className="space-y-4">
               {/* Barra de progreso y resumen (solo si hay puesto en catálogo) */}
               {empProgress?.positionFound && empProgress.totalRequired > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+                <div className="space-y-2 p-3 rounded-lg bg-gray-50 bg-background/40 border ">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium dark:text-gray-200">
+                    <span className="font-medium text-foreground">
                       {empProgress.aprobados} / {empProgress.totalRequired} cursos requeridos
                     </span>
-                    <span className="text-gray-500 dark:text-gray-400">
+                    <span className="text-muted-foreground">
                       {Math.round((empProgress.aprobados / empProgress.totalRequired) * 100)}%
                     </span>
                   </div>
                   {/* Barra segmentada */}
-                  <div className="flex h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 gap-px">
+                  <div className="flex h-2 rounded-full overflow-hidden bg-gray-200 bg-muted gap-px">
                     {empProgress.aprobados > 0 && (
                       <div
                         className="bg-green-500 transition-all"
@@ -1518,10 +1866,10 @@ export default function CapacitacionContent() {
                     <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                       <CheckCircle2 className="h-3 w-3" /> {empProgress.aprobados} aprobados
                     </span>
-                    <span className="flex items-center gap-1 text-red-500 dark:text-red-400">
+                    <span className="flex items-center gap-1 text-destructive dark:text-red-400">
                       <XCircle className="h-3 w-3" /> {empProgress.reprobados} reprobados
                     </span>
-                    <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1 text-muted-foreground">
                       <Clock className="h-3 w-3" /> {empProgress.pendientes} pendientes
                     </span>
                   </div>
@@ -1542,7 +1890,7 @@ export default function CapacitacionContent() {
                     <Briefcase className="mr-1.5 h-3.5 w-3.5" />
                     Requeridos
                     {empProgress?.totalRequired ? (
-                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 dark:bg-gray-700">
+                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 bg-muted">
                         {empProgress.totalRequired}
                       </Badge>
                     ) : null}
@@ -1551,7 +1899,7 @@ export default function CapacitacionContent() {
                     <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
                     Historial completo
                     {empCourses.length > 0 && (
-                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 dark:bg-gray-700">
+                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 bg-muted">
                         {empCourses.length}
                       </Badge>
                     )}
@@ -1561,7 +1909,7 @@ export default function CapacitacionContent() {
                 {/* ── Requeridos ───────────────────────────────────────── */}
                 <TabsContent value="requeridos" className="mt-3">
                   {!empProgress?.positionFound || empProgress.totalRequired === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">
+                    <p className="text-sm text-muted-foreground py-6 text-center">
                       {!empProgress?.positionFound
                         ? "No se encontró el puesto en el catálogo."
                         : "Este puesto no tiene cursos requeridos registrados."}
@@ -1574,16 +1922,16 @@ export default function CapacitacionContent() {
                           className={`flex items-center gap-2.5 p-2.5 rounded-lg border
                             ${c.status === 'aprobado'  ? 'bg-green-50  dark:bg-green-900/10  border-green-200 dark:border-green-800' : ''}
                             ${c.status === 'reprobado' ? 'bg-red-50    dark:bg-red-900/10    border-red-200   dark:border-red-800'   : ''}
-                            ${c.status === 'pendiente' ? 'bg-gray-50   dark:bg-gray-900/40   border-gray-200  dark:border-gray-700'  : ''}
+                            ${c.status === 'pendiente' ? 'bg-gray-50   bg-background/40   border-gray-200  '  : ''}
                           `}
                         >
                           {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
-                          {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-red-500   shrink-0" />}
+                          {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-destructive   shrink-0" />}
                           {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-gray-400   shrink-0" />}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm dark:text-gray-200 leading-tight truncate">{c.courseName}</p>
+                            <p className="text-sm text-foreground leading-tight truncate">{c.courseName}</p>
                             {c.fechaAplicacion && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-muted-foreground">
                                 {c.fechaAplicacion.split('-').reverse().join('/')}
                               </p>
                             )}
@@ -1599,7 +1947,7 @@ export default function CapacitacionContent() {
                                 {c.calificacion}
                               </Badge>
                             ) : (
-                              <span className="text-xs text-gray-400 dark:text-gray-500 w-16 text-right block">—</span>
+                              <span className="text-xs text-muted-foreground w-16 text-right block">—</span>
                             )}
                           </div>
                         </div>
@@ -1611,20 +1959,20 @@ export default function CapacitacionContent() {
                 {/* ── Historial completo ───────────────────────────────── */}
                 <TabsContent value="historial" className="mt-3">
                   {empCourses.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">
+                    <p className="text-sm text-muted-foreground py-6 text-center">
                       No hay cursos registrados para este empleado.
                     </p>
                   ) : (
                     <div className="space-y-1.5 pb-2">
                       {empCourses.map((ec, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+                        <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 bg-background/40 border ">
                           <BookOpen className="h-4 w-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm dark:text-gray-200 truncate leading-tight">
+                            <p className="text-sm text-foreground truncate leading-tight">
                               {ec.course?.name ?? ec.raw_course_name}
                             </p>
                             {ec.fecha_aplicacion && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-muted-foreground">
                                 {ec.fecha_aplicacion.split('-').reverse().join('/')}
                               </p>
                             )}

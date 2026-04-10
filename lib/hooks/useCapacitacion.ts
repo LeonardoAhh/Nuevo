@@ -704,6 +704,36 @@ export function useCapacitacion() {
 
   // ── Agregar cursos a un empleado existente ───────────────────────────────
 
+  const bulkImportCourseRecords = async (
+    records: { employee_id: string; course_id: string; raw_course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
+  ): Promise<{ success: boolean; inserted: number; error?: string }> => {
+    setImporting(true)
+    setImportError(null)
+    try {
+      if (records.length === 0) return { success: true, inserted: 0 }
+      const { error } = await supabase
+        .from('employee_courses')
+        .upsert(
+          records.map(r => ({
+            employee_id: r.employee_id,
+            course_id: r.course_id,
+            raw_course_name: r.raw_course_name,
+            fecha_aplicacion: r.fecha_aplicacion,
+            calificacion: r.calificacion,
+          })),
+          { onConflict: 'employee_id,raw_course_name', ignoreDuplicates: false }
+        )
+      if (error) throw new Error(error.message)
+      return { success: true, inserted: records.length }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al importar'
+      setImportError(msg)
+      return { success: false, inserted: 0, error: msg }
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const addCoursesToEmployee = async (
     employeeId: string,
     employeeCourses: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
@@ -755,7 +785,7 @@ export function useCapacitacion() {
     try {
       const { data: empData, error: empError } = await supabase
         .from('employees')
-        .upsert([employee], { onConflict: 'nombre' })
+        .insert([employee])
         .select('id')
       if (empError) throw new Error(empError.message)
       const employeeId = empData?.[0]?.id
@@ -838,5 +868,6 @@ export function useCapacitacion() {
     createEmployeeManual,
     updateEmployee,
     addCoursesToEmployee,
+    bulkImportCourseRecords,
   }
 }

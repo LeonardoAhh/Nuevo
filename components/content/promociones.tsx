@@ -187,7 +187,7 @@ function AptitudBadge({ status }: { status: AptitudStatus }) {
     pendiente: {
       label: "Pendiente",
       icon: Clock,
-      className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600",
+      className: "bg-gray-100 text-gray-700 bg-card border-gray-200",
     },
     en_revision: {
       label: "En Revisión",
@@ -222,7 +222,7 @@ function CriterioRow({
 }) {
   return (
     <div className="flex items-center justify-between py-1.5">
-      <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         {cumple ? (
           <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
         ) : (
@@ -231,10 +231,10 @@ function CriterioRow({
         <span>{label}</span>
       </div>
       <div className="text-sm text-right">
-        <span className={`font-semibold ${cumple ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
+        <span className={`font-semibold ${cumple ? "text-emerald-600 dark:text-emerald-400" : "text-destructive dark:text-red-400"}`}>
           {valor}{unidad}
         </span>
-        <span className="text-gray-400 dark:text-gray-500 ml-1 text-xs">/ mín {minimo}{unidad}</span>
+        <span className="text-muted-foreground ml-1 text-xs">/ mín {minimo}{unidad}</span>
       </div>
     </div>
   )
@@ -263,7 +263,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
             </div>
             <div>
               <div className="font-bold">{empleado.nombre}</div>
-              <div className="text-sm font-normal text-gray-500 dark:text-gray-400">
+              <div className="text-sm font-normal text-muted-foreground">
                 {empleado.puesto} · {empleado.departamento}
               </div>
             </div>
@@ -276,8 +276,8 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
         <div className="space-y-5 mt-2">
           {/* Resumen de criterios */}
           {regla ? (
-            <div className="rounded-lg border dark:border-gray-700 overflow-hidden">
-              <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            <div className="rounded-lg border overflow-hidden">
+              <div className="bg-gray-50 bg-card px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Criterios de Promoción
               </div>
               <div className="px-4 divide-y dark:divide-gray-700">
@@ -310,9 +310,9 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
           )}
 
           {/* Cursos requeridos */}
-          <div className="rounded-lg border dark:border-gray-700 overflow-hidden">
-            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <div className="rounded-lg border overflow-hidden">
+            <div className="bg-gray-50 bg-card px-4 py-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Cursos Requeridos
               </span>
               <span className="text-xs font-semibold text-primary">
@@ -326,21 +326,21 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
               ) : (
                 <ul className="space-y-1.5">
                   {empleado.cursosRequeridos.map((curso, i) => (
-                    <li key={i} className="flex items-center justify-between text-sm py-1 border-b last:border-0 dark:border-gray-700">
+                    <li key={i} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
                       <div className="flex items-center gap-2">
                         {curso.completado ? (
                           <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
                         ) : (
-                          <XCircle size={14} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                          <XCircle size={14} className="text-muted-foreground/40 flex-shrink-0" />
                         )}
-                        <span className={curso.completado ? "text-gray-800 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}>
+                        <span className={curso.completado ? "text-gray-800" : "text-muted-foreground"}>
                           {curso.nombre}
                         </span>
                       </div>
                       {curso.completado && (
-                        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {curso.calificacion !== undefined && (
-                            <span className="font-medium text-gray-600 dark:text-gray-300">{curso.calificacion}</span>
+                            <span className="font-medium text-muted-foreground">{curso.calificacion}</span>
                           )}
                           {curso.fechaAplicacion && <span>{curso.fechaAplicacion}</span>}
                         </div>
@@ -353,8 +353,8 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
           </div>
 
           {/* Historial de evaluaciones */}
-          <div className="rounded-lg border dark:border-gray-700 overflow-hidden">
-            <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <div className="rounded-lg border overflow-hidden">
+            <div className="bg-gray-50 bg-card px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Evaluaciones de Desempeño
             </div>
             <div className="px-4 py-2">
@@ -365,8 +365,8 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
                   {[...empleado.evaluaciones]
                     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
                     .map((ev, i) => (
-                      <li key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0 dark:border-gray-700">
-                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <li key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar size={13} />
                           <span>{ev.fecha}</span>
                           {ev.periodo && <Badge variant="secondary" className="text-xs py-0">{ev.periodo}</Badge>}
@@ -378,7 +378,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
                           <span className={`font-bold text-base ${
                             ev.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400"
                             : ev.calificacion >= 60 ? "text-amber-600 dark:text-amber-400"
-                            : "text-red-600 dark:text-red-400"
+                            : "text-destructive"
                           }`}>
                             {ev.calificacion}
                           </span>
@@ -411,15 +411,15 @@ function SummaryCard({
   subtitle?: string
 }) {
   return (
-    <Card className="border dark:border-gray-700">
+    <Card className="border">
       <CardContent className="p-4 flex items-center gap-4">
         <div className={`p-3 rounded-xl ${color}`}>
           <Icon size={22} className="text-white" />
         </div>
         <div>
-          <div className="text-2xl font-bold dark:text-white">{value}</div>
-          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</div>
-          {subtitle && <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</div>}
+          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-sm font-medium text-muted-foreground">{title}</div>
+          {subtitle && <div className="text-xs text-muted-foreground mt-0.5">{subtitle}</div>}
         </div>
       </CardContent>
     </Card>
@@ -490,19 +490,19 @@ function CapturarDesempeñoDialog({
             </div>
             <div className="min-w-0">
               <div className="font-bold">Evaluación de Desempeño</div>
-              <div className="text-sm font-normal text-gray-500 dark:text-gray-400 truncate">{empleado.nombre}</div>
+              <div className="text-sm font-normal text-muted-foreground truncate">{empleado.nombre}</div>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-          <span className="font-medium text-gray-700 dark:text-gray-300">{empleado.puesto}</span>
+        <div className="text-xs text-muted-foreground bg-gray-50 bg-card rounded-lg px-3 py-2">
+          <span className="font-medium text-gray-700">{empleado.puesto}</span>
           {empleado.numero && <span className="ml-2">#{empleado.numero}</span>}
         </div>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-600 dark:text-gray-400">Calificación de desempeño (0–100)</Label>
+            <Label className="text-xs text-muted-foreground">Calificación de desempeño (0–100)</Label>
             <input
               type="number"
               min={0}
@@ -511,23 +511,23 @@ function CapturarDesempeñoDialog({
               placeholder="Ej. 85"
               value={calificacion}
               onChange={(e) => setCalificacion(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-600 dark:text-gray-400">Periodo de evaluación (opcional)</Label>
+            <Label className="text-xs text-muted-foreground">Periodo de evaluación (opcional)</Label>
             <input
               type="text"
               placeholder="Ej. 2026-Q1"
               value={periodo}
               onChange={(e) => setPeriodo(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
             />
           </div>
         </div>
 
         {error && (
-          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+          <div className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {error}
           </div>
         )}
@@ -628,7 +628,7 @@ function PromoverDialog({
             </div>
             <div className="min-w-0">
               <div className="font-bold">Cambio de Puesto</div>
-              <div className="text-sm font-normal text-gray-500 dark:text-gray-400 truncate">{empleado.nombre}</div>
+              <div className="text-sm font-normal text-muted-foreground truncate">{empleado.nombre}</div>
             </div>
             <div className="ml-auto shrink-0">
               <AptitudBadge status={aptitud} />
@@ -637,10 +637,10 @@ function PromoverDialog({
         </DialogHeader>
 
         {/* Puesto actual → destino */}
-        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-3 text-sm mt-1">
+        <div className="flex items-center gap-2 bg-gray-50 bg-card rounded-lg px-3 py-3 text-sm mt-1">
           <div className="flex-1 text-center min-w-0">
             <div className="text-xs text-gray-400 mb-0.5">Puesto actual</div>
-            <div className="font-semibold text-gray-800 dark:text-white text-xs sm:text-sm leading-tight">{empleado.puesto}</div>
+            <div className="font-semibold text-gray-800 text-xs sm:text-sm leading-tight">{empleado.puesto}</div>
           </div>
           <ArrowRight size={16} className="text-primary shrink-0" />
           <div className="flex-1 text-center min-w-0">
@@ -680,26 +680,26 @@ function PromoverDialog({
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs text-gray-600 dark:text-gray-400">Fecha inicio nuevo puesto</Label>
+              <Label className="text-xs text-muted-foreground">Fecha inicio nuevo puesto</Label>
               <input
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-gray-600 dark:text-gray-400">Fecha del examen</Label>
+              <Label className="text-xs text-muted-foreground">Fecha del examen</Label>
               <input
                 type="date"
                 value={fechaExamen}
                 onChange={(e) => setFechaExamen(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-600 dark:text-gray-400">
+            <Label className="text-xs text-muted-foreground">
               Calificación del examen (0–100)
               {empleado.intentosExamen != null && empleado.intentosExamen > 0 && (
                 <span className="ml-2 text-gray-400">
@@ -715,13 +715,13 @@ function PromoverDialog({
               placeholder="Ej. 85"
               value={calExamen}
               onChange={(e) => setCalExamen(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:border-gray-700 dark:bg-gray-800"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
             />
           </div>
         </div>
 
         {error && (
-          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+          <div className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {error}
           </div>
         )}
@@ -1015,10 +1015,10 @@ export default function PromocionesContent({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="overflow-x-auto rounded-lg border dark:border-gray-700">
+            <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-800 text-xs">
+                  <TableRow className="bg-gray-50 bg-card text-xs">
                     <TableHead>Puesto Actual</TableHead>
                     <TableHead>Promoción a</TableHead>
                     <TableHead className="text-center">Temporalidad</TableHead>
@@ -1031,7 +1031,7 @@ export default function PromocionesContent({
                   {reglasPreview.map((r, i) => (
                     <TableRow key={i} className="text-sm">
                       <TableCell className="font-medium">{r["Puesto Actual"]}</TableCell>
-                      <TableCell className="text-gray-500 dark:text-gray-400">{r["Promoción a"]}</TableCell>
+                      <TableCell className="text-muted-foreground">{r["Promoción a"]}</TableCell>
                       <TableCell className="text-center">{r["Temporalidad (meses)"]} meses</TableCell>
                       <TableCell className="text-center">{r["Calificación Examen Teorico"]}</TableCell>
                       <TableCell className="text-center">{r["Cumplimiento Cursos Asigandos"]}%</TableCell>
@@ -1070,10 +1070,10 @@ export default function PromocionesContent({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="overflow-x-auto rounded-lg border dark:border-gray-700">
+            <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-800 text-xs">
+                  <TableRow className="bg-gray-50 bg-card text-xs">
                     <TableHead>N.N</TableHead>
                     <TableHead>Fecha Inicio Puesto</TableHead>
                     <TableHead className="text-center">Desempeño %</TableHead>
@@ -1206,20 +1206,20 @@ export default function PromocionesContent({
               return (
                 <div
                   key={emp.id}
-                  className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-xl px-4 py-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
+                  className="bg-background border rounded-xl px-4 py-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
                   onClick={() => setEmpleadoPromover(emp)}
                 >
                   {/* Fila superior: nombre + badge */}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">{emp.nombre}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{emp.puesto}</div>
+                      <div className="font-semibold text-sm text-gray-900 leading-tight">{emp.nombre}</div>
+                      <div className="text-xs text-muted-foreground leading-tight mt-0.5">{emp.puesto}</div>
                     </div>
                     <AptitudBadge status={aptitud} />
                   </div>
 
                   {/* Depto + número */}
-                  <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-2.5">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2.5">
                     <span>{emp.departamento}</span>
                     {emp.numero && <><span>·</span><span>#{emp.numero}</span></>}
                   </div>
@@ -1235,7 +1235,7 @@ export default function PromocionesContent({
                             ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
                             : <XCircle size={11} className="text-red-400 shrink-0" />
                         )}
-                        <span className="font-medium text-gray-700 dark:text-gray-300">{formatMeses(meses)}</span>
+                        <span className="font-medium text-gray-700">{formatMeses(meses)}</span>
                       </div>
                       {regla && <span className="text-gray-400" style={{fontSize:"10px"}}>mín {formatMeses(regla.minTemporalidadMeses)}</span>}
                     </div>
@@ -1252,7 +1252,7 @@ export default function PromocionesContent({
                         <span className={`font-semibold ${
                           pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400"
                           : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400"
-                          : "text-red-600 dark:text-red-400"
+                          : "text-destructive"
                         }`}>{pctCursos}%</span>
                         <span className="text-gray-400">({emp.cursosRequeridos.filter(c => c.completado).length}/{emp.cursosRequeridos.length})</span>
                       </div>
@@ -1273,7 +1273,7 @@ export default function PromocionesContent({
                             <span className={`font-bold ${
                               evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400"
                               : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400"
-                              : "text-red-600 dark:text-red-400"
+                              : "text-destructive"
                             }`}>{evalActual.calificacion}</span>
                           </>
                         ) : (
@@ -1290,9 +1290,9 @@ export default function PromocionesContent({
             {/* Separador inhabilitados - móvil */}
             {paginadosSinCategoria.length > 0 && (
               <div className="flex items-center gap-2 py-1 px-1 mt-1">
-                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                <span className="text-xs text-gray-400 dark:text-gray-500">Categoría A / Sin categoría — inhabilitados</span>
-                <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                <div className="h-px flex-1 bg-gray-200 bg-muted" />
+                <span className="text-xs text-muted-foreground">Categoría A / Sin categoría — inhabilitados</span>
+                <div className="h-px flex-1 bg-gray-200 bg-muted" />
               </div>
             )}
 
@@ -1301,19 +1301,19 @@ export default function PromocionesContent({
               return (
                 <div
                   key={emp.id}
-                  className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-xl px-4 py-3 opacity-60 select-none"
+                  className="bg-background border rounded-xl px-4 py-3 opacity-60 select-none"
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">{emp.nombre}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{emp.puesto}</div>
+                      <div className="font-semibold text-sm text-gray-900 leading-tight">{emp.nombre}</div>
+                      <div className="text-xs text-muted-foreground leading-tight mt-0.5">{emp.puesto}</div>
                     </div>
-                    <Badge variant="outline" className="text-xs text-gray-400 border-gray-300 dark:border-gray-600 shrink-0">
+                    <Badge variant="outline" className="text-xs text-gray-400 border-gray-300 shrink-0">
                       {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{emp.departamento}</span>
                       {emp.numero && <><span>·</span><span>#{emp.numero}</span></>}
                     </div>
@@ -1333,10 +1333,10 @@ export default function PromocionesContent({
           </div>
 
           {/* ── Vista desktop: tabla ── */}
-          <div className="hidden md:block rounded-lg border dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
+          <div className="hidden md:block rounded-lg border overflow-hidden bg-background">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-800">
+                <TableRow className="bg-gray-50 bg-card">
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Empleado</TableHead>
                   <TableHead>Departamento</TableHead>
@@ -1386,25 +1386,25 @@ export default function PromocionesContent({
                           {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-sm text-gray-900 dark:text-white">{emp.nombre}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{emp.puesto}</div>
-                          {emp.numero && <div className="text-xs text-gray-400 dark:text-gray-500">#{emp.numero}</div>}
+                          <div className="font-medium text-sm text-gray-900">{emp.nombre}</div>
+                          <div className="text-xs text-muted-foreground">{emp.puesto}</div>
+                          {emp.numero && <div className="text-xs text-muted-foreground">#{emp.numero}</div>}
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{emp.departamento}</span>
-                          {emp.area && <div className="text-xs text-gray-400 dark:text-gray-500">{emp.area}</div>}
+                          <span className="text-sm text-muted-foreground">{emp.departamento}</span>
+                          {emp.area && <div className="text-xs text-muted-foreground">{emp.area}</div>}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             {cumpleTemp !== null && (cumpleTemp ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-                            <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatMeses(meses)}</span>
+                            <span className="text-sm text-gray-700 whitespace-nowrap">{formatMeses(meses)}</span>
                           </div>
                           {regla && <div className="text-xs text-gray-400 mt-0.5">mín {formatMeses(regla.minTemporalidadMeses)}</div>}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5 mb-1">
                             {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-                            <span className={`text-sm font-semibold ${pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400" : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>{pctCursos}%</span>
+                            <span className={`text-sm font-semibold ${pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400" : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{pctCursos}%</span>
                             <span className="text-xs text-gray-400">({emp.cursosRequeridos.filter((c) => c.completado).length}/{emp.cursosRequeridos.length})</span>
                           </div>
                           <Progress value={pctCursos} className="h-1.5 w-24" />
@@ -1413,7 +1413,7 @@ export default function PromocionesContent({
                           {evalActual ? (
                             <div className="flex items-center gap-1.5">
                               {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-                              <span className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>{evalActual.calificacion}</span>
+                              <span className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{evalActual.calificacion}</span>
                               {evalActual.periodo && <span className="text-xs text-gray-400">{evalActual.periodo}</span>}
                             </div>
                           ) : (
@@ -1449,16 +1449,16 @@ export default function PromocionesContent({
                       </TableRow>
 
                       {isExpanded && (
-                        <TableRow key={`${emp.id}-courses`} className="bg-gray-50/50 dark:bg-gray-800/30">
+                        <TableRow key={`${emp.id}-courses`} className="bg-gray-50/50 bg-card/30">
                           <TableCell></TableCell>
                           <TableCell colSpan={7} className="py-3">
-                            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Cursos requeridos</div>
+                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Cursos requeridos</div>
                             {emp.cursosRequeridos.length === 0 ? (
                               <span className="text-xs text-gray-400 italic">Sin cursos asignados para este puesto</span>
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                                 {emp.cursosRequeridos.map((curso, i) => (
-                                  <div key={i} className={`flex items-center gap-2 text-xs rounded px-2 py-1.5 ${curso.completado ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300" : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"}`}>
+                                  <div key={i} className={`flex items-center gap-2 text-xs rounded px-2 py-1.5 ${curso.completado ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300" : "bg-destructive/10 text-destructive"}`}>
                                     {curso.completado ? <CheckCircle2 size={12} className="flex-shrink-0" /> : <XCircle size={12} className="flex-shrink-0" />}
                                     <span className="truncate">{curso.nombre}</span>
                                     {curso.calificacion !== undefined && <span className="ml-auto font-semibold">{curso.calificacion}</span>}
@@ -1476,8 +1476,8 @@ export default function PromocionesContent({
                 {/* Separador inhabilitados - desktop */}
                 {paginadosSinCategoria.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-2 bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">Categoría A / Sin categoría — inhabilitados</span>
+                    <TableCell colSpan={8} className="py-2 bg-gray-50 bg-card/50">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Categoría A / Sin categoría — inhabilitados</span>
                     </TableCell>
                   </TableRow>
                 )}
@@ -1488,8 +1488,8 @@ export default function PromocionesContent({
                     <TableRow key={emp.id} className="opacity-60">
                       <TableCell />
                       <TableCell>
-                        <div className="font-medium text-sm text-gray-900 dark:text-white">{emp.nombre}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{emp.puesto}</div>
+                        <div className="font-medium text-sm text-gray-900">{emp.nombre}</div>
+                        <div className="text-xs text-muted-foreground">{emp.puesto}</div>
                         {emp.numero && <div className="text-xs text-gray-400">#{emp.numero}</div>}
                       </TableCell>
                       <TableCell><span className="text-sm text-gray-500">{emp.departamento}</span></TableCell>
@@ -1500,14 +1500,14 @@ export default function PromocionesContent({
                           <span className={`text-sm font-semibold ${
                             evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400"
                             : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400"
-                            : "text-red-600 dark:text-red-400"
+                            : "text-destructive"
                           }`}>{evalActual.calificacion}</span>
                         ) : (
                           <span className="text-xs italic text-gray-400">Sin evaluar</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs text-gray-400 border-gray-300 dark:border-gray-600">
+                        <Badge variant="outline" className="text-xs text-gray-400 border-gray-300">
                           {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
                         </Badge>
                       </TableCell>
@@ -1538,7 +1538,7 @@ export default function PromocionesContent({
           {/* Paginación */}
           {totalPaginas > 1 && (
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-gray-400 dark:text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {(pagina - 1) * PAGE_SIZE + 1}–{Math.min(pagina * PAGE_SIZE, todosOrdenados.length)} de {todosOrdenados.length}
               </span>
               <div className="flex items-center gap-1">
@@ -1551,7 +1551,7 @@ export default function PromocionesContent({
                 >
                   <ChevronLeft size={14} />
                 </Button>
-                <span className="text-xs text-gray-600 dark:text-gray-300 px-2">
+                <span className="text-xs text-muted-foreground px-2">
                   {pagina} / {totalPaginas}
                 </span>
                 <Button
@@ -1570,7 +1570,7 @@ export default function PromocionesContent({
       )}
 
       {/* Leyenda */}
-      <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400 pt-1">
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-1">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 size={12} className="text-emerald-500" /> Criterio cumplido
         </div>
@@ -1618,14 +1618,14 @@ export default function PromocionesContent({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border dark:border-gray-700 border-dashed bg-white dark:bg-gray-900">
+    <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border border-dashed bg-background">
       <div className="bg-primary/10 p-4 rounded-full mb-4">
         <BarChart3 size={32} className="text-primary" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
+      <h3 className="text-lg font-semibold text-gray-800 mb-1">
         Sin datos de empleados
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+      <p className="text-sm text-muted-foreground max-w-sm">
         Carga los datos de empleados con sus evaluaciones de desempeño y el sistema calculará automáticamente la aptitud para promoción.
       </p>
     </div>

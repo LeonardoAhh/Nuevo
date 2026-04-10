@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useTheme } from "@/components/theme-context"
+import { useTheme, ACCENT_COLOR_MAP, type AccentColor } from "@/components/theme-context"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ColorPicker } from "@/components/color-picker"
@@ -31,22 +31,11 @@ import { useProfile, useUser } from "@/lib/hooks"
 import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
 import { AuthForm } from "@/components/auth-form"
 
-type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
+type PresetAccent = Exclude<AccentColor, "custom">
 
-interface ColorOption {
-  name: AccentColor
-  value: string
-  textColor: string
-}
+const PRESET_ACCENTS: ReadonlyArray<PresetAccent> = ["blue", "purple", "green", "orange", "pink", "yellow"]
 
-const colorOptions: ColorOption[] = [
-  { name: "blue", value: "bg-blue-500", textColor: "text-white" },
-  { name: "purple", value: "bg-purple-500", textColor: "text-white" },
-  { name: "green", value: "bg-green-500", textColor: "text-white" },
-  { name: "orange", value: "bg-orange-500", textColor: "text-white" },
-  { name: "pink", value: "bg-pink-500", textColor: "text-white" },
-  { name: "yellow", value: "bg-yellow-500", textColor: "text-black" },
-]
+const YELLOW_USES_DARK_TEXT = new Set<PresetAccent>(["yellow"])
 
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -190,11 +179,11 @@ export default function SettingsContent() {
         <TabsContent value="profile" className="space-y-4">
           {/* Loading State */}
           {(userLoading || profileLoading) && (
-            <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <Card>
               <CardContent className="flex items-center justify-center py-8">
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Cargando perfil...</span>
+                  <span className="text-sm text-muted-foreground">Cargando perfil...</span>
                 </div>
               </CardContent>
             </Card>
@@ -202,9 +191,9 @@ export default function SettingsContent() {
 
           {/* Success/Error Messages */}
           {showSavedMessage && (
-            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-              <Check className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
+            <Alert className="border-emerald-500/30 bg-emerald-500/10">
+              <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <AlertDescription className="text-emerald-700 dark:text-emerald-300">
                 ¡Perfil actualizado con éxito!
               </AlertDescription>
             </Alert>
@@ -221,10 +210,10 @@ export default function SettingsContent() {
 
           {!profileLoading && !userLoading && (
             <>
-              <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <Card>
             <CardHeader>
-              <CardTitle className="dark:text-white">Información de perfil</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardTitle>Información de perfil</CardTitle>
+              <CardDescription>
                 Actualiza tu información personal y tu foto de perfil.
               </CardDescription>
             </CardHeader>
@@ -240,7 +229,6 @@ export default function SettingsContent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="dark:border-gray-600 dark:text-gray-200"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingAvatar}
                   >
@@ -263,7 +251,7 @@ export default function SettingsContent() {
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     JPG, GIF o PNG. Tamaño máximo 2MB. Se recomienda imagen cuadrada.
                   </p>
                 </div>
@@ -272,55 +260,55 @@ export default function SettingsContent() {
               <form id="profile-form" onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first-name" className="dark:text-gray-200">
+                    <Label htmlFor="first-name">
                       Nombre *
                     </Label>
                     <Input
                       id="first-name"
                       {...registerProfile("firstName")}
                       className={cn(
-                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm",
                         profileErrors.firstName && "border-red-500"
                       )}
                     />
                     {profileErrors.firstName && (
-                      <p className="text-sm text-red-500">{profileErrors.firstName.message}</p>
+                      <p className="text-sm text-destructive">{profileErrors.firstName.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last-name" className="dark:text-gray-200">
+                    <Label htmlFor="last-name">
                       Apellido *
                     </Label>
                     <Input
                       id="last-name"
                       {...registerProfile("lastName")}
                       className={cn(
-                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm",
                         profileErrors.lastName && "border-red-500"
                       )}
                     />
                     {profileErrors.lastName && (
-                      <p className="text-sm text-red-500">{profileErrors.lastName.message}</p>
+                      <p className="text-sm text-destructive">{profileErrors.lastName.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="display-name" className="dark:text-gray-200">
+                    <Label htmlFor="display-name">
                       Nombre visible *
                     </Label>
                     <Input
                       id="display-name"
                       {...registerProfile("displayName")}
                       className={cn(
-                        "text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200",
+                        "text-base md:text-sm",
                         profileErrors.displayName && "border-red-500"
                       )}
                     />
                     {profileErrors.displayName && (
-                      <p className="text-sm text-red-500">{profileErrors.displayName.message}</p>
+                      <p className="text-sm text-destructive">{profileErrors.displayName.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="dark:text-gray-200">
+                    <Label htmlFor="email">
                       Correo electrónico
                     </Label>
                     <Input
@@ -328,9 +316,9 @@ export default function SettingsContent() {
                       type="email"
                       value={user?.email || ""}
                       readOnly
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed opacity-70"
+                      className="cursor-not-allowed opacity-70"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       El email se gestiona desde tu proveedor de autenticación.
                     </p>
                   </div>
@@ -342,7 +330,6 @@ export default function SettingsContent() {
               <Button
                 type="button"
                 variant="outline"
-                className="dark:border-gray-600 dark:text-gray-200"
                 onClick={() => resetProfile()}
                 disabled={isSubmittingProfile}
               >
@@ -367,68 +354,72 @@ export default function SettingsContent() {
 
         {/* Appearance Settings */}
         <TabsContent value="appearance" className="space-y-4">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="dark:text-white">Tema</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardTitle>Tema</CardTitle>
+              <CardDescription>
                 Personaliza la apariencia de la aplicación.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label className="dark:text-gray-200">Modo de color</Label>
+                <Label>Modo de color</Label>
                 <div className="flex gap-4">
                   <div
                     className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer ${
-                      theme === "light" ? "border-primary bg-primary/10" : "dark:border-gray-600"
+                      theme === "light" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                     onClick={() => handleThemeChange("light")}
                   >
                     <div className="bg-white border shadow-sm p-2 rounded-full">
                       <Sun className="h-6 w-6 text-yellow-500" />
                     </div>
-                    <span className="font-medium dark:text-gray-200">Claro</span>
+                    <span className="font-medium">Claro</span>
                   </div>
                   <div
                     className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer ${
-                      theme === "dark" ? "border-primary bg-primary/10" : "dark:border-gray-600"
+                      theme === "dark" ? "border-primary bg-primary/10" : "border-border"
                     }`}
                     onClick={() => handleThemeChange("dark")}
                   >
                     <div className="bg-gray-900 border shadow-sm p-2 rounded-full">
                       <Moon className="h-6 w-6 text-blue-400" />
                     </div>
-                    <span className="font-medium dark:text-gray-200">Oscuro</span>
+                    <span className="font-medium">Oscuro</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="dark:text-gray-200">Color de acento</Label>
+                <Label>Color de acento</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {colorOptions.map((color) => (
-                    <TooltipProvider key={color.name}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={cn(
-                              "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all",
-                              color.value,
-                              accentColor === color.name
-                                ? "border-black dark:border-white scale-105"
-                                : "border-transparent hover:scale-105",
-                            )}
-                            onClick={() => handleAccentColorChange(color.name)}
-                          >
-                            {accentColor === color.name && <Check className={cn("h-6 w-6", color.textColor)} />}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="capitalize">{color.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
+                  {PRESET_ACCENTS.map((name) => {
+                    const { primary } = ACCENT_COLOR_MAP[name]
+                    const checkTextClass = YELLOW_USES_DARK_TEXT.has(name) ? "text-black" : "text-white"
+                    return (
+                      <TooltipProvider key={name}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className={cn(
+                                "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all",
+                                accentColor === name
+                                  ? "border-foreground scale-105"
+                                  : "border-transparent hover:scale-105",
+                              )}
+                              style={{ backgroundColor: `hsl(${primary})` }}
+                              onClick={() => handleAccentColorChange(name)}
+                            >
+                              {accentColor === name && <Check className={cn("h-6 w-6", checkTextClass)} />}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="capitalize">{name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )
+                  })}
 
                   {/* Custom color option */}
                   <TooltipProvider>
@@ -438,7 +429,7 @@ export default function SettingsContent() {
                           className={cn(
                             "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all relative overflow-hidden",
                             accentColor === "custom"
-                              ? "border-black dark:border-white scale-105"
+                              ? "border-foreground scale-105"
                               : "border-transparent hover:scale-105",
                           )}
                           onClick={() => handleAccentColorChange("custom")}
@@ -456,26 +447,26 @@ export default function SettingsContent() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Selecciona un color de acento para personalizar tu tablero.
                 </p>
               </div>
 
               {/* Custom Color Picker Section */}
               {accentColor === "custom" && (
-                <div className="space-y-3 p-4 border rounded-lg dark:border-gray-700">
-                  <Label className="text-base dark:text-gray-200">Color personalizado</Label>
+                <div className="space-y-3 p-4 border rounded-lg">
+                  <Label className="text-base">Color personalizado</Label>
                   <ColorPicker onColorChange={handleCustomColorChange} />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label className="dark:text-gray-200">Tamaño de fuente</Label>
+                <Label>Tamaño de fuente</Label>
                 <Select value={fontSize} onValueChange={(v) => setFontSize(v as "small" | "medium" | "large")}>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecciona el tamaño" />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent>
                     <SelectItem value="small">Pequeño</SelectItem>
                     <SelectItem value="medium">Mediano</SelectItem>
                     <SelectItem value="large">Grande</SelectItem>
@@ -485,8 +476,8 @@ export default function SettingsContent() {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base dark:text-gray-200">Movimiento reducido</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <Label className="text-base">Movimiento reducido</Label>
+                  <p className="text-sm text-muted-foreground">
                     Reduce la cantidad de animaciones y efectos de movimiento.
                   </p>
                 </div>
@@ -505,7 +496,7 @@ export default function SettingsContent() {
               )}
 
               {showSavedMessage && (
-                <p className="text-green-600 dark:text-green-400 flex items-center">
+                <p className="text-emerald-600 dark:text-emerald-400 flex items-center">
                   <Check className="h-4 w-4 mr-1" /> Theme preferences saved
                 </p>
               )}
@@ -520,42 +511,40 @@ export default function SettingsContent() {
             </CardFooter>
           </Card>
 
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="dark:text-white">Vista previa del tema</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardTitle>Vista previa del tema</CardTitle>
+              <CardDescription>
                 Vista previa de cómo se verá el tema seleccionado.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 border rounded-lg dark:border-gray-700">
-                  <h3 className="text-lg font-medium mb-2 dark:text-gray-200">Componentes UI</h3>
+                <div className="p-4 border rounded-lg">
+                  <h3 className="text-lg font-medium mb-2">Componentes UI</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Button className="w-full">Botón primario</Button>
-                      <Button variant="outline" className="w-full dark:border-gray-600 dark:text-gray-200">
+                      <Button variant="outline" className="w-full">
                         Botón secundario
                       </Button>
-                      <Button variant="ghost" className="w-full dark:text-gray-200">
+                      <Button variant="ghost" className="w-full">
                         Botón fantasma
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      <div className="p-3 bg-card border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                        <p className="text-sm dark:text-gray-200">Componente tarjeta</p>
+                      <div className="p-3 bg-card border rounded-md">
+                        <p className="text-sm">Componente tarjeta</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch id="preview-switch" />
-                        <Label htmlFor="preview-switch" className="dark:text-gray-200">
+                        <Label htmlFor="preview-switch">
                           Interruptor
                         </Label>
                       </div>
                       <div className="flex gap-2">
                         <Badge>Predeterminado</Badge>
-                        <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-200">
-                          Contorno
-                        </Badge>
+                        <Badge variant="outline">Contorno</Badge>
                       </div>
                     </div>
                   </div>

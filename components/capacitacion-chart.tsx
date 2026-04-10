@@ -32,9 +32,9 @@ interface Department { id: string; name: string }
 const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
 const YEARS  = ["2024","2025","2026"] as const
 const COLORS: Record<string, string> = {
-  "2024": "#f59e0b",   // amber
-  "2025": "#ef4444",   // red
-  "2026": "#3b82f6",   // blue
+  "2024": "hsl(var(--chart-3))",   // amber
+  "2025": "hsl(var(--chart-5))",   // red/pink
+  "2026": "hsl(var(--chart-1))",   // blue
 }
 
 /** Regresión lineal sobre puntos {x, y}. Devuelve valor en cada x de 0..11. */
@@ -58,15 +58,15 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const dataPoints = payload.filter((p: any) => !p.dataKey.includes("_trend"))
   return (
-    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm min-w-[150px]">
-      <p className="font-semibold dark:text-white mb-2">{label}</p>
+    <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[150px]">
+      <p className="font-semibold text-foreground mb-2">{label}</p>
       {dataPoints.map((p: any) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
             {p.dataKey}
           </span>
-          <span className="font-medium dark:text-white">
+          <span className="font-medium text-foreground">
             {p.value} {p.value === 1 ? "curso" : "cursos"}
           </span>
         </div>
@@ -202,18 +202,18 @@ export default function CapacitacionChart() {
   )
 
   return (
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
+    <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-2">
         <div>
-          <CardTitle className="text-base font-semibold dark:text-white">
+          <CardTitle className="text-base font-semibold">
             Comparación Anual de Cursos Impartidos
           </CardTitle>
           <div className="flex flex-wrap items-center gap-3 mt-2">
             {yearTotals.map(({ year, total }) => (
               <div key={year} className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: COLORS[year] }} />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{year}</span>
-                <Badge variant="secondary" className="text-xs px-1.5 dark:bg-gray-700 dark:text-gray-300">
+                <span className="text-xs text-muted-foreground">{year}</span>
+                <Badge variant="secondary" className="text-xs px-1.5">
                   {total}
                 </Badge>
               </div>
@@ -225,7 +225,7 @@ export default function CapacitacionChart() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={() => loadData(selectedDept)}
             disabled={loading}
             title="Actualizar datos"
@@ -233,10 +233,10 @@ export default function CapacitacionChart() {
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
           <Select value={selectedDept} onValueChange={setSelectedDept}>
-            <SelectTrigger className="w-full sm:w-56 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 h-8 text-sm">
+            <SelectTrigger className="w-full sm:w-56 h-8 text-sm">
               <SelectValue placeholder="" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              <SelectContent>
               <SelectItem value="all">Todos los departamentos</SelectItem>
               {departments.map(d => (
                 <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
@@ -252,7 +252,7 @@ export default function CapacitacionChart() {
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           </div>
         ) : isEmpty ? (
-          <div className="flex flex-col items-center justify-center h-72 text-gray-400 dark:text-gray-500 gap-2">
+          <div className="flex flex-col items-center justify-center h-72 text-muted-foreground gap-2">
             <GraduationCap className="h-10 w-10 opacity-30" />
             <p className="text-sm">No hay datos de historial importados aún.</p>
           </div>
@@ -324,7 +324,7 @@ export default function CapacitacionChart() {
             </ResponsiveContainer>
 
             {/* Nota al pie */}
-            <div className="flex items-start gap-1.5 mt-3 text-xs text-gray-400 dark:text-gray-500">
+            <div className="flex items-start gap-1.5 mt-3 text-xs text-muted-foreground">
               <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <span>
                 Solo se cuentan cursos únicos por mes (un curso solo se cuenta una vez por mes aunque se haya impartido varias veces)

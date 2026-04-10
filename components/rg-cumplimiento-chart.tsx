@@ -74,17 +74,17 @@ function CustomTooltip({ active, payload, label }: any) {
   const d = payload[0]?.payload as DeptData
   const cumple = d.pct >= META
   return (
-    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
-      <p className="font-semibold dark:text-white mb-1 truncate">{label}</p>
-      <div className="flex items-center justify-between gap-4 text-gray-600 dark:text-gray-300">
+    <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
+      <p className="font-semibold text-foreground mb-1 truncate">{label}</p>
+      <div className="flex items-center justify-between gap-4 text-muted-foreground">
         <span>Entregados</span>
         <span className="font-bold text-emerald-600 dark:text-emerald-400">{d.entregados}</span>
       </div>
-      <div className="flex items-center justify-between gap-4 text-gray-600 dark:text-gray-300">
+      <div className="flex items-center justify-between gap-4 text-muted-foreground">
         <span>Total</span>
         <span className="font-medium">{d.total}</span>
       </div>
-      <div className="flex items-center justify-between gap-4 text-gray-600 dark:text-gray-300 mt-1 pt-1 border-t dark:border-gray-700">
+      <div className="flex items-center justify-between gap-4 text-muted-foreground mt-1 pt-1 border-t">
         <span>Cumplimiento</span>
         <span className={`font-bold ${cumple ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
           {d.pct}%
@@ -104,8 +104,8 @@ function CustomTooltip({ active, payload, label }: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function colorPct(pct: number): string {
-  if (pct >= META) return "#10b981" // emerald-500 — cumple meta ≥70%
-  return "#ef4444"                  // red-500 — no cumple
+  if (pct >= META) return "hsl(var(--chart-2))" // green — cumple meta ≥70%
+  return "hsl(var(--destructive))"               // red — no cumple
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ export default function RgCumplimientoChart() {
   }
 
   return (
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
+    <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -194,18 +194,18 @@ export default function RgCumplimientoChart() {
               <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <CardTitle className="text-base dark:text-white">Cumplimiento RG-REC-048</CardTitle>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Por departamento · Trimestral</p>
+              <CardTitle className="text-base">Cumplimiento RG-REC-048</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Por departamento · Trimestral</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Selector de año */}
             <Select value={año} onValueChange={setAño}>
-              <SelectTrigger className="w-24 h-8 text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+              <SelectTrigger className="w-24 h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              <SelectContent>
                 {añosDisponibles.map((y) => (
                   <SelectItem key={y} value={y!} className="text-xs">{y}</SelectItem>
                 ))}
@@ -216,7 +216,7 @@ export default function RgCumplimientoChart() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="h-8 w-8"
               onClick={cargar}
               disabled={loading}
             >
@@ -243,25 +243,25 @@ export default function RgCumplimientoChart() {
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           </div>
         ) : totalGeneral === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500 gap-2">
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
             <ShieldCheck size={32} className="opacity-30" />
             <p className="text-sm">Sin registros en este trimestre</p>
           </div>
         ) : (
           <>
             {/* Resumen general */}
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-muted/50 border">
               <div className="flex-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cumplimiento general del trimestre</div>
+                <div className="text-xs text-muted-foreground mb-1">Cumplimiento general del trimestre</div>
                 <div className="flex items-center gap-2">
                   <span className={`text-2xl font-bold ${pctGeneral >= META ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                     {pctGeneral}%
                   </span>
-                  <span className="text-xs text-gray-400">{entregadosGeneral} / {totalGeneral} entregados</span>
-                  <span className="text-xs text-gray-400">· meta 70%</span>
+                  <span className="text-xs text-muted-foreground">{entregadosGeneral} / {totalGeneral} entregados</span>
+                  <span className="text-xs text-muted-foreground">· meta 70%</span>
                 </div>
                 {/* Barra de progreso general */}
-                <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${pctGeneral}%`, backgroundColor: colorPct(pctGeneral) }}
@@ -296,18 +296,18 @@ export default function RgCumplimientoChart() {
                   domain={[0, 100]}
                   tickFormatter={(v) => `${v}%`}
                   tick={{ fontSize: 10, fill: "currentColor" }}
-                  className="text-gray-500 dark:text-gray-400"
+                  className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
                   ticks={[0, 25, 50, 70, 100]}
                 />
-                <ReferenceLine x={META} stroke="#6366f1" strokeDasharray="4 3" strokeWidth={1.5} label={{ value: "Meta", position: "top", fontSize: 9, fill: "#6366f1" }} />
+                <ReferenceLine x={META} stroke="hsl(var(--chart-4))" strokeDasharray="4 3" strokeWidth={1.5} label={{ value: "Meta", position: "top", fontSize: 9, fill: "hsl(var(--chart-4))" }} />
                 <YAxis
                   type="category"
                   dataKey="departamento"
                   width={110}
                   tick={{ fontSize: 10, fill: "currentColor" }}
-                  className="text-gray-600 dark:text-gray-300"
+                  className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={abrevDept}
@@ -329,9 +329,9 @@ export default function RgCumplimientoChart() {
             </div>
 
             {/* Leyenda de colores */}
-            <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400 justify-end">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{background:"#10b981"}} /> Cumple (≥ 70%)</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{background:"#ef4444"}} /> No cumple (&lt; 70%)</span>
+            <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground justify-end">
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{background:"hsl(var(--chart-2))"}} /> Cumple (≥ 70%)</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block" style={{background:"hsl(var(--destructive))"}} /> No cumple (&lt; 70%)</span>
             </div>
           </>
         )}

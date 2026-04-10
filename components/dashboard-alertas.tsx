@@ -113,9 +113,9 @@ function Metrica({ icono, label, valor, colorValor, colorBorder, onClick, loadin
         {loading ? (
           <div className="h-6 w-8 bg-current/10 rounded animate-pulse" />
         ) : (
-          <span className="text-xl font-bold leading-none text-gray-900 dark:text-white">{valor}</span>
+          <span className="text-xl font-bold leading-none text-gray-900">{valor}</span>
         )}
-        <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-tight truncate">{label}</span>
+        <span className="text-xs text-muted-foreground mt-0.5 leading-tight truncate">{label}</span>
       </div>
       {valor > 0 && !loading && (
         <ChevronRight size={13} className={`${colorValor} opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0`} />
@@ -166,7 +166,7 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
   }
 
   return (
-    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
+    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-card/60 shadow-sm ${colorBorde}`}>
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
@@ -175,17 +175,17 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-sm dark:text-white leading-tight truncate">{item.nombre}</p>
+            <p className="font-semibold text-sm leading-tight truncate">{item.nombre}</p>
             <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
             {[item.departamento, item.turno].filter(Boolean).join(" · ") || "Sin departamento"}
           </p>
           <div className="flex items-center justify-between mt-2">
             <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
               {badgeLabel}
             </span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
+            <span className="text-xs text-muted-foreground">{formatDate(item.fecha)}</span>
           </div>
         </div>
       </div>
@@ -206,7 +206,7 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
             onChange={e => setCalStr(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleGuardar(); if (e.key === "Escape") { setEditando(false); setCalStr("") } }}
             autoFocus
-            className="w-24 text-xs border dark:border-gray-600 rounded-md px-2 py-1 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-24 text-xs border rounded-md px-2 py-1 bg-muted focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <button
             onClick={handleGuardar}
@@ -255,7 +255,7 @@ function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEnt
   }
 
   return (
-    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-white dark:bg-gray-800/60 shadow-sm ${colorBorde}`}>
+    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-card/60 shadow-sm ${colorBorde}`}>
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
@@ -264,17 +264,17 @@ function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEnt
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-sm dark:text-white leading-tight truncate">{item.nombre}</p>
+            <p className="font-semibold text-sm leading-tight truncate">{item.nombre}</p>
             <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
             {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
           </p>
           <div className="flex items-center justify-between mt-2">
             <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
               {item.etiqueta}
             </span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(item.fecha)}</span>
+            <span className="text-xs text-muted-foreground">{formatDate(item.fecha)}</span>
           </div>
         </div>
       </div>
@@ -489,14 +489,14 @@ export default function DashboardAlertas() {
 
   return (
     <>
-      <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <Card className="bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
-            <CardTitle className="text-base font-semibold dark:text-white flex items-center gap-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-primary" />
               Alertas de Vencimiento
             </CardTitle>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Haz clic en una métrica para ver el detalle
             </p>
           </div>
@@ -591,9 +591,9 @@ export default function DashboardAlertas() {
 
       <Dialog open={dialogTipo !== null} onOpenChange={(open) => !open && setDialogTipo(null)}>
         {dialogActivo && (
-          <DialogContent className="sm:max-w-lg dark:bg-gray-900 dark:border-gray-700 flex flex-col max-h-[85vh]">
+          <DialogContent className="sm:max-w-lg bg-background flex flex-col max-h-[85vh]">
             <DialogHeader className="shrink-0">
-              <DialogTitle className="flex items-center gap-2 dark:text-white">
+              <DialogTitle className="flex items-center gap-2">
                 {dialogActivo.icono}
                 {dialogActivo.titulo}
               </DialogTitle>
@@ -707,10 +707,10 @@ export default function DashboardAlertas() {
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 pt-2 border-t dark:border-gray-700">
+            <div className="shrink-0 pt-2 border-t">
               <a
                 href="/nuevo-ingreso"
-                className="flex items-center justify-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
               >
                 <User size={14} />
                 Ver todos en Nuevo Ingreso
@@ -793,13 +793,13 @@ function agruparPorDepto<T extends { departamento: string | null }>(items: T[]):
 function DeptoHeader({ nombre, count }: { nombre: string; count: number }) {
   return (
     <div className="flex items-center gap-2 pt-1 pb-0.5">
-      <span className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 truncate">
+      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground truncate">
         {nombre}
       </span>
-      <span className="flex-shrink-0 text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full px-1.5 py-0.5">
+      <span className="flex-shrink-0 text-[10px] font-semibold bg-gray-100 bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
         {count}
       </span>
-      <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700/60" />
+      <div className="flex-1 h-px bg-gray-100 bg-muted/60" />
     </div>
   )
 }
@@ -816,7 +816,7 @@ function ListaEvals({ items, vencida, vacio, onCalificar }: {
 }) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500 gap-2">
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
         <CheckCircle2 className="h-8 w-8 opacity-40" />
         <p className="text-sm">{vacio}</p>
       </div>
@@ -864,7 +864,7 @@ function ListaFechasPorDepto({
 }) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-500 gap-2">
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
         <CheckCircle2 className="h-8 w-8 opacity-40" />
         <p className="text-sm">{vacio}</p>
       </div>

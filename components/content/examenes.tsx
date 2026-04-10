@@ -312,7 +312,7 @@ export default function ExamenesContent({
 
       {/* Dialog crear / editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="sm:max-w-2xl bg-card">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar Pregunta" : "Nueva Pregunta"}</DialogTitle>
             <DialogDescription>
@@ -418,7 +418,7 @@ export default function ExamenesContent({
 
       {/* Dialog confirmar eliminación */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
+        <AlertDialogContent className="bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar pregunta?</AlertDialogTitle>
             <AlertDialogDescription>

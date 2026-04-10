@@ -101,6 +101,8 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
       "AUXILIAR DE ALMACÉN B",
       "AUXILIAR DE ALMACÉN C",
       "AUXILIAR DE ALMACÉN D",
+      "CHOFER A",
+      "CHOFER B",
       "JEFE DE ALMACÉN"]
   },//ACTUALIZADO
   "RECURSOS HUMANOS": {

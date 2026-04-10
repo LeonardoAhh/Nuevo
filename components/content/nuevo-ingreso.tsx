@@ -27,8 +27,8 @@ const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.ElementT
   completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-green-600 dark:text-green-400' },
   proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-yellow-500 dark:text-yellow-400' },
   hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-orange-500 dark:text-orange-400' },
-  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-red-500 dark:text-red-400' },
-  pendiente: { label: 'Pendiente', icon: Clock, classes: 'text-gray-400 dark:text-gray-500' },
+  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-destructive dark:text-red-400' },
+  pendiente: { label: 'Pendiente', icon: Clock, classes: 'text-muted-foreground' },
 }
 
 function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion: number | null }) {
@@ -61,7 +61,7 @@ function ContratoTerminoBadge({ fecha }: { fecha: string | null }) {
   const urgent = diff <= 10
   const past = diff < 0
   return (
-    <div className={`text-xs font-medium ${past ? 'text-red-500' : urgent ? 'text-orange-500' : 'text-gray-600 dark:text-gray-400'}`}>
+    <div className={`text-xs font-medium ${past ? 'text-destructive' : urgent ? 'text-orange-500' : 'text-muted-foreground'}`}>
       <div>{formatDate(fecha)}</div>
       <div className="opacity-70">
         {past ? `Vencido hace ${Math.abs(diff)}d` : diff === 0 ? 'Hoy' : `En ${diff} días`}
@@ -107,24 +107,24 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="sm:max-w-lg bg-card">
         <DialogHeader>
-          <DialogTitle className="dark:text-white flex items-center gap-2">
+          <DialogTitle className=" flex items-center gap-2">
             <Pencil className="h-4 w-4 text-primary" />
             {record.nombre}
           </DialogTitle>
-          <DialogDescription className="dark:text-gray-400">
+          <DialogDescription className="">
             {record.puesto} · {record.departamento} · Ingreso: {formatDate(record.fecha_ingreso)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium dark:text-gray-200">Escolaridad</label>
+            <label className="text-sm font-medium">Escolaridad</label>
             <Input
               value={form.escolaridad ?? ''}
               onChange={e => set('escolaridad', e.target.value)}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              className="bg-muted"
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -134,7 +134,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
               { label: '3er mes', key: 'eval_3_calificacion' as const, fecha: record.eval_3_fecha },
             ]).map(({ label, key, fecha }) => (
               <div key={key} className="space-y-1.5">
-                <label className="text-xs font-medium dark:text-gray-300">
+                <label className="text-xs font-medium">
                   Eval. {label}
                   <span className="block text-gray-400 font-normal">{formatDate(fecha)}</span>
                 </label>
@@ -142,29 +142,29 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
                   type="number" min={0} max={100}
                   value={form[key] ?? ''}
                   onChange={e => set(key, e.target.value === '' ? null : parseInt(e.target.value))}
-                  className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="text-base md:text-sm bg-muted"
                 />
               </div>
             ))}
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium dark:text-gray-200">Tipo de contrato</label>
+            <label className="text-sm font-medium">Tipo de contrato</label>
             <Select value={form.tipo_contrato ?? record.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
-              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"><SelectValue /></SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-card">
                 <SelectItem value="A prueba">A prueba</SelectItem>
                 <SelectItem value="Indeterminado">Indeterminado</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium dark:text-gray-200">
+            <label className="text-sm font-medium">
               RG-REC-048
               <span className="ml-2 text-xs font-normal text-gray-400">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
             </label>
             <Select value={form.rg_rec_048 ?? record.rg_rec_048} onValueChange={v => set('rg_rec_048', v as EstadoRG)}>
-              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"><SelectValue /></SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+              <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-card">
                 <SelectItem value="Pendiente">Pendiente</SelectItem>
                 <SelectItem value="Entregado">Entregado</SelectItem>
               </SelectContent>
@@ -173,7 +173,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving} className="dark:border-gray-600 dark:text-gray-200">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="">
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
@@ -216,8 +216,8 @@ function FormField({
 }: { id: string; label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-medium dark:text-gray-200">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      <Label htmlFor={id} className="text-sm font-medium">
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
     </div>
@@ -293,9 +293,9 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
         <DialogHeader>
-          <DialogTitle className="dark:text-white flex items-center gap-2">
+          <DialogTitle className=" flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-amber-500" />
             Nuevo Empleado
           </DialogTitle>
@@ -318,13 +318,13 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
               <Input id="numero" value={form.numero}
                 onChange={e => set('numero', e.target.value)}
                 placeholder="001"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                className="bg-muted" />
             </FormField>
             <FormField id="nombre" label="Nombre completo" required>
               <Input id="nombre" value={form.nombre}
                 onChange={e => set('nombre', e.target.value)}
                 placeholder="PÉREZ GARCÍA JUAN"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                className="bg-muted" />
             </FormField>
           </div>
 
@@ -332,10 +332,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField id="departamento" label="Departamento" required>
               <Select value={form.departamento} onValueChange={setDepartamento}>
-                <SelectTrigger id="departamento" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="departamento" className="bg-muted">
                   <SelectValue placeholder="Selecciona..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -343,10 +343,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
             <FormField id="area" label="Área" required>
               <Select value={form.area} onValueChange={v => set('area', v)} disabled={!form.departamento}>
-                <SelectTrigger id="area" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="area" className="bg-muted">
                   <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {areasDisponibles.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -357,10 +357,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField id="puesto" label="Puesto" required>
               <Select value={form.puesto} onValueChange={v => set('puesto', v)} disabled={!form.departamento}>
-                <SelectTrigger id="puesto" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="puesto" className="bg-muted">
                   <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {puestosDisponibles.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -368,10 +368,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
             <FormField id="turno" label="Turno" required>
               <Select value={form.turno} onValueChange={v => set('turno', v)}>
-                <SelectTrigger id="turno" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="turno" className="bg-muted">
                   <SelectValue placeholder="Selecciona..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -384,14 +384,14 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
               <Input id="fecha_ingreso" type="date"
                 value={form.fecha_ingreso}
                 onChange={e => set('fecha_ingreso', e.target.value)}
-                className="text-base md:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                className="text-base md:text-sm bg-muted" />
             </FormField>
             <FormField id="tipo_contrato" label="Tipo de contrato">
               <Select value={form.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
-                <SelectTrigger id="tipo_contrato" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="tipo_contrato" className="bg-muted">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="bg-card">
                   <SelectItem value="A prueba">A prueba</SelectItem>
                   <SelectItem value="Indeterminado">Indeterminado</SelectItem>
                 </SelectContent>
@@ -405,14 +405,14 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
               <Input id="curp" value={form.curp}
                 onChange={e => set('curp', e.target.value.toUpperCase())}
                 placeholder="PELJ900101HDFRZN09"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+                className="bg-muted" />
             </FormField>
             <FormField id="escolaridad" label="Escolaridad">
               <Select value={form.escolaridad} onValueChange={v => set('escolaridad', v)}>
-                <SelectTrigger id="escolaridad" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="escolaridad" className="bg-muted">
                   <SelectValue placeholder="Selecciona..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {ESCOLARIDAD.map(e => (
                     <SelectItem key={e} value={e}>{e}</SelectItem>
                   ))}
@@ -421,10 +421,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
             </FormField>
             <FormField id="jefe_area" label="Jefe de área">
               <Select value={form.jefe_area} onValueChange={v => set('jefe_area', v)}>
-                <SelectTrigger id="jefe_area" className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger id="jefe_area" className="bg-muted">
                   <SelectValue placeholder="Selecciona..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-56">
+                <SelectContent className="bg-card max-h-56">
                   {JEFES_DE_AREA.map(j => (
                     <SelectItem key={j} value={j}>{j}</SelectItem>
                   ))}
@@ -446,7 +446,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
                 ].map(({ label, days }) => (
                   <div key={label} className="text-center">
                     <p className="text-amber-600 dark:text-amber-500 font-medium">{label}</p>
-                    <p className="text-gray-600 dark:text-gray-400">{formatDate(addDays(form.fecha_ingreso, days))}</p>
+                    <p className="text-muted-foreground">{formatDate(addDays(form.fecha_ingreso, days))}</p>
                   </div>
                 ))}
               </div>
@@ -455,7 +455,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving} className="gap-2 dark:border-gray-600 dark:text-gray-200">
+          <Button variant="outline" onClick={onClose} disabled={saving} className="gap-2">
             <X className="h-4 w-4" /> Cancelar
           </Button>
           <Button onClick={handleCreate} disabled={saving || !form.nombre.trim()} className="gap-2">
@@ -605,44 +605,44 @@ export default function NuevoIngresoContent() {
             placeholder=""
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+            className="pl-9 bg-muted"
           />
         </div>
         {/* Selects — 2 columnas en móvil, fila en desktop */}
         <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
           <Select value={filterDept} onValueChange={setFilterDept}>
-            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+            <SelectTrigger className="bg-muted text-sm">
               <SelectValue placeholder="" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+            <SelectContent className="bg-card">
               <SelectItem value="all">Departamentos</SelectItem>
               {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterContrato} onValueChange={setFilterContrato}>
-            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+            <SelectTrigger className="bg-muted text-sm">
               <SelectValue placeholder="" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+            <SelectContent className="bg-card">
               <SelectItem value="all">Tipo contrato</SelectItem>
               <SelectItem value="A prueba">A prueba</SelectItem>
               <SelectItem value="Indeterminado">Indeterminado</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterTurno} onValueChange={setFilterTurno}>
-            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+            <SelectTrigger className="bg-muted text-sm">
               <SelectValue placeholder="" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+            <SelectContent className="bg-card">
               <SelectItem value="all">Turnos</SelectItem>
               {turnos.map(t => <SelectItem key={t} value={t}>Turno {t}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterRG} onValueChange={setFilterRG}>
-            <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 text-sm">
+            <SelectTrigger className="bg-muted text-sm">
               <SelectValue placeholder="" />
             </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+            <SelectContent className="bg-card">
               <SelectItem value="all">Plan de Formación</SelectItem>
               <SelectItem value="Pendiente">Pendiente</SelectItem>
               <SelectItem value="Entregado">Entregado</SelectItem>
@@ -652,14 +652,14 @@ export default function NuevoIngresoContent() {
       </div>
 
       {/* Tabla */}
-      <Card className="dark:bg-gray-800 dark:border-gray-700 mb-6">
+      <Card className="bg-card mb-6">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-16">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-16 text-muted-foreground">
               {records.length === 0
                 ? 'No hay registros. Usa el botón Importar para cargar el JSON.'
                 : 'No se encontraron empleados con ese filtro.'}
@@ -681,13 +681,13 @@ export default function NuevoIngresoContent() {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="min-w-0">
                           {r.numero && (
-                            <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 leading-none mb-0.5">
+                            <p className="text-[10px] font-mono text-muted-foreground leading-none mb-0.5">
                               #{r.numero}
                             </p>
                           )}
-                          <p className="font-semibold text-sm dark:text-gray-200 leading-tight">{r.nombre}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{r.puesto}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</p>
+                          <p className="font-semibold text-sm leading-tight">{r.nombre}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.puesto}</p>
+                          <p className="text-xs text-muted-foreground">{r.departamento}</p>
                         </div>
                         <div className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
@@ -702,15 +702,15 @@ export default function NuevoIngresoContent() {
                       {/* Fila inferior: 3 evaluaciones en línea */}
                       <div className="flex gap-2">
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500">1er mes</span>
+                          <span className="text-[10px] text-muted-foreground">1er mes</span>
                           <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500">2do mes</span>
+                          <span className="text-[10px] text-muted-foreground">2do mes</span>
                           <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500">3er mes</span>
+                          <span className="text-[10px] text-muted-foreground">3er mes</span>
                           <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
                         </div>
                       </div>
@@ -723,16 +723,16 @@ export default function NuevoIngresoContent() {
               <div className="hidden sm:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="dark:border-gray-700 dark:bg-gray-900/50">
-                      <TableHead className="dark:text-gray-400 w-[90px]">N.N</TableHead>
-                      <TableHead className="dark:text-gray-400 min-w-[180px]">Empleado</TableHead>
-                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Ingreso</TableHead>
-                      <TableHead className="dark:text-gray-400 text-center">Eval. 1er mes</TableHead>
-                      <TableHead className="dark:text-gray-400 text-center hidden md:table-cell">Eval. 2do mes</TableHead>
-                      <TableHead className="dark:text-gray-400 text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
-                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Término</TableHead>
-                      <TableHead className="dark:text-gray-400 hidden md:table-cell">Contrato</TableHead>
-                      <TableHead className="dark:text-gray-400 text-center">RG-REC-048</TableHead>
+                    <TableRow className=" bg-background/50">
+                      <TableHead className=" w-[90px]">N.N</TableHead>
+                      <TableHead className=" min-w-[180px]">Empleado</TableHead>
+                      <TableHead className=" hidden md:table-cell">Ingreso</TableHead>
+                      <TableHead className=" text-center">Eval. 1er mes</TableHead>
+                      <TableHead className=" text-center hidden md:table-cell">Eval. 2do mes</TableHead>
+                      <TableHead className=" text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
+                      <TableHead className=" hidden md:table-cell">Término</TableHead>
+                      <TableHead className=" hidden md:table-cell">Contrato</TableHead>
+                      <TableHead className=" text-center">RG-REC-048</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -742,21 +742,21 @@ export default function NuevoIngresoContent() {
                       return (
                         <TableRow
                           key={r.id}
-                          className="dark:border-gray-700 hover:dark:bg-gray-700/40 cursor-pointer"
+                          className=" hover:bg-muted/40 cursor-pointer"
                           onClick={() => handleEdit(r)}
                         >
                           <TableCell>
-                            <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-mono text-xs text-muted-foreground">
                               {r.numero ?? '—'}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium dark:text-gray-200 text-sm leading-tight">{r.nombre}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{r.puesto}</div>
+                            <div className="font-medium text-sm leading-tight">{r.nombre}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{r.puesto}</div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            <div className="text-sm dark:text-gray-300">{formatDate(r.fecha_ingreso)}</div>
-                            <div className="text-xs text-gray-400 dark:text-gray-500">{r.departamento}</div>
+                            <div className="text-sm">{formatDate(r.fecha_ingreso)}</div>
+                            <div className="text-xs text-muted-foreground">{r.departamento}</div>
                           </TableCell>
                           <TableCell className="text-center">
                             <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
@@ -775,7 +775,7 @@ export default function NuevoIngresoContent() {
                               variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
                               className={`text-xs whitespace-nowrap ${r.tipo_contrato === 'Indeterminado'
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                                : 'dark:bg-gray-700 dark:text-gray-300'
+                                : 'bg-muted'
                                 }`}
                             >
                               {r.tipo_contrato}
@@ -803,12 +803,12 @@ export default function NuevoIngresoContent() {
         </CardContent>
       </Card>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+      <p className="text-xs text-muted-foreground mb-6">
         {filtered.length} de {records.length} empleados
       </p>
 
       {/* Leyenda */}
-      <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400 mb-6">
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-6">
         <div className="flex items-center gap-1.5">
           <Info className="h-3.5 w-3.5" />
           <span>Haz clic en una fila para editar calificaciones y estado</span>

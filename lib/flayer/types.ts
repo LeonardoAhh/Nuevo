@@ -93,6 +93,11 @@ export const COLOR_HISTORY_KEY = "flayer-color-history"
 export const AUTOSAVE_KEY = "flayer-autosave"
 export const AUTOSAVE_INTERVAL = 30_000
 
+/** Default fill color for new shapes added to the canvas */
+export const DEFAULT_SHAPE_COLOR = "#3b82f6"
+/** Default text/icon color for new icon elements added to the canvas */
+export const DEFAULT_TEXT_COLOR = "#0f172a"
+
 export const FONTS = [
   { label: "Inter", value: "Inter, sans-serif" },
   { label: "Roboto", value: "Roboto, sans-serif" },

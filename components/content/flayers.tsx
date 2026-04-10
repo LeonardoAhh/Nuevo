@@ -131,6 +131,8 @@ import {
   AUTOSAVE_INTERVAL,
   FONTS,
   DEFAULT_STYLE,
+  DEFAULT_SHAPE_COLOR,
+  DEFAULT_TEXT_COLOR,
   TEXT_SHADOWS,
   BOX_SHADOWS,
   GRADIENT_PRESETS,
@@ -459,7 +461,7 @@ export default function FlayersContent() {
       const newEl: FlayerElement = {
         id: uid(), type: "shape", shapeType, x: 80, y: 80, width: w, height: h,
         content: "", zIndex: elements.length + 1,
-        style: { ...DEFAULT_STYLE, backgroundColor: "#3b82f6" },
+        style: { ...DEFAULT_STYLE, backgroundColor: DEFAULT_SHAPE_COLOR },
       }
       setElements((prev) => [...prev, newEl])
       setSelectedId(newEl.id)
@@ -474,7 +476,7 @@ export default function FlayersContent() {
       const newEl: FlayerElement = {
         id: uid(), type: "icon", iconName, x: 80, y: 80, width: 48, height: 48,
         content: "", zIndex: elements.length + 1,
-        style: { ...DEFAULT_STYLE, color: "#0f172a", backgroundColor: "transparent" },
+        style: { ...DEFAULT_STYLE, color: DEFAULT_TEXT_COLOR, backgroundColor: "transparent" },
       }
       setElements((prev) => [...prev, newEl])
       setSelectedId(newEl.id)

@@ -194,12 +194,12 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
   }, [])
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex flex-col md:flex-row h-screen bg-background">
       {/* Sidebar */}
       <div
-        className={`bg-white dark:bg-gray-800 border-r dark:border-gray-700 transition-all duration-300 flex flex-col max-md:fixed max-md:z-50 max-md:h-screen max-md:shadow-lg max-md:w-64 max-md:-translate-x-full ${showMobileSidebar ? "max-md:translate-x-0" : ""} ${sidebarCollapsed ? "md:w-20" : "md:w-64"}`}
+        className={`bg-card border-r transition-all duration-300 flex flex-col max-md:fixed max-md:z-50 max-md:h-screen max-md:shadow-lg max-md:w-64 max-md:-translate-x-full ${showMobileSidebar ? "max-md:translate-x-0" : ""} ${sidebarCollapsed ? "md:w-20" : "md:w-64"}`}
       >
-        <div className="p-2 h-[50px] border-b dark:border-gray-700 flex items-center justify-between">
+        <div className="p-2 h-[50px] border-b flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {showExpandedSidebar && (
               <>
@@ -207,7 +207,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                   <Car size={16} />
                 </div>
                 <div>
-                  <div className="font-semibold dark:text-white">VIÑOPLASTIC</div>
+                  <div className="font-semibold">VIÑOPLASTIC</div>
                 </div>
               </>
             )}
@@ -237,7 +237,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                     </span>
                   </div>
                 ) : (
-                  sectionIdx > 0 && <div className="mx-3 my-1 border-t dark:border-gray-700" />
+                  sectionIdx > 0 && <div className="mx-3 my-1 border-t" />
                 )}
                 <div className="space-y-1">
                   {section.items.map((item) => (
@@ -266,7 +266,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         </div>
 
         {/* Sidebar Bottom — User Menu */}
-        <div className="p-2 border-t dark:border-gray-700">
+        <div className="p-2 border-t">
           <DropdownMenu>
             <TooltipProvider delayDuration={0}>
               <Tooltip>
@@ -284,7 +284,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
                           <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
                         </Avatar>
                         <span className="flex-1 min-w-0 text-left">
-                          <span className="block font-medium text-sm truncate dark:text-white">
+                          <span className="block font-medium text-sm truncate">
                             {displayName}
                           </span>
                         </span>
@@ -369,7 +369,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto scrollbar-thin">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-3 sm:px-6 p-2 min-h-[50px] sticky top-0 z-20">
+        <header className="bg-card border-b px-3 sm:px-6 p-2 min-h-[50px] sticky top-0 z-20">
           <div className="flex flex-col gap-3 sm:gap-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               {isMobileView && !showMobileSidebar ? (
@@ -385,7 +385,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
               ) : null}
               <div className="min-w-0">
                 {displayTitle ? (
-                  <p className="text-lg sm:text-xl font-semibold dark:text-white truncate">
+                  <p className="text-lg sm:text-xl font-semibold truncate">
                     {displayTitle}
                   </p>
                 ) : null}
@@ -396,7 +396,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         </header>
 
         {/* Dashboard Content */}
-        <main className="px-3 sm:px-6 py-6 dark:bg-gray-900 dark:text-gray-100">
+        <main className="px-3 sm:px-6 py-6 bg-background">
           {content ? (
             content
           ) : (
@@ -404,12 +404,12 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
               <div className="flex gap-2 mb-4 sm:mb-6">
                 <Button
                   variant="outline"
-                  className="gap-2 text-xs sm:text-sm h-8 sm:h-10 dark:border-gray-700 dark:text-gray-300"
+                  className="gap-2 text-xs sm:text-sm h-8 sm:h-10"
                 >
                   <Filter size={14} className="sm:size-16" />
                   Filters
                 </Button>
-                <Button className="gap-2 bg-gray-900 hover:bg-black dark:bg-gray-700 dark:hover:bg-gray-600 text-white text-xs sm:text-sm h-8 sm:h-10">
+                <Button className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs sm:text-sm h-8 sm:h-10">
                   <Plus size={14} className="sm:size-16" />
                   Add Widget
                 </Button>
