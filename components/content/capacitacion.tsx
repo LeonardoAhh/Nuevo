@@ -45,12 +45,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useCapacitacion } from "@/lib/hooks"
+import { useCapacitacion, useRole } from "@/lib/hooks"
 import type {
   Department, Position, Course, ImportPreview,
   CourseMatch, HistorialPreview, EmployeeCourse, Employee, EmployeeProgress,
 } from "@/lib/hooks"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
+import { ReadOnlyBanner } from "@/components/read-only-banner"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -81,6 +82,7 @@ const NEW_COURSE_VALUE = '__new__'
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CapacitacionContent() {
+  const { isReadOnly } = useRole()
   const {
     importing, importError,
     parseJSON, importData,
@@ -428,6 +430,7 @@ export default function CapacitacionContent() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
+      <ReadOnlyBanner />
       <Tabs
         defaultValue="puestos"
         onValueChange={(v) => {
@@ -840,7 +843,7 @@ export default function CapacitacionContent() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handleImport} disabled={importing} className="gap-2">
+                    <Button onClick={handleImport} disabled={isReadOnly || importing} className="gap-2">
                       {importing ? (
                         <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
                       ) : (
@@ -941,7 +944,7 @@ export default function CapacitacionContent() {
               className="dark:border-gray-600 dark:text-gray-200">
               Cancelar
             </Button>
-            <Button onClick={handleSaveAddCourses} disabled={addCoursesSaving} className="gap-2">
+            <Button onClick={handleSaveAddCourses} disabled={isReadOnly || addCoursesSaving} className="gap-2">
               {addCoursesSaving
                 ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
                 : 'Guardar cursos'
@@ -1177,7 +1180,7 @@ export default function CapacitacionContent() {
                   className="dark:border-gray-600 dark:text-gray-200">
                   ← Anterior
                 </Button>
-                <Button onClick={handleSaveNewEmp} disabled={newEmpSaving} className="gap-2">
+                <Button onClick={handleSaveNewEmp} disabled={isReadOnly || newEmpSaving} className="gap-2">
                   {newEmpSaving
                     ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
                     : 'Guardar'
@@ -1220,7 +1223,7 @@ export default function CapacitacionContent() {
             <Button
               variant="destructive"
               onClick={handleClearHistorial}
-              disabled={importing}
+              disabled={isReadOnly || importing}
               className="gap-2"
             >
               {importing ? (
@@ -1371,7 +1374,7 @@ export default function CapacitacionContent() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleSaveEditEmp} disabled={editEmpSaving} className="gap-2">
+            <Button onClick={handleSaveEditEmp} disabled={isReadOnly || editEmpSaving} className="gap-2">
               {editEmpSaving
                 ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
                 : <><Pencil className="h-4 w-4" /> Guardar cambios</>
@@ -1412,7 +1415,7 @@ export default function CapacitacionContent() {
             </Button>
             <Button
               variant="destructive"
-              disabled={deletingEmp}
+              disabled={isReadOnly || deletingEmp}
               className="gap-2"
               onClick={async () => {
                 if (!deleteEmpTarget) return

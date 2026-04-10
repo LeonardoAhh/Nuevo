@@ -51,22 +51,22 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="shadow-lg border-gray-200 dark:border-gray-800">
+    <Card className="login-fade-up shadow-xl border-border/50 backdrop-blur-sm bg-card/80 dark:bg-card/60" style={{ animationDelay: "550ms" }}>
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="p-3 text-sm bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400 rounded-md">
+            <div className="p-3 text-sm bg-destructive/10 text-destructive rounded-lg border border-destructive/20 login-shake">
               {error}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
-              Email address
+            <Label htmlFor="email" className="text-foreground/80 text-sm font-medium">
+              Correo electrónico
             </Label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MailIcon className="h-5 w-5 text-gray-400" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+                <MailIcon className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               </div>
               <Input
                 id="email"
@@ -74,19 +74,19 @@ export default function LoginForm() {
                 placeholder=""
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">
-              Password
+            <Label htmlFor="password" className="text-foreground/80 text-sm font-medium">
+              Contraseña
             </Label>
-            <div className="relative">
+            <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <LockIcon className="h-5 w-5 text-gray-400" />
+                <LockIcon className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               </div>
               <Input
                 id="password"
@@ -94,7 +94,7 @@ export default function LoginForm() {
                 placeholder=""
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10"
                 required
               />
               <button
@@ -118,14 +118,25 @@ export default function LoginForm() {
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
               />
-              <Label htmlFor="remember-me" className="text-sm text-gray-600 dark:text-gray-400">
-                Remember me
+              <Label htmlFor="remember-me" className="text-sm text-muted-foreground">
+                Recordarme
               </Label>
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign in"}
+          <Button
+            type="submit"
+            className="w-full h-11 font-semibold text-sm tracking-wide transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="login-spinner h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full" />
+                Iniciando sesión...
+              </span>
+            ) : (
+              "Iniciar sesión"
+            )}
           </Button>
 
         </form>

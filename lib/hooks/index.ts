@@ -1,6 +1,8 @@
 export { useProfile } from './useProfile'
 export { useSkills } from './useSkills'
 export { useUser } from './useUser'
+export { useRole } from './useRole'
+export type { AppRole } from './useRole'
 export { useNotificationPreferences } from './useNotificationPreferences'
 export { useCapacitacion } from './useCapacitacion'
 export { useExamenes } from './useExamenes'
@@ -8,9 +10,6 @@ export type { PreguntaExamen, PreguntaInsert, PreguntaUpdate } from './useExamen
 export { useNuevoIngreso } from './useNuevoIngreso'
 export { useCursos } from './useCursos'
 export type { Curso } from './useCursos'
-export { useCurso } from './useCurso'
-export { useSlides } from './useSlides'
-export type { Slide } from './useSlides'
 export type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG, EvalStatus } from './useNuevoIngreso'
 export { formatDate, daysFromToday, evalStatus, addDays } from './useNuevoIngreso'
 export type {

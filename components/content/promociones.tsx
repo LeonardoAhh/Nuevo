@@ -45,6 +45,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase/client"
+import { useRole } from "@/lib/hooks"
+import { ReadOnlyBanner } from "@/components/read-only-banner"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -435,6 +437,7 @@ function CapturarDesempeñoDialog({
   onClose: () => void
   onGuardado: () => void
 }) {
+  const { isReadOnly } = useRole()
   const evalActual = ultimaEvaluacion(empleado.evaluaciones)
   const [calificacion, setCalificacion] = useState(
     evalActual ? String(evalActual.calificacion) : ""
@@ -533,7 +536,7 @@ function CapturarDesempeñoDialog({
           <Button variant="outline" onClick={onClose} disabled={guardando}>
             Cancelar
           </Button>
-          <Button onClick={handleGuardar} disabled={guardando} className="gap-2">
+          <Button onClick={handleGuardar} disabled={isReadOnly || guardando} className="gap-2">
             {guardando ? <Loader2 size={14} className="animate-spin" /> : <Star size={14} />}
             Guardar evaluación
           </Button>
@@ -554,6 +557,7 @@ function PromoverDialog({
   onClose: () => void
   onPromovido: () => void
 }) {
+  const { isReadOnly } = useRole()
   const aptitud = calcularAptitud(empleado)
   const meses = mesesEnPuesto(empleado.fechaIngresoPuesto)
   const pctCursos = porcentajeCursos(empleado.cursosRequeridos)
@@ -768,7 +772,7 @@ function PromoverDialog({
                   setGuardando(false)
                 }
               }}
-              disabled={guardando}
+              disabled={isReadOnly || guardando}
               className="w-full sm:w-auto gap-2"
             >
               {guardando ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -777,7 +781,7 @@ function PromoverDialog({
           )}
           <Button
             onClick={handleConfirmar}
-            disabled={guardando || !puedePromover}
+            disabled={isReadOnly || guardando || !puedePromover}
             className="w-full sm:w-auto gap-2"
           >
             {guardando ? <Loader2 size={14} className="animate-spin" /> : <TrendingUp size={14} />}
@@ -798,6 +802,7 @@ export default function PromocionesContent({
   empleados: EmpleadoPromocion[]
   onDatosActualizados?: () => void
 }) {
+  const { isReadOnly } = useRole()
   const [busqueda, setBusqueda] = useState("")
   const [filtroDept, setFiltroDept] = useState("todos")
   const [filtroStatus, setFiltroStatus] = useState("todos")
@@ -989,6 +994,7 @@ export default function PromocionesContent({
 
   return (
     <div className="space-y-6">
+      <ReadOnlyBanner />
       {/* Inputs ocultos para JSON */}
       <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFileChange} />
       <input ref={datosFileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleDatosFileChange} />
@@ -1040,7 +1046,7 @@ export default function PromocionesContent({
               <Button variant="outline" onClick={() => setReglasPreview(null)} disabled={cargando}>
                 Cancelar
               </Button>
-              <Button onClick={handleCargarReglas} disabled={cargando} className="gap-2">
+              <Button onClick={handleCargarReglas} disabled={isReadOnly || cargando} className="gap-2">
                 {cargando ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
                 {cargando ? "Cargando..." : "Confirmar y cargar a Supabase"}
               </Button>
@@ -1105,7 +1111,7 @@ export default function PromocionesContent({
               <Button variant="outline" onClick={() => setDatosPreview(null)} disabled={datosCargando}>
                 Cancelar
               </Button>
-              <Button onClick={handleCargarDatos} disabled={datosCargando} className="gap-2">
+              <Button onClick={handleCargarDatos} disabled={isReadOnly || datosCargando} className="gap-2">
                 {datosCargando ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
                 {datosCargando ? "Cargando..." : "Confirmar y cargar a Supabase"}
               </Button>

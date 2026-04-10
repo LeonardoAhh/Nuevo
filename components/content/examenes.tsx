@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useRole } from "@/lib/hooks"
+import { ReadOnlyBanner } from "@/components/read-only-banner"
 import {
   Table,
   TableBody,
@@ -84,6 +86,7 @@ export default function ExamenesContent({
   onActualizar,
   onEliminar,
 }: ExamenesContentProps) {
+  const { isReadOnly } = useRole()
   const [searchTerm, setSearchTerm] = useState("")
   const [hasSearched, setHasSearched] = useState(false)
 
@@ -169,6 +172,7 @@ export default function ExamenesContent({
 
   return (
     <div className="pt-2 pb-6 space-y-6">
+      <ReadOnlyBanner />
       {/* Barra de búsqueda + botón crear */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -193,7 +197,7 @@ export default function ExamenesContent({
           {loading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Search size={16} className="mr-2" />}
           Buscar
         </Button>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} disabled={isReadOnly}>
           <Plus size={16} className="mr-2" />
           Nueva Pregunta
         </Button>
@@ -233,7 +237,7 @@ export default function ExamenesContent({
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <Badge variant="secondary" className="shrink-0 text-xs">{p.departamento}</Badge>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)} title="Editar">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)} title="Editar" disabled={isReadOnly}>
                         <Pencil size={13} />
                       </Button>
                       <Button
@@ -283,7 +287,7 @@ export default function ExamenesContent({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)} title="Editar">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)} title="Editar" disabled={isReadOnly}>
                             <Pencil size={15} />
                           </Button>
                           <Button
@@ -404,7 +408,7 @@ export default function ExamenesContent({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={isReadOnly || saving}>
               {saving && <Loader2 size={16} className="mr-2 animate-spin" />}
               {editingId ? "Guardar Cambios" : "Crear Pregunta"}
             </Button>
@@ -425,7 +429,7 @@ export default function ExamenesContent({
             <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={deleting}
+              disabled={isReadOnly || deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting && <Loader2 size={16} className="mr-2 animate-spin" />}

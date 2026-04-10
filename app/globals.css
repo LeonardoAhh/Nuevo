@@ -232,6 +232,158 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* ─── Print: Generador de Exámenes ─────────────────────── */
+
+/* ─── Login Hero ──────────────────────────────────────── */
+
+/* Aurora gradient – usa primary como base, funciona en light y dark */
+.login-aurora {
+  background:
+    linear-gradient(135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary) / 0.7) 25%,
+      hsl(var(--primary) / 0.4) 50%,
+      hsl(var(--primary) / 0.8) 75%,
+      hsl(var(--primary) / 0.6) 100%
+    );
+  background-size: 400% 400%;
+  animation: loginAuroraShift 16s ease-in-out infinite;
+}
+
+@keyframes loginAuroraShift {
+  0%, 100% { background-position: 0% 50%; }
+  25%      { background-position: 100% 0%; }
+  50%      { background-position: 100% 100%; }
+  75%      { background-position: 0% 100%; }
+}
+
+/* Orbs flotantes – derivan de --primary */
+.login-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.35;
+}
+.login-orb-1 {
+  width: min(360px, 50vw);
+  height: min(360px, 50vw);
+  background: radial-gradient(circle, hsl(var(--primary) / 0.8), transparent 70%);
+  top: -10%;
+  left: 10%;
+  animation: loginOrb1 10s ease-in-out infinite;
+}
+.login-orb-2 {
+  width: min(280px, 40vw);
+  height: min(280px, 40vw);
+  background: radial-gradient(circle, hsl(var(--primary) / 0.6), transparent 70%);
+  bottom: 5%;
+  right: 15%;
+  animation: loginOrb2 13s ease-in-out infinite;
+}
+.login-orb-3 {
+  width: min(200px, 30vw);
+  height: min(200px, 30vw);
+  background: radial-gradient(circle, hsl(var(--primary-foreground) / 0.3), transparent 70%);
+  top: 40%;
+  right: 5%;
+  animation: loginOrb3 11s ease-in-out infinite;
+}
+
+@keyframes loginOrb1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(30px, -40px) scale(1.08); }
+}
+@keyframes loginOrb2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(-20px, 25px) scale(0.94); }
+  66%      { transform: translate(15px, -15px) scale(1.04); }
+}
+@keyframes loginOrb3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-25px, 20px) scale(1.06); }
+}
+
+/* Grid decorativo */
+.login-grid-overlay {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Grain / Noise texture (CSS only) */
+.login-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Logo: entrada + flotación suave */
+.login-logo-entrance {
+  animation: loginLogoIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+@keyframes loginLogoIn {
+  from { opacity: 0; transform: scale(0.6) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.login-logo-float {
+  animation: loginLogoFloat 6s ease-in-out infinite;
+}
+@keyframes loginLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* Fade-up genérico para textos */
+.login-fade-up {
+  opacity: 0;
+  animation: loginFadeUp 0.7s ease forwards;
+}
+@keyframes loginFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Entrada del formulario (slide desde derecha en desktop, desde abajo en móvil) */
+.login-form-entrance {
+  animation: loginFormSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+@keyframes loginFormSlide {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 1024px) {
+  @keyframes loginFormSlide {
+    from { opacity: 0; transform: translateX(32px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+}
+
+/* Shake para errores */
+.login-shake {
+  animation: loginShake 0.5s ease;
+}
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* Spinner del botón */
+.login-spinner {
+  display: inline-block;
+  animation: loginSpin 0.7s linear infinite;
+}
+@keyframes loginSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Fin Login Hero ──────────────────────────────────── */
+
+/* ─── Print: Generador de Exámenes ─────────────────────── */
 @media print {
   /* Ocultar todo usando visibility para no romper el árbol del DOM */
   body * {

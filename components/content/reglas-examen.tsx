@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { useReglasCRUD, TRANSICION_LABEL, TRANSICION_ORDEN } from "@/lib/hooks/useGeneradorExamen"
+import { useRole } from "@/lib/hooks"
+import { ReadOnlyBanner } from "@/components/read-only-banner"
 import type { TransicionKey } from "@/lib/hooks/useGeneradorExamen"
 import { CATALOGO_ORGANIZACIONAL } from "@/lib/catalogo"
 
@@ -20,6 +22,7 @@ const TRANSICION_COLOR: Record<TransicionKey, string> = {
 }
 
 export default function ReglasExamenContent() {
+  const { isReadOnly } = useRole()
   const { reglas, loading, error, guardar, toggleActivo } = useReglasCRUD()
   const [saving, setSaving] = useState<string | null>(null) // "DEP_TRANSICION"
   const [editValues, setEditValues] = useState<Record<string, number>>({})
@@ -74,6 +77,7 @@ export default function ReglasExamenContent() {
 
   return (
     <div className="px-6 pt-2 pb-6 space-y-4">
+      <ReadOnlyBanner />
       <div className="flex items-center gap-2 mb-1">
         <Settings2 size={16} className="text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
@@ -110,7 +114,7 @@ export default function ReglasExamenContent() {
                       <Switch
                         checked={regla?.activo ?? true}
                         onCheckedChange={(v) => regla && toggleActivo(regla.id, v)}
-                        disabled={!regla}
+                        disabled={isReadOnly || !regla}
                         className="shrink-0"
                       />
                       <span className="font-bold text-sm flex-1">{TRANSICION_LABEL[t]}</span>
@@ -119,7 +123,7 @@ export default function ReglasExamenContent() {
                           size="sm"
                           className="h-7 text-xs px-2"
                           onClick={() => handleSave(dep, t)}
-                          disabled={isSaving}
+                          disabled={isReadOnly || isSaving}
                         >
                           {isSaving ? (
                             <Loader2 size={12} className="animate-spin" />

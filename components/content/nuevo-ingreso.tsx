@@ -14,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, addDays } from "@/lib/hooks"
+import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, addDays, useRole } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG, EvalStatus } from "@/lib/hooks"
+import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA, ESCOLARIDAD } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -474,6 +475,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function NuevoIngresoContent() {
+  const { isReadOnly } = useRole()
   const { loading, saving, error, fetchAll, updateRecord, createRecord } = useNuevoIngreso()
 
   const [records, setRecords] = useState<NuevoIngreso[]>([])
@@ -566,10 +568,12 @@ export default function NuevoIngresoContent() {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
+      <ReadOnlyBanner />
       <div className="flex justify-end mb-6">
         <Button
           size="sm"
           className="gap-2"
+          disabled={isReadOnly}
           onClick={() => setNuevoOpen(true)}
         >
           <UserPlus className="h-4 w-4" /> Nuevo Empleado

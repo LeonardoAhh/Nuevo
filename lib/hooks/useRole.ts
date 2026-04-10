@@ -1,0 +1,47 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { useUser } from './useUser'
+
+export type AppRole = 'dev' | 'admin'
+
+export function useRole() {
+  const { user, loading: userLoading } = useUser()
+  const [role, setRole] = useState<AppRole>('admin')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (userLoading) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const fetchRole = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+
+        if (!error && data?.role) {
+          setRole(data.role as AppRole)
+        }
+      } catch {
+        // Default to admin (read-only) on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRole()
+  }, [user, userLoading])
+
+  /** true si el usuario puede editar/crear/eliminar */
+  const canEdit = role === 'dev'
+
+  /** true si el usuario solo puede ver */
+  const isReadOnly = role === 'admin'
+
+  return { role, canEdit, isReadOnly, loading }
+}
