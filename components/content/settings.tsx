@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Moon,
+  Monitor,
   Palette,
   Sun,
   User,
@@ -12,6 +13,7 @@ import {
   Paintbrush,
   AlertCircle,
   Upload,
+  RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +24,7 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useTheme, ACCENT_COLOR_MAP, type AccentColor } from "@/components/theme-context"
+import { useTheme, ACCENT_COLOR_MAP, type AccentColor, type Theme } from "@/components/theme-context"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ColorPicker } from "@/components/color-picker"
@@ -39,7 +41,7 @@ const YELLOW_USES_DARK_TEXT = new Set<PresetAccent>(["yellow"])
 
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("profile")
-  const { theme, accentColor, customColor, fontSize, reducedMotion, setTheme, setAccentColor, setCustomColor, setFontSize, setReducedMotion, isColorLight } = useTheme()
+  const { theme, accentColor, customColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setCustomColor, setFontSize, setDensity, setReducedMotion, isColorLight, resetTheme } = useTheme()
   const [showSavedMessage, setShowSavedMessage] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -49,7 +51,7 @@ export default function SettingsContent() {
   const { user, loading: userLoading } = useUser()
 
   // Hooks para API
-  const { profile, loading: profileLoading, error: profileError, updateProfile, uploadAvatar } = useProfile(user?.id)
+  const { profile, loading: profileLoading, error: profileError, updateProfile, uploadAvatar, updateThemePreferences } = useProfile(user?.id)
 
   // Formulario unificado de perfil
   const {
@@ -129,7 +131,7 @@ export default function SettingsContent() {
   }
 
   // Direct application of theme changes
-  const handleThemeChange = (newTheme: "light" | "dark") => {
+  const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme)
   }
 
@@ -142,19 +144,26 @@ export default function SettingsContent() {
     setAccentColor("custom")
   }
 
-  const saveThemePreferences = () => {
-    try {
-      // Show success message
-      setShowSavedMessage(true)
-      setSaveError(null)
-      setTimeout(() => {
-        setShowSavedMessage(false)
-      }, 3000)
-    } catch (error) {
-      console.error("Error saving theme preferences:", error)
-      setSaveError("Failed to save preferences. Please try again.")
-    }
-  }
+  // Debounced sync of theme preferences to Supabase
+  React.useEffect(() => {
+    if (!user?.id) return
+    const timer = setTimeout(() => {
+      updateThemePreferences({ theme, accentColor, customColor, fontSize, density, reducedMotion })
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [theme, accentColor, customColor, fontSize, density, reducedMotion, user?.id])
+
+  // Load theme preferences from Supabase on mount
+  React.useEffect(() => {
+    if (!profile?.themePreferences || Object.keys(profile.themePreferences).length === 0) return
+    const p = profile.themePreferences
+    if (p.theme) setTheme(p.theme as Theme)
+    if (p.accentColor) setAccentColor(p.accentColor as AccentColor)
+    if (p.customColor) setCustomColor(p.customColor)
+    if (p.fontSize) setFontSize(p.fontSize as "small" | "medium" | "large")
+    if (p.density) setDensity(p.density as "comfortable" | "compact")
+    if (p.reducedMotion !== undefined) setReducedMotion(p.reducedMotion)
+  }, [profile?.id])
 
   // Si no hay usuario autenticado, mostrar formulario de login
   if (!user && !userLoading) {
@@ -191,9 +200,9 @@ export default function SettingsContent() {
 
           {/* Success/Error Messages */}
           {showSavedMessage && (
-            <Alert className="border-emerald-500/30 bg-emerald-500/10">
-              <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+            <Alert className="border-success/30 bg-success/10">
+              <Check className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">
                 ¡Perfil actualizado con éxito!
               </AlertDescription>
             </Alert>
@@ -364,28 +373,42 @@ export default function SettingsContent() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>Modo de color</Label>
-                <div className="flex gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   <div
-                    className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer ${
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
                       theme === "light" ? "border-primary bg-primary/10" : "border-border"
-                    }`}
+                    )}
                     onClick={() => handleThemeChange("light")}
                   >
-                    <div className="bg-white border shadow-sm p-2 rounded-full">
-                      <Sun className="h-6 w-6 text-yellow-500" />
+                    <div className="bg-background border shadow-sm p-2 rounded-full">
+                      <Sun className="h-6 w-6 text-foreground" />
                     </div>
-                    <span className="font-medium">Claro</span>
+                    <span className="font-medium text-sm">Claro</span>
                   </div>
                   <div
-                    className={`flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer ${
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
                       theme === "dark" ? "border-primary bg-primary/10" : "border-border"
-                    }`}
+                    )}
                     onClick={() => handleThemeChange("dark")}
                   >
-                    <div className="bg-gray-900 border shadow-sm p-2 rounded-full">
-                      <Moon className="h-6 w-6 text-blue-400" />
+                    <div className="bg-foreground border shadow-sm p-2 rounded-full">
+                      <Moon className="h-6 w-6 text-background" />
                     </div>
-                    <span className="font-medium">Oscuro</span>
+                    <span className="font-medium text-sm">Oscuro</span>
+                  </div>
+                  <div
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
+                      theme === "system" ? "border-primary bg-primary/10" : "border-border"
+                    )}
+                    onClick={() => handleThemeChange("system")}
+                  >
+                    <div className="bg-muted border shadow-sm p-2 rounded-full">
+                      <Monitor className="h-6 w-6 text-foreground" />
+                    </div>
+                    <span className="font-medium text-sm">Sistema</span>
                   </div>
                 </div>
               </div>
@@ -474,6 +497,22 @@ export default function SettingsContent() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <Label>Densidad</Label>
+                <Select value={density} onValueChange={(v) => setDensity(v as "comfortable" | "compact")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona la densidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="comfortable">Cómoda</SelectItem>
+                    <SelectItem value="compact">Compacta</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Reduce el espaciado general de la interfaz.
+                </p>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base">Movimiento reducido</Label>
@@ -487,27 +526,15 @@ export default function SettingsContent() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              {saveError && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{saveError}</AlertDescription>
-                </Alert>
-              )}
-
-              {showSavedMessage && (
-                <p className="text-emerald-600 dark:text-emerald-400 flex items-center">
-                  <Check className="h-4 w-4 mr-1" /> Theme preferences saved
-                </p>
-              )}
-              <div className="ml-auto">
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={saveThemePreferences}
-                >
-                  Save Preferences
-                </Button>
-              </div>
+            <CardFooter>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={resetTheme}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restablecer valores por defecto
+              </Button>
             </CardFooter>
           </Card>
 

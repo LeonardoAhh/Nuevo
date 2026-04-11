@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
+export interface ThemePreferences {
+  theme?: 'light' | 'dark' | 'system'
+  accentColor?: string
+  customColor?: string
+  fontSize?: string
+  density?: string
+  reducedMotion?: boolean
+}
+
 export interface UserProfile {
   id: string
   firstName: string
@@ -11,6 +20,7 @@ export interface UserProfile {
   language: string
   dateFormat: string
   skills: string[]
+  themePreferences: ThemePreferences
 }
 
 export interface ApiResponse<T> {
@@ -73,6 +83,7 @@ export function useProfile(userId?: string) {
           language: (data as any).language || 'en',
           dateFormat: (data as any).date_format || 'mm-dd-yyyy',
           skills: skillsData?.map((s) => s.skill_name) || [],
+          themePreferences: (data as any).theme_preferences ?? {},
         })
       }
     } catch (err) {
@@ -114,6 +125,7 @@ export function useProfile(userId?: string) {
         language: 'en',
         dateFormat: 'mm-dd-yyyy',
         skills: [],
+        themePreferences: {},
       }
     } catch (err) {
       console.error('Error creating default profile:', err instanceof Error ? err.message : JSON.stringify(err))
@@ -188,5 +200,24 @@ export function useProfile(userId?: string) {
     }
   }
 
-  return { profile, loading, error, fetchProfile, updateProfile, uploadAvatar }
+  const updateThemePreferences = async (prefs: ThemePreferences) => {
+    if (!userId) return { success: false, error: 'No user ID available' }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ theme_preferences: prefs, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { ...prev, themePreferences: prefs } : prev)
+      return { success: true }
+    } catch (err) {
+      console.error('Error updating theme preferences:', err instanceof Error ? err.message : JSON.stringify(err))
+      return { success: false, error: 'Failed to update theme preferences' }
+    }
+  }
+
+  return { profile, loading, error, fetchProfile, updateProfile, uploadAvatar, updateThemePreferences }
 }

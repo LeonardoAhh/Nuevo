@@ -13,13 +13,8 @@ import {
   ChevronRight,
   X,
   RotateCcw,
-  Users,
   ClipboardList,
   AlertTriangle,
-  HelpCircle,
-  Link2,
-  ChevronDown,
-  ChevronUp,
   Clock,
   XCircle,
   Trash2,
@@ -28,6 +23,7 @@ import {
   Plus,
   Minus,
   Layers,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,17 +49,11 @@ import type {
 } from "@/lib/hooks"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
+import { STATUS_META } from "@/lib/constants/status"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
 // ─────────────────────────────────────────────────────────────────────────────
-
-const STATUS_META = {
-  exact:       { label: 'Exacto',       color: 'text-green-600  dark:text-green-400',  bg: 'bg-green-50  dark:bg-green-900/20',  border: 'border-green-200 dark:border-green-800',  Icon: CheckCircle2 },
-  alias:       { label: 'Por alias',    color: 'text-blue-600   dark:text-blue-400',   bg: 'bg-blue-50   dark:bg-blue-900/20',   border: 'border-blue-200  dark:border-blue-800',   Icon: Link2 },
-  approximate: { label: 'Aproximado',   color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', Icon: AlertTriangle },
-  unknown:     { label: 'Desconocido',  color: 'text-red-600    dark:text-red-400',    bg: 'bg-red-50    dark:bg-red-900/20',    border: 'border-red-200   dark:border-red-800',    Icon: HelpCircle },
-} as const
 
 function StatusBadge({ status }: { status: CourseMatch['status'] }) {
   const meta = STATUS_META[status]
@@ -579,7 +569,7 @@ export default function CapacitacionContent() {
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder=""
                     value={posSearch} onChange={e => setPosSearch(e.target.value)}
@@ -599,7 +589,7 @@ export default function CapacitacionContent() {
 
               {loadingPositions ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : filteredPositions.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -656,7 +646,7 @@ export default function CapacitacionContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder=""
                   value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
@@ -665,7 +655,7 @@ export default function CapacitacionContent() {
               </div>
               {loadingCourses ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : filteredCourses.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -674,8 +664,8 @@ export default function CapacitacionContent() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {filteredCourses.map((course, idx) => (
-                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg border  bg-background/30">
-                      <span className="text-xs font-mono text-gray-400 w-6 text-right shrink-0">{idx + 1}</span>
+                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                      <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{idx + 1}</span>
                       <BookOpen className="h-4 w-4 text-primary shrink-0" />
                       <span className="text-sm text-foreground leading-tight">{course.name}</span>
                     </div>
@@ -695,9 +685,9 @@ export default function CapacitacionContent() {
 
             {/* Alertas de éxito */}
             {(newEmpSuccess || addCoursesSuccess) && (
-              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800 dark:text-green-200">
+              <Alert className="border-success/30 bg-success/10">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <AlertDescription className="text-success">
                   {newEmpSuccess ? 'Empleado registrado correctamente.' : 'Cursos guardados correctamente.'}
                 </AlertDescription>
               </Alert>
@@ -717,7 +707,7 @@ export default function CapacitacionContent() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="hidden gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      className="hidden gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setConfirmClearOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" /> Borrar
@@ -748,7 +738,7 @@ export default function CapacitacionContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={empSearch} onChange={e => setEmpSearch(e.target.value)}
                     className="pl-9 bg-muted  text-foreground"
@@ -756,7 +746,7 @@ export default function CapacitacionContent() {
                 </div>
                 {loadingEmployees ? (
                   <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
                 ) : filteredEmployees.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
@@ -827,7 +817,7 @@ export default function CapacitacionContent() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-destructive hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => { setDeleteEmpError(null); setDeleteEmpTarget(emp) }}
                                   title="Eliminar"
                                 >
@@ -853,9 +843,9 @@ export default function CapacitacionContent() {
         <TabsContent value="importar">
           <div className="space-y-4">
             {importSuccess && (
-              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800 dark:text-green-200">
+              <Alert className="border-success/30 bg-success/10">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <AlertDescription className="text-success">
                   Catálogo importado correctamente a Supabase.
                 </AlertDescription>
               </Alert>
@@ -921,7 +911,7 @@ export default function CapacitacionContent() {
               <Card className="bg-card ">
                 <CardHeader>
                   <CardTitle className=" flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <CheckCircle2 className="h-5 w-5 text-success" />
                     Vista previa de importación
                   </CardTitle>
                   <CardDescription className="">
@@ -984,7 +974,7 @@ export default function CapacitacionContent() {
                   <div className="flex justify-end">
                     <Button onClick={handleImport} disabled={isReadOnly || importing} className="gap-2">
                       {importing ? (
-                        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
                       ) : (
                         <><Upload className="h-4 w-4" /> Confirmar e importar</>
                       )}
@@ -999,13 +989,13 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Agregar cursos a empleado ────────────────────────────── */}
       <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) setAddCoursesError(null); setAddCoursesDlgOpen(open) }}>
-        <DialogContent className="sm:max-w-lg bg-card ">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className=" flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
               Agregar cursos
             </DialogTitle>
-            <DialogDescription className="">
+            <DialogDescription>
               {addCoursesDlgEmp?.nombre}
               {addCoursesDlgEmp?.puesto ? ` · ${addCoursesDlgEmp.puesto}` : ''}
             </DialogDescription>
@@ -1021,13 +1011,13 @@ export default function CapacitacionContent() {
           <div className="space-y-2 overflow-y-auto">
             {loadingCourses ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : (
               <>
                 <div className="space-y-2">
                   {addCoursesRows.map((row, i) => (
-                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border  bg-gray-50 bg-background/40">
+                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border bg-muted/50">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 space-y-1">
                           <label className="text-xs font-medium text-muted-foreground">Curso</label>
@@ -1043,7 +1033,7 @@ export default function CapacitacionContent() {
                         {addCoursesRows.length > 1 && (
                           <button
                             onClick={() => removeAddCoursesRow(i)}
-                            className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="mt-5 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -1078,14 +1068,13 @@ export default function CapacitacionContent() {
             )}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setAddCoursesDlgOpen(false)}
-              className=" text-foreground">
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddCoursesDlgOpen(false)}>
               Cancelar
             </Button>
             <Button onClick={handleSaveAddCourses} disabled={isReadOnly || addCoursesSaving} className="gap-2">
               {addCoursesSaving
-                ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
                 : 'Guardar cursos'
               }
             </Button>
@@ -1095,7 +1084,7 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Carga masiva de cursos ───────────────────────────────── */}
       <Dialog open={bulkOpen} onOpenChange={open => { if (!open) { setBulkRows([]); setBulkError(null); setBulkParseError(null) } setBulkOpen(open) }}>
-        <DialogContent className="sm:max-w-2xl bg-card">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" />
@@ -1107,9 +1096,9 @@ export default function CapacitacionContent() {
           </DialogHeader>
 
           {bulkSuccess !== null && (
-            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
+            <Alert className="border-success/30 bg-success/10">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">
                 {bulkSuccess} registros importados correctamente.
               </AlertDescription>
             </Alert>
@@ -1180,11 +1169,11 @@ export default function CapacitacionContent() {
               <div className="space-y-3">
                 <div className="flex items-center gap-4 text-sm flex-wrap">
                   <span className="text-muted-foreground">{bulkRows.length} registros</span>
-                  <span className="text-green-600 font-medium flex items-center gap-1">
+                  <span className="text-success font-medium flex items-center gap-1">
                     <CheckCircle2 className="h-3.5 w-3.5" /> {validCount} válidos
                   </span>
                   {invalidCount > 0 && (
-                    <span className="text-yellow-600 font-medium flex items-center gap-1">
+                    <span className="text-warning font-medium flex items-center gap-1">
                       <AlertTriangle className="h-3.5 w-3.5" /> {invalidCount} con errores
                     </span>
                   )}
@@ -1208,7 +1197,7 @@ export default function CapacitacionContent() {
                           const isOk = !!(row.employeeId && row.courseId)
                           const noEmp = !row.employeeId
                           return (
-                            <TableRow key={row.id} className={isOk ? '' : 'bg-yellow-50/30 dark:bg-yellow-900/10'}>
+                            <TableRow key={row.id} className={isOk ? '' : 'bg-warning/5'}>
                               <TableCell className="p-1.5">
                                 <Input
                                   value={row.numero}
@@ -1235,7 +1224,7 @@ export default function CapacitacionContent() {
                                   </SelectContent>
                                 </Select>
                                 {!row.courseId && row.cursoRaw && (
-                                  <p className="text-xs text-yellow-600 mt-0.5 truncate" title={row.cursoRaw}>{row.cursoRaw}</p>
+                                  <p className="text-xs text-warning mt-0.5 truncate" title={row.cursoRaw}>{row.cursoRaw}</p>
                                 )}
                               </TableCell>
                               <TableCell className="p-1.5">
@@ -1256,8 +1245,8 @@ export default function CapacitacionContent() {
                               </TableCell>
                               <TableCell className="p-1.5 text-center">
                                 {isOk
-                                  ? <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
-                                  : <AlertTriangle className="h-4 w-4 text-yellow-500 mx-auto" />}
+                                  ? <CheckCircle2 className="h-4 w-4 text-success mx-auto" />
+                                  : <AlertTriangle className="h-4 w-4 text-warning mx-auto" />}
                               </TableCell>
                             </TableRow>
                           )
@@ -1278,8 +1267,8 @@ export default function CapacitacionContent() {
           })()}
 
           {(bulkRows.length > 0 || bulkSuccess !== null) && (
-            <DialogFooter className="gap-3 flex-col sm:flex-row">
-              <Button variant="outline" onClick={() => setBulkOpen(false)} className="text-foreground">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkOpen(false)}>
                 {bulkSuccess !== null ? 'Cerrar' : 'Cancelar'}
               </Button>
               {bulkRows.length > 0 && (() => {
@@ -1291,7 +1280,7 @@ export default function CapacitacionContent() {
                     className="gap-2"
                   >
                     {bulkSaving
-                      ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Importando...</>
+                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
                       : <><Upload className="h-4 w-4" /> Importar {validCount} registros</>
                     }
                   </Button>
@@ -1304,21 +1293,21 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Nuevo Empleado ───────────────────────────────────────── */}
       <Dialog open={newEmpOpen} onOpenChange={open => { if (!open) resetNewEmp(); setNewEmpOpen(open) }}>
-        <DialogContent className="sm:max-w-lg bg-card ">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className=" flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
               Nuevo empleado
             </DialogTitle>
-            <DialogDescription className="">
+            <DialogDescription>
               Paso {newEmpStep} de 2 — {newEmpStep === 1 ? 'Datos del empleado' : 'Cursos tomados (opcional)'}
             </DialogDescription>
           </DialogHeader>
 
           {/* Indicador de pasos */}
           <div className="flex items-center gap-2 mb-1">
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-gray-200 bg-muted'}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-gray-200 bg-muted'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-muted'}`} />
           </div>
 
           {newEmpError && (
@@ -1446,7 +1435,7 @@ export default function CapacitacionContent() {
             <div className="space-y-3 overflow-y-auto max-h-[60dvh] pr-1">
               {loadingCourses ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : (
                 <>
@@ -1457,7 +1446,7 @@ export default function CapacitacionContent() {
                   ) : (
                     <div className="space-y-2">
                       {newEmpCourseRows.map((row, i) => (
-                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border  bg-gray-50 bg-background/40">
+                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border bg-muted/50">
                           <div className="flex items-start gap-2">
                             <div className="flex-1 space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Curso</label>
@@ -1475,7 +1464,7 @@ export default function CapacitacionContent() {
                             </div>
                             <button
                               onClick={() => removeCourseRow(i)}
-                              className="mt-5 p-1.5 rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              className="mt-5 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
@@ -1511,11 +1500,10 @@ export default function CapacitacionContent() {
             </div>
           )}
 
-          <DialogFooter className="gap-3 flex-col sm:flex-row">
+          <DialogFooter>
             {newEmpStep === 1 ? (
               <>
-                <Button variant="outline" onClick={() => { resetNewEmp(); setNewEmpOpen(false) }}
-                  className=" text-foreground">
+                <Button variant="outline" onClick={() => { resetNewEmp(); setNewEmpOpen(false) }}>
                   Cancelar
                 </Button>
                 <Button onClick={handleNewEmpNext}>
@@ -1524,13 +1512,12 @@ export default function CapacitacionContent() {
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={() => setNewEmpStep(1)}
-                  className=" text-foreground">
+                <Button variant="outline" onClick={() => setNewEmpStep(1)}>
                   ← Anterior
                 </Button>
                 <Button onClick={handleSaveNewEmp} disabled={isReadOnly || newEmpSaving} className="gap-2">
                   {newEmpSaving
-                    ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
                     : 'Guardar'
                   }
                 </Button>
@@ -1542,14 +1529,14 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Confirmación borrar historial ─────────────────────────── */}
       <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-        <DialogContent className="sm:max-w-sm bg-card ">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className=" flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
               Borrar historial
             </DialogTitle>
-            <DialogDescription className="">
-              Se eliminarán <strong className="text-foreground">{employees.length} empleados</strong> y
+            <DialogDescription>
+              Se eliminarán <strong>{employees.length} empleados</strong> y
               todos sus registros de cursos tomados. Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
@@ -1559,11 +1546,10 @@ export default function CapacitacionContent() {
               <AlertDescription>{importError}</AlertDescription>
             </Alert>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmClearOpen(false)}
-              className=" text-foreground"
               disabled={importing}
             >
               Cancelar
@@ -1575,7 +1561,7 @@ export default function CapacitacionContent() {
               className="gap-2"
             >
               {importing ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Borrando...</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Borrando...</>
               ) : (
                 <><Trash2 className="h-4 w-4" /> Sí, borrar todo</>
               )}
@@ -1586,14 +1572,14 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Editar Empleado ──────────────────────────────────────── */}
       <Dialog open={editEmpOpen} onOpenChange={open => { if (!open) { setEditEmpOpen(false); setEditEmpTarget(null) } }}>
-        <DialogContent className="sm:max-w-lg bg-card ">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className=" flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <Pencil className="h-5 w-5 text-primary" />
               Editar empleado
             </DialogTitle>
-            <DialogDescription className="">
-              Modifica los datos de <strong className="text-foreground">{editEmpTarget?.nombre}</strong>
+            <DialogDescription>
+              Modifica los datos de <strong>{editEmpTarget?.nombre}</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -1713,18 +1699,17 @@ export default function CapacitacionContent() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
               disabled={editEmpSaving}
-              className=" text-foreground"
             >
               Cancelar
             </Button>
             <Button onClick={handleSaveEditEmp} disabled={isReadOnly || editEmpSaving} className="gap-2">
               {editEmpSaving
-                ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
                 : <><Pencil className="h-4 w-4" /> Guardar cambios</>
               }
             </Button>
@@ -1734,14 +1719,14 @@ export default function CapacitacionContent() {
 
       {/* ── Confirmar borrar empleado individual ────────────────────────── */}
       <Dialog open={!!deleteEmpTarget} onOpenChange={(o) => { if (!o) setDeleteEmpTarget(null) }}>
-        <DialogContent className="sm:max-w-sm bg-card ">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className=" flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
               Eliminar empleado
             </DialogTitle>
-            <DialogDescription className="">
-              Se eliminará a <strong className="text-foreground">{deleteEmpTarget?.nombre}</strong> y
+            <DialogDescription>
+              Se eliminará a <strong>{deleteEmpTarget?.nombre}</strong> y
               todos sus datos del sistema: cursos, evaluaciones de desempeño, datos de promoción y nuevo ingreso.
               Esta acción no se puede deshacer.
             </DialogDescription>
@@ -1752,12 +1737,11 @@ export default function CapacitacionContent() {
               <AlertDescription>{deleteEmpError}</AlertDescription>
             </Alert>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDeleteEmpTarget(null)}
               disabled={deletingEmp}
-              className=" text-foreground"
             >
               Cancelar
             </Button>
@@ -1780,7 +1764,7 @@ export default function CapacitacionContent() {
               }}
             >
               {deletingEmp ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Eliminando...</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Eliminando...</>
               ) : (
                 <><Trash2 className="h-4 w-4" /> Sí, eliminar</>
               )}
@@ -1791,17 +1775,17 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Cursos requeridos del puesto ──────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg bg-card ">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="">{selectedPosition?.name}</DialogTitle>
-            <DialogDescription className="">
+            <DialogTitle>{selectedPosition?.name}</DialogTitle>
+            <DialogDescription>
               {(selectedPosition?.department as any)?.name} · Cursos requeridos
             </DialogDescription>
           </DialogHeader>
-          {loadingDialog ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-            </div>
+              {loadingDialog ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
           ) : positionCourses.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               No hay cursos registrados para este puesto.
@@ -1809,8 +1793,8 @@ export default function CapacitacionContent() {
           ) : (
             <div className="space-y-2">
               {positionCourses.map((pc, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 bg-background/40 border ">
-                  <span className="text-xs font-mono text-gray-400 w-5 text-right shrink-0">{pc.order_index}</span>
+                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
+                  <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
                   <BookOpen className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-sm text-foreground">{pc.course.name}</span>
                 </div>
@@ -1822,23 +1806,23 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Progreso del empleado ─────────────────────────────────── */}
       <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
-        <DialogContent className="sm:max-w-xl bg-card ">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle className="">{selectedEmployee?.nombre}</DialogTitle>
-            <DialogDescription className="">
+            <DialogTitle>{selectedEmployee?.nombre}</DialogTitle>
+            <DialogDescription>
               {selectedEmployee?.puesto}{selectedEmployee?.departamento ? ` · ${selectedEmployee.departamento}` : ''}
             </DialogDescription>
           </DialogHeader>
 
-          {loadingEmpCourses ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-            </div>
+              {loadingEmpCourses ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
           ) : (
             <div className="space-y-4">
               {/* Barra de progreso y resumen (solo si hay puesto en catálogo) */}
               {empProgress?.positionFound && empProgress.totalRequired > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-gray-50 bg-background/40 border ">
+                <div className="space-y-2 p-3 rounded-lg bg-muted/50 border">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-foreground">
                       {empProgress.aprobados} / {empProgress.totalRequired} cursos requeridos
@@ -1848,25 +1832,25 @@ export default function CapacitacionContent() {
                     </span>
                   </div>
                   {/* Barra segmentada */}
-                  <div className="flex h-2 rounded-full overflow-hidden bg-gray-200 bg-muted gap-px">
+                  <div className="flex h-2 rounded-full overflow-hidden bg-muted gap-px">
                     {empProgress.aprobados > 0 && (
                       <div
-                        className="bg-green-500 transition-all"
+                        className="bg-success transition-all"
                         style={{ width: `${(empProgress.aprobados / empProgress.totalRequired) * 100}%` }}
                       />
                     )}
                     {empProgress.reprobados > 0 && (
                       <div
-                        className="bg-red-400 transition-all"
+                        className="bg-destructive transition-all"
                         style={{ width: `${(empProgress.reprobados / empProgress.totalRequired) * 100}%` }}
                       />
                     )}
                   </div>
                   <div className="flex gap-4 text-xs">
-                    <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                    <span className="flex items-center gap-1 text-success">
                       <CheckCircle2 className="h-3 w-3" /> {empProgress.aprobados} aprobados
                     </span>
-                    <span className="flex items-center gap-1 text-destructive dark:text-red-400">
+                    <span className="flex items-center gap-1 text-destructive">
                       <XCircle className="h-3 w-3" /> {empProgress.reprobados} reprobados
                     </span>
                     <span className="flex items-center gap-1 text-muted-foreground">
@@ -1877,7 +1861,7 @@ export default function CapacitacionContent() {
               )}
 
               {empProgress && !empProgress.positionFound && (
-                <div className="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-center gap-2 text-sm text-warning p-3 rounded-lg bg-warning/10 border border-warning/30">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   Puesto no encontrado en el catálogo. Importa primero el JSON de puestos.
                 </div>
@@ -1920,14 +1904,14 @@ export default function CapacitacionContent() {
                         <div
                           key={c.courseId}
                           className={`flex items-center gap-2.5 p-2.5 rounded-lg border
-                            ${c.status === 'aprobado'  ? 'bg-green-50  dark:bg-green-900/10  border-green-200 dark:border-green-800' : ''}
-                            ${c.status === 'reprobado' ? 'bg-red-50    dark:bg-red-900/10    border-red-200   dark:border-red-800'   : ''}
-                            ${c.status === 'pendiente' ? 'bg-gray-50   bg-background/40   border-gray-200  '  : ''}
+                            ${c.status === 'aprobado'  ? 'bg-success/10 border-success/30' : ''}
+                            ${c.status === 'reprobado' ? 'bg-destructive/10 border-destructive/30'   : ''}
+                            ${c.status === 'pendiente' ? 'bg-muted/50 border-border'  : ''}
                           `}
                         >
-                          {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                          {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-success shrink-0" />}
                           {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-destructive   shrink-0" />}
-                          {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-gray-400   shrink-0" />}
+                          {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-muted-foreground    shrink-0" />}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-foreground leading-tight truncate">{c.courseName}</p>
                             {c.fechaAplicacion && (
@@ -1940,8 +1924,8 @@ export default function CapacitacionContent() {
                             {c.calificacion != null ? (
                               <Badge
                                 className={`text-xs font-bold min-w-[2.5rem] justify-center
-                                  ${c.status === 'aprobado'  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border border-green-300 dark:border-green-700' : ''}
-                                  ${c.status === 'reprobado' ? 'bg-red-100   text-red-700   dark:bg-red-900/40   dark:text-red-300   border border-red-300   dark:border-red-700'  : ''}
+                                  ${c.status === 'aprobado'  ? 'bg-success/15 text-success border border-success/30' : ''}
+                                  ${c.status === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' : ''}
                                 `}
                               >
                                 {c.calificacion}
@@ -1965,7 +1949,7 @@ export default function CapacitacionContent() {
                   ) : (
                     <div className="space-y-1.5 pb-2">
                       {empCourses.map((ec, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 bg-background/40 border ">
+                    <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
                           <BookOpen className="h-4 w-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-foreground truncate leading-tight">

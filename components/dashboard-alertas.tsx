@@ -113,7 +113,7 @@ function Metrica({ icono, label, valor, colorValor, colorBorder, onClick, loadin
         {loading ? (
           <div className="h-6 w-8 bg-current/10 rounded animate-pulse" />
         ) : (
-          <span className="text-xl font-bold leading-none text-gray-900">{valor}</span>
+          <span className="text-xl font-bold leading-none text-foreground">{valor}</span>
         )}
         <span className="text-xs text-muted-foreground mt-0.5 leading-tight truncate">{label}</span>
       </div>
@@ -217,7 +217,7 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
           </button>
           <button
             onClick={() => { setEditando(false); setCalStr("") }}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancelar
           </button>
@@ -502,7 +502,7 @@ export default function DashboardAlertas() {
           </div>
           <Button
             variant="ghost" size="icon"
-            className="h-8 w-8 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={cargarDatos} disabled={loading} title="Actualizar"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -591,8 +591,8 @@ export default function DashboardAlertas() {
 
       <Dialog open={dialogTipo !== null} onOpenChange={(open) => !open && setDialogTipo(null)}>
         {dialogActivo && (
-          <DialogContent className="sm:max-w-lg bg-background flex flex-col max-h-[85vh]">
-            <DialogHeader className="shrink-0">
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {dialogActivo.icono}
                 {dialogActivo.titulo}
@@ -600,8 +600,7 @@ export default function DashboardAlertas() {
               <DialogDescription>{dialogActivo.descripcion}</DialogDescription>
             </DialogHeader>
 
-            {/* Lista scrolleable */}
-            <div className="overflow-y-auto flex-1 pr-1 -mr-1">
+
 
               {/* ── Evaluaciones ────────────────────────────────────────── */}
               {dialogTipo === "eval1_vencidas" && (
@@ -704,13 +703,12 @@ export default function DashboardAlertas() {
                   }}
                 />
               )}
-            </div>
 
             {/* Footer */}
-            <div className="shrink-0 pt-2 border-t">
+            <div className="pt-2 border-t">
               <a
                 href="/nuevo-ingreso"
-                className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <User size={14} />
                 Ver todos en Nuevo Ingreso
@@ -796,10 +794,10 @@ function DeptoHeader({ nombre, count }: { nombre: string; count: number }) {
       <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground truncate">
         {nombre}
       </span>
-      <span className="flex-shrink-0 text-[10px] font-semibold bg-gray-100 bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+      <span className="flex-shrink-0 text-[10px] font-semibold bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
         {count}
       </span>
-      <div className="flex-1 h-px bg-gray-100 bg-muted/60" />
+      <div className="flex-1 h-px bg-muted/60" />
     </div>
   )
 }

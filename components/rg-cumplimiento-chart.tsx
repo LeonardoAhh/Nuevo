@@ -69,16 +69,20 @@ function currentYear(): string {
 
 const META = 70  // % mínimo obligatorio
 
-function CustomTooltip({ active, payload, label }: any) {
+interface RgTooltipEntry {
+  payload: DeptData
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: RgTooltipEntry[]; label?: string }) {
   if (!active || !payload?.length) return null
-  const d = payload[0]?.payload as DeptData
+  const d = payload[0]?.payload
   const cumple = d.pct >= META
   return (
     <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
       <p className="font-semibold text-foreground mb-1 truncate">{label}</p>
       <div className="flex items-center justify-between gap-4 text-muted-foreground">
         <span>Entregados</span>
-        <span className="font-bold text-emerald-600 dark:text-emerald-400">{d.entregados}</span>
+        <span className="font-bold text-success">{d.entregados}</span>
       </div>
       <div className="flex items-center justify-between gap-4 text-muted-foreground">
         <span>Total</span>
@@ -86,12 +90,12 @@ function CustomTooltip({ active, payload, label }: any) {
       </div>
       <div className="flex items-center justify-between gap-4 text-muted-foreground mt-1 pt-1 border-t">
         <span>Cumplimiento</span>
-        <span className={`font-bold ${cumple ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+        <span className={`font-bold ${cumple ? "text-success" : "text-destructive"}`}>
           {d.pct}%
         </span>
       </div>
       <div className="mt-1 text-xs">
-        <span className={cumple ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}>
+        <span className={cumple ? "text-success" : "text-destructive"}>
           {cumple ? "✓ Cumple meta (≥70%)" : "✗ No cumple meta (<70%)"}
         </span>
       </div>
@@ -190,8 +194,8 @@ export default function RgCumplimientoChart() {
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-              <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
+            <div className="p-2 rounded-lg bg-success/15">
+              <ShieldCheck size={18} className="text-success" />
             </div>
             <div>
               <CardTitle className="text-base">Cumplimiento RG-REC-048</CardTitle>
@@ -254,7 +258,7 @@ export default function RgCumplimientoChart() {
               <div className="flex-1">
                 <div className="text-xs text-muted-foreground mb-1">Cumplimiento general del trimestre</div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-2xl font-bold ${pctGeneral >= META ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                  <span className={`text-2xl font-bold ${pctGeneral >= META ? "text-success" : "text-destructive"}`}>
                     {pctGeneral}%
                   </span>
                   <span className="text-xs text-muted-foreground">{entregadosGeneral} / {totalGeneral} entregados</span>
@@ -290,7 +294,7 @@ export default function RgCumplimientoChart() {
                 margin={{ top: 0, right: 44, left: 0, bottom: 0 }}
                 barSize={22}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(156,163,175,0.3)" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted-foreground/30" />
                 <XAxis
                   type="number"
                   domain={[0, 100]}
@@ -312,8 +316,8 @@ export default function RgCumplimientoChart() {
                   axisLine={false}
                   tickFormatter={abrevDept}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-                <Bar dataKey="pct" radius={[0, 4, 4, 0]} background={{ fill: "rgba(0,0,0,0.03)", radius: 4 }}>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+                <Bar dataKey="pct" radius={[0, 4, 4, 0]} background={{ fill: "hsl(var(--muted) / 0.2)", radius: 4 }}>
                   {chartData.map((entry, i) => (
                     <Cell key={i} fill={colorPct(entry.pct)} />
                   ))}

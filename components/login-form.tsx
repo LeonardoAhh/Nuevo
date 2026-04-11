@@ -41,10 +41,11 @@ export default function LoginForm() {
       const redirectTo = searchParams.get("redirectTo") || "/"
       router.push(redirectTo)
       router.refresh()
-    } catch (err: any) {
-      setError(err?.message === "Invalid login credentials"
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ""
+      setError(msg === "Invalid login credentials"
         ? "Correo o contraseña incorrectos"
-        : (err?.message ?? "Error al iniciar sesión"))
+        : (msg || "Error al iniciar sesión"))
     } finally {
       setIsLoading(false)
     }

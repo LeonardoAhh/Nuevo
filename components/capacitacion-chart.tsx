@@ -54,13 +54,19 @@ function linearTrend(values: number[]): number[] {
 // Tooltip
 // ─────────────────────────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipEntry {
+  dataKey: string
+  value: number
+  color: string
+}
+
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) {
   if (!active || !payload?.length) return null
-  const dataPoints = payload.filter((p: any) => !p.dataKey.includes("_trend"))
+  const dataPoints = payload.filter((p) => !p.dataKey.includes("_trend"))
   return (
     <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[150px]">
       <p className="font-semibold text-foreground mb-2">{label}</p>
-      {dataPoints.map((p: any) => (
+      {dataPoints.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
@@ -117,7 +123,7 @@ export default function CapacitacionChart() {
       // ── Paso 2: obtener historial con filtro opcional por empleados ────────
       // Supabase tiene límite de 1000 filas por defecto — paginamos para traer todo
       const PAGE_SIZE = 1000
-      let allRows: any[] = []
+      let allRows: { employee_id: string; course_id: string | null; raw_course_name: string; fecha_aplicacion: string | null }[] = []
       let from = 0
       let hasMore = true
 
@@ -139,9 +145,6 @@ export default function CapacitacionChart() {
         hasMore = (data?.length ?? 0) === PAGE_SIZE
         from += PAGE_SIZE
       }
-
-      const data = allRows
-      const error = null
 
       const rows = allRows
 
@@ -262,17 +265,19 @@ export default function CapacitacionChart() {
               <LineChart data={chartData} margin={{ top: 10, right: 16, left: -10, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(156,163,175,0.15)"
+                  className="stroke-muted-foreground/15"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 11, fill: "rgb(156,163,175)" }}
+                  tick={{ fontSize: 11 }}
+                  className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "rgb(156,163,175)" }}
+                  tick={{ fontSize: 11 }}
+                  className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
@@ -289,7 +294,7 @@ export default function CapacitacionChart() {
                     type: "line" as const,
                     color: COLORS[y],
                     id: y,
-                  })).concat([{ value: "Tendencia", type: "line" as const, color: "#9ca3af", id: "trend" }])}
+                  })).concat([{ value: "Tendencia", type: "line" as const, color: "hsl(var(--muted-foreground))", id: "trend" }])}
                 />
 
                 {/* Líneas principales */}
@@ -301,7 +306,7 @@ export default function CapacitacionChart() {
                     stroke={COLORS[year]}
                     strokeWidth={2}
                     dot={{ r: 3.5, fill: COLORS[year], strokeWidth: 0 }}
-                    activeDot={{ r: 6, strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6, strokeWidth: 2, stroke: "hsl(var(--background))" }}
                     connectNulls
                   />
                 ))}

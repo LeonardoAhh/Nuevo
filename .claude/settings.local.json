@@ -30,7 +30,15 @@
       "Bash(cmd /c \"type \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\app\\\\capacitacion\\\\page.tsx\\\\\"\")",
       "Bash(grep -E \"\\\\.\\(json|ts|tsx\\)$\")",
       "Bash(npx shadcn@latest add progress --yes)",
-      "Bash(cmd /c \"npx tsc --noEmit --project tsconfig.json 2>&1\")"
+      "Bash(cmd /c \"npx tsc --noEmit --project tsconfig.json 2>&1\")",
+      "Bash(xargs wc:*)",
+      "Bash(find \"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/components/content\" -type f -name \"*.tsx\" -exec wc -l {} +)",
+      "Bash(ls -lh components/content/*.bak)",
+      "Bash(find \"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) ! -path \"*/.next/*\" ! -path \"*/node_modules/*\" -exec grep -l \"^export\" {} \\\\;)",
+      "Bash(xargs head:*)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(xargs cat:*)",
+      "Bash(find \"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/components\" -name \"*.tsx\" ! -path \"*content*\" -type f -exec basename {} \\\\;)"
     ]
   }
 }

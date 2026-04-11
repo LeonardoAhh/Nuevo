@@ -38,7 +38,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         // ── Base ────────────────────────────────────────────────────────
-        "fixed z-50 bg-background shadow-xl",
+        "fixed z-50 bg-card shadow-xl",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "duration-300 ease-out",

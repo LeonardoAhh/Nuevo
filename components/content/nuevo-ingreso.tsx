@@ -107,13 +107,13 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-card">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className=" flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-4 w-4 text-primary" />
             {record.nombre}
           </DialogTitle>
-          <DialogDescription className="">
+          <DialogDescription>
             {record.puesto} · {record.departamento} · Ingreso: {formatDate(record.fecha_ingreso)}
           </DialogDescription>
         </DialogHeader>
@@ -136,7 +136,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
               <div key={key} className="space-y-1.5">
                 <label className="text-xs font-medium">
                   Eval. {label}
-                  <span className="block text-gray-400 font-normal">{formatDate(fecha)}</span>
+                  <span className="block text-muted-foreground font-normal">{formatDate(fecha)}</span>
                 </label>
                 <Input
                   type="number" min={0} max={100}
@@ -173,11 +173,11 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving} className="">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
-            {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
+            {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -293,10 +293,10 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className=" flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-amber-500" />
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5 text-primary" />
             Nuevo Empleado
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -445,7 +445,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
                   { label: 'Término / RG', days: 90 },
                 ].map(({ label, days }) => (
                   <div key={label} className="text-center">
-                    <p className="text-amber-600 dark:text-amber-500 font-medium">{label}</p>
+        <p className="text-amber-600 dark:text-amber-500 font-medium">{label}</p>
                     <p className="text-muted-foreground">{formatDate(addDays(form.fecha_ingreso, days))}</p>
                   </div>
                 ))}
@@ -460,7 +460,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
           </Button>
           <Button onClick={handleCreate} disabled={saving || !form.nombre.trim()} className="gap-2">
             {saving
-              ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</>
+              ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</>
               : <><UserPlus className="h-4 w-4" /> Crear Empleado</>}
           </Button>
         </DialogFooter>

@@ -187,7 +187,7 @@ function AptitudBadge({ status }: { status: AptitudStatus }) {
     pendiente: {
       label: "Pendiente",
       icon: Clock,
-      className: "bg-gray-100 text-gray-700 bg-card border-gray-200",
+      className: "bg-muted text-foreground border-border",
     },
     en_revision: {
       label: "En Revisión",
@@ -255,32 +255,32 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <div className="bg-primary/10 p-2 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 p-2 rounded-lg shrink-0">
               <Award size={20} className="text-primary" />
             </div>
-            <div>
-              <div className="font-bold">{empleado.nombre}</div>
-              <div className="text-sm font-normal text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <DialogTitle>{empleado.nombre}</DialogTitle>
+              <DialogDescription>
                 {empleado.puesto} · {empleado.departamento}
-              </div>
+              </DialogDescription>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto shrink-0">
               <AptitudBadge status={aptitud} />
             </div>
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
           {/* Resumen de criterios */}
           {regla ? (
             <div className="rounded-lg border overflow-hidden">
-              <div className="bg-gray-50 bg-card px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <div className="bg-muted px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Criterios de Promoción
               </div>
-              <div className="px-4 divide-y dark:divide-gray-700">
+              <div className="px-4 divide-y">
                 <CriterioRow
                   label="Temporalidad en el puesto"
                   cumple={cumpleTemp}
@@ -311,7 +311,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
 
           {/* Cursos requeridos */}
           <div className="rounded-lg border overflow-hidden">
-            <div className="bg-gray-50 bg-card px-4 py-2 flex items-center justify-between">
+            <div className="bg-muted px-4 py-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Cursos Requeridos
               </span>
@@ -322,7 +322,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
             <div className="px-4 py-2">
               <Progress value={pctCursos} className="h-1.5 mb-3" />
               {empleado.cursosRequeridos.length === 0 ? (
-                <p className="text-sm text-gray-400 py-2">Sin cursos asignados para este puesto</p>
+                <p className="text-sm text-muted-foreground py-2">Sin cursos asignados para este puesto</p>
               ) : (
                 <ul className="space-y-1.5">
                   {empleado.cursosRequeridos.map((curso, i) => (
@@ -333,7 +333,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
                         ) : (
                           <XCircle size={14} className="text-muted-foreground/40 flex-shrink-0" />
                         )}
-                        <span className={curso.completado ? "text-gray-800" : "text-muted-foreground"}>
+                        <span className={curso.completado ? "text-foreground" : "text-muted-foreground"}>
                           {curso.nombre}
                         </span>
                       </div>
@@ -354,12 +354,12 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
 
           {/* Historial de evaluaciones */}
           <div className="rounded-lg border overflow-hidden">
-            <div className="bg-gray-50 bg-card px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <div className="bg-muted px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Evaluaciones de Desempeño
             </div>
             <div className="px-4 py-2">
               {empleado.evaluaciones.length === 0 ? (
-                <p className="text-sm text-gray-400 py-2">Sin evaluaciones registradas</p>
+                <p className="text-sm text-muted-foreground py-2">Sin evaluaciones registradas</p>
               ) : (
                 <ul className="space-y-1.5">
                   {[...empleado.evaluaciones]
@@ -373,7 +373,7 @@ function DetalleEmpleado({ empleado, onClose }: { empleado: EmpleadoPromocion; o
                         </div>
                         <div className="flex items-center gap-3">
                           {ev.evaluador && (
-                            <span className="text-xs text-gray-400">{ev.evaluador}</span>
+                            <span className="text-xs text-muted-foreground">{ev.evaluador}</span>
                           )}
                           <span className={`font-bold text-base ${
                             ev.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400"
@@ -482,28 +482,28 @@ function CapturarDesempeñoDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
+          <div className="flex items-center gap-2">
             <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg shrink-0">
               <Star size={16} className="text-amber-500" />
             </div>
-            <div className="min-w-0">
-              <div className="font-bold">Evaluación de Desempeño</div>
-              <div className="text-sm font-normal text-muted-foreground truncate">{empleado.nombre}</div>
+            <div className="min-w-0 flex-1">
+              <DialogTitle>Evaluación de Desempeño</DialogTitle>
+              <DialogDescription className="truncate">{empleado.nombre}</DialogDescription>
             </div>
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
-        <div className="text-xs text-muted-foreground bg-gray-50 bg-card rounded-lg px-3 py-2">
-          <span className="font-medium text-gray-700">{empleado.puesto}</span>
+        <div className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
+          <span className="font-medium text-foreground">{empleado.puesto}</span>
           {empleado.numero && <span className="ml-2">#{empleado.numero}</span>}
         </div>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Calificación de desempeño (0–100)</Label>
-            <input
+            <Input
               type="number"
               min={0}
               max={100}
@@ -511,17 +511,17 @@ function CapturarDesempeñoDialog({
               placeholder="Ej. 85"
               value={calificacion}
               onChange={(e) => setCalificacion(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
+              className="bg-muted"
             />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Periodo de evaluación (opcional)</Label>
-            <input
+            <Input
               type="text"
               placeholder="Ej. 2026-Q1"
               value={periodo}
               onChange={(e) => setPeriodo(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
+              className="bg-muted"
             />
           </div>
         </div>
@@ -532,7 +532,7 @@ function CapturarDesempeñoDialog({
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={guardando}>
             Cancelar
           </Button>
@@ -620,32 +620,32 @@ function PromoverDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
+          <div className="flex items-center gap-2">
             <div className="bg-primary/10 p-2 rounded-lg shrink-0">
               <TrendingUp size={18} className="text-primary" />
             </div>
-            <div className="min-w-0">
-              <div className="font-bold">Cambio de Puesto</div>
-              <div className="text-sm font-normal text-muted-foreground truncate">{empleado.nombre}</div>
+            <div className="min-w-0 flex-1">
+              <DialogTitle>Cambio de Puesto</DialogTitle>
+              <DialogDescription className="truncate">{empleado.nombre}</DialogDescription>
             </div>
             <div className="ml-auto shrink-0">
               <AptitudBadge status={aptitud} />
             </div>
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         {/* Puesto actual → destino */}
-        <div className="flex items-center gap-2 bg-gray-50 bg-card rounded-lg px-3 py-3 text-sm mt-1">
+        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-3 text-sm mt-1">
           <div className="flex-1 text-center min-w-0">
-            <div className="text-xs text-gray-400 mb-0.5">Puesto actual</div>
-            <div className="font-semibold text-gray-800 text-xs sm:text-sm leading-tight">{empleado.puesto}</div>
+            <div className="text-xs text-muted-foreground mb-0.5">Puesto actual</div>
+            <div className="font-semibold text-foreground text-xs sm:text-sm leading-tight">{empleado.puesto}</div>
           </div>
           <ArrowRight size={16} className="text-primary shrink-0" />
           <div className="flex-1 text-center min-w-0">
-            <div className="text-xs text-gray-400 mb-0.5">Promover a</div>
-            <div className={`font-semibold text-xs sm:text-sm leading-tight ${regla?.promocionA ? "text-primary" : "text-gray-400 italic"}`}>
+            <div className="text-xs text-muted-foreground mb-0.5">Promover a</div>
+            <div className={`font-semibold text-xs sm:text-sm leading-tight ${regla?.promocionA ? "text-primary" : "text-muted-foreground italic"}`}>
               {regla?.promocionA ?? "Sin definir"}
             </div>
           </div>
@@ -653,7 +653,7 @@ function PromoverDialog({
 
         {/* Resumen de criterios */}
         {regla && (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800 text-sm px-1">
+          <div className="divide-y text-sm px-1">
             <CriterioRow
               label="Temporalidad"
               cumple={cumpleTemp}
@@ -681,20 +681,20 @@ function PromoverDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Fecha inicio nuevo puesto</Label>
-              <input
+              <Input
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
+                className="bg-muted"
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Fecha del examen</Label>
-              <input
+              <Input
                 type="date"
                 value={fechaExamen}
                 onChange={(e) => setFechaExamen(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
+                className="bg-muted"
               />
             </div>
           </div>
@@ -702,12 +702,12 @@ function PromoverDialog({
             <Label className="text-xs text-muted-foreground">
               Calificación del examen (0–100)
               {empleado.intentosExamen != null && empleado.intentosExamen > 0 && (
-                <span className="ml-2 text-gray-400">
+                <span className="ml-2 text-muted-foreground">
                   · {empleado.intentosExamen} intento{empleado.intentosExamen !== 1 ? "s" : ""} previo{empleado.intentosExamen !== 1 ? "s" : ""}
                 </span>
               )}
             </Label>
-            <input
+            <Input
               type="number"
               min={0}
               max={100}
@@ -715,7 +715,7 @@ function PromoverDialog({
               placeholder="Ej. 85"
               value={calExamen}
               onChange={(e) => setCalExamen(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-base md:text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring bg-card"
+              className="bg-muted"
             />
           </div>
         </div>
@@ -737,8 +737,8 @@ function PromoverDialog({
         )}
 
         {/* Botones */}
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={onClose} disabled={guardando} className="w-full sm:w-auto">
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={guardando}>
             Cancelar
           </Button>
           {!puedePromover && calExamen !== "" && (
@@ -773,7 +773,7 @@ function PromoverDialog({
                 }
               }}
               disabled={isReadOnly || guardando}
-              className="w-full sm:w-auto gap-2"
+              className="gap-2"
             >
               {guardando ? <Loader2 size={14} className="animate-spin" /> : null}
               Solo guardar examen
@@ -782,12 +782,12 @@ function PromoverDialog({
           <Button
             onClick={handleConfirmar}
             disabled={isReadOnly || guardando || !puedePromover}
-            className="w-full sm:w-auto gap-2"
+            className="gap-2"
           >
             {guardando ? <Loader2 size={14} className="animate-spin" /> : <TrendingUp size={14} />}
             Confirmar promoción
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -1018,7 +1018,7 @@ export default function PromocionesContent({
             <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50 bg-card text-xs">
+                  <TableRow className="bg-muted text-xs">
                     <TableHead>Puesto Actual</TableHead>
                     <TableHead>Promoción a</TableHead>
                     <TableHead className="text-center">Temporalidad</TableHead>
@@ -1073,7 +1073,7 @@ export default function PromocionesContent({
             <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50 bg-card text-xs">
+                  <TableRow className="bg-muted text-xs">
                     <TableHead>N.N</TableHead>
                     <TableHead>Fecha Inicio Puesto</TableHead>
                     <TableHead className="text-center">Desempeño %</TableHead>
@@ -1086,19 +1086,19 @@ export default function PromocionesContent({
                   {datosPreview.map((r, i) => (
                     <TableRow key={i} className="text-sm">
                       <TableCell className="font-mono font-medium">{r["N.N"]}</TableCell>
-                      <TableCell>{r["Fecha Inicio Puesto"] || <span className="text-gray-400 italic">—</span>}</TableCell>
+                      <TableCell>{r["Fecha Inicio Puesto"] || <span className="text-muted-foreground italic">—</span>}</TableCell>
                       <TableCell className="text-center">
                         <span className={r["Desempeño Actual (%)"] && parseFloat(r["Desempeño Actual (%)"]) > 0
                           ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                          : "text-gray-400"}>
+                          : "text-muted-foreground"}>
                           {r["Desempeño Actual (%)"] || "—"}
                         </span>
                       </TableCell>
-                      <TableCell>{r["Periodo de Evaluación"] || <span className="text-gray-400 italic">—</span>}</TableCell>
+                      <TableCell>{r["Periodo de Evaluación"] || <span className="text-muted-foreground italic">—</span>}</TableCell>
                       <TableCell className="text-center">
                         {r["Última Calificación Examen (%)"]
                           ? <span className="font-semibold">{r["Última Calificación Examen (%)"]}</span>
-                          : <span className="text-gray-400">—</span>}
+                          : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-center">{r["Intentos de Examen"]}</TableCell>
                     </TableRow>
@@ -1123,7 +1123,7 @@ export default function PromocionesContent({
       {/* Filtros */}
       <div className="space-y-2">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar empleado, puesto, número..."
             value={busqueda}
@@ -1188,7 +1188,7 @@ export default function PromocionesContent({
       {empleados.length === 0 ? (
         <EmptyState />
       ) : todosOrdenados.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-sm">Sin resultados para los filtros aplicados</div>
+        <div className="text-center py-10 text-muted-foreground text-sm">Sin resultados para los filtros aplicados</div>
       ) : (
         <>
           {/* ── Vista móvil: tarjetas ── */}
@@ -1206,13 +1206,13 @@ export default function PromocionesContent({
               return (
                 <div
                   key={emp.id}
-                  className="bg-background border rounded-xl px-4 py-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800 transition-colors"
+                  className="bg-background border rounded-xl px-4 py-3 cursor-pointer active:bg-muted/70 transition-colors"
                   onClick={() => setEmpleadoPromover(emp)}
                 >
                   {/* Fila superior: nombre + badge */}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 leading-tight">{emp.nombre}</div>
+                      <div className="font-semibold text-sm text-foreground leading-tight">{emp.nombre}</div>
                       <div className="text-xs text-muted-foreground leading-tight mt-0.5">{emp.puesto}</div>
                     </div>
                     <AptitudBadge status={aptitud} />
@@ -1228,21 +1228,21 @@ export default function PromocionesContent({
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     {/* Temporalidad */}
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-gray-400 uppercase tracking-wide" style={{fontSize:"10px"}}>Temporalidad</span>
+                      <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Temporalidad</span>
                       <div className="flex items-center gap-1">
                         {cumpleTemp !== null && (
                           cumpleTemp
                             ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
                             : <XCircle size={11} className="text-red-400 shrink-0" />
                         )}
-                        <span className="font-medium text-gray-700">{formatMeses(meses)}</span>
+                        <span className="font-medium text-foreground">{formatMeses(meses)}</span>
                       </div>
-                      {regla && <span className="text-gray-400" style={{fontSize:"10px"}}>mín {formatMeses(regla.minTemporalidadMeses)}</span>}
+                      {regla && <span className="text-muted-foreground" style={{fontSize:"10px"}}>mín {formatMeses(regla.minTemporalidadMeses)}</span>}
                     </div>
 
                     {/* Cursos */}
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-gray-400 uppercase tracking-wide" style={{fontSize:"10px"}}>Cursos</span>
+                      <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Cursos</span>
                       <div className="flex items-center gap-1">
                         {cumpleCursos !== null && (
                           cumpleCursos
@@ -1254,14 +1254,14 @@ export default function PromocionesContent({
                           : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400"
                           : "text-destructive"
                         }`}>{pctCursos}%</span>
-                        <span className="text-gray-400">({emp.cursosRequeridos.filter(c => c.completado).length}/{emp.cursosRequeridos.length})</span>
+                        <span className="text-muted-foreground">({emp.cursosRequeridos.filter(c => c.completado).length}/{emp.cursosRequeridos.length})</span>
                       </div>
                       <Progress value={pctCursos} className="h-1 mt-0.5" />
                     </div>
 
                     {/* Evaluación */}
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-gray-400 uppercase tracking-wide" style={{fontSize:"10px"}}>Evaluación</span>
+                      <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Evaluación</span>
                       <div className="flex items-center gap-1">
                         {evalActual ? (
                           <>
@@ -1277,10 +1277,10 @@ export default function PromocionesContent({
                             }`}>{evalActual.calificacion}</span>
                           </>
                         ) : (
-                          <span className="italic text-gray-400">Sin evaluar</span>
+                          <span className="italic text-muted-foreground">Sin evaluar</span>
                         )}
                       </div>
-                      {regla && <span className="text-gray-400" style={{fontSize:"10px"}}>mín {regla.minCalificacionEvaluacion}</span>}
+                      {regla && <span className="text-muted-foreground" style={{fontSize:"10px"}}>mín {regla.minCalificacionEvaluacion}</span>}
                     </div>
                   </div>
                 </div>
@@ -1290,9 +1290,9 @@ export default function PromocionesContent({
             {/* Separador inhabilitados - móvil */}
             {paginadosSinCategoria.length > 0 && (
               <div className="flex items-center gap-2 py-1 px-1 mt-1">
-                <div className="h-px flex-1 bg-gray-200 bg-muted" />
+                <div className="h-px flex-1 bg-muted" />
                 <span className="text-xs text-muted-foreground">Categoría A / Sin categoría — inhabilitados</span>
-                <div className="h-px flex-1 bg-gray-200 bg-muted" />
+                <div className="h-px flex-1 bg-muted" />
               </div>
             )}
 
@@ -1305,10 +1305,10 @@ export default function PromocionesContent({
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm text-gray-900 leading-tight">{emp.nombre}</div>
+                      <div className="font-semibold text-sm text-foreground leading-tight">{emp.nombre}</div>
                       <div className="text-xs text-muted-foreground leading-tight mt-0.5">{emp.puesto}</div>
                     </div>
-                    <Badge variant="outline" className="text-xs text-gray-400 border-gray-300 shrink-0">
+                    <Badge variant="outline" className="text-xs text-muted-foreground border-border shrink-0">
                       {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
                     </Badge>
                   </div>
@@ -1336,7 +1336,7 @@ export default function PromocionesContent({
           <div className="hidden md:block rounded-lg border overflow-hidden bg-background">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50 bg-card">
+                <TableRow className="bg-muted">
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Empleado</TableHead>
                   <TableHead>Departamento</TableHead>
@@ -1379,14 +1379,14 @@ export default function PromocionesContent({
                   return (
                     <React.Fragment key={emp.id}>
                       <TableRow
-                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
                         onClick={() => setEmpleadoPromover(emp)}
                       >
                         <TableCell className="pr-0" onClick={(e) => { e.stopPropagation(); toggleExpand(emp.id) }}>
-                          {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
+                          {isExpanded ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-sm text-gray-900">{emp.nombre}</div>
+                          <div className="font-medium text-sm text-foreground">{emp.nombre}</div>
                           <div className="text-xs text-muted-foreground">{emp.puesto}</div>
                           {emp.numero && <div className="text-xs text-muted-foreground">#{emp.numero}</div>}
                         </TableCell>
@@ -1397,15 +1397,15 @@ export default function PromocionesContent({
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             {cumpleTemp !== null && (cumpleTemp ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-                            <span className="text-sm text-gray-700 whitespace-nowrap">{formatMeses(meses)}</span>
+                            <span className="text-sm text-foreground whitespace-nowrap">{formatMeses(meses)}</span>
                           </div>
-                          {regla && <div className="text-xs text-gray-400 mt-0.5">mín {formatMeses(regla.minTemporalidadMeses)}</div>}
+                          {regla && <div className="text-xs text-muted-foreground mt-0.5">mín {formatMeses(regla.minTemporalidadMeses)}</div>}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5 mb-1">
                             {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
                             <span className={`text-sm font-semibold ${pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400" : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{pctCursos}%</span>
-                            <span className="text-xs text-gray-400">({emp.cursosRequeridos.filter((c) => c.completado).length}/{emp.cursosRequeridos.length})</span>
+                            <span className="text-xs text-muted-foreground">({emp.cursosRequeridos.filter((c) => c.completado).length}/{emp.cursosRequeridos.length})</span>
                           </div>
                           <Progress value={pctCursos} className="h-1.5 w-24" />
                         </TableCell>
@@ -1414,12 +1414,12 @@ export default function PromocionesContent({
                             <div className="flex items-center gap-1.5">
                               {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
                               <span className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{evalActual.calificacion}</span>
-                              {evalActual.periodo && <span className="text-xs text-gray-400">{evalActual.periodo}</span>}
+                              {evalActual.periodo && <span className="text-xs text-muted-foreground">{evalActual.periodo}</span>}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400 italic">Sin evaluar</span>
+                            <span className="text-xs text-muted-foreground italic">Sin evaluar</span>
                           )}
-                          {regla && <div className="text-xs text-gray-400 mt-0.5">mín {regla.minCalificacionEvaluacion}</div>}
+                          {regla && <div className="text-xs text-muted-foreground mt-0.5">mín {regla.minCalificacionEvaluacion}</div>}
                         </TableCell>
                         <TableCell><AptitudBadge status={aptitud} /></TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1437,7 +1437,7 @@ export default function PromocionesContent({
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className={`h-7 w-7 ${aptitud === "apto" ? "text-primary hover:text-primary" : "text-gray-400"}`} onClick={() => setEmpleadoPromover(emp)}>
+                                  <Button variant="ghost" size="icon" className={`h-7 w-7 ${aptitud === "apto" ? "text-primary hover:text-primary" : "text-muted-foreground"}`} onClick={() => setEmpleadoPromover(emp)}>
                                     <TrendingUp size={14} />
                                   </Button>
                                 </TooltipTrigger>
@@ -1449,12 +1449,12 @@ export default function PromocionesContent({
                       </TableRow>
 
                       {isExpanded && (
-                        <TableRow key={`${emp.id}-courses`} className="bg-gray-50/50 bg-card/30">
+                        <TableRow key={`${emp.id}-courses`} className="bg-muted/30">
                           <TableCell></TableCell>
                           <TableCell colSpan={7} className="py-3">
                             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Cursos requeridos</div>
                             {emp.cursosRequeridos.length === 0 ? (
-                              <span className="text-xs text-gray-400 italic">Sin cursos asignados para este puesto</span>
+                              <span className="text-xs text-muted-foreground italic">Sin cursos asignados para este puesto</span>
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                                 {emp.cursosRequeridos.map((curso, i) => (
@@ -1476,7 +1476,7 @@ export default function PromocionesContent({
                 {/* Separador inhabilitados - desktop */}
                 {paginadosSinCategoria.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-2 bg-gray-50 bg-card/50">
+                    <TableCell colSpan={8} className="py-2 bg-muted/50">
                       <span className="text-xs text-muted-foreground uppercase tracking-wide">Categoría A / Sin categoría — inhabilitados</span>
                     </TableCell>
                   </TableRow>
@@ -1488,11 +1488,11 @@ export default function PromocionesContent({
                     <TableRow key={emp.id} className="opacity-60">
                       <TableCell />
                       <TableCell>
-                        <div className="font-medium text-sm text-gray-900">{emp.nombre}</div>
+                        <div className="font-medium text-sm text-foreground">{emp.nombre}</div>
                         <div className="text-xs text-muted-foreground">{emp.puesto}</div>
-                        {emp.numero && <div className="text-xs text-gray-400">#{emp.numero}</div>}
+                        {emp.numero && <div className="text-xs text-muted-foreground">#{emp.numero}</div>}
                       </TableCell>
-                      <TableCell><span className="text-sm text-gray-500">{emp.departamento}</span></TableCell>
+                      <TableCell><span className="text-sm text-muted-foreground">{emp.departamento}</span></TableCell>
                       <TableCell />
                       <TableCell />
                       <TableCell>
@@ -1503,11 +1503,11 @@ export default function PromocionesContent({
                             : "text-destructive"
                           }`}>{evalActual.calificacion}</span>
                         ) : (
-                          <span className="text-xs italic text-gray-400">Sin evaluar</span>
+                          <span className="text-xs italic text-muted-foreground">Sin evaluar</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs text-gray-400 border-gray-300">
+                        <Badge variant="outline" className="text-xs text-muted-foreground border-border">
                           {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
                         </Badge>
                       </TableCell>
@@ -1622,7 +1622,7 @@ function EmptyState() {
       <div className="bg-primary/10 p-4 rounded-full mb-4">
         <BarChart3 size={32} className="text-primary" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-1">
+      <h3 className="text-lg font-semibold text-foreground mb-1">
         Sin datos de empleados
       </h3>
       <p className="text-sm text-muted-foreground max-w-sm">

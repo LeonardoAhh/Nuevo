@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 
-export type Theme = "light" | "dark"
+export type Theme = "light" | "dark" | "system"
 export type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
 export type FontSize = "small" | "medium" | "large"
+export type Density = "comfortable" | "compact"
 
 export const DEFAULT_CUSTOM_COLOR = "#3b82f6"
 
@@ -15,19 +16,28 @@ const FONT_SIZE_MAP: Record<FontSize, string> = {
   large: "18px",
 }
 
+const DENSITY_SCALE_MAP: Record<Density, string> = {
+  comfortable: "1",
+  compact: "0.875",
+}
+
 type ThemeContextType = {
   theme: Theme
+  resolvedTheme: "light" | "dark"
   accentColor: AccentColor
   customColor: string
   fontSize: FontSize
+  density: Density
   reducedMotion: boolean
   isColorLight: (hex?: string) => boolean
   setTheme: (theme: Theme) => void
   setAccentColor: (color: AccentColor) => void
   setCustomColor: (color: string) => void
   setFontSize: (size: FontSize) => void
+  setDensity: (d: Density) => void
   setReducedMotion: (v: boolean) => void
   toggleTheme: () => void
+  resetTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -136,141 +146,146 @@ function isColorLight(hex?: string): boolean {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
   const [accentColor, setAccentColor] = useState<AccentColor>("blue")
   const [customColor, setCustomColor] = useState<string>(DEFAULT_CUSTOM_COLOR)
   const [fontSize, setFontSize] = useState<FontSize>("medium")
+  const [density, setDensity] = useState<Density>("comfortable")
   const [reducedMotion, setReducedMotion] = useState<boolean>(false)
+
+  // Resolve the effective theme (light or dark) from "system" or explicit
+  const resolveTheme = useCallback((t: Theme): "light" | "dark" => {
+    if (t === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    }
+    return t
+  }, [])
 
   // Initialize from localStorage or system preference
   useEffect(() => {
-    try {
-      const storedTheme = localStorage.getItem("theme") as Theme | null
-      const storedAccentColor = localStorage.getItem("accentColor") as AccentColor | null
-      const storedCustomColor = localStorage.getItem("customColor") as string | null
-      const storedFontSize = localStorage.getItem("fontSize") as FontSize | null
-      const storedReducedMotion = localStorage.getItem("reducedMotion")
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const storedTheme = localStorage.getItem("theme") as Theme | null
+    const storedAccentColor = localStorage.getItem("accentColor") as AccentColor | null
+    const storedCustomColor = localStorage.getItem("customColor") as string | null
+    const storedFontSize = localStorage.getItem("fontSize") as FontSize | null
+    const storedDensity = localStorage.getItem("density") as Density | null
+    const storedReducedMotion = localStorage.getItem("reducedMotion")
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-      if (storedTheme) {
-        setTheme(storedTheme)
-      } else if (prefersDark) {
-        setTheme("dark")
-      }
-
-      if (storedAccentColor) {
-        setAccentColor(storedAccentColor)
-      }
-
-      if (storedCustomColor && /^#[0-9A-Fa-f]{6}$/.test(storedCustomColor)) {
-        setCustomColor(storedCustomColor)
-      }
-
-      if (storedFontSize && storedFontSize in FONT_SIZE_MAP) {
-        setFontSize(storedFontSize)
-      }
-
-      const rm = storedReducedMotion !== null ? storedReducedMotion === "true" : prefersReducedMotion
-      setReducedMotion(rm)
-    } catch (error) {
-      console.error("Error initializing theme from localStorage:", error)
+    if (storedTheme && (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system")) {
+      setTheme(storedTheme)
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark")
     }
+
+    if (storedAccentColor) setAccentColor(storedAccentColor)
+    if (storedCustomColor && /^#[0-9A-Fa-f]{6}$/.test(storedCustomColor)) setCustomColor(storedCustomColor)
+    if (storedFontSize && storedFontSize in FONT_SIZE_MAP) setFontSize(storedFontSize)
+    if (storedDensity && (storedDensity === "comfortable" || storedDensity === "compact")) setDensity(storedDensity)
+
+    const rm = storedReducedMotion !== null ? storedReducedMotion === "true" : prefersReducedMotion
+    setReducedMotion(rm)
   }, [])
 
-  // Update document class and localStorage when theme changes
+  // Apply dark/light class + subscribe to system changes when theme="system"
   useEffect(() => {
-    try {
-      if (theme === "dark") {
+    const apply = (resolved: "light" | "dark") => {
+      setResolvedTheme(resolved)
+      if (resolved === "dark") {
         document.documentElement.classList.add("dark")
       } else {
         document.documentElement.classList.remove("dark")
       }
-      localStorage.setItem("theme", theme)
-    } catch (error) {
-      console.error("Error updating theme:", error)
     }
-  }, [theme])
 
-  // Aplicar font size al elemento raíz
-  useEffect(() => {
-    try {
-      document.documentElement.style.fontSize = FONT_SIZE_MAP[fontSize]
-      localStorage.setItem("fontSize", fontSize)
-    } catch (error) {
-      console.error("Error updating font size:", error)
+    apply(resolveTheme(theme))
+    localStorage.setItem("theme", theme)
+
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)")
+      const handler = (e: MediaQueryListEvent) => apply(e.matches ? "dark" : "light")
+      mq.addEventListener("change", handler)
+      return () => mq.removeEventListener("change", handler)
     }
+  }, [theme, resolveTheme])
+
+  // Apply font size via CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty("--font-base-size", FONT_SIZE_MAP[fontSize])
+    localStorage.setItem("fontSize", fontSize)
   }, [fontSize])
 
-  // Aplicar reduced motion
+  // Apply density via CSS variable
   useEffect(() => {
-    try {
-      if (reducedMotion) {
-        document.documentElement.classList.add("reduce-motion")
-      } else {
-        document.documentElement.classList.remove("reduce-motion")
-      }
-      localStorage.setItem("reducedMotion", String(reducedMotion))
-    } catch (error) {
-      console.error("Error updating reduced motion:", error)
+    document.documentElement.style.setProperty("--density-scale", DENSITY_SCALE_MAP[density])
+    localStorage.setItem("density", density)
+  }, [density])
+
+  // Apply reduced motion
+  useEffect(() => {
+    if (reducedMotion) {
+      document.documentElement.classList.add("reduce-motion")
+    } else {
+      document.documentElement.classList.remove("reduce-motion")
     }
+    localStorage.setItem("reducedMotion", String(reducedMotion))
   }, [reducedMotion])
 
   // Update CSS variables when accent color or custom color changes
   useEffect(() => {
-    try {
-      let primaryValue: string
-      let primaryForeground: string
+    let primaryValue: string
+    let primaryForeground: string
 
-      if (accentColor === "custom") {
-        // Convert custom color to HSL for CSS variables
-        const hsl = hexToHSL(customColor)
-        const isLight = isColorLight(customColor)
-
-        // Set the primary color to the custom color
-        primaryValue = `${hsl.h} ${hsl.s}% ${hsl.l}%`
-
-        // Choose text color based on the brightness of the background
-        primaryForeground = isLight ? "222.2 84% 4.9%" : "210 40% 98%"
-
-        // Save custom color to localStorage
-        localStorage.setItem("customColor", customColor)
-      } else {
-        // Use predefined colors
-        const colors = ACCENT_COLOR_MAP[accentColor]
-        primaryValue = colors.primary
-        primaryForeground = colors.primaryForeground
-      }
-
-      // Apply the colors to CSS variables
-      document.documentElement.style.setProperty("--primary", primaryValue)
-      document.documentElement.style.setProperty("--primary-foreground", primaryForeground)
-
-      // Save accent color to localStorage
-      localStorage.setItem("accentColor", accentColor)
-    } catch (error) {
-      console.error("Error updating accent color:", error)
+    if (accentColor === "custom") {
+      const hsl = hexToHSL(customColor)
+      const light = isColorLight(customColor)
+      primaryValue = `${hsl.h} ${hsl.s}% ${hsl.l}%`
+      primaryForeground = light ? "222.2 84% 4.9%" : "210 40% 98%"
+      localStorage.setItem("customColor", customColor)
+    } else {
+      const colors = ACCENT_COLOR_MAP[accentColor]
+      primaryValue = colors.primary
+      primaryForeground = colors.primaryForeground
     }
-  }, [accentColor, customColor, theme])
+
+    document.documentElement.style.setProperty("--primary", primaryValue)
+    document.documentElement.style.setProperty("--primary-foreground", primaryForeground)
+    localStorage.setItem("accentColor", accentColor)
+  }, [accentColor, customColor])
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light")
+  }
+
+  const resetTheme = () => {
+    setTheme("light")
+    setAccentColor("blue")
+    setCustomColor(DEFAULT_CUSTOM_COLOR)
+    setFontSize("medium")
+    setDensity("comfortable")
+    setReducedMotion(false)
+    const keys = ["theme", "accentColor", "customColor", "fontSize", "density", "reducedMotion"]
+    keys.forEach(k => localStorage.removeItem(k))
   }
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
+        resolvedTheme,
         accentColor,
         customColor,
         fontSize,
+        density,
         reducedMotion,
         isColorLight,
         setTheme,
         setAccentColor,
         setCustomColor,
         setFontSize,
+        setDensity,
         setReducedMotion,
         toggleTheme,
+        resetTheme,
       }}
     >
       {children}
