@@ -6,11 +6,15 @@ import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#2563eb" },
+    { media: "(prefers-color-scheme: dark)",  color: "#1e40af" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 }
 
 export const metadata: Metadata = {
@@ -19,13 +23,25 @@ export const metadata: Metadata = {
   applicationName: "Capacitación",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Capacitación",
+    startupImage: "/icons/apple-touch-icon.png",
   },
   formatDetection: {
     telephone: false,
   },
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/icons/favicon-32.png",
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

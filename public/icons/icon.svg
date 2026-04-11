@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Capacitación">
+  <style>
+    .bg { fill: #2563eb; }
+    .fg { stroke: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #3b82f6; }
+    }
+  </style>
+  <rect class="bg" width="512" height="512" rx="112" ry="112"/>
+  <polyline
+    class="fg"
+    points="134.14,256 238.59,343.04 381.34,158.52"
+    fill="none"
+    stroke-width="52.22"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+</svg>
