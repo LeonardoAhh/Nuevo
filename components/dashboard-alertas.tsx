@@ -26,6 +26,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase/client"
+import Link from "next/link"
 import { daysFromToday, formatDate } from "@/lib/hooks/useNuevoIngreso"
 import type { NuevoIngreso } from "@/lib/hooks/useNuevoIngreso"
 
@@ -98,6 +99,7 @@ function Metrica({ icono, label, valor, colorValor, colorBorder, onClick, loadin
     <button
       onClick={onClick}
       disabled={loading || valor === 0}
+      aria-label={`${label}: ${valor}`}
       className={`
         group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-primary/10 dark:bg-primary/20 transition-all duration-200
         ${valor > 0 && !loading
@@ -132,7 +134,7 @@ function SeccionHeader({ icono, label }: { icono: React.ReactNode; label: string
   return (
     <div className="flex items-center gap-1.5 mb-2">
       {icono}
-      <span className="text-xs font-semibold text-primary dark:text-primary-foreground uppercase tracking-wide">
+      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
         {label}
       </span>
     </div>
@@ -603,53 +605,22 @@ export default function DashboardAlertas() {
 
 
               {/* ── Evaluaciones ────────────────────────────────────────── */}
-              {dialogTipo === "eval1_vencidas" && (
-                <ListaEvals items={eval1Venc} vencida vacio="No hay evaluaciones de 1er mes vencidas"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_1_calificacion: cal }).eq("id", dbId)
-                    setEval1Venc(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
-              )}
-              {dialogTipo === "eval1_por_vencer" && (
-                <ListaEvals items={eval1Prox} vencida={false} vacio="No hay evaluaciones de 1er mes por vencer"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_1_calificacion: cal }).eq("id", dbId)
-                    setEval1Prox(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
-              )}
-              {dialogTipo === "eval2_vencidas" && (
-                <ListaEvals items={eval2Venc} vencida vacio="No hay evaluaciones de 2° mes vencidas"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_2_calificacion: cal }).eq("id", dbId)
-                    setEval2Venc(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
-              )}
-              {dialogTipo === "eval2_por_vencer" && (
-                <ListaEvals items={eval2Prox} vencida={false} vacio="No hay evaluaciones de 2° mes por vencer"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_2_calificacion: cal }).eq("id", dbId)
-                    setEval2Prox(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
-              )}
-              {dialogTipo === "eval3_vencidas" && (
-                <ListaEvals items={eval3Venc} vencida vacio="No hay evaluaciones de 3er mes vencidas"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_3_calificacion: cal }).eq("id", dbId)
-                    setEval3Venc(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
-              )}
-              {dialogTipo === "eval3_por_vencer" && (
-                <ListaEvals items={eval3Prox} vencida={false} vacio="No hay evaluaciones de 3er mes por vencer"
-                  onCalificar={async (dbId, cal) => {
-                    await supabase.from("nuevo_ingreso").update({ eval_3_calificacion: cal }).eq("id", dbId)
-                    setEval3Prox(prev => prev.filter(i => i.dbId !== dbId))
-                  }}
-                />
+              {([
+                { tipo: "eval1_vencidas",    items: eval1Venc, setter: setEval1Venc, vencida: true,  col: "eval_1_calificacion", vacio: "No hay evaluaciones de 1er mes vencidas" },
+                { tipo: "eval1_por_vencer",  items: eval1Prox, setter: setEval1Prox, vencida: false, col: "eval_1_calificacion", vacio: "No hay evaluaciones de 1er mes por vencer" },
+                { tipo: "eval2_vencidas",    items: eval2Venc, setter: setEval2Venc, vencida: true,  col: "eval_2_calificacion", vacio: "No hay evaluaciones de 2° mes vencidas" },
+                { tipo: "eval2_por_vencer",  items: eval2Prox, setter: setEval2Prox, vencida: false, col: "eval_2_calificacion", vacio: "No hay evaluaciones de 2° mes por vencer" },
+                { tipo: "eval3_vencidas",    items: eval3Venc, setter: setEval3Venc, vencida: true,  col: "eval_3_calificacion", vacio: "No hay evaluaciones de 3er mes vencidas" },
+                { tipo: "eval3_por_vencer",  items: eval3Prox, setter: setEval3Prox, vencida: false, col: "eval_3_calificacion", vacio: "No hay evaluaciones de 3er mes por vencer" },
+              ] as const).map(({ tipo, items, setter, vencida, col, vacio }) =>
+                dialogTipo === tipo && (
+                  <ListaEvals key={tipo} items={items} vencida={vencida} vacio={vacio}
+                    onCalificar={async (dbId, cal) => {
+                      await supabase.from("nuevo_ingreso").update({ [col]: cal }).eq("id", dbId)
+                      setter(prev => prev.filter(i => i.dbId !== dbId))
+                    }}
+                  />
+                )
               )}
 
               {/* ── RG-REC-048 ──────────────────────────────────────────── */}
@@ -706,14 +677,14 @@ export default function DashboardAlertas() {
 
             {/* Footer */}
             <div className="pt-2 border-t">
-              <a
+              <Link
                 href="/nuevo-ingreso"
                 className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <User size={14} />
                 Ver todos en Nuevo Ingreso
                 <ChevronRight size={14} />
-              </a>
+              </Link>
             </div>
           </DialogContent>
         )}

@@ -27,7 +27,7 @@ export default function HeroDashboard() {
       {/* Contenido */}
       <div className="relative z-10 flex flex-col justify-center h-full px-8 sm:px-12">
         <div className="hero-fade-up" style={{ animationDelay: "0ms" }}>
-          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-blue-300 mb-3 opacity-0 hero-fade-up-item" style={{ animationDelay: "100ms" }}>
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary/70 mb-3 opacity-0 hero-fade-up-item" style={{ animationDelay: "100ms" }}>
             Bienvenido
           </span>
         </div>
@@ -36,7 +36,7 @@ export default function HeroDashboard() {
           style={{ animationDelay: "250ms" }}
         >
           VIÑOPLASTIC<br />
-          <span className="text-blue-400">Planta Querétaro</span>
+          <span className="text-primary">Planta Querétaro</span>
         </h1>
       </div>
 

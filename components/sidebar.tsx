@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Car,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -183,18 +182,14 @@ export default function Sidebar({
       >
         {/* Logo / collapse toggle */}
         <div className="p-2 h-[50px] border-b flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center">
             {showExpanded ? (
-              <>
-                <div className="bg-primary text-primary-foreground p-2 rounded">
-                  <Car size={16} />
-                </div>
-                <span className="font-semibold">VIÑOPLASTIC</span>
-              </>
+              <span className="text-lg font-bold tracking-tight select-none">
+                <span className="text-primary">VIÑO</span>
+                <span className="text-foreground">PLASTIC</span>
+              </span>
             ) : (
-              <div className="bg-primary text-primary-foreground p-2 rounded mx-auto">
-                <Car size={16} />
-              </div>
+              <span className="text-lg font-bold text-primary select-none mx-auto">V</span>
             )}
           </div>
           <Button
