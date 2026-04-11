@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme, type Theme } from "@/components/theme-context"
 import { useUser, useProfile } from "@/lib/hooks"
+import { toast } from "sonner"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
@@ -152,7 +153,10 @@ export default function Sidebar({
   const handleLogout = async () => {
     const { supabase } = await import("@/lib/supabase/client")
     await supabase.auth.signOut()
-    window.location.href = "/login"
+    toast.success("Sesión cerrada correctamente")
+    setTimeout(() => {
+      window.location.href = "/login"
+    }, 1200)
   }
 
   const cycleTheme = () => setTheme(THEME_NEXT[theme])

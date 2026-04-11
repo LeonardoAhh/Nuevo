@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
+import { SonnerProvider } from "@/components/ui/sonner-provider"
 
 export const viewport: Viewport = {
   themeColor: "#2563eb",
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <ThemeProvider>{children}</ThemeProvider>
         <PWARegister />
+        <SonnerProvider />
       </body>
     </html>
   )

@@ -3,13 +3,19 @@
 import Dashboard from "@/components/Dashboard"
 import ExamenesContent from "@/components/content/examenes"
 import GeneradorExamenContent from "@/components/content/generador-examen"
-  import ReglasExamenContent from "@/components/content/reglas-examen"
+import ReglasExamenContent from "@/components/content/reglas-examen"
 import { useExamenes } from "@/lib/hooks/useExamenes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileText, BookOpen, Settings2 } from "lucide-react"
+import { useEffect } from "react"
+import { toast } from "sonner"
 
 export default function ExamenesPage() {
   const { preguntas, loading, error, buscar, crear, actualizar, eliminar } = useExamenes()
+
+  useEffect(() => {
+    if (error) toast.error(`Error al cargar datos: ${error}`)
+  }, [error])
 
   return (
     <Dashboard

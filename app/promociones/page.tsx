@@ -3,9 +3,15 @@
 import Dashboard from "@/components/Dashboard"
 import PromocionesContent from "@/components/content/promociones"
 import { usePromociones } from "@/lib/hooks/usePromociones"
+import { useEffect } from "react"
+import { toast } from "sonner"
 
 function PromocionesWrapper() {
   const { empleados, loading, error, recargar } = usePromociones()
+
+  useEffect(() => {
+    if (error) toast.error(`Error al cargar datos: ${error}`)
+  }, [error])
 
   if (loading && empleados.length === 0) {
     return (

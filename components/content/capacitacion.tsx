@@ -50,6 +50,7 @@ import type {
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { STATUS_META } from "@/lib/constants/status"
+import { toast } from "sonner"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -164,8 +165,10 @@ export default function CapacitacionContent() {
       setEditEmpOpen(false)
       setEditEmpTarget(null)
       loadEmployees()
+      toast.success('Empleado actualizado')
     } else {
       setEditEmpError(result.error ?? 'Error al guardar')
+      toast.error(result.error ?? 'Error al actualizar')
     }
   }
 
@@ -221,8 +224,10 @@ export default function CapacitacionContent() {
     setNewEmpSaving(false)
     if (result.success) {
       setNewEmpOpen(false); resetNewEmp(); setNewEmpSuccess(true); setEmpSearch(''); loadEmployees()
+      toast.success('Empleado creado')
     } else {
       setNewEmpError(result.error ?? 'Error al guardar')
+      toast.error(result.error ?? 'Error al crear empleado')
     }
   }
 
@@ -382,7 +387,7 @@ export default function CapacitacionContent() {
 
   const handleBulkImport = async () => {
     const valid = bulkRows.filter(r => r.employeeId && r.courseId)
-    if (valid.length === 0) { setBulkError('No hay registros válidos con empleado y curso resueltos'); return }
+    if (valid.length === 0) { setBulkError('No hay registros válidos con empleado y curso resueltos'); toast.error('No hay registros válidos con empleado y curso resueltos'); return }
     setBulkSaving(true); setBulkError(null)
     const records = valid.map(r => ({
       employee_id:      r.employeeId!,
@@ -397,8 +402,10 @@ export default function CapacitacionContent() {
       setBulkSuccess(result.inserted)
       setBulkRows([])
       setBulkText('')
+      toast.success(`${result.inserted} registros importados correctamente`)
     } else {
       setBulkError(result.error ?? 'Error al importar')
+      toast.error(result.error ?? 'Error al importar')
     }
   }
 
@@ -434,7 +441,12 @@ export default function CapacitacionContent() {
   const handleImport = async () => {
     if (!preview) return
     const result = await importData(preview)
-    if (result.success) { setImportSuccess(true); setPreview(null); setJsonText("") }
+    if (result.success) {
+      setImportSuccess(true); setPreview(null); setJsonText("")
+      toast.success('Catálogo importado correctamente')
+    } else {
+      toast.error(result.error ?? 'Error al importar catálogo')
+    }
   }
 
   const handleReset = () => { setJsonText(""); setPreview(null); setParseError(null); setImportSuccess(false) }
@@ -483,6 +495,9 @@ export default function CapacitacionContent() {
     if (result.success) {
       setConfirmClearOpen(false)
       setEmployees([])
+      toast.success(`Historial eliminado (${employees.length} empleados)`)
+    } else {
+      toast.error(result.error ?? 'Error al eliminar historial')
     }
   }
 
@@ -988,7 +1003,7 @@ export default function CapacitacionContent() {
       </Tabs>
 
       {/* ── Dialog: Agregar cursos a empleado ────────────────────────────── */}
-      <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) setAddCoursesError(null); setAddCoursesDlgOpen(open) }}>
+      <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) { setAddCoursesError(null); setAddCoursesDlgOpen(open) } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1758,8 +1773,10 @@ export default function CapacitacionContent() {
                 if (result.success) {
                   setEmployees(prev => prev.filter(e => e.id !== deleteEmpTarget.id))
                   setDeleteEmpTarget(null)
+                  toast.success('Empleado eliminado')
                 } else {
                   setDeleteEmpError(result.error ?? 'Error al eliminar')
+                  toast.error(result.error ?? 'Error al eliminar')
                 }
               }}
             >
@@ -1822,7 +1839,7 @@ export default function CapacitacionContent() {
             <div className="space-y-4">
               {/* Barra de progreso y resumen (solo si hay puesto en catálogo) */}
               {empProgress?.positionFound && empProgress.totalRequired > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-muted/50 border">
+                <div className="space-y-2 p-3 rounded-lg bg-muted/50 border border-muted/30">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-foreground">
                       {empProgress.aprobados} / {empProgress.totalRequired} cursos requeridos
