@@ -844,6 +844,76 @@ export function useCapacitacion() {
     }
   }
 
+  // ── Asignar / quitar curso de puesto ─────────────────────────────────────
+
+  const addCourseToPosition = async (
+    positionId: string,
+    courseId: string,
+    orderIndex: number
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('position_courses')
+        .insert([{ position_id: positionId, course_id: courseId, order_index: orderIndex }])
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al asignar curso'
+      return { success: false, error: msg }
+    }
+  }
+
+  const removeCourseFromPosition = async (
+    positionCourseId: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('position_courses')
+        .delete()
+        .eq('id', positionCourseId)
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al quitar curso'
+      return { success: false, error: msg }
+    }
+  }
+
+  // ── Crear puesto manualmente ──────────────────────────────────────────────
+
+  const createPosition = async (
+    name: string,
+    departmentId: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('positions')
+        .insert([{ name: name.trim(), department_id: departmentId }])
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al crear puesto'
+      return { success: false, error: msg }
+    }
+  }
+
+  // ── Crear curso manualmente ───────────────────────────────────────────────
+
+  const createCourse = async (
+    name: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .insert([{ name: name.trim() }])
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al crear curso'
+      return { success: false, error: msg }
+    }
+  }
+
   return {
     importing,
     importError,
@@ -869,5 +939,9 @@ export function useCapacitacion() {
     updateEmployee,
     addCoursesToEmployee,
     bulkImportCourseRecords,
+    createPosition,
+    createCourse,
+    addCourseToPosition,
+    removeCourseFromPosition,
   }
 }

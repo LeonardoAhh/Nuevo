@@ -44,7 +44,8 @@
       "Bash(node_modules/.bin/tsc --noEmit --pretty)",
       "Bash(where node:*)",
       "Bash(where npm:*)",
-      "Bash(cmd.exe /c \"where node\")"
+      "Bash(cmd.exe /c \"where node\")",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   }
 }

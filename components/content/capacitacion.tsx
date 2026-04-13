@@ -45,7 +45,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type {
   Department, Position, Course, ImportPreview,
-  CourseMatch, HistorialPreview, EmployeeCourse, Employee, EmployeeProgress,
+  CourseMatch, HistorialPreview, EmployeeCourse, Employee, EmployeeProgress, PositionCourse,
 } from "@/lib/hooks"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
@@ -81,6 +81,8 @@ export default function CapacitacionContent() {
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
     clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee, addCoursesToEmployee, bulkImportCourseRecords,
+    createPosition, createCourse,
+    addCourseToPosition, removeCourseFromPosition,
   } = useCapacitacion()
 
   // ── Estado: Importar catálogo ─────────────────────────────────────────────
@@ -105,8 +107,26 @@ export default function CapacitacionContent() {
   // ── Estado: Dialog cursos del puesto ─────────────────────────────────────
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
-  const [positionCourses, setPositionCourses] = useState<{ course: { name: string }; order_index: number }[]>([])
+  const [positionCourses, setPositionCourses] = useState<PositionCourse[]>([])
   const [loadingDialog, setLoadingDialog] = useState(false)
+
+  // ── Estado: Asignar curso a puesto ────────────────────────────────────────
+  const [assignCourseId, setAssignCourseId] = useState("")
+  const [assignCourseSaving, setAssignCourseSaving] = useState(false)
+  const [assignCourseError, setAssignCourseError] = useState<string | null>(null)
+
+  // ── Estado: Nuevo puesto dialog ───────────────────────────────────────────
+  const [newPosOpen, setNewPosOpen] = useState(false)
+  const [newPosName, setNewPosName] = useState("")
+  const [newPosDeptId, setNewPosDeptId] = useState("")
+  const [newPosSaving, setNewPosSaving] = useState(false)
+  const [newPosError, setNewPosError] = useState<string | null>(null)
+
+  // ── Estado: Nuevo curso dialog ────────────────────────────────────────────
+  const [newCourseOpen, setNewCourseOpen] = useState(false)
+  const [newCourseName, setNewCourseName] = useState("")
+  const [newCourseSaving, setNewCourseSaving] = useState(false)
+  const [newCourseError, setNewCourseError] = useState<string | null>(null)
 
   // ── Estado: Historial – empleados ─────────────────────────────────────────
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -474,9 +494,47 @@ export default function CapacitacionContent() {
 
   const handleViewCourses = async (position: Position) => {
     setSelectedPosition(position); setDialogOpen(true); setLoadingDialog(true)
-    try { setPositionCourses(await fetchPositionCourses(position.id) as any) }
+    setAssignCourseId(''); setAssignCourseError(null)
+    if (courses.length === 0) loadCoursesData()
+    try { setPositionCourses(await fetchPositionCourses(position.id)) }
     catch (err) { console.error("Error loading courses:", err) }
     finally { setLoadingDialog(false) }
+  }
+
+  const reloadPositionCourses = async () => {
+    if (!selectedPosition) return
+    try { setPositionCourses(await fetchPositionCourses(selectedPosition.id)) }
+    catch (err) { console.error("Error reloading courses:", err) }
+  }
+
+  const handleAssignCourse = async () => {
+    if (!assignCourseId || !selectedPosition) return
+    const alreadyAssigned = positionCourses.some(pc => pc.course_id === assignCourseId)
+    if (alreadyAssigned) { setAssignCourseError('Este curso ya está asignado al puesto'); return }
+    setAssignCourseSaving(true); setAssignCourseError(null)
+    const nextOrder = positionCourses.length > 0
+      ? Math.max(...positionCourses.map(pc => pc.order_index)) + 1
+      : 1
+    const result = await addCourseToPosition(selectedPosition.id, assignCourseId, nextOrder)
+    setAssignCourseSaving(false)
+    if (result.success) {
+      setAssignCourseId('')
+      await reloadPositionCourses()
+      toast.success('Curso asignado correctamente')
+    } else {
+      setAssignCourseError(result.error ?? 'Error al asignar curso')
+      toast.error(result.error ?? 'Error al asignar curso')
+    }
+  }
+
+  const handleRemoveCourseFromPosition = async (positionCourseId: string) => {
+    const result = await removeCourseFromPosition(positionCourseId)
+    if (result.success) {
+      await reloadPositionCourses()
+      toast.success('Curso quitado')
+    } else {
+      toast.error(result.error ?? 'Error al quitar curso')
+    }
   }
 
   // ── Handlers: Cursos ──────────────────────────────────────────────────────
@@ -490,6 +548,39 @@ export default function CapacitacionContent() {
   const filteredCourses = courses.filter(c =>
     c.name.toLowerCase().includes(courseSearch.toLowerCase())
   )
+
+  // ── Handlers: Nuevo puesto ────────────────────────────────────────────────
+  const handleSaveNewPos = async () => {
+    if (!newPosName.trim()) { setNewPosError('El nombre del puesto es requerido'); return }
+    if (!newPosDeptId) { setNewPosError('Selecciona un departamento'); return }
+    setNewPosSaving(true); setNewPosError(null)
+    const result = await createPosition(newPosName, newPosDeptId)
+    setNewPosSaving(false)
+    if (result.success) {
+      setNewPosOpen(false); setNewPosName(''); setNewPosDeptId('')
+      loadPositionData()
+      toast.success('Puesto creado correctamente')
+    } else {
+      setNewPosError(result.error ?? 'Error al crear puesto')
+      toast.error(result.error ?? 'Error al crear puesto')
+    }
+  }
+
+  // ── Handlers: Nuevo curso ─────────────────────────────────────────────────
+  const handleSaveNewCourse = async () => {
+    if (!newCourseName.trim()) { setNewCourseError('El nombre del curso es requerido'); return }
+    setNewCourseSaving(true); setNewCourseError(null)
+    const result = await createCourse(newCourseName)
+    setNewCourseSaving(false)
+    if (result.success) {
+      setNewCourseOpen(false); setNewCourseName('')
+      loadCoursesData()
+      toast.success('Curso creado correctamente')
+    } else {
+      setNewCourseError(result.error ?? 'Error al crear curso')
+      toast.error(result.error ?? 'Error al crear curso')
+    }
+  }
 
   const handleClearHistorial = async () => {
     const result = await clearHistorial()
@@ -599,10 +690,21 @@ export default function CapacitacionContent() {
         <TabsContent value="puestos">
           <Card className="bg-card ">
             <CardHeader>
-              <CardTitle className="">Puestos registrados</CardTitle>
-              <CardDescription className="">
-                Consulta los puestos y sus cursos requeridos por departamento.
-              </CardDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="">Puestos registrados</CardTitle>
+                  <CardDescription className="">
+                    Consulta los puestos y sus cursos requeridos por departamento.
+                  </CardDescription>
+                </div>
+                {!isReadOnly && (
+                  <Button size="sm" className="gap-1.5 shrink-0"
+                    onClick={() => { setNewPosName(''); setNewPosDeptId(''); setNewPosError(null); setNewPosOpen(true) }}>
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Nuevo puesto</span>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -677,10 +779,21 @@ export default function CapacitacionContent() {
         <TabsContent value="cursos">
           <Card className="bg-card ">
             <CardHeader>
-              <CardTitle className="">Catálogo de cursos</CardTitle>
-              <CardDescription className="">
-                Todos los cursos únicos registrados en el sistema.
-              </CardDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="">Catálogo de cursos</CardTitle>
+                  <CardDescription className="">
+                    Todos los cursos únicos registrados en el sistema.
+                  </CardDescription>
+                </div>
+                {!isReadOnly && (
+                  <Button size="sm" className="gap-1.5 shrink-0"
+                    onClick={() => { setNewCourseName(''); setNewCourseError(null); setNewCourseOpen(true) }}>
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Nuevo curso</span>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
@@ -1836,30 +1949,90 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Cursos requeridos del puesto ──────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{selectedPosition?.name}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="flex flex-col w-full max-w-lg max-h-[85dvh] p-0 gap-0">
+          {/* Header fijo */}
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+            <DialogTitle className="text-base leading-snug">{selectedPosition?.name}</DialogTitle>
+            <DialogDescription className="text-xs">
               {(selectedPosition?.department as any)?.name} · Cursos requeridos
             </DialogDescription>
           </DialogHeader>
-              {loadingDialog ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-          ) : positionCourses.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No hay cursos registrados para este puesto.
-            </p>
+
+          {loadingDialog ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
           ) : (
-            <div className="space-y-2">
-              {positionCourses.map((pc, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
-                  <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
-                  <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-foreground">{pc.course.name}</span>
+            <div className="flex flex-col min-h-0 flex-1">
+              {/* Lista scrolleable */}
+              <div className="flex-1 overflow-y-auto px-6 pb-2">
+                {positionCourses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    No hay cursos asignados a este puesto.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {positionCourses.map((pc) => (
+                      <div key={pc.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
+                        <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
+                        <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                        <span className="text-sm text-foreground flex-1 min-w-0 truncate">{pc.course.name}</span>
+                        {!isReadOnly && (
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => handleRemoveCourseFromPosition(pc.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sección asignar — fija al fondo */}
+              {!isReadOnly && (
+                <div className="shrink-0 border-t bg-card px-6 py-4 space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Asignar curso</p>
+                  <div className="flex gap-2">
+                    <Select value={assignCourseId} onValueChange={v => { setAssignCourseId(v); setAssignCourseError(null) }}>
+                      <SelectTrigger className="bg-muted text-foreground flex-1 text-sm min-w-0">
+                        <SelectValue placeholder="Selecciona un curso…" />
+                      </SelectTrigger>
+                      <SelectContent
+                        className="bg-card"
+                        position="popper"
+                        side="top"
+                        sideOffset={6}
+                        avoidCollisions
+                        collisionPadding={12}
+                        style={{ width: 'var(--radix-select-trigger-width)', maxHeight: '40dvh' }}
+                      >
+                        {courses
+                          .filter(c => !positionCourses.some(pc => pc.course_id === c.id))
+                          .map(c => (
+                            <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      disabled={!assignCourseId || assignCourseSaving}
+                      onClick={handleAssignCourse}
+                    >
+                      {assignCourseSaving
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <Plus className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  {assignCourseError && (
+                    <p className="text-xs text-destructive">{assignCourseError}</p>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </DialogContent>
@@ -2038,6 +2211,91 @@ export default function CapacitacionContent() {
               </Tabs>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Nuevo puesto ────────────────────────────────────────────── */}
+      <Dialog open={newPosOpen} onOpenChange={setNewPosOpen}>
+        <DialogContent className="bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo puesto</DialogTitle>
+            <DialogDescription>Agrega un puesto al catálogo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Nombre del puesto</label>
+              <Input
+                placeholder="Ej. Operador de producción"
+                value={newPosName}
+                onChange={e => setNewPosName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveNewPos() }}
+                className="bg-muted text-foreground"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Departamento</label>
+              <Select value={newPosDeptId} onValueChange={setNewPosDeptId}>
+                <SelectTrigger className="bg-muted text-foreground">
+                  <SelectValue placeholder="Selecciona departamento" />
+                </SelectTrigger>
+                <SelectContent className="bg-card">
+                  {departments.map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {newPosError && (
+              <Alert variant="destructive" className="py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{newPosError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewPosOpen(false)} disabled={newPosSaving}>Cancelar</Button>
+            <Button onClick={handleSaveNewPos} disabled={newPosSaving}>
+              {newPosSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Nuevo curso ─────────────────────────────────────────────── */}
+      <Dialog open={newCourseOpen} onOpenChange={setNewCourseOpen}>
+        <DialogContent className="bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo curso</DialogTitle>
+            <DialogDescription>Agrega un curso al catálogo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Nombre del curso</label>
+              <Input
+                placeholder="Ej. Seguridad industrial básica"
+                value={newCourseName}
+                onChange={e => setNewCourseName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveNewCourse() }}
+                className="bg-muted text-foreground"
+                autoFocus
+              />
+            </div>
+            {newCourseError && (
+              <Alert variant="destructive" className="py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{newCourseError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewCourseOpen(false)} disabled={newCourseSaving}>Cancelar</Button>
+            <Button onClick={handleSaveNewCourse} disabled={newCourseSaving}>
+              {newCourseSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Guardar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
