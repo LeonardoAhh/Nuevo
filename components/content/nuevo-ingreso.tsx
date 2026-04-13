@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, Pencil, CalendarCheck, Info, UserPlus, X,
+  XCircle, Pencil, CalendarCheck, Info, UserPlus, X, Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -80,10 +80,12 @@ interface EditDialogProps {
   saving: boolean
   onClose: () => void
   onSave: (id: string, updates: NuevoIngresoUpdate) => Promise<void>
+  onDelete: (id: string) => Promise<void>
 }
 
-function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) {
+function EditDialog({ record, open, saving, onClose, onSave, onDelete }: EditDialogProps) {
   const [form, setForm] = useState<NuevoIngresoUpdate>({})
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (record) {
@@ -95,6 +97,7 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
         tipo_contrato: record.tipo_contrato,
         rg_rec_048: record.rg_rec_048,
       })
+      setConfirmDelete(false)
     }
   }, [record])
 
@@ -172,13 +175,43 @@ function EditDialog({ record, open, saving, onClose, onSave }: EditDialogProps) 
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-2">
-            {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
-          </Button>
+        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-sm text-destructive font-medium">¿Eliminar este empleado?</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={saving}
+                onClick={() => onDelete(record.id)}
+                className="gap-1"
+              >
+                {saving ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" /> : <Trash2 className="h-3 w-3" />}
+                Sí, eliminar
+              </Button>
+              <Button variant="outline" size="sm" disabled={saving} onClick={() => setConfirmDelete(false)}>
+                No
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => setConfirmDelete(true)}
+              className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Eliminar empleado
+            </Button>
+          )}
+          <div className="flex gap-2 sm:ml-auto">
+            <Button variant="outline" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="gap-2">
+              {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -476,7 +509,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
 export default function NuevoIngresoContent() {
   const { isReadOnly } = useRole()
-  const { loading, saving, error, fetchAll, updateRecord, createRecord } = useNuevoIngreso()
+  const { loading, saving, error, fetchAll, updateRecord, deleteRecord, createRecord } = useNuevoIngreso()
 
   const [records, setRecords] = useState<NuevoIngreso[]>([])
   const [search, setSearch] = useState('')
@@ -548,6 +581,15 @@ export default function NuevoIngresoContent() {
 
   const handleSave = async (id: string, updates: NuevoIngresoUpdate) => {
     const result = await updateRecord(id, updates)
+    if (result.success) {
+      setEditOpen(false)
+      setEditRecord(null)
+      load()
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const result = await deleteRecord(id)
     if (result.success) {
       setEditOpen(false)
       setEditRecord(null)
@@ -836,6 +878,7 @@ export default function NuevoIngresoContent() {
         saving={saving}
         onClose={() => { setEditOpen(false); setEditRecord(null) }}
         onSave={handleSave}
+        onDelete={handleDelete}
       />
     </>
   )

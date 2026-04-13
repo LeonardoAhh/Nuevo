@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -168,58 +169,51 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
   }
 
   return (
-    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-card/60 shadow-sm ${colorBorde}`}>
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
-          {item.nombre.charAt(0).toUpperCase()}
-        </div>
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-sm leading-tight truncate">{item.nombre}</p>
-            <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {[item.departamento, item.turno].filter(Boolean).join(" · ") || "Sin departamento"}
-          </p>
-          <div className="flex items-center justify-between mt-2">
-            <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
-              {badgeLabel}
-            </span>
-            <span className="text-xs text-muted-foreground">{formatDate(item.fecha)}</span>
-          </div>
-        </div>
+    <div className={`flex flex-col gap-2 rounded-2xl border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+      <div className="flex items-start justify-between gap-2.5">
+        <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
+          {dias(item.diasDiff)}
+        </span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {[item.departamento, item.turno].filter(Boolean).join(" · ") || "Sin departamento"}
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
+          {badgeLabel}
+        </span>
+        <span className="text-xs font-medium text-muted-foreground">{formatDate(item.fecha)}</span>
       </div>
 
       {/* Acción rápida: calificar */}
       {!editando ? (
         <button
           onClick={() => setEditando(true)}
-          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
         >
           <Pencil size={11} /> Calificar
         </button>
       ) : (
-        <div className="ml-12 flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="number" min={0} max={100} placeholder="0 – 100"
             value={calStr}
             onChange={e => setCalStr(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleGuardar(); if (e.key === "Escape") { setEditando(false); setCalStr("") } }}
             autoFocus
-            className="w-24 text-xs border rounded-md px-2 py-1 bg-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-8 w-24 rounded-md border bg-muted px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <button
             onClick={handleGuardar}
             disabled={saving || calStr === ""}
-            className="text-xs font-medium bg-primary text-primary-foreground px-2.5 py-1 rounded-md disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            className="h-8 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? "…" : "Guardar"}
           </button>
           <button
             onClick={() => { setEditando(false); setCalStr("") }}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="h-8 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             Cancelar
           </button>
@@ -257,28 +251,21 @@ function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEnt
   }
 
   return (
-    <div className={`flex flex-col gap-2 p-3 rounded-xl border-l-4 bg-card/60 shadow-sm ${colorBorde}`}>
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className={`flex-shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorAvatar}`}>
-          {item.nombre.charAt(0).toUpperCase()}
-        </div>
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-sm leading-tight truncate">{item.nombre}</p>
-            <span className={`text-xs font-bold shrink-0 ${colorDias}`}>{dias(item.diasDiff)}</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
-          </p>
-          <div className="flex items-center justify-between mt-2">
-            <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full w-fit ${colorBadge}`}>
-              {item.etiqueta}
-            </span>
-            <span className="text-xs text-muted-foreground">{formatDate(item.fecha)}</span>
-          </div>
-        </div>
+    <div className={`flex flex-col gap-2 rounded-2xl border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+      <div className="flex items-start justify-between gap-2.5">
+        <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
+          {dias(item.diasDiff)}
+        </span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
+          {item.etiqueta}
+        </span>
+        <span className="text-xs font-medium text-muted-foreground">{formatDate(item.fecha)}</span>
       </div>
 
       {/* Acción rápida: marcar entregado (RG) */}
@@ -286,7 +273,7 @@ function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEnt
         <button
           onClick={handleEntregado}
           disabled={saving}
-          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+          className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
         >
           <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar entregado"}
         </button>
@@ -297,7 +284,7 @@ function FilaFecha({ item, colorAvatar, colorBadge, colorDias, colorBorde, onEnt
         <button
           onClick={handleIndeterminado}
           disabled={saving}
-          className="self-start ml-12 flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+          className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
         >
           <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar como Indeterminado"}
         </button>
@@ -761,14 +748,14 @@ function agruparPorDepto<T extends { departamento: string | null }>(items: T[]):
 
 function DeptoHeader({ nombre, count }: { nombre: string; count: number }) {
   return (
-    <div className="flex items-center gap-2 pt-1 pb-0.5">
-      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground truncate">
+    <div className="flex items-center gap-2 pb-1 pt-1.5">
+      <span className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {nombre}
       </span>
-      <span className="flex-shrink-0 text-[10px] font-semibold bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+      <span className="flex-shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
         {count}
       </span>
-      <div className="flex-1 h-px bg-muted/60" />
+      <div className="h-px flex-1 bg-border/70" />
     </div>
   )
 }
@@ -793,14 +780,40 @@ function ListaEvals({ items, vencida, vacio, onCalificar }: {
   }
 
   const grupos = agruparPorDepto(items)
+  const TAB_ALL = "__all__"
+  const compactDepto = (nombre: string) => (nombre.length > 14 ? `${nombre.slice(0, 12)}…` : nombre)
 
   return (
-    <div className="space-y-3">
-      {grupos.map(([depto, miembros]) => (
-        <div key={depto}>
-          <DeptoHeader nombre={depto} count={miembros.length} />
-          <div className="space-y-2 mt-1.5">
-            {miembros.map((item) => (
+    <>
+      {/* Mobile: tabs por departamento (solo muestra los que tienen evaluaciones) */}
+      <div className="sm:hidden">
+        <Tabs defaultValue={TAB_ALL} className="w-full">
+          <div className="sticky top-0 z-10 -mx-1 rounded-xl bg-card/95 px-1 pb-1.5 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 overflow-visible rounded-xl p-1">
+              <TabsTrigger value={TAB_ALL} className="min-h-8 gap-1 px-2 py-1 text-[11px] leading-none">
+                Todo
+                <Badge variant="secondary" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                  {items.length}
+                </Badge>
+              </TabsTrigger>
+              {grupos.map(([depto, miembros]) => (
+                <TabsTrigger
+                  key={depto}
+                  value={depto}
+                  aria-label={`${depto}: ${miembros.length} evaluaciones`}
+                  className="min-h-8 max-w-[48%] gap-1 px-2 py-1 text-[11px] leading-none"
+                >
+                  <span className="truncate">{compactDepto(depto)}</span>
+                  <Badge variant="secondary" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
+                    {miembros.length}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <TabsContent value={TAB_ALL} className="mt-2 space-y-2">
+            {items.map((item) => (
               <FilaEval
                 key={item.id}
                 item={item}
@@ -814,10 +827,54 @@ function ListaEvals({ items, vencida, vacio, onCalificar }: {
                 onCalificar={onCalificar}
               />
             ))}
+          </TabsContent>
+
+          {grupos.map(([depto, miembros]) => (
+            <TabsContent key={depto} value={depto} className="mt-2 space-y-2">
+              {miembros.map((item) => (
+                <FilaEval
+                  key={item.id}
+                  item={item}
+                  colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
+                  colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
+                  colorBadge={vencida
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
+                  colorBorde={vencida ? "border-red-400" : "border-amber-400"}
+                  badgeLabel={vencida ? "Vencida" : "Por vencer"}
+                  onCalificar={onCalificar}
+                />
+              ))}
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+
+      {/* Desktop: agrupado por departamento */}
+      <div className="hidden space-y-3 sm:block">
+        {grupos.map(([depto, miembros]) => (
+          <div key={depto}>
+            <DeptoHeader nombre={depto} count={miembros.length} />
+            <div className="mt-1.5 space-y-2">
+              {miembros.map((item) => (
+                <FilaEval
+                  key={item.id}
+                  item={item}
+                  colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
+                  colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
+                  colorBadge={vencida
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
+                  colorBorde={vencida ? "border-red-400" : "border-amber-400"}
+                  badgeLabel={vencida ? "Vencida" : "Por vencer"}
+                  onCalificar={onCalificar}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   )
 }
 
