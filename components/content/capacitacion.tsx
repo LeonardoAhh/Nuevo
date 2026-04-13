@@ -42,6 +42,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Progress } from "@/components/ui/progress"
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type {
   Department, Position, Course, ImportPreview,
@@ -111,6 +112,7 @@ export default function CapacitacionContent() {
   // ── Estado: Historial – empleados ─────────────────────────────────────────
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loadingEmployees, setLoadingEmployees] = useState(false)
+  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; total: number }>>({})
   const [empSearch, setEmpSearch] = useState("")
   const [empDialogOpen, setEmpDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
@@ -504,10 +506,26 @@ export default function CapacitacionContent() {
   // ── Handlers: Empleados ───────────────────────────────────────────────────
   const loadEmployees = useCallback(async () => {
     setLoadingEmployees(true)
-    try { setEmployees(await fetchEmployees()) }
-    catch (err) { console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err)) }
+    setProgressMap({})
+    try {
+      const emps = await fetchEmployees()
+      setEmployees(emps)
+      // Carga progreso en lotes de 8 sin bloquear la UI
+      const batchSize = 8
+      for (let i = 0; i < emps.length; i += batchSize) {
+        const batch = emps.slice(i, i + batchSize)
+        const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
+        const chunk: Record<string, { aprobados: number; total: number }> = {}
+        results.forEach((r, idx) => {
+          if (r.status === 'fulfilled') {
+            chunk[batch[idx].id] = { aprobados: r.value.aprobados, total: r.value.totalRequired }
+          }
+        })
+        setProgressMap(prev => ({ ...prev, ...chunk }))
+      }
+    } catch (err) { console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err)) }
     finally { setLoadingEmployees(false) }
-  }, [])
+  }, [fetchEmployeeProgress])
 
   const handleViewEmployee = async (emp: Employee) => {
     setSelectedEmployee(emp)
@@ -778,6 +796,7 @@ export default function CapacitacionContent() {
                           <TableHead>Empleado</TableHead>
                           <TableHead className="hidden sm:table-cell">Puesto</TableHead>
                           <TableHead className="hidden md:table-cell">Departamento</TableHead>
+                          <TableHead className="hidden sm:table-cell w-28">Avance</TableHead>
                           <TableHead className="text-right w-28 sm:w-auto">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -797,6 +816,14 @@ export default function CapacitacionContent() {
                                 <Badge variant="secondary" className="bg-muted text-foreground text-xs">
                                   {emp.departamento}
                                 </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell w-28">
+                              {progressMap[emp.id] != null && (
+                                <Progress
+                                  value={progressMap[emp.id].total > 0 ? Math.round((progressMap[emp.id].aprobados / progressMap[emp.id].total) * 100) : 0}
+                                  className="h-1.5"
+                                />
                               )}
                             </TableCell>
                             <TableCell className="text-right p-2">
