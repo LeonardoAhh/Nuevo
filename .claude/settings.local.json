@@ -40,7 +40,11 @@
       "Bash(xargs cat:*)",
       "Bash(find \"/c/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/components\" -name \"*.tsx\" ! -path \"*content*\" -type f -exec basename {} \\\\;)",
       "Bash(node scripts/gen-icons.mjs)",
-      "Bash(\"./NODE JS/node.exe\" scripts/gen-icons.mjs)"
+      "Bash(\"./NODE JS/node.exe\" scripts/gen-icons.mjs)",
+      "Bash(node_modules/.bin/tsc --noEmit --pretty)",
+      "Bash(where node:*)",
+      "Bash(where npm:*)",
+      "Bash(cmd.exe /c \"where node\")"
     ]
   }
 }

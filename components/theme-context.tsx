@@ -214,9 +214,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("fontSize", fontSize)
   }, [fontSize])
 
-  // Apply density via CSS variable
+  // Apply density via CSS variable + class
   useEffect(() => {
     document.documentElement.style.setProperty("--density-scale", DENSITY_SCALE_MAP[density])
+    if (density === "compact") {
+      document.documentElement.classList.add("density-compact")
+    } else {
+      document.documentElement.classList.remove("density-compact")
+    }
     localStorage.setItem("density", density)
   }, [density])
 
