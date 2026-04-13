@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   applicationName: "Capacitación",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Capacitación",
     startupImage: "/icons/apple-touch-icon.png",
   },
