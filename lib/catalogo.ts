@@ -132,9 +132,9 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
   "SGI": {
     areas: ["SGI"],
     puestos: ["COORDINADOR DE SGI",
-      "AUXILIAR DE SGI A",
-      "AUXILIAR DE SGI B",
-      "AUXILIAR DE SGI C"]
+      "AUXILIAR DEL SGI A",
+      "AUXILIAR DEL SGI B",
+      "AUXILIAR DEL SGI C"]
   },//ACTUALIZADO
   "METROLOGÍA": {
     areas: ["METROLOGÍA"],
