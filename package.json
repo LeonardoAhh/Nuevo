@@ -47,6 +47,8 @@
     "date-fns": "latest",
     "dotenv": "^17.4.1",
     "embla-carousel-react": "8.5.1",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "html-to-image": "^1.11.13",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
@@ -61,6 +63,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

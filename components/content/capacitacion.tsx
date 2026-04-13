@@ -42,6 +42,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type {
   Department, Position, Course, ImportPreview,
@@ -666,9 +667,37 @@ export default function CapacitacionContent() {
       <ReadOnlyBanner />
       <Tabs
         defaultValue="puestos"
-        onValueChange={(v) => {
-          if (v === "cursos") loadCoursesData()
-          if (v === "historial") loadEmployees()
+        onValueChange={async (v) => {
+          if (v === "cursos") {
+            loadCoursesData();
+            setLoadingEmployees(true);
+            try {
+              const [emps, poss] = await Promise.all([
+                fetchEmployees(),
+                fetchPositions()
+              ]);
+              setEmployees(emps);
+              setPositions(poss);
+              // Cargar todos los positionCourses
+              const allPositionCourses = (await Promise.all(
+                poss.map(p => fetchPositionCourses(p.id))
+              )).flat();
+              setPositionCourses(allPositionCourses);
+              // Obtener todos los cursos de todos los empleados
+              const allEmpCourses = (await Promise.all(
+                emps.map(e => fetchEmployeeCourses(e.id))
+              )).flat();
+              setEmpCourses(allEmpCourses);
+            } catch (err) {
+              setEmployees([]);
+              setEmpCourses([]);
+              setPositions([]);
+              setPositionCourses([]);
+            } finally {
+              setLoadingEmployees(false);
+            }
+          }
+          if (v === "historial") loadEmployees();
         }}
       >
         <TabsList className="flex w-full mb-4">
@@ -786,13 +815,95 @@ export default function CapacitacionContent() {
                     Todos los cursos únicos registrados en el sistema.
                   </CardDescription>
                 </div>
-                {!isReadOnly && (
-                  <Button size="sm" className="gap-1.5 shrink-0"
-                    onClick={() => { setNewCourseName(''); setNewCourseError(null); setNewCourseOpen(true) }}>
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Nuevo curso</span>
+                <div className="flex gap-2 items-center">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 border-primary text-primary hover:bg-primary/10 rounded-lg shadow-sm font-semibold"
+                    onClick={async () => {
+                      // Generar Excel seguro con exceljs y file-saver
+                      const ExcelJS = await import('exceljs');
+                      const { saveAs } = await import('file-saver');
+                      const workbook = new ExcelJS.Workbook();
+                      const sheet = workbook.addWorksheet('Reporte');
+                      // Encabezados
+                      sheet.columns = [
+                        { header: 'Curso', key: 'Curso', width: 32 },
+                        { header: 'Empleado', key: 'Empleado', width: 32 },
+                        { header: 'Departamento', key: 'Departamento', width: 24 },
+                        { header: 'Puesto', key: 'Puesto', width: 24 },
+                        { header: 'Fecha', key: 'Fecha', width: 14 },
+                        { header: 'Calificación', key: 'Calificacion', width: 14 },
+                        { header: 'Estado', key: 'Estado', width: 14 },
+                      ];
+                      // Recolectar filas
+                      let filas = [];
+                      filteredCourses.forEach(course => {
+                        const puestosAsignados = positions
+                          .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
+                          .map(pos => pos.name);
+                        employees
+                          .filter(emp => puestosAsignados.includes(emp.puesto ?? ''))
+                          .forEach(emp => {
+                            const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id);
+                            let estado = 'Pendiente', calificacion = '', fecha = '';
+                            if (match) {
+                              calificacion = match.calificacion != null ? String(match.calificacion) : '';
+                              fecha = match.fecha_aplicacion ? match.fecha_aplicacion.split('-').reverse().join('/') : '';
+                              if (match.calificacion != null) {
+                                estado = match.calificacion >= 70 ? 'Aprobado' : 'Reprobado';
+                              }
+                            }
+                            filas.push({
+                              Curso: course.name,
+                              Empleado: emp.nombre,
+                              Departamento: emp.departamento ?? '',
+                              Puesto: emp.puesto ?? '',
+                              Fecha: fecha,
+                              Calificacion: calificacion,
+                              Estado: estado,
+                            });
+                          });
+                      });
+                      // Ordenar: Departamento A-Z, luego Pendientes, Reprobados, Aprobados
+                      const ordenEstado = { 'Pendiente': 0, 'Reprobado': 1, 'Aprobado': 2 };
+                      filas = filas.sort((a, b) => {
+                        const depA = (a.Departamento || '').localeCompare(b.Departamento || '');
+                        if (depA !== 0) return depA;
+                        return ordenEstado[a.Estado] - ordenEstado[b.Estado];
+                      });
+                      filas.forEach(row => sheet.addRow(row));
+                      // Estilos cabecera shadcn/ui y Daytona
+                      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Daytona', size: 12 };
+                      sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF18181B' } };
+                      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+                      sheet.columns.forEach(col => { col.alignment = { vertical: 'middle', horizontal: 'left' }; });
+                      // Estilo filas
+                      sheet.eachRow((row, idx) => {
+                        if (idx > 1) {
+                          row.font = { name: 'Daytona', size: 11 };
+                          row.alignment = { vertical: 'middle', horizontal: 'left' };
+                        }
+                      });
+                      // Descargar
+                      const buffer = await workbook.xlsx.writeBuffer();
+                      const fecha = new Date().toISOString().slice(0, 10);
+                      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `reporte-cursos-${fecha}.xlsx`);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6V4a2 2 0 00-2-2H10a2 2 0 00-2 2v2" />
+                    </svg>
+                    <span className="hidden sm:inline">Descargar Excel</span>
                   </Button>
-                )}
+                  {!isReadOnly && (
+                    <Button size="sm" className="gap-1.5 shrink-0"
+                      onClick={() => { setNewCourseName(''); setNewCourseError(null); setNewCourseOpen(true) }}>
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Nuevo curso</span>
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -813,15 +924,121 @@ export default function CapacitacionContent() {
                   {courses.length === 0 ? "No hay cursos registrados. Importa datos primero." : "No se encontraron cursos."}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {filteredCourses.map((course, idx) => (
-                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                      <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{idx + 1}</span>
-                      <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                      <span className="text-sm text-foreground leading-tight">{course.name}</span>
-                    </div>
-                  ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full space-y-2">
+                  {filteredCourses.map((course, idx) => {
+                    // Mostrar TODOS los empleados, con su estado para este curso
+                    // Solo empleados asignados a este curso por puesto
+                    const puestosAsignados = positions
+                      .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
+                      .map(pos => pos.name)
+
+                    const empleadosConEstado = employees
+                      .filter(emp => puestosAsignados.includes(emp.puesto ?? ''))
+                      .map(emp => {
+                        const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id)
+                        let estado = 'pendiente', calificacion = null, fecha = null
+                        if (match) {
+                          calificacion = match.calificacion
+                          fecha = match.fecha_aplicacion
+                          if (calificacion != null) {
+                            estado = calificacion >= 70 ? 'aprobado' : 'reprobado'
+                          }
+                        }
+                        return {
+                          ...emp,
+                          calificacion,
+                          fecha,
+                          estado,
+                        }
+                      })
+                      // Mostrar todos: aprobados, pendientes y reprobados
+                    return (
+                      <AccordionItem key={course.id} value={course.id}>
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-3 w-full">
+                            <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{idx + 1}</span>
+                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-sm text-foreground leading-tight flex-1 text-left">{course.name}</span>
+                            <Badge variant="secondary" className="bg-muted text-foreground ml-2">{empleadosConEstado.length}</Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          {empleadosConEstado.length === 0 ? (
+                            <div className="text-xs text-muted-foreground py-2">Ningún empleado tiene este curso asignado.</div>
+                          ) : (
+                            <>
+                              {/* Mobile: lista/card */}
+                              <div className="flex flex-col gap-2 sm:hidden">
+                                {empleadosConEstado.map((row, i) => (
+                                  <div key={row.id + '-' + i} className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-foreground flex-1 truncate">{row.nombre}</span>
+                                      <Badge
+                                        className={
+                                          row.estado === 'aprobado' ? 'bg-success/15 text-success border border-success/30' :
+                                          row.estado === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' :
+                                          'bg-muted text-muted-foreground border'
+                                        }
+                                      >
+                                        {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                      <span><b>Puesto:</b> {row.puesto ?? '—'}</span>
+                                      <span><b>Fecha:</b> {row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</span>
+                                      <span><b>Calificación:</b> {row.calificacion != null ? row.calificacion : '—'}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Desktop: tabla */}
+                              <div className="overflow-x-auto hidden sm:block">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Empleado</TableHead>
+                                      <TableHead>Puesto</TableHead>
+                                      <TableHead>Fecha</TableHead>
+                                      <TableHead>Calificación</TableHead>
+                                      <TableHead>Estado</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {empleadosConEstado.map((row, i) => (
+                                      <TableRow key={row.id + '-' + i}>
+                                        <TableCell>{row.nombre}</TableCell>
+                                        <TableCell>{row.puesto ?? '—'}</TableCell>
+                                        <TableCell>{row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</TableCell>
+                                        <TableCell>
+                                          {row.calificacion != null ? (
+                                            <Badge variant={row.calificacion >= 70 ? 'default' : 'destructive'}>
+                                              {row.calificacion}
+                                            </Badge>
+                                          ) : '—'}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Badge
+                                            className={
+                                              row.estado === 'aprobado' ? 'bg-success/15 text-success border border-success/30' :
+                                              row.estado === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' :
+                                              'bg-muted text-muted-foreground border'
+                                            }
+                                          >
+                                            {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
+                                          </Badge>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    )
+                  })}
+                </Accordion>
               )}
               <p className="text-xs text-muted-foreground">
                 {filteredCourses.length} de {courses.length} cursos
