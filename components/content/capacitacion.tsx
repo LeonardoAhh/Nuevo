@@ -42,7 +42,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type {
   Department, Position, Course, ImportPreview,
@@ -112,7 +111,7 @@ export default function CapacitacionContent() {
   // ── Estado: Historial – empleados ─────────────────────────────────────────
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loadingEmployees, setLoadingEmployees] = useState(false)
-  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; total: number }>>({})
+  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
   const [empSearch, setEmpSearch] = useState("")
   const [empDialogOpen, setEmpDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
@@ -504,28 +503,34 @@ export default function CapacitacionContent() {
   }
 
   // ── Handlers: Empleados ───────────────────────────────────────────────────
+  const loadProgressInBackground = useCallback(async (emps: Employee[]) => {
+    const batchSize = 8
+    for (let i = 0; i < emps.length; i += batchSize) {
+      const batch = emps.slice(i, i + batchSize)
+      const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
+      const chunk: Record<string, { aprobados: number; reprobados: number; total: number }> = {}
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled') {
+          chunk[batch[idx].id] = { aprobados: r.value.aprobados, reprobados: r.value.reprobados, total: r.value.totalRequired }
+        }
+      })
+      setProgressMap(prev => ({ ...prev, ...chunk }))
+    }
+  }, [fetchEmployeeProgress])
+
   const loadEmployees = useCallback(async () => {
     setLoadingEmployees(true)
-    setProgressMap({})
     try {
       const emps = await fetchEmployees()
       setEmployees(emps)
-      // Carga progreso en lotes de 8 sin bloquear la UI
-      const batchSize = 8
-      for (let i = 0; i < emps.length; i += batchSize) {
-        const batch = emps.slice(i, i + batchSize)
-        const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
-        const chunk: Record<string, { aprobados: number; total: number }> = {}
-        results.forEach((r, idx) => {
-          if (r.status === 'fulfilled') {
-            chunk[batch[idx].id] = { aprobados: r.value.aprobados, total: r.value.totalRequired }
-          }
-        })
-        setProgressMap(prev => ({ ...prev, ...chunk }))
-      }
-    } catch (err) { console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err)) }
-    finally { setLoadingEmployees(false) }
-  }, [fetchEmployeeProgress])
+      setLoadingEmployees(false)
+      // Carga el progreso en segundo plano (no bloquea la tabla)
+      loadProgressInBackground(emps)
+    } catch (err) {
+      console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
+      setLoadingEmployees(false)
+    }
+  }, [loadProgressInBackground])
 
   const handleViewEmployee = async (emp: Employee) => {
     setSelectedEmployee(emp)
@@ -818,13 +823,25 @@ export default function CapacitacionContent() {
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell className="hidden sm:table-cell w-28">
-                              {progressMap[emp.id] != null && (
-                                <Progress
-                                  value={progressMap[emp.id].total > 0 ? Math.round((progressMap[emp.id].aprobados / progressMap[emp.id].total) * 100) : 0}
-                                  className="h-1.5"
-                                />
-                              )}
+                            <TableCell className="hidden sm:table-cell w-32">
+                              {(() => {
+                                const p = progressMap[emp.id]
+                                if (!p || p.total === 0) return null
+                                const pct = Math.round((p.aprobados / p.total) * 100)
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex h-1.5 flex-1 rounded-full overflow-hidden bg-muted">
+                                      {p.aprobados > 0 && (
+                                        <div className="bg-success transition-all" style={{ width: `${(p.aprobados / p.total) * 100}%` }} />
+                                      )}
+                                      {p.reprobados > 0 && (
+                                        <div className="bg-destructive transition-all" style={{ width: `${(p.reprobados / p.total) * 100}%` }} />
+                                      )}
+                                    </div>
+                                    <span className="text-[11px] tabular-nums text-muted-foreground w-7 text-right">{pct}%</span>
+                                  </div>
+                                )
+                              })()}
                             </TableCell>
                             <TableCell className="text-right p-2">
                               <div className="flex items-center justify-end gap-0.5">
