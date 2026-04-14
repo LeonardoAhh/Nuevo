@@ -18,13 +18,13 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Capacitación VIÑOPLASTIC",
-  description: "Sistema de gestión de capacitación y nuevo ingreso",
-  applicationName: "Capacitación",
+  title: "Capacitación Qro",
+  description: "Sistema de Administractión, Estandarización y Control de Datos",
+  applicationName: "Vertx System v2.0",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Capacitación",
+    title: "Vertx System v2.0",
     startupImage: "/icons/apple-touch-icon.png",
   },
   formatDetection: {
