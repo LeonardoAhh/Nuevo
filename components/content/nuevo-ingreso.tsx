@@ -55,17 +55,19 @@ function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion
   )
 }
 
-function ContratoTerminoBadge({ fecha }: { fecha: string | null }) {
+function ContratoTerminoBadge({ fecha, indeterminado }: { fecha: string | null; indeterminado?: boolean }) {
   const diff = daysFromToday(fecha)
   if (diff === null) return <span className="text-xs text-gray-400">—</span>
   const urgent = diff <= 10
   const past = diff < 0
   return (
-    <div className={`text-xs font-medium ${past ? 'text-destructive' : urgent ? 'text-orange-500' : 'text-muted-foreground'}`}>
+    <div className={`text-xs font-medium ${past && !indeterminado ? 'text-destructive' : urgent && !indeterminado ? 'text-orange-500' : 'text-muted-foreground'}`}>
       <div>{formatDate(fecha)}</div>
-      <div className="opacity-70">
-        {past ? `Vencido hace ${Math.abs(diff)}d` : diff === 0 ? 'Hoy' : `En ${diff} días`}
-      </div>
+      {!indeterminado && (
+        <div className="opacity-70">
+          {past ? `Vencido hace ${Math.abs(diff)}d` : diff === 0 ? 'Hoy' : `En ${diff} días`}
+        </div>
+      )}
     </div>
   )
 }
@@ -810,7 +812,7 @@ export default function NuevoIngresoContent() {
                             <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            <ContratoTerminoBadge fecha={r.termino_contrato} />
+                            <ContratoTerminoBadge fecha={r.termino_contrato} indeterminado={r.tipo_contrato === 'Indeterminado'} />
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <Badge

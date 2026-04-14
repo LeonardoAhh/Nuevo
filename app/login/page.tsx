@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import LoginForm from "@/components/login-form"
-import { ThemeProvider } from "@/components/theme-context"
 import LoginHero from "@/components/login-hero"
 
 export const metadata: Metadata = {
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <ThemeProvider>
       <div className="login-page min-h-[100dvh] flex flex-col lg:flex-row bg-background text-foreground">
         {/* ── Hero Panel (izquierda en desktop, arriba en móvil) ── */}
         <div className="login-hero-panel relative flex-shrink-0 lg:w-[55%] xl:w-[58%] h-[36dvh] sm:h-[40dvh] lg:h-auto lg:min-h-[100dvh]">
@@ -36,6 +34,5 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </ThemeProvider>
   )
 }

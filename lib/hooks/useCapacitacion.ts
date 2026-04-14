@@ -60,6 +60,7 @@ export interface Employee {
   turno: string | null
   fecha_ingreso: string | null
   jefe_directo: string | null
+  evaluacion_desempeno: string | null
   created_at: string
 }
 
@@ -777,6 +778,7 @@ export function useCapacitacion() {
       turno: string | null
       fecha_ingreso: string | null
       jefe_directo: string | null
+      evaluacion_desempeno: string | null
     },
     employeeCourses: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
   ): Promise<{ success: boolean; error?: string }> => {
@@ -829,6 +831,7 @@ export function useCapacitacion() {
       turno: string | null
       fecha_ingreso: string | null
       jefe_directo: string | null
+      evaluacion_desempeno: string | null
     }
   ): Promise<{ success: boolean; error?: string }> => {
     try {

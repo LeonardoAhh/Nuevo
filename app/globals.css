@@ -163,14 +163,7 @@ input[type="color"]::-webkit-color-swatch {
   animation: heroZoom 12s ease-in-out infinite alternate;
 }
 
-/* Fade-up de texto */
-@keyframes heroFadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.hero-fade-up-item {
-  animation: heroFadeUp 0.6s ease forwards;
-}
+/* Fade-up de texto (legacy — framer-motion handles hero animations now) */
 
 /* Orbs flotantes */
 @keyframes heroFloat1 {
@@ -360,16 +353,7 @@ input[type="color"]::-webkit-color-swatch {
 /* Sidebar header */
 .density-compact .h-\[50px\] { height: 40px; }
 
-/* Hero dashboard — slightly shorter */
-.density-compact .hero-dashboard {
-  height: 160px;
-}
-@media (min-width: 640px) {
-  .density-compact .hero-dashboard { height: 220px; }
-}
-@media (min-width: 768px) {
-  .density-compact .hero-dashboard { height: 260px; }
-}
+/* Hero dashboard density handled by component Tailwind classes */
 
 /* ─── Fin Density: Compact ───────────────────────────── */
 

@@ -148,7 +148,7 @@ export default function CapacitacionContent() {
   // ── Estado: Editar empleado dialog ────────────────────────────────────────
   const [editEmpOpen, setEditEmpOpen] = useState(false)
   const [editEmpTarget, setEditEmpTarget] = useState<Employee | null>(null)
-  const [editEmpForm, setEditEmpForm] = useState({ numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '' })
+  const [editEmpForm, setEditEmpForm] = useState({ numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '', evaluacion_desempeno: '' })
   const [editEmpSaving, setEditEmpSaving] = useState(false)
   const [editEmpError, setEditEmpError] = useState<string | null>(null)
 
@@ -163,6 +163,7 @@ export default function CapacitacionContent() {
       turno:         emp.turno ?? '',
       fecha_ingreso: emp.fecha_ingreso ?? '',
       jefe_directo:  emp.jefe_directo ?? '',
+      evaluacion_desempeno: emp.evaluacion_desempeno ?? '',
     })
     setEditEmpError(null)
     setEditEmpOpen(true)
@@ -181,6 +182,7 @@ export default function CapacitacionContent() {
       turno:         editEmpForm.turno || null,
       fecha_ingreso: editEmpForm.fecha_ingreso || null,
       jefe_directo:  editEmpForm.jefe_directo || null,
+      evaluacion_desempeno: editEmpForm.evaluacion_desempeno.trim() || null,
     })
     setEditEmpSaving(false)
     if (result.success) {
@@ -199,7 +201,7 @@ export default function CapacitacionContent() {
 
   // ── Estado: Nuevo empleado dialog ─────────────────────────────────────────
   type NewEmpCourseRow = { course_id: string; course_name: string; fecha_aplicacion: string; calificacion: string }
-  const EMPTY_EMP = { numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '' }
+  const EMPTY_EMP = { numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '', evaluacion_desempeno: '' }
   const [newEmpOpen, setNewEmpOpen] = useState(false)
   const [newEmpStep, setNewEmpStep] = useState<1 | 2>(1)
   const [newEmpForm, setNewEmpForm] = useState(EMPTY_EMP)
@@ -233,6 +235,7 @@ export default function CapacitacionContent() {
         turno:         newEmpForm.turno || null,
         fecha_ingreso: newEmpForm.fecha_ingreso || null,
         jefe_directo:  newEmpForm.jefe_directo || null,
+        evaluacion_desempeno: newEmpForm.evaluacion_desempeno.trim() || null,
       },
       newEmpCourseRows
         .filter(r => r.course_id)
@@ -1709,7 +1712,7 @@ export default function CapacitacionContent() {
           {/* ── Paso 1: Datos ─────────────────────────────────────────────── */}
           {newEmpStep === 1 && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">N.N</label>
                   <Input
@@ -1723,7 +1726,7 @@ export default function CapacitacionContent() {
                   <Input type="date"
                     value={newEmpForm.fecha_ingreso}
                     onChange={e => setNewEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                    className="bg-muted text-foreground"
+                    className="bg-muted text-foreground min-w-0"
                   />
                 </div>
               </div>
@@ -1802,19 +1805,38 @@ export default function CapacitacionContent() {
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
-                <Select
-                  value={newEmpForm.jefe_directo}
-                  onValueChange={v => setNewEmpForm(f => ({ ...f, jefe_directo: v }))}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-[1fr_auto] gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
+                  <Select
+                    value={newEmpForm.jefe_directo}
+                    onValueChange={v => setNewEmpForm(f => ({ ...f, jefe_directo: v }))}
+                  >
+                    <SelectTrigger className="bg-muted  text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card  max-h-60">
+                      {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1 w-20">
+                  <label className="text-xs font-medium text-muted-foreground">Eval. desemp.</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={99}
+                    maxLength={2}
+                    className="bg-muted text-foreground text-center"
+                    placeholder="00"
+                    value={newEmpForm.evaluacion_desempeno}
+                    onChange={e => {
+                      const v = e.target.value.slice(0, 2)
+                      setNewEmpForm(f => ({ ...f, evaluacion_desempeno: v }))
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -1980,7 +2002,7 @@ export default function CapacitacionContent() {
           )}
 
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">N.N</label>
                 <Input
@@ -1994,7 +2016,7 @@ export default function CapacitacionContent() {
                 <Input type="date"
                   value={editEmpForm.fecha_ingreso}
                   onChange={e => setEditEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                  className="bg-muted text-foreground"
+                  className="bg-muted text-foreground min-w-0"
                 />
               </div>
             </div>
@@ -2071,6 +2093,9 @@ export default function CapacitacionContent() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto] gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
                 <Select
@@ -2084,6 +2109,23 @@ export default function CapacitacionContent() {
                     {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1 w-20">
+                <label className="text-xs font-medium text-muted-foreground">Eval. desemp.</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={99}
+                  maxLength={2}
+                  className="bg-muted text-foreground text-center"
+                  placeholder="00"
+                  value={editEmpForm.evaluacion_desempeno}
+                  onChange={e => {
+                    const v = e.target.value.slice(0, 2)
+                    setEditEmpForm(f => ({ ...f, evaluacion_desempeno: v }))
+                  }}
+                />
               </div>
             </div>
           </div>
