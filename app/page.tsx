@@ -6,6 +6,7 @@ import DashboardAlertas from "@/components/dashboard-alertas"
 import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
 import HeroDashboard from "@/components/hero-dashboard"
 import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
+import NotesWidget from "@/components/notes-widget"
 
 export default function Page() {
   return <Dashboard pageTitle="Dashboard" content={<DashboardContent />} />
@@ -14,9 +15,11 @@ export default function Page() {
 function DashboardContent() {
   return (
     <div className="space-y-6">
-
       {/* Hero principal */}
       <HeroDashboard />
+
+      {/* Widget de notas colaborativas */}
+      <NotesWidget />
 
       {/* Widget de alertas de vencimiento */}
       <DashboardAlertas />
