@@ -134,6 +134,8 @@ export default function CapacitacionContent() {
   const [loadingEmployees, setLoadingEmployees] = useState(false)
   const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
   const [empSearch, setEmpSearch] = useState("")
+  const [empFilterDept, setEmpFilterDept] = useState<string>("all")
+  const [empFilterTurno, setEmpFilterTurno] = useState<string>("all")
   const [empDialogOpen, setEmpDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [empCourses, setEmpCourses] = useState<EmployeeCourse[]>([])
@@ -346,6 +348,29 @@ export default function CapacitacionContent() {
       return { ...r, [field]: value }
     }))
 
+  // ── Helpers: normalizar fechas ─────────────────────────────────────────────
+  const normalizeDateToISO = (raw: string): string => {
+    if (!raw) return ''
+    // Already YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+    // DD/MM/YYYY or DD-MM-YYYY
+    const dmy = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/)
+    if (dmy) {
+      const [, d, m, y] = dmy
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    }
+    // YYYY/MM/DD
+    const ymd = raw.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
+    if (ymd) {
+      const [, y, m, d] = ymd
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    }
+    // Try native Date parse as fallback
+    const d = new Date(raw)
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
+    return raw
+  }
+
   // ── Handlers: Carga masiva de cursos ─────────────────────────────────────
   const parseBulkJSON = (text: string) => {
     setBulkParseError(null)
@@ -356,7 +381,8 @@ export default function CapacitacionContent() {
       const rows: BulkCourseRow[] = arr.map((item, i) => {
         const numero    = String(item.numero ?? item.nn ?? item.NN ?? '').trim()
         const cursoRaw  = String(item.curso ?? item.course ?? item.Curso ?? '').trim()
-        const fecha     = String(item.fecha ?? item.date ?? item.Fecha ?? '').trim()
+        const fechaRaw  = String(item.fecha ?? item.date ?? item.Fecha ?? '').trim()
+        const fecha     = normalizeDateToISO(fechaRaw)
         const calificacion = String(item.calificacion ?? item.Calificacion ?? item.score ?? '').trim()
         const emp    = employees.find(e => (e.numero ?? '') === numero && numero !== '')
         const course = courses.find(c => c.name === cursoRaw)
@@ -655,6 +681,8 @@ export default function CapacitacionContent() {
       (e.departamento ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
       (e.puesto ?? '').toLowerCase().includes(empSearch.toLowerCase())
     )
+    .filter(e => empFilterDept === 'all' || (e.departamento ?? '') === empFilterDept)
+    .filter(e => empFilterTurno === 'all' || (e.turno ?? '') === empFilterTurno)
     .sort((a, b) => {
       const na = parseInt(a.numero ?? '0', 10)
       const nb = parseInt(b.numero ?? '0', 10)
@@ -753,7 +781,7 @@ export default function CapacitacionContent() {
                     <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent className="bg-card ">
-                    <SelectItem value="all">Todos los departamentos</SelectItem>
+                    <SelectItem value="all">Departamentos</SelectItem>
                     {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -826,6 +854,7 @@ export default function CapacitacionContent() {
                     onClick={async () => {
                       // Generar Excel seguro con exceljs y file-saver
                       const ExcelJS = await import('exceljs');
+                      // @ts-ignore
                       const { saveAs } = await import('file-saver');
                       const workbook = new ExcelJS.Workbook();
                       const sheet = workbook.addWorksheet('Reporte');
@@ -839,8 +868,8 @@ export default function CapacitacionContent() {
                         { header: 'Calificación', key: 'Calificacion', width: 14 },
                         { header: 'Estado', key: 'Estado', width: 14 },
                       ];
-                      // Recolectar filas
-                      let filas = [];
+                      type FilaRow = { Curso: string; Empleado: string; Departamento: string; Puesto: string; Fecha: string; Calificacion: string; Estado: string }
+                      let filas: FilaRow[] = [];
                       filteredCourses.forEach(course => {
                         const puestosAsignados = positions
                           .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
@@ -869,7 +898,7 @@ export default function CapacitacionContent() {
                           });
                       });
                       // Ordenar: Departamento A-Z, luego Pendientes, Reprobados, Aprobados
-                      const ordenEstado = { 'Pendiente': 0, 'Reprobado': 1, 'Aprobado': 2 };
+                      const ordenEstado: Record<string, number> = { 'Pendiente': 0, 'Reprobado': 1, 'Aprobado': 2 };
                       filas = filas.sort((a, b) => {
                         const depA = (a.Departamento || '').localeCompare(b.Departamento || '');
                         if (depA !== 0) return depA;
@@ -1108,12 +1137,37 @@ export default function CapacitacionContent() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-                    className="pl-9 bg-muted  text-foreground"
-                  />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={empSearch} onChange={e => setEmpSearch(e.target.value)}
+                      placeholder="Buscar empleado..."
+                      className="pl-9 bg-muted text-foreground"
+                    />
+                  </div>
+                  <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
+                    <SelectTrigger className="w-full sm:w-44 bg-muted text-foreground">
+                      <SelectValue placeholder="Departamento" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card">
+                      <SelectItem value="all">Departamentos</SelectItem>
+                      {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={empFilterTurno} onValueChange={setEmpFilterTurno}>
+                    <SelectTrigger className="w-full sm:w-36 bg-muted text-foreground">
+                      <SelectValue placeholder="Turno" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card">
+                      <SelectItem value="all">Turnos</SelectItem>
+                      {TURNOS.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 {loadingEmployees ? (
                   <div className="flex justify-center py-12">
@@ -1476,7 +1530,7 @@ export default function CapacitacionContent() {
 
       {/* ── Dialog: Carga masiva de cursos ───────────────────────────────── */}
       <Dialog open={bulkOpen} onOpenChange={open => { if (!open) { setBulkRows([]); setBulkError(null); setBulkParseError(null) } setBulkOpen(open) }}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" />
@@ -1580,7 +1634,7 @@ export default function CapacitacionContent() {
                           <TableHead>Empleado</TableHead>
                           <TableHead>Curso</TableHead>
                           <TableHead className="w-32">Fecha</TableHead>
-                          <TableHead className="w-20">Cal.</TableHead>
+                          <TableHead className="w-24">Cal.</TableHead>
                           <TableHead className="w-8 text-center"></TableHead>
                         </TableRow>
                       </TableHeader>
