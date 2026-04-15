@@ -539,6 +539,12 @@ input[type="color"]::-webkit-color-swatch {
 
 /* ─── Fin Login Hero ──────────────────────────────────── */
 
+/* ─── Examen: columnas (pantalla + impresión) ──────────── */
+.examen-columnas {
+  column-count: 2;
+  column-gap: 20px;
+}
+
 /* ─── Print: Generador de Exámenes ─────────────────────── */
 @media print {
   /* Ocultar todo usando visibility para no romper el árbol del DOM */
@@ -559,7 +565,7 @@ input[type="color"]::-webkit-color-swatch {
     top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 12mm 14mm !important;
+    padding: 0 !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -579,6 +585,36 @@ input[type="color"]::-webkit-color-swatch {
   .examen-print-root .break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+  }
+
+  /* Salto de página entre secciones */
+  .examen-print-root .break-before-page {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Cada página dentro de su propio espacio */
+  .examen-pagina {
+    padding: 10mm 14mm !important;
+  }
+
+  /* Columnas CSS — respeta break-inside mucho mejor que grid */
+  .examen-columnas {
+    column-count: 2;
+    column-gap: 20px;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Hoja de respuestas: forzar tinta negra en burbujas rellenas */
+  .examen-print-root .bg-black {
+    background: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .examen-print-root .text-white {
+    color: white !important;
   }
 
   @page {

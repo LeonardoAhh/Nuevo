@@ -170,7 +170,11 @@ export function useGeneradorExamen() {
           return
         }
 
-        const seleccionadas = shuffle(todas).slice(0, numPreguntas)
+        // Deduplicar preguntas por texto (evita repetidas en la BD)
+        const unicas = Array.from(
+          new Map(todas.map((p) => [p.pregunta.trim().toLowerCase(), p])).values()
+        )
+        const seleccionadas = shuffle(unicas).slice(0, numPreguntas)
         const { actual, destino } = TRANSICION_CAT[transicionKey]
 
         setExamen({

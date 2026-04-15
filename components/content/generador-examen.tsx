@@ -57,7 +57,7 @@ export default function GeneradorExamenContent() {
     setEmpleadoSeleccionado(emp)
     // Auto-detectar la transición según la categoría del puesto
     const cat = extraerCategoria(emp.puesto)
-    const transiciones = transicionesDesde(emp.departamento, cat)
+    const transiciones = transicionesDesde(reglas, emp.departamento)
     if (cat && transiciones.length > 0) {
       // Seleccionar la transición que corresponde a la categoría actual
       const match = transiciones.find((t) => t.categoriaActual === cat)
