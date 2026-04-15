@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, Pencil, CalendarCheck, Info, UserPlus, X, Trash2,
+  XCircle, CalendarCheck, Info, UserPlus, Trash2,
   ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, addDays, useRole } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG, EvalStatus } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
-import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA, ESCOLARIDAD, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
+import { CATALOGO_ORGANIZACIONAL, TURNOS, ESCOLARIDAD, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -120,7 +120,7 @@ function EditDialog({ record, open, saving, onClose, onSave, onDelete }: EditDia
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-4 sm:-mt-6"
+          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-1 sm:-mt-6"
         >
           <div className="flex items-center justify-between">
             <motion.div whileTap={{ scale: 0.95 }}>
@@ -375,7 +375,7 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-4 sm:-mt-6"
+          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-1 sm:-mt-6"
         >
           <div className="grid grid-cols-[1fr_auto_1fr] items-center py-1">
             <motion.div whileTap={{ scale: 0.95 }} className="justify-self-start">
@@ -592,19 +592,6 @@ export default function NuevoIngresoContent() {
   // Reset página al cambiar filtros
   useEffect(() => { setCurrentPage(1) }, [search, filterDept, filterContrato, filterRG, filterTurno])
 
-  // KPIs
-  const today = new Date()
-  const todayISO = today.toISOString().split('T')[0]
-  const evalsPendientes = records.filter(r =>
-    evalStatus(r.eval_1_fecha, r.eval_1_calificacion) !== 'completada' ||
-    evalStatus(r.eval_2_fecha, r.eval_2_calificacion) !== 'completada' ||
-    evalStatus(r.eval_3_fecha, r.eval_3_calificacion) !== 'completada'
-  ).length
-  const contratosPorVencer = records.filter(r => {
-    const diff = daysFromToday(r.termino_contrato)
-    return diff !== null && diff >= 0 && diff <= 15
-  }).length
-  const rgPendientes = records.filter(r => r.rg_rec_048 === 'Pendiente').length
 
   const handleEdit = (record: NuevoIngreso) => {
     setEditRecord(record)
