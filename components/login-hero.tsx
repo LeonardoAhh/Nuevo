@@ -29,7 +29,6 @@ export default function LoginHero() {
               alt="Viñoplastic"
               fill
               className="object-contain drop-shadow-2xl"
-              priority
             />
           </div>
         </div>

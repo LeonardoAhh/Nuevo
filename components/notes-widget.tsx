@@ -186,8 +186,8 @@ function AttachmentPreviewDialog({
 
   return (
     <Dialog open={!!target} onOpenChange={v => { if (!v) onClose() }}>
-      <DialogContent className="sm:max-w-3xl w-full p-0 overflow-hidden">
-        <DialogHeader className="px-4 pt-4 pb-2 flex-row items-center justify-between gap-3">
+      <DialogContent className="sm:max-w-3xl w-full max-h-[95dvh] !px-0 !pt-0 overflow-hidden">
+        <DialogHeader className="px-4 pt-2 pb-2 flex-row items-center justify-between gap-3 mb-0">
           <div className="flex items-center gap-2 min-w-0">
             {kind === "image" ? (
               <ImageIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -213,14 +213,14 @@ function AttachmentPreviewDialog({
           </a>
         </DialogHeader>
 
-        <div className="px-4 pb-4">
+        <div className="px-2 pb-2">
           {kind === "image" && (
-            <div className="flex items-center justify-center bg-muted/40 rounded-lg overflow-hidden max-h-[72vh]">
+            <div className="flex items-center justify-center bg-muted/40 rounded-lg overflow-auto max-h-[80dvh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={target.url}
                 alt={label}
-                className="max-w-full max-h-[72vh] object-contain"
+                className="w-full object-contain"
               />
             </div>
           )}
@@ -379,12 +379,12 @@ function NoteCard({ note, isOwn, onToggleChecklist, onPin, onEdit, onDelete, onP
             className="w-full text-left group/att"
           >
             {kind === "image" ? (
-              <div className="relative overflow-hidden rounded-md border bg-muted/30 max-h-40">
+              <div className="relative overflow-hidden rounded-md border bg-muted/30">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={note.attachment_url}
                   alt={label}
-                  className="w-full max-h-40 object-cover transition-opacity group-hover/att:opacity-90"
+                  className="w-full object-contain transition-opacity group-hover/att:opacity-90"
                 />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/att:opacity-100 transition-opacity bg-black/20 rounded-md">
                   <div className="bg-background/90 rounded-full p-2">
