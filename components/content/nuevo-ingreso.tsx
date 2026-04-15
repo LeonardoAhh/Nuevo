@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
+import { motion } from "framer-motion"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
   XCircle, Pencil, CalendarCheck, Info, UserPlus, X, Trash2,
@@ -12,13 +13,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
 import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, addDays, useRole } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG, EvalStatus } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
-import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA, ESCOLARIDAD } from "@/lib/catalogo"
+import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA, ESCOLARIDAD, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -113,27 +114,63 @@ function EditDialog({ record, open, saving, onClose, onSave, onDelete }: EditDia
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pencil className="h-4 w-4 text-primary" />
-            {record.nombre}
-          </DialogTitle>
+      <DialogContent className="sm:max-w-lg [&>button.absolute]:hidden">
+        {/* ── Top toolbar: Cancelar / Guardar ─────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-4 sm:-mt-6"
+        >
+          <div className="flex items-center justify-between">
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                disabled={saving}
+                className="shrink-0 rounded-full"
+              >
+                Cancelar
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className="gap-2 shrink-0 rounded-full shadow-md shadow-primary/25"
+              >
+                {saving ? <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current" /> Guardando...</> : <><CheckCircle2 className="h-3.5 w-3.5" /> Guardar</>}
+              </Button>
+            </motion.div>
+          </div>
+          <div className="px-2 pt-1.5 pb-1 text-center">
+            <p className="text-sm font-semibold leading-tight">{record.nombre}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {record.puesto} · {record.departamento} · Ingreso: {formatDate(record.fecha_ingreso)}
+            </p>
+          </div>
+        </motion.div>
+
+        <DialogHeader className="sr-only">
+          <DialogTitle>{record.nombre}</DialogTitle>
           <DialogDescription>
             {record.puesto} · {record.departamento} · Ingreso: {formatDate(record.fecha_ingreso)}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-5 pt-6">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Escolaridad</label>
-            <Input
-              value={form.escolaridad ?? ''}
-              onChange={e => set('escolaridad', e.target.value)}
-              className="bg-muted"
-            />
+            <Select value={form.escolaridad ?? ''} onValueChange={v => set('escolaridad', v)}>
+              <SelectTrigger className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
+              <SelectContent className="bg-card max-h-56">
+                {ESCOLARIDAD.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {([
               { label: '1er mes', key: 'eval_1_calificacion' as const, fecha: record.eval_1_fecha },
               { label: '2do mes', key: 'eval_2_calificacion' as const, fecha: record.eval_2_fecha },
@@ -153,69 +190,70 @@ function EditDialog({ record, open, saving, onClose, onSave, onDelete }: EditDia
               </div>
             ))}
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Tipo de contrato</label>
-            <Select value={form.tipo_contrato ?? record.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
-              <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-card">
-                <SelectItem value="A prueba">A prueba</SelectItem>
-                <SelectItem value="Indeterminado">Indeterminado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">
-              RG-REC-048
-              <span className="ml-2 text-xs font-normal text-gray-400">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
-            </label>
-            <Select value={form.rg_rec_048 ?? record.rg_rec_048} onValueChange={v => set('rg_rec_048', v as EstadoRG)}>
-              <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-card">
-                <SelectItem value="Pendiente">Pendiente</SelectItem>
-                <SelectItem value="Entregado">Entregado</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Tipo de contrato</label>
+              <Select value={form.tipo_contrato ?? record.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
+                <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-card">
+                  <SelectItem value="A prueba">A prueba</SelectItem>
+                  <SelectItem value="Indeterminado">Indeterminado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">
+                RG-REC-048
+                <span className="block text-xs font-normal text-muted-foreground">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
+              </label>
+              <Select value={form.rg_rec_048 ?? record.rg_rec_048} onValueChange={v => set('rg_rec_048', v as EstadoRG)}>
+                <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-card">
+                  <SelectItem value="Pendiente">Pendiente</SelectItem>
+                  <SelectItem value="Entregado">Entregado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+        {/* ── Zona de eliminación ──────────────────────────── */}
+        <div className="pt-3 mt-2 border-t">
           {confirmDelete ? (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center justify-center gap-2">
               <span className="text-sm text-destructive font-medium">¿Eliminar este empleado?</span>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={saving}
-                onClick={() => onDelete(record.id)}
-                className="gap-1"
-              >
-                {saving ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" /> : <Trash2 className="h-3 w-3" />}
-                Sí, eliminar
-              </Button>
-              <Button variant="outline" size="sm" disabled={saving} onClick={() => setConfirmDelete(false)}>
-                No
-              </Button>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => onDelete(record.id)}
+                  className="gap-1 rounded-full shadow-md shadow-destructive/25"
+                >
+                  {saving ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" /> : <Trash2 className="h-3 w-3" />}
+                  Sí, eliminar
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" size="sm" disabled={saving} onClick={() => setConfirmDelete(false)} className="rounded-full">
+                  No
+                </Button>
+              </motion.div>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={saving}
-              onClick={() => setConfirmDelete(true)}
-              className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Eliminar empleado
-            </Button>
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => setConfirmDelete(true)}
+                className="w-full gap-1.5 rounded-full text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Eliminar empleado
+              </Button>
+            </motion.div>
           )}
-          <div className="flex gap-2 sm:ml-auto">
-            <Button variant="outline" onClick={onClose} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</> : <><CheckCircle2 className="h-4 w-4" /> Guardar</>}
-            </Button>
-          </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -284,11 +322,13 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
   const puestosDisponibles = form.departamento ? (CATALOGO_ORGANIZACIONAL[form.departamento]?.puestos || []) : []
 
   const setDepartamento = (v: string) => {
+    const jefe = JEFES_DE_AREA_POR_DEPARTAMENTO[v]?.[0] ?? ''
     setForm(prev => ({
       ...prev,
       departamento: v,
       area: '',
-      puesto: ''
+      puesto: '',
+      jefe_area: jefe,
     }))
   }
 
@@ -329,18 +369,37 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
-            Nuevo Empleado
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Formulario para registrar a un nuevo trabajador en el sistema.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-2xl [&>button.absolute]:hidden">
+        {/* ── Top toolbar: Cancelar / Crear ─────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="sticky top-0 -mx-6 px-4 pt-1 pb-2 bg-card/95 backdrop-blur-sm z-10 border-b -mt-4 sm:-mt-6"
+        >
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center py-1">
+            <motion.div whileTap={{ scale: 0.95 }} className="justify-self-start">
+              <Button variant="ghost" size="sm" onClick={onClose} disabled={saving} className="shrink-0 rounded-full">
+                Cancelar
+              </Button>
+            </motion.div>
+            <p className="text-sm font-semibold text-center">Nuevo Empleado</p>
+            <motion.div whileTap={{ scale: 0.95 }} className="justify-self-end">
+              <Button size="sm" onClick={handleCreate} disabled={saving || !form.nombre.trim()} className="gap-2 shrink-0 rounded-full shadow-md shadow-primary/25">
+                {saving
+                  ? <><div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current" /> Guardando...</>
+                  : <><UserPlus className="h-3.5 w-3.5" /> Crear</>}
+              </Button>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <DialogHeader className="sr-only">
+          <DialogTitle>Nuevo Empleado</DialogTitle>
+          <DialogDescription>Formulario para registrar a un nuevo trabajador en el sistema.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-1">
+        <div className="space-y-3 pt-5">
           {formError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -348,24 +407,34 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
             </Alert>
           )}
 
-          {/* Fila 1: N.N + Nombre */}
-          <div className="grid grid-cols-[100px_1fr] gap-3">
-            <FormField id="numero" label="N.N">
-              <Input id="numero" value={form.numero}
-                onChange={e => set('numero', e.target.value)}
-                placeholder="001"
+          {/* ── Sección: Identificación ────────────────────────── */}
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identificación</legend>
+            <div className="grid grid-cols-[80px_1fr] gap-3">
+              <FormField id="numero" label="N.N">
+                <Input id="numero" value={form.numero}
+                  onChange={e => set('numero', e.target.value)}
+                  placeholder="001"
+                  className="bg-muted" />
+              </FormField>
+              <FormField id="nombre" label="Nombre completo" required>
+                <Input id="nombre" value={form.nombre}
+                  onChange={e => set('nombre', e.target.value)}
+                  placeholder="PÉREZ GARCÍA JUAN"
+                  className="bg-muted" />
+              </FormField>
+            </div>
+            <FormField id="curp" label="CURP">
+              <Input id="curp" value={form.curp}
+                onChange={e => set('curp', e.target.value.toUpperCase())}
+                placeholder="PELJ900101HDFRZN09"
                 className="bg-muted" />
             </FormField>
-            <FormField id="nombre" label="Nombre completo" required>
-              <Input id="nombre" value={form.nombre}
-                onChange={e => set('nombre', e.target.value)}
-                placeholder="PÉREZ GARCÍA JUAN"
-                className="bg-muted" />
-            </FormField>
-          </div>
+          </fieldset>
 
-          {/* Fila 2: Departamento + Área */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* ── Sección: Organización ──────────────────────────── */}
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Organización</legend>
             <FormField id="departamento" label="Departamento" required>
               <Select value={form.departamento} onValueChange={setDepartamento}>
                 <SelectTrigger id="departamento" className="bg-muted">
@@ -376,73 +445,63 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
                 </SelectContent>
               </Select>
             </FormField>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField id="area" label="Área" required>
+                <Select value={form.area} onValueChange={v => set('area', v)} disabled={!form.departamento}>
+                  <SelectTrigger id="area" className="bg-muted">
+                    <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card max-h-56">
+                    {areasDisponibles.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField id="puesto" label="Puesto" required>
+                <Select value={form.puesto} onValueChange={v => set('puesto', v)} disabled={!form.departamento}>
+                  <SelectTrigger id="puesto" className="bg-muted">
+                    <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card max-h-56">
+                    {puestosDisponibles.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField id="turno" label="Turno" required>
+                <Select value={form.turno} onValueChange={v => set('turno', v)}>
+                  <SelectTrigger id="turno" className="bg-muted">
+                    <SelectValue placeholder="Selecciona..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card max-h-56">
+                    {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField id="jefe_area" label="Jefe de área">
+                <div className="flex items-center h-9 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
+                  {form.jefe_area || <span className="italic opacity-50">Se asigna por departamento</span>}
+                </div>
+              </FormField>
+            </div>
+          </fieldset>
 
-            <FormField id="area" label="Área" required>
-              <Select value={form.area} onValueChange={v => set('area', v)} disabled={!form.departamento}>
-                <SelectTrigger id="area" className="bg-muted">
-                  <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {areasDisponibles.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
-
-          {/* Fila 3: Puesto + Turno */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField id="puesto" label="Puesto" required>
-              <Select value={form.puesto} onValueChange={v => set('puesto', v)} disabled={!form.departamento}>
-                <SelectTrigger id="puesto" className="bg-muted">
-                  <SelectValue placeholder={form.departamento ? "Selecciona..." : "Elige depto primero"} />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {puestosDisponibles.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </FormField>
-
-            <FormField id="turno" label="Turno" required>
-              <Select value={form.turno} onValueChange={v => set('turno', v)}>
-                <SelectTrigger id="turno" className="bg-muted">
-                  <SelectValue placeholder="Selecciona..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
-
-          {/* Fila 4: Fecha ingreso + Tipo contrato */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField id="fecha_ingreso" label="Fecha de ingreso" required>
-              <Input id="fecha_ingreso" type="date"
-                value={form.fecha_ingreso}
-                onChange={e => set('fecha_ingreso', e.target.value)}
-                className="text-base md:text-sm bg-muted" />
-            </FormField>
-            <FormField id="tipo_contrato" label="Tipo de contrato">
-              <Select value={form.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
-                <SelectTrigger id="tipo_contrato" className="bg-muted">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card">
-                  <SelectItem value="A prueba">A prueba</SelectItem>
-                  <SelectItem value="Indeterminado">Indeterminado</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
-
-          {/* Fila 5: CURP + Escolaridad + Jefe */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <FormField id="curp" label="CURP">
-              <Input id="curp" value={form.curp}
-                onChange={e => set('curp', e.target.value.toUpperCase())}
-                placeholder="PELJ900101HDFRZN09"
-                className="bg-muted" />
-            </FormField>
+          {/* ── Sección: Contrato ─────────────────────────────── */}
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contrato</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField id="fecha_ingreso" label="Fecha de ingreso" required>
+                <Input id="fecha_ingreso" type="date"
+                  value={form.fecha_ingreso}
+                  onChange={e => set('fecha_ingreso', e.target.value)}
+                  className="text-base md:text-sm bg-muted" />
+              </FormField>
+              <FormField id="tipo_contrato" label="Tipo de contrato">
+                <div className="flex items-center h-9 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
+                  A prueba
+                </div>
+              </FormField>
+            </div>
             <FormField id="escolaridad" label="Escolaridad">
               <Select value={form.escolaridad} onValueChange={v => set('escolaridad', v)}>
                 <SelectTrigger id="escolaridad" className="bg-muted">
@@ -455,51 +514,11 @@ function NuevoEmpleadoDialog({ open, saving, onClose, onCreate }: NuevoEmpleadoD
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField id="jefe_area" label="Jefe de área">
-              <Select value={form.jefe_area} onValueChange={v => set('jefe_area', v)}>
-                <SelectTrigger id="jefe_area" className="bg-muted">
-                  <SelectValue placeholder="Selecciona..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {JEFES_DE_AREA.map(j => (
-                    <SelectItem key={j} value={j}>{j}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
+          </fieldset>
 
-          {/* Preview fechas calculadas */}
-          {form.fecha_ingreso && (
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 p-3">
-              <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Fechas calculadas automáticamente</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                {[
-                  { label: 'Eval. 1er mes', days: 30 },
-                  { label: 'Eval. 2o mes', days: 60 },
-                  { label: 'Eval. 3er mes', days: 80 },
-                  { label: 'Término / RG', days: 90 },
-                ].map(({ label, days }) => (
-                  <div key={label} className="text-center">
-        <p className="text-amber-600 dark:text-amber-500 font-medium">{label}</p>
-                    <p className="text-muted-foreground">{formatDate(addDays(form.fecha_ingreso, days))}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving} className="gap-2">
-            <X className="h-4 w-4" /> Cancelar
-          </Button>
-          <Button onClick={handleCreate} disabled={saving || !form.nombre.trim()} className="gap-2">
-            {saving
-              ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" /> Guardando...</>
-              : <><UserPlus className="h-4 w-4" /> Crear Empleado</>}
-          </Button>
-        </DialogFooter>
+
       </DialogContent>
     </Dialog>
   )

@@ -209,3 +209,36 @@ export const ESCOLARIDAD = [
   "MAESTRIA",
   "DOCTORADO"
 ]
+
+export const JEFES_DE_AREA_POR_DEPARTAMENTO: { [departamento: string]: string[] } = {
+  "PRODUCCIÓN": [
+    "GOMEZ SANCHEZ CARLOS ARIEL ",
+  ],
+  "CALIDAD":[
+    "CENOBIO HERNANDEZ JORGE ALBERTO",
+  ],
+  "MANTENIMIENTO":[
+  "BRAVO GARCIA JESUS FERNANDO",
+  ],
+  "ALMACÉN":[
+    "GARCIA JUAREZ XICOTENCATL",
+  ],
+  "RECURSOS HUMANOS":[
+    "HERNANDEZ GUDIÑO NOEMI",
+  ], 
+  "TALLER DE MOLDES":[
+    "GOMEZ SANCHEZ CESAR",
+  ], 
+  "SGI":[
+    "AGUILLON RANGEL LIZBETH",
+  ], 
+  "METROLOGÍA":[
+    "ESQUIVEL MATA ARIADNA NAYELY",
+  ], 
+  "PROYECTOS":[
+    "SALINAS ORTIZ ANA ERIKA",
+  ], 
+  "SISTEMAS":[
+    "CABRERO BOO MANUEL ALBERTO",
+  ],
+}
