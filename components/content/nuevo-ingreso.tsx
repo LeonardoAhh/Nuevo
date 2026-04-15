@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
   XCircle, Pencil, CalendarCheck, Info, UserPlus, X, Trash2,
+  ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -521,6 +522,7 @@ export default function NuevoIngresoContent() {
   const [filterTurno, setFilterTurno] = useState('all')
   const [editRecord, setEditRecord] = useState<NuevoIngreso | null>(null)
   const [editOpen, setEditOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Nuevo empleado dialog
   const [nuevoOpen, setNuevoOpen] = useState(false)
@@ -561,6 +563,15 @@ export default function NuevoIngresoContent() {
     if (isNaN(nb)) return -1
     return na - nb
   })
+
+  // Paginación
+  const PAGE_SIZE = 15
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedFiltered = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  // Reset página al cambiar filtros
+  useEffect(() => { setCurrentPage(1) }, [search, filterDept, filterContrato, filterRG, filterTurno])
 
   // KPIs
   const today = new Date()
@@ -695,6 +706,57 @@ export default function NuevoIngresoContent() {
         </div>
       </div>
 
+      {/* Paginación superior */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-muted-foreground">
+            Página {safePage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage <= 1}
+              onClick={() => setCurrentPage(p => p - 1)}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+              .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1]) > 1) acc.push('ellipsis')
+                acc.push(p)
+                return acc
+              }, [])
+              .map((item, idx) =>
+                item === 'ellipsis' ? (
+                  <span key={`e${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
+                ) : (
+                  <Button
+                    key={item}
+                    variant={item === safePage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(item)}
+                    className="h-8 w-8 p-0 text-xs"
+                  >
+                    {item}
+                  </Button>
+                )
+              )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage >= totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Tabla */}
       <Card className="bg-card mb-6">
         <CardContent className="p-0">
@@ -712,7 +774,7 @@ export default function NuevoIngresoContent() {
             <>
               {/* ── Móvil: tarjetas ──────────────────────────────────────── */}
               <div className="sm:hidden divide-y dark:divide-gray-700">
-                {filtered.map(r => {
+                {paginatedFiltered.map(r => {
                   const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
                   const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
                   return (
@@ -780,7 +842,7 @@ export default function NuevoIngresoContent() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map(r => {
+                    {paginatedFiltered.map(r => {
                       const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
                       const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
                       return (

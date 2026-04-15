@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
   X,
   RotateCcw,
   ClipboardList,
@@ -69,6 +70,36 @@ function StatusBadge({ status }: { status: CourseMatch['status'] }) {
 }
 
 const NEW_COURSE_VALUE = '__new__'
+const PAGE_SIZE = 15
+
+function PaginationBar({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void }) {
+  const safePage = Math.min(currentPage, totalPages)
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-sm text-muted-foreground">Página {safePage} de {totalPages}</span>
+      <div className="flex items-center gap-1">
+        <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)} className="h-8 w-8 p-0">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+          .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+            if (idx > 0 && p - arr[idx - 1] > 1) acc.push('ellipsis')
+            acc.push(p)
+            return acc
+          }, [])
+          .map((item, idx) =>
+            item === 'ellipsis'
+              ? <span key={`e${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
+              : <Button key={item} variant={item === safePage ? 'default' : 'outline'} size="sm" onClick={() => onPageChange(item)} className="h-8 w-8 p-0 text-xs">{item}</Button>
+          )}
+        <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)} className="h-8 w-8 p-0">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Componente principal
@@ -99,11 +130,13 @@ export default function CapacitacionContent() {
   const [selectedDept, setSelectedDept] = useState<string>("all")
   const [posSearch, setPosSearch] = useState("")
   const [loadingPositions, setLoadingPositions] = useState(false)
+  const [posPage, setPosPage] = useState(1)
 
   // ── Estado: Cursos ────────────────────────────────────────────────────────
   const [courses, setCourses] = useState<Course[]>([])
   const [courseSearch, setCourseSearch] = useState("")
   const [loadingCourses, setLoadingCourses] = useState(false)
+  const [coursePage, setCoursePage] = useState(1)
 
   // ── Estado: Dialog cursos del puesto ─────────────────────────────────────
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -136,6 +169,7 @@ export default function CapacitacionContent() {
   const [empSearch, setEmpSearch] = useState("")
   const [empFilterDept, setEmpFilterDept] = useState<string>("all")
   const [empFilterTurno, setEmpFilterTurno] = useState<string>("all")
+  const [empPage, setEmpPage] = useState(1)
   const [empDialogOpen, setEmpDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [empCourses, setEmpCourses] = useState<EmployeeCourse[]>([])
@@ -522,6 +556,11 @@ export default function CapacitacionContent() {
     return matchesDept && matchesSearch
   })
 
+  const posTotalPages = Math.max(1, Math.ceil(filteredPositions.length / PAGE_SIZE))
+  const posSafePage = Math.min(posPage, posTotalPages)
+  const paginatedPositions = filteredPositions.slice((posSafePage - 1) * PAGE_SIZE, posSafePage * PAGE_SIZE)
+  useEffect(() => { setPosPage(1) }, [posSearch, selectedDept])
+
   const handleViewCourses = async (position: Position) => {
     setSelectedPosition(position); setDialogOpen(true); setLoadingDialog(true)
     setAssignCourseId(''); setAssignCourseError(null)
@@ -578,6 +617,11 @@ export default function CapacitacionContent() {
   const filteredCourses = courses.filter(c =>
     c.name.toLowerCase().includes(courseSearch.toLowerCase())
   )
+
+  const courseTotalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE))
+  const courseSafePage = Math.min(coursePage, courseTotalPages)
+  const paginatedCourses = filteredCourses.slice((courseSafePage - 1) * PAGE_SIZE, courseSafePage * PAGE_SIZE)
+  useEffect(() => { setCoursePage(1) }, [courseSearch])
 
   // ── Handlers: Nuevo puesto ────────────────────────────────────────────────
   const handleSaveNewPos = async () => {
@@ -689,6 +733,11 @@ export default function CapacitacionContent() {
       return nb - na
     })
 
+  const empTotalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE))
+  const empSafePage = Math.min(empPage, empTotalPages)
+  const paginatedEmployees = filteredEmployees.slice((empSafePage - 1) * PAGE_SIZE, empSafePage * PAGE_SIZE)
+  useEffect(() => { setEmpPage(1) }, [empSearch, empFilterDept, empFilterTurno])
+
   // ── Grupos de matches ─────────────────────────────────────────────────────
   // ─────────────────────────────────────────────────────────────────────────
   // Render
@@ -798,6 +847,10 @@ export default function CapacitacionContent() {
                     : "No se encontraron puestos con ese filtro."}
                 </div>
               ) : (
+                <>
+                {filteredPositions.length > PAGE_SIZE && (
+                  <PaginationBar currentPage={posPage} totalPages={posTotalPages} onPageChange={setPosPage} />
+                )}
                 <div className="rounded-xl border  overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -808,7 +861,7 @@ export default function CapacitacionContent() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPositions.map(pos => (
+                      {paginatedPositions.map(pos => (
                         <TableRow key={pos.id} className=" hover:bg-muted/50">
                           <TableCell className="font-medium text-foreground">{pos.name}</TableCell>
                           <TableCell>
@@ -827,6 +880,7 @@ export default function CapacitacionContent() {
                     </TableBody>
                   </Table>
                 </div>
+                </>
               )}
               <p className="text-xs text-muted-foreground">
                 {filteredPositions.length} de {positions.length} puestos
@@ -956,8 +1010,12 @@ export default function CapacitacionContent() {
                   {courses.length === 0 ? "No hay cursos registrados. Importa datos primero." : "No se encontraron cursos."}
                 </div>
               ) : (
+                <>
+                {filteredCourses.length > PAGE_SIZE && (
+                  <PaginationBar currentPage={coursePage} totalPages={courseTotalPages} onPageChange={setCoursePage} />
+                )}
                 <Accordion type="single" collapsible className="w-full space-y-2">
-                  {filteredCourses.map((course, idx) => {
+                  {paginatedCourses.map((course, idx) => {
                     // Mostrar TODOS los empleados, con su estado para este curso
                     // Solo empleados asignados a este curso por puesto
                     const puestosAsignados = positions
@@ -988,7 +1046,7 @@ export default function CapacitacionContent() {
                       <AccordionItem key={course.id} value={course.id}>
                         <AccordionTrigger>
                           <div className="flex items-center gap-3 w-full">
-                            <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{idx + 1}</span>
+                            <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{(courseSafePage - 1) * PAGE_SIZE + idx + 1}</span>
                             <BookOpen className="h-4 w-4 text-primary shrink-0" />
                             <span className="text-sm text-foreground leading-tight flex-1 text-left">{course.name}</span>
                             <Badge variant="secondary" className="bg-muted text-foreground ml-2">{empleadosConEstado.length}</Badge>
@@ -1071,6 +1129,7 @@ export default function CapacitacionContent() {
                     )
                   })}
                 </Accordion>
+                </>
               )}
               <p className="text-xs text-muted-foreground">
                 {filteredCourses.length} de {courses.length} cursos
@@ -1180,6 +1239,10 @@ export default function CapacitacionContent() {
                       : "No se encontraron empleados con esa búsqueda."}
                   </div>
                 ) : (
+                  <>
+                  {filteredEmployees.length > PAGE_SIZE && (
+                    <PaginationBar currentPage={empPage} totalPages={empTotalPages} onPageChange={setEmpPage} />
+                  )}
                   <div className="rounded-xl border overflow-hidden">
                     <Table>
                       <TableHeader>
@@ -1193,7 +1256,7 @@ export default function CapacitacionContent() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredEmployees.map(emp => (
+                        {paginatedEmployees.map(emp => (
                           <TableRow key={emp.id} className="hover:bg-muted/50">
                             <TableCell className="text-sm text-muted-foreground font-mono hidden sm:table-cell">{emp.numero ?? "—"}</TableCell>
                             <TableCell className="font-medium text-foreground">
@@ -1276,6 +1339,7 @@ export default function CapacitacionContent() {
                       </TableBody>
                     </Table>
                   </div>
+                  </>
                 )}
                 <p className="text-xs text-muted-foreground">
                   {filteredEmployees.length} de {employees.length} empleados
