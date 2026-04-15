@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import {
@@ -180,82 +181,93 @@ function AttachmentPreviewDialog({
   target:  PreviewTarget | null
   onClose: () => void
 }) {
+  const onEsc = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose()
+  }, [onClose])
+
+  useEffect(() => {
+    if (!target) return
+    document.addEventListener("keydown", onEsc)
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", onEsc)
+      document.body.style.overflow = ""
+    }
+  }, [target, onEsc])
+
   if (!target) return null
   const kind = getFileKind(target.url, target.name)
   const label = target.name ?? "Archivo adjunto"
 
-  return (
-    <Dialog open={!!target} onOpenChange={v => { if (!v) onClose() }}>
-      <DialogContent className="sm:max-w-3xl w-full max-h-[95dvh] !px-0 !pt-0 overflow-hidden">
-        <DialogHeader className="px-4 pt-2 pb-2 flex-row items-center justify-between gap-3 mb-0">
-          <div className="flex items-center gap-2 min-w-0">
-            {kind === "image" ? (
-              <ImageIcon className="size-4 shrink-0 text-muted-foreground" />
-            ) : kind === "pdf" ? (
-              <FileText className="size-4 shrink-0 text-muted-foreground" />
-            ) : (
-              <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-            )}
-            <DialogTitle className="text-sm font-medium truncate">{label}</DialogTitle>
-            <DialogDescription className="sr-only">Vista previa del archivo adjunto</DialogDescription>
+  return createPortal(
+    /* Backdrop — click para cerrar */
+    <div
+      className="fixed inset-0 z-50 bg-black/80 animate-in fade-in-0 duration-150"
+      onClick={onClose}
+    >
+      {/* Botones flotantes */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+        <a
+          href={target.url}
+          download={label}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+        >
+          <Button size="icon" variant="secondary" className="size-9 rounded-full shadow-lg">
+            <Download className="size-4" />
+            <span className="sr-only">Descargar</span>
+          </Button>
+        </a>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="size-9 rounded-full shadow-lg"
+          onClick={e => { e.stopPropagation(); onClose() }}
+        >
+          <X className="size-4" />
+          <span className="sr-only">Cerrar</span>
+        </Button>
+      </div>
+
+      {/* Contenido */}
+      <div
+        className="flex items-center justify-center w-full h-full p-4"
+        onClick={e => e.stopPropagation()}
+      >
+        {kind === "image" && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={target.url}
+            alt={label}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+        )}
+
+        {kind === "pdf" && (
+          <iframe
+            src={target.url}
+            title={label}
+            className="w-full h-full rounded-lg border-0"
+          />
+        )}
+
+        {kind === "other" && (
+          <div className="flex flex-col items-center gap-4 text-center text-white">
+            <FileIcon className="size-16 opacity-60" />
+            <p className="font-medium text-lg">{label}</p>
+            <p className="text-sm text-white/70">Sin vista previa disponible</p>
+            <a href={target.url} download={label} target="_blank" rel="noopener noreferrer">
+              <Button className="gap-2">
+                <Download className="size-4" />
+                Descargar
+              </Button>
+            </a>
           </div>
-          <a
-            href={target.url}
-            download={label}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0"
-          >
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Download className="size-3.5" />
-              Descargar
-            </Button>
-          </a>
-        </DialogHeader>
-
-        <div className="px-2 pb-2">
-          {kind === "image" && (
-            <div className="flex items-center justify-center bg-muted/40 rounded-lg overflow-auto max-h-[80dvh]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={target.url}
-                alt={label}
-                className="w-full object-contain"
-              />
-            </div>
-          )}
-
-          {kind === "pdf" && (
-            <iframe
-              src={target.url}
-              title={label}
-              className="w-full rounded-lg border"
-              style={{ height: "72vh" }}
-            />
-          )}
-
-          {kind === "other" && (
-            <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-              <div className="rounded-full bg-muted p-5">
-                <FileIcon className="size-10 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="font-medium">{label}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Este tipo de archivo no tiene vista previa.
-                </p>
-              </div>
-              <a href={target.url} download={label} target="_blank" rel="noopener noreferrer">
-                <Button className="gap-2">
-                  <Download className="size-4" />
-                  Descargar archivo
-                </Button>
-              </a>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        )}
+      </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -344,7 +356,7 @@ function NoteCard({ note, isOwn, onToggleChecklist, onPin, onEdit, onDelete, onP
 
       {/* Content */}
       {note.type === "text" && (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{note.content}</p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed line-clamp-3">{note.content}</p>
       )}
 
       {note.type === "checklist" && (
@@ -384,7 +396,7 @@ function NoteCard({ note, isOwn, onToggleChecklist, onPin, onEdit, onDelete, onP
                 <img
                   src={note.attachment_url}
                   alt={label}
-                  className="w-full object-contain transition-opacity group-hover/att:opacity-90"
+                  className="w-full max-h-40 object-cover transition-opacity group-hover/att:opacity-90"
                 />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/att:opacity-100 transition-opacity bg-black/20 rounded-md">
                   <div className="bg-background/90 rounded-full p-2">
@@ -778,7 +790,7 @@ export default function NotesWidget() {
             </div>
           ) : (
             /* Notes list */
-            <div className="space-y-2 md:max-h-[420px] md:overflow-y-auto md:pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:max-h-[400px] md:overflow-y-auto md:pr-1">
               {filtered.map(note => (
                 <NoteCard
                   key={note.id}
