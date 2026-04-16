@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import webpush from "web-push"
 
-// Force Node.js runtime — web-push needs crypto, http, https
+// web-push requiere runtime de Node.js (usa crypto nativo)
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 // Server-side Supabase client with service role
 function getSupabaseAdmin() {
@@ -61,9 +62,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ sent: 0, message: "No subscriptions found" })
     }
 
-    // web-push expects VAPID details
+    // Asegurar formato mailto: requerido por el estándar Web Push
+    const rawEmail = process.env.VAPID_EMAIL || "admin@vinoplastic.com"
+    const vapidSubject = rawEmail.startsWith("mailto:") ? rawEmail : `mailto:${rawEmail}`
     webpush.setVapidDetails(
-      process.env.VAPID_EMAIL ? `mailto:${process.env.VAPID_EMAIL}` : "mailto:admin@vinoplastic.com",
+      vapidSubject,
       process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
       process.env.VAPID_PRIVATE_KEY!
     )

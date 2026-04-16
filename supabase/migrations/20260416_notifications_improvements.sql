@@ -13,12 +13,16 @@ ALTER TABLE notification_preferences
   ADD COLUMN IF NOT EXISTS email_bajas        BOOLEAN NOT NULL DEFAULT false;
 
 -- ─── 2. RLS por rol en baja_notifications ────────────────────────────────────
--- Eliminar políticas permisivas previas
+-- Eliminar TODAS las políticas existentes (previas y nuevas) para evitar conflictos
 
 DROP POLICY IF EXISTS "Authenticated users can read baja_notifications"    ON baja_notifications;
 DROP POLICY IF EXISTS "Authenticated users can insert baja_notifications"   ON baja_notifications;
 DROP POLICY IF EXISTS "Authenticated users can update baja_notifications"   ON baja_notifications;
 DROP POLICY IF EXISTS "Authenticated users can delete baja_notifications"   ON baja_notifications;
+DROP POLICY IF EXISTS "baja_select_authenticated"     ON baja_notifications;
+DROP POLICY IF EXISTS "baja_insert_dev_only"          ON baja_notifications;
+DROP POLICY IF EXISTS "baja_update_dev_or_own_read"   ON baja_notifications;
+DROP POLICY IF EXISTS "baja_delete_dev_only"          ON baja_notifications;
 
 -- Función auxiliar: obtener el rol del usuario autenticado
 -- (evita un subquery por cada fila evaluada)

@@ -43,10 +43,11 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
   }
 
   // Persistir en Supabase
+  // Nota: push_subscriptions.user_id referencia auth.users(id), que es igual a user.id
   const keys = subscription.toJSON().keys!
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
-    await supabase.from("push_subscriptions").upsert(
+    const { error: upsertError } = await supabase.from("push_subscriptions").upsert(
       {
         user_id: user.id,
         endpoint: subscription.endpoint,
@@ -55,6 +56,9 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
       },
       { onConflict: "endpoint" }
     )
+    if (upsertError) {
+      console.error("Error guardando suscripción push:", upsertError.message)
+    }
   }
 
   return subscription

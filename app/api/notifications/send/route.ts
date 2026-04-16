@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-// IMPORTANTE: instalar dependencia con:
-//   npm install web-push @types/web-push
-// y agregar al .env.local:
-//   NEXT_PUBLIC_VAPID_PUBLIC_KEY=<tu_clave_publica>
-//   VAPID_PRIVATE_KEY=<tu_clave_privada>
-//   VAPID_EMAIL=mailto:admin@tudominio.com
-//
-// Generar claves VAPID con:
-//   npx web-push generate-vapid-keys
+// web-push requiere runtime de Node.js (usa crypto nativo)
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 async function getWebPush() {
   try {
@@ -40,7 +34,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  webpush.setVapidDetails(vapidEmail, vapidPublic, vapidPrivate)
+  // Asegurar formato mailto: requerido por el estándar Web Push
+  const vapidSubject = vapidEmail.startsWith("mailto:") ? vapidEmail : `mailto:${vapidEmail}`
+  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate)
 
   const body = await req.json()
   const { title, body: msgBody, url = "/", tag = "general", id } = body
