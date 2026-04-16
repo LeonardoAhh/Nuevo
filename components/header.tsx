@@ -2,6 +2,7 @@
 
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import NotificationBell from "@/components/notification-bell"
 
 interface HeaderProps {
   title?: string
@@ -14,9 +15,9 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
   return (
     <header
       role="banner"
-      className="bg-card border-b px-3 sm:px-6 p-2 min-h-[50px] sticky top-0 z-20"
+      className="bg-card border-b px-3 sm:px-6 h-[50px] sticky top-0 z-20"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 h-full">
         {isMobileView && !showMobileSidebar && (
           <Button
             variant="ghost"
@@ -31,6 +32,10 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
         {title && (
           <h1 className="text-lg sm:text-xl font-semibold truncate">{title}</h1>
         )}
+
+        <div className="ml-auto">
+          <NotificationBell />
+        </div>
       </div>
     </header>
   )
