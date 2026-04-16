@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import webpush from "web-push"
+
+// Force Node.js runtime — web-push needs crypto, http, https
+export const runtime = "nodejs"
 
 // Server-side Supabase client with service role
 function getSupabaseAdmin() {
@@ -58,10 +62,8 @@ export async function POST(request: NextRequest) {
     }
 
     // web-push expects VAPID details
-    // Dynamic import since web-push is server-only
-    const webpush = await import("web-push")
     webpush.setVapidDetails(
-      `mailto:${process.env.VAPID_EMAIL || "admin@vinoplastic.com"}`,
+      process.env.VAPID_EMAIL ? `mailto:${process.env.VAPID_EMAIL}` : "mailto:admin@vinoplastic.com",
       process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
       process.env.VAPID_PRIVATE_KEY!
     )
