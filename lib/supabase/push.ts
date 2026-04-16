@@ -38,7 +38,7 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
   if (!subscription) {
     subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
     })
   }
 
@@ -54,7 +54,7 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
         p256dh: keys.p256dh!,
         auth: keys.auth!,
       },
-      { onConflict: "endpoint" }
+      { onConflict: "user_id,endpoint" }   // la constraint es UNIQUE(user_id, endpoint)
     )
     if (upsertError) {
       console.error("Error guardando suscripción push:", upsertError.message)
