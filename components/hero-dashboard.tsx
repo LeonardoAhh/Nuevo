@@ -68,16 +68,17 @@ export default function HeroDashboard() {
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
 
-  const [now, setNow] = useState(() => new Date())
+  const [now, setNow] = useState<Date | null>(null)
 
   useEffect(() => {
+    setNow(new Date())
     const id = setInterval(() => setNow(new Date()), 30_000)
     return () => clearInterval(id)
   }, [])
 
-  const greeting = useMemo(() => getGreeting(now.getHours()), [now])
-  const timeStr = useMemo(() => formatTime(now), [now])
-  const dateStr = useMemo(() => formatDate(now), [now])
+  const greeting = useMemo(() => now ? getGreeting(now.getHours()) : "", [now])
+  const timeStr = useMemo(() => now ? formatTime(now) : "", [now])
+  const dateStr = useMemo(() => now ? formatDate(now) : "", [now])
   const displayName = profile?.displayName || profile?.firstName || "Bienvenido"
 
   const isCompact = density === "compact"

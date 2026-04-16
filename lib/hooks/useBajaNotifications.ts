@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { syncBadge, clearBadge } from "@/lib/supabase/push"
 
@@ -53,8 +53,12 @@ export function useBajaNotifications() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   // Sincronizar badge del ícono de la app con el conteo de no leídas
+  const prevBadgeCount = useRef<number | null>(null)
   useEffect(() => {
-    syncBadge(unreadCount)
+    if (prevBadgeCount.current !== unreadCount) {
+      prevBadgeCount.current = unreadCount
+      syncBadge(unreadCount)
+    }
   }, [unreadCount])
 
   const create = useCallback(async (record: BajaNotificationInsert) => {

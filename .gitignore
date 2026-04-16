@@ -23,8 +23,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# PWA — generados por next-pwa en build
-/public/sw.js
+# PWA — generados por next-pwa en build (sw.js is hand-written, keep tracked)
 /public/sw.js.map
 /public/workbox-*.js
 /public/workbox-*.js.map
