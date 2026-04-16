@@ -66,9 +66,12 @@ export function useBajaNotifications() {
     const { data: inserted, error } = await supabase
       .from("baja_notifications")
       .insert({ ...record, created_by: user?.id ?? null })
-      .select("id")
+      .select()
       .single()
     if (error) throw error
+
+    // Actualizar UI inmediatamente (no esperar el websocket)
+    setNotifications((prev) => [inserted as BajaNotification, ...prev])
 
     // Enviar push notification a todos los usuarios suscritos via servidor
     const { data: { session } } = await supabase.auth.getSession()
@@ -89,6 +92,10 @@ export function useBajaNotifications() {
   }, [])
 
   const markAsRead = useCallback(async (id: string) => {
+    // Actualizar UI inmediatamente (optimistic update)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    )
     await supabase
       .from("baja_notifications")
       .update({ read: true })
@@ -96,6 +103,8 @@ export function useBajaNotifications() {
   }, [])
 
   const markAllAsRead = useCallback(async () => {
+    // Actualizar UI inmediatamente
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     await supabase
       .from("baja_notifications")
       .update({ read: true })
