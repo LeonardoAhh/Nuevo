@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { syncBadge, clearBadge } from "@/lib/supabase/push"
 
 export interface BajaNotification {
   id: string
@@ -24,7 +25,7 @@ export function useBajaNotifications() {
   const [notifications, setNotifications] = useState<BajaNotification[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetch = useCallback(async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from("baja_notifications")
@@ -34,40 +35,49 @@ export function useBajaNotifications() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => { fetchNotifications() }, [fetchNotifications])
 
-  // Realtime
+  // Realtime: actualizar lista cuando hay cambios en la tabla
   useEffect(() => {
     const channel = supabase
       .channel("baja_notifications_changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "baja_notifications" },
-        () => { fetch() }
+        () => { fetchNotifications() }
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [fetch])
+  }, [fetchNotifications])
+
+  const unreadCount = notifications.filter((n) => !n.read).length
+
+  // Sincronizar badge del ícono de la app con el conteo de no leídas
+  useEffect(() => {
+    syncBadge(unreadCount)
+  }, [unreadCount])
 
   const create = useCallback(async (record: BajaNotificationInsert) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("baja_notifications")
       .insert({ ...record, created_by: user?.id ?? null })
+      .select("id")
+      .single()
     if (error) throw error
-    // Push notification via SW
-    if ("serviceWorker" in navigator && "Notification" in window) {
-      const permission = await Notification.requestPermission()
-      if (permission === "granted") {
-        const reg = await navigator.serviceWorker.ready
-        reg.showNotification("Baja de empleado", {
-          body: `${record.employee_name} – Fecha de baja: ${record.fecha_baja}`,
-          icon: "/icons/icon-192x192.png",
-          badge: "/icons/icon-192x192.png",
-          tag: "baja-notification",
-        })
-      }
-    }
+
+    // Enviar push notification a todos los usuarios suscritos via servidor
+    window.fetch("/api/notifications/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: inserted?.id,
+        title: "Baja de empleado",
+        body: `${record.employee_name} – Fecha de baja: ${record.fecha_baja}`,
+        url: "/",
+        tag: "baja-notification",
+      }),
+    }).catch(() => {})
   }, [])
 
   const markAsRead = useCallback(async (id: string) => {
@@ -82,6 +92,7 @@ export function useBajaNotifications() {
       .from("baja_notifications")
       .update({ read: true })
       .eq("read", false)
+    clearBadge()
   }, [])
 
   const remove = useCallback(async (id: string) => {
@@ -91,7 +102,5 @@ export function useBajaNotifications() {
       .eq("id", id)
   }, [])
 
-  const unreadCount = notifications.filter((n) => !n.read).length
-
-  return { notifications, loading, unreadCount, create, markAsRead, markAllAsRead, remove, refresh: fetch }
+  return { notifications, loading, unreadCount, create, markAsRead, markAllAsRead, remove, refresh: fetchNotifications }
 }

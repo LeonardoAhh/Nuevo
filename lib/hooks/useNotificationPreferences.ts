@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 export interface NotificationPreferences {
+  pushBajas: boolean
+  pushBajasWarning: boolean
+  emailBajas: boolean
   emailProductUpdates: boolean
   emailComments: boolean
   emailMentions: boolean
@@ -12,6 +15,9 @@ export interface NotificationPreferences {
 }
 
 const defaultPreferences: NotificationPreferences = {
+  pushBajas: true,
+  pushBajasWarning: true,
+  emailBajas: false,
   emailProductUpdates: false,
   emailComments: true,
   emailMentions: true,
@@ -42,12 +48,15 @@ export function useNotificationPreferences(userId?: string) {
         .single()
 
       if (error) {
-        if (error.code === 'PGRST116') return // Sin preferencias aún, usar defaults
+        if (error.code === 'PGRST116') return
         throw error
       }
 
       if (data) {
         setPreferences({
+          pushBajas: data.push_bajas ?? true,
+          pushBajasWarning: data.push_bajas_warning ?? true,
+          emailBajas: data.email_bajas ?? false,
           emailProductUpdates: data.email_product_updates,
           emailComments: data.email_comments,
           emailMentions: data.email_mentions,
@@ -79,6 +88,9 @@ export function useNotificationPreferences(userId?: string) {
         .from('notification_preferences')
         .upsert({
           user_id: userId,
+          push_bajas: preferences.pushBajas,
+          push_bajas_warning: preferences.pushBajasWarning,
+          email_bajas: preferences.emailBajas,
           email_product_updates: preferences.emailProductUpdates,
           email_comments: preferences.emailComments,
           email_mentions: preferences.emailMentions,

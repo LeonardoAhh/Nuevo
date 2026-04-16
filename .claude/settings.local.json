@@ -45,7 +45,30 @@
       "Bash(where node:*)",
       "Bash(where npm:*)",
       "Bash(cmd.exe /c \"where node\")",
-      "Bash(node_modules/.bin/tsc --noEmit)"
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(grep -E \"\\(layout|app\\)\\\\.\\(ts|tsx|js\\)$\")",
+      "Bash(grep -i \"notification\\\\|push\\\\|subscribe\" \"c:/Users/Capacitacion - QRO/Desktop/Capacitación/Nuevo/supabase/migrations/\"*.sql)",
+      "Bash(npm install *)",
+      "Bash(\"/c/Users/Capacitacion - QRO/Desktop/Capacitación/NODE JS/npm.cmd\" install web-push @types/web-push)",
+      "Bash(command -v node)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/Capacitacion - QRO/AppData/Roaming/**)",
+      "Bash(find /c -name \"npm.cmd\")",
+      "Bash(cmd.exe /c \"npm install web-push @types/web-push\")",
+      "Bash(powershell.exe -Command \"cd 'c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo'; npm install web-push @types/web-push\")",
+      "Bash(powershell.exe -Command \"Set-Location 'c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo'; npm install web-push @types/web-push 2>&1\")",
+      "Bash(powershell.exe -Command 'Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source; Get-Command npm -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source; $env:PATH -split '\\\\'';'\\\\'' | Where-Object { $_ -like '\\\\''*node*'\\\\'' }')",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Program Files\\\\nodejs' -ErrorAction SilentlyContinue; Get-ChildItem 'C:\\\\Program Files \\(x86\\)\\\\nodejs' -ErrorAction SilentlyContinue; Get-ChildItem \\\\\"C:\\\\Users\\\\Capacitacion - QRO\\\\AppData\\\\Roaming\\\\nvm\\\\\" -ErrorAction SilentlyContinue\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\NODE JS' -ErrorAction SilentlyContinue | Select-Object Name\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación' -ErrorAction SilentlyContinue | Select-Object Name\")",
+      "Bash(cmd /c \"cd \\\\\"c:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && set PATH=%CD%\\\\..\\\\..\\\\..\\\\..\\\\Desktop\\\\Capacitación\\\\NODE JS;%PATH% && npm install web-push @types/web-push\")",
+      "Bash(cmd /c \"set PATH=C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\NODE JS;%PATH% && cd \\\\\"C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\Nuevo\\\\\" && npm install web-push @types/web-push 2>&1\")",
+      "Bash(powershell.exe -Command ' *)",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop\\\\Capacitación\\\\NODE JS' | Select-Object Name\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\Capacitacion - QRO\\\\Desktop' | Select-Object Name\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\Capacitacion - QRO' -Filter 'npm*' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 FullName\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Program Files' -Filter 'node*' -ErrorAction SilentlyContinue | Select-Object Name; Get-ChildItem 'C:\\\\Program Files \\(x86\\)' -Filter 'node*' -ErrorAction SilentlyContinue | Select-Object Name\")",
+      "Bash(powershell.exe -Command 'Get-ChildItem '\\\\''C:\\\\Users\\\\Capacitacion - QRO\\\\AppData\\\\Roaming\\\\npm'\\\\'' -ErrorAction SilentlyContinue | Select-Object -First 5 Name; Get-ChildItem '\\\\''C:\\\\Users\\\\Capacitacion - QRO\\\\AppData\\\\Local\\\\Programs'\\\\'' -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '\\\\''*node*'\\\\'' } | Select-Object Name')"
     ]
   }
 }

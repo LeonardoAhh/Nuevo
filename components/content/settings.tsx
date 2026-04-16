@@ -14,6 +14,9 @@ import {
   AlertCircle,
   Upload,
   RotateCcw,
+  Bell,
+  Loader2,
+  BellOff,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,9 +32,11 @@ import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ColorPicker } from "@/components/color-picker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useProfile, useUser } from "@/lib/hooks"
+import { useProfile, useUser, useNotificationPreferences } from "@/lib/hooks"
 import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
 import { AuthForm } from "@/components/auth-form"
+import NotificationHistory from "@/components/notification-history"
+import { requestPushPermission, unsubscribeFromPush, isPushSubscribed } from "@/lib/supabase/push"
 
 type PresetAccent = Exclude<AccentColor, "custom">
 
@@ -40,7 +45,13 @@ const PRESET_ACCENTS: ReadonlyArray<PresetAccent> = ["blue", "purple", "green", 
 const YELLOW_USES_DARK_TEXT = new Set<PresetAccent>(["yellow"])
 
 export default function SettingsContent() {
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      return params.get("tab") || "profile"
+    }
+    return "profile"
+  })
   const { theme, accentColor, customColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setCustomColor, setFontSize, setDensity, setReducedMotion, isColorLight, resetTheme } = useTheme()
   const [showSavedMessage, setShowSavedMessage] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -52,6 +63,31 @@ export default function SettingsContent() {
 
   // Hooks para API
   const { profile, loading: profileLoading, error: profileError, updateProfile, uploadAvatar, updateThemePreferences } = useProfile(user?.id)
+  const { preferences: notifPrefs, loading: notifLoading, saving: notifSaving, updatePreference: updateNotifPref, savePreferences: saveNotifPrefs } = useNotificationPreferences(user?.id)
+  const [notifSaved, setNotifSaved] = useState(false)
+  const [pushSubscribed, setPushSubscribed] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+
+  // Verificar estado de suscripción push al abrir el tab
+  React.useEffect(() => {
+    if (activeTab !== "notifications") return
+    isPushSubscribed().then(setPushSubscribed).catch(() => {})
+  }, [activeTab])
+
+  const handleTogglePush = async () => {
+    setPushLoading(true)
+    try {
+      if (pushSubscribed) {
+        await unsubscribeFromPush()
+        setPushSubscribed(false)
+      } else {
+        const ok = await requestPushPermission()
+        setPushSubscribed(ok)
+      }
+    } finally {
+      setPushLoading(false)
+    }
+  }
 
   // Formulario unificado de perfil
   const {
@@ -181,6 +217,10 @@ export default function SettingsContent() {
           <TabsTrigger value="appearance" className="flex-1 text-xs sm:text-sm">
             <Palette className="mr-1 sm:mr-2 h-4 w-4" />
             <span>Apariencia</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex-1 text-xs sm:text-sm">
+            <Bell className="mr-1 sm:mr-2 h-4 w-4" />
+            <span>Notificaciones</span>
           </TabsTrigger>
         </TabsList>
 
@@ -579,6 +619,178 @@ export default function SettingsContent() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Notification Preferences */}
+        <TabsContent value="notifications" className="space-y-4">
+          {notifSaved && (
+            <Alert className="border-success/30 bg-success/10">
+              <Check className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">¡Preferencias de notificación guardadas!</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Push subscription toggle */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {pushSubscribed ? <Bell className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+                Notificaciones push
+              </CardTitle>
+              <CardDescription>
+                Recibe alertas en este dispositivo aunque la app esté cerrada.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">
+                    {pushSubscribed ? "Activadas en este dispositivo" : "Desactivadas en este dispositivo"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {pushSubscribed
+                      ? "Recibirás notificaciones push aunque no tengas la app abierta."
+                      : "Actívalas para recibir alertas aunque no tengas la app abierta."}
+                  </p>
+                </div>
+                <Button
+                  variant={pushSubscribed ? "outline" : "default"}
+                  size="sm"
+                  disabled={pushLoading}
+                  onClick={handleTogglePush}
+                  className="ml-4 shrink-0"
+                >
+                  {pushLoading
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : pushSubscribed ? "Desactivar" : "Activar push"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notificaciones de Baja</CardTitle>
+              <CardDescription>Configura cómo recibir alertas cuando se registre o se acerque una baja de empleado.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Push — Bajas nuevas</Label>
+                  <p className="text-xs text-muted-foreground">Recibir notificación push al registrar una baja</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.pushBajas}
+                  onCheckedChange={(v) => updateNotifPref("pushBajas", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Push — Aviso anticipado (3 días)</Label>
+                  <p className="text-xs text-muted-foreground">Alerta automática antes de la fecha de baja</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.pushBajasWarning}
+                  onCheckedChange={(v) => updateNotifPref("pushBajasWarning", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Email — Bajas</Label>
+                  <p className="text-xs text-muted-foreground">Recibir resumen por correo electrónico</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.emailBajas}
+                  onCheckedChange={(v) => updateNotifPref("emailBajas", v)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Notificaciones generales</CardTitle>
+              <CardDescription>Push y correo para comentarios, menciones y mensajes directos.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Push — Comentarios</Label>
+                  <p className="text-xs text-muted-foreground">Cuando alguien comenta</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.pushComments}
+                  onCheckedChange={(v) => updateNotifPref("pushComments", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Push — Menciones</Label>
+                  <p className="text-xs text-muted-foreground">Cuando te mencionan</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.pushMentions}
+                  onCheckedChange={(v) => updateNotifPref("pushMentions", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Push — Mensajes directos</Label>
+                  <p className="text-xs text-muted-foreground">Mensajes privados</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.pushDirectMessages}
+                  onCheckedChange={(v) => updateNotifPref("pushDirectMessages", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Email — Comentarios</Label>
+                  <p className="text-xs text-muted-foreground">Resumen de comentarios por correo</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.emailComments}
+                  onCheckedChange={(v) => updateNotifPref("emailComments", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Email — Menciones</Label>
+                  <p className="text-xs text-muted-foreground">Aviso por correo cuando te mencionan</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.emailMentions}
+                  onCheckedChange={(v) => updateNotifPref("emailMentions", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Email — Marketing</Label>
+                  <p className="text-xs text-muted-foreground">Novedades y actualizaciones del producto</p>
+                </div>
+                <Switch
+                  checked={notifPrefs.emailMarketing}
+                  onCheckedChange={(v) => updateNotifPref("emailMarketing", v)}
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button
+                disabled={notifSaving || notifLoading}
+                onClick={async () => {
+                  const result = await saveNotifPrefs()
+                  if (result?.success) {
+                    setNotifSaved(true)
+                    setTimeout(() => setNotifSaved(false), 3000)
+                  }
+                }}
+              >
+                {notifSaving ? "Guardando…" : "Guardar preferencias"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <NotificationHistory />
         </TabsContent>
       </Tabs>
     </>

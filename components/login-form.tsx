@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "lucide-react"
 import { useTheme } from "@/components/theme-context"
 import { supabase } from "@/lib/supabase/client"
+import { requestPushPermission } from "@/lib/supabase/push"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -37,6 +38,9 @@ export default function LoginForm() {
       setIsLoading(true)
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
       if (authError) throw authError
+
+      // Solicitar permiso de notificaciones DESPUÉS de login exitoso (una sola vez)
+      requestPushPermission().catch(() => {})
 
       const redirectTo = searchParams.get("redirectTo") || "/"
       router.push(redirectTo)

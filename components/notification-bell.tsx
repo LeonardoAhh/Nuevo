@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
-import { Bell, Plus, Trash2, CheckCheck, UserMinus, Calendar, Loader2, Search } from "lucide-react"
+import { Bell, Plus, Trash2, CheckCheck, UserMinus, Calendar, Loader2, Search, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -274,6 +274,18 @@ export default function NotificationBell() {
                 ))}
               </ul>
             )}
+          </div>
+
+          {/* Footer — link to history */}
+          <div className="border-t px-4 py-2">
+            <a
+              href="/settings?tab=notifications"
+              className="text-xs text-primary hover:underline flex items-center gap-1 justify-center"
+              onClick={() => setPopoverOpen(false)}
+            >
+              <History size={12} />
+              Ver historial completo
+            </a>
           </div>
         </PopoverContent>
       </Popover>
