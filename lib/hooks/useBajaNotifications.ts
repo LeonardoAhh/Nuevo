@@ -67,9 +67,13 @@ export function useBajaNotifications() {
     if (error) throw error
 
     // Enviar push notification a todos los usuarios suscritos via servidor
-    window.fetch("/api/notifications/send", {
+    const { data: { session } } = await supabase.auth.getSession()
+    window.fetch("/api/send-push", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
       body: JSON.stringify({
         id: inserted?.id,
         title: "Baja de empleado",
@@ -96,11 +100,12 @@ export function useBajaNotifications() {
   }, [])
 
   const remove = useCallback(async (id: string) => {
-    await supabase
+    const { error } = await supabase
       .from("baja_notifications")
       .delete()
       .eq("id", id)
-  }, [])
+    if (!error) await fetchNotifications()
+  }, [fetchNotifications])
 
   return { notifications, loading, unreadCount, create, markAsRead, markAllAsRead, remove, refresh: fetchNotifications }
 }

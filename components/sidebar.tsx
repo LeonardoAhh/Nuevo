@@ -178,8 +178,8 @@ export default function Sidebar({
         aria-label="Menú principal"
         className={`
           bg-card border-r transition-all duration-300 flex flex-col
-          max-md:fixed max-md:z-50 max-md:h-screen max-md:shadow-lg max-md:w-64
-          max-md:-translate-x-full
+          max-md:fixed max-md:z-50 max-md:h-[100dvh] max-md:shadow-lg max-md:w-64
+          max-md:-translate-x-full max-md:overflow-hidden
           ${showMobileSidebar ? "max-md:translate-x-0" : ""}
           ${collapsed ? "md:w-20" : "md:w-64"}
         `}
@@ -209,7 +209,7 @@ export default function Sidebar({
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 overflow-auto scrollbar-thin">
+        <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-3 p-2">
             {NAV_SECTIONS.map((section, idx) => (
               <div key={section.sectionLabel}>
@@ -258,7 +258,7 @@ export default function Sidebar({
         </nav>
 
         {/* User menu */}
-        <div className="p-2 border-t">
+        <div className="p-2 border-t flex-shrink-0">
           <DropdownMenu>
             <TooltipProvider delayDuration={0}>
               <Tooltip>

@@ -28,7 +28,7 @@ LANGUAGE SQL
 STABLE
 SECURITY DEFINER
 AS $$
-  SELECT role FROM public.profiles WHERE id = auth.uid();
+  SELECT role FROM public.profiles WHERE user_id = auth.uid();
 $$;
 
 -- SELECT: todos los usuarios autenticados pueden leer
