@@ -864,7 +864,14 @@ export default function NuevoIngresoContent() {
                           </TableCell>
                           <TableCell>
                             <div className="font-medium text-sm leading-tight">{r.nombre}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{r.puesto}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <span className="text-xs text-muted-foreground">{r.puesto}</span>
+                              {r.turno && (
+                                <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">
+                                  T{r.turno}
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="text-sm">{formatDate(r.fecha_ingreso)}</div>

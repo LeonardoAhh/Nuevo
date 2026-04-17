@@ -3,6 +3,15 @@ import { createBrowserClient } from '@supabase/ssr'
 export const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    realtime: {
+      // Reducir intentos de reconexión cuando el key no soporta Realtime
+      timeout: 10_000,
+      params: {
+        eventsPerSecond: 2,
+      },
+    },
+  }
 )
 
 // Tipos para las tablas de Supabase

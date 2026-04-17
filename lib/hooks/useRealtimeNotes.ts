@@ -90,31 +90,9 @@ export function useRealtimeNotes() {
 
   useEffect(() => {
     fetchNotes()
-
-    const channel = supabase
-      .channel("notes:realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notes" },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setNotes(prev => {
-              // Evitar duplicados si el INSERT ya fue aplicado optimistamente
-              if (prev.some(n => n.id === (payload.new as { id: string }).id)) return prev
-              return [parseNote(payload.new), ...prev]
-            })
-          } else if (payload.eventType === "DELETE") {
-            setNotes(prev => prev.filter(n => n.id !== (payload.old as { id: string }).id))
-          } else if (payload.eventType === "UPDATE") {
-            setNotes(prev =>
-              prev.map(n => n.id === (payload.new as { id: string }).id ? parseNote(payload.new) : n)
-            )
-          }
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
+    // Polling cada 30s (Realtime no disponible en este proyecto)
+    const interval = setInterval(() => fetchNotes(true), 30_000)
+    return () => clearInterval(interval)
   }, [fetchNotes])
 
   // ─── CRUD ──────────────────────────────────────────────────────────────────

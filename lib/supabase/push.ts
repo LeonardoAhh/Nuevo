@@ -47,6 +47,7 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
   const keys = subscription.toJSON().keys!
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
+    console.log("[Push] Guardando suscripción para user:", user.id)
     const { error: upsertError } = await supabase.from("push_subscriptions").upsert(
       {
         user_id: user.id,
@@ -57,8 +58,12 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
       { onConflict: "user_id,endpoint" }   // la constraint es UNIQUE(user_id, endpoint)
     )
     if (upsertError) {
-      console.error("Error guardando suscripción push:", upsertError.message)
+      console.error("[Push] ERROR guardando suscripción:", upsertError.code, upsertError.message, upsertError.details)
+    } else {
+      console.log("[Push] Suscripción guardada correctamente")
     }
+  } else {
+    console.warn("[Push] No hay usuario autenticado, no se guarda la suscripción")
   }
 
   return subscription

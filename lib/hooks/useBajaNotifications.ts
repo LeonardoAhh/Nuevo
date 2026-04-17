@@ -37,17 +37,10 @@ export function useBajaNotifications() {
 
   useEffect(() => { fetchNotifications() }, [fetchNotifications])
 
-  // Realtime: actualizar lista cuando hay cambios en la tabla
+  // Polling cada 20s (Realtime no disponible en este proyecto)
   useEffect(() => {
-    const channel = supabase
-      .channel("baja_notifications_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "baja_notifications" },
-        () => { fetchNotifications() }
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    const interval = setInterval(fetchNotifications, 20_000)
+    return () => clearInterval(interval)
   }, [fetchNotifications])
 
   const unreadCount = notifications.filter((n) => !n.read).length
@@ -88,7 +81,10 @@ export function useBajaNotifications() {
         url: "/",
         tag: "baja-notification",
       }),
-    }).catch(() => {})
+    })
+      .then((res) => res.json())
+      .then((data) => console.log("[Push] send-push response:", JSON.stringify(data)))
+      .catch((err) => console.error("[Push] send-push fetch error:", err))
   }, [])
 
   const markAsRead = useCallback(async (id: string) => {
