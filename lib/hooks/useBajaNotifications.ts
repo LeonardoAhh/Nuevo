@@ -76,7 +76,7 @@ export function useBajaNotifications() {
       },
       body: JSON.stringify({
         id: inserted?.id,
-        title: "🔔 Baja de empleado",
+        title: "Baja de empleado",
         body: `${record.employee_name} – Fecha de baja: ${record.fecha_baja}`,
         url: "/",
         tag: "baja-notification",

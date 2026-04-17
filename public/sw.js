@@ -175,12 +175,12 @@ self.addEventListener("push", (event) => {
     const [yyyy, mm, dd] = fechaMatch[1].split("-")
     const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
     const fechaLegible = `${parseInt(dd)} ${meses[parseInt(mm) - 1]} ${yyyy}`
-    body = body.replace(/\s*–\s*Fecha de baja:\s*\d{4}-\d{2}-\d{2}/, `\n📅 ${fechaLegible}`)
+    body = body.replace(/\s*–\s*Fecha de baja:\s*\d{4}-\d{2}-\d{2}/, `\n${fechaLegible}`)
   }
 
   const options = {
     body,
-    icon:    "/icons/icon-192.png",
+    icon:    "/icons/icon-512.png",
     badge:   "/icons/icon-192.png",
     tag,
     renotify: true,

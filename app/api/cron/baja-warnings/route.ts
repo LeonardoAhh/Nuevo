@@ -2,12 +2,14 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
 /**
- * Cron endpoint — meant to be called daily (e.g. Vercel Cron).
- * Finds baja_notifications with fecha_baja in the next 3 days
- * and sends push notifications as a warning.
+ * Cron diario — 8:00 AM
+ * Envía push notifications para:
+ *   1. Bajas de empleados (hoy, 1 día antes, 3 días antes)
+ *   2. RG-REC-048 pendientes próximos a vencer (hoy, 3 días, 7 días)
+ *   3. Términos de contrato próximos (hoy, 3 días, 7 días)
  *
- * Configure in vercel.json:
- *   { "crons": [{ "path": "/api/cron/baja-warnings", "schedule": "0 8 * * *" }] }
+ * Usa push_sent_log para no enviar el mismo aviso más de una vez por día/tipo.
+ * Solo notifica a usuarios con rol 'dev' o 'admin'.
  */
 
 function getSupabaseAdmin() {
@@ -17,8 +19,61 @@ function getSupabaseAdmin() {
   return createClient(url, key)
 }
 
+const BAJA_DAYS     = [0, 1, 3]      // días antes de la baja
+const RG_DAYS       = [0, 3, 7]      // días antes de vencer el RG-REC-048
+const CONTRATO_DAYS = [0, 3, 7]      // días antes de vencer el contrato
+
+async function alreadySent(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  refId: string,
+  refType: string,
+  daysBefore: number
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("push_sent_log")
+    .select("id")
+    .eq("ref_id", refId)
+    .eq("ref_type", refType)
+    .eq("days_before", daysBefore)
+    .eq("sent_at", new Date().toISOString().slice(0, 10))
+    .maybeSingle()
+  return !!data
+}
+
+async function markSent(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  refId: string,
+  refType: string,
+  daysBefore: number
+) {
+  await supabase.from("push_sent_log").insert({
+    ref_id: refId,
+    ref_type: refType,
+    days_before: daysBefore,
+    sent_at: new Date().toISOString().slice(0, 10),
+  }).select()
+}
+
+async function sendPush(
+  baseUrl: string,
+  apiKey: string | undefined,
+  title: string,
+  body: string,
+  tag: string,
+  userIds: string[]
+) {
+  const res = await fetch(`${baseUrl}/api/send-push`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ title, body, tag, url: "/", userIds: userIds.length ? userIds : undefined }),
+  })
+  return res.ok
+}
+
 export async function GET(request: Request) {
-  // Verify cron secret (Vercel sets CRON_SECRET automatically)
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -27,70 +82,107 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseAdmin()
-
-    // Dates: today and 3 days from now
     const today = new Date()
-    const threeDays = new Date(today)
-    threeDays.setDate(threeDays.getDate() + 3)
-
     const todayStr = today.toISOString().slice(0, 10)
-    const threeDaysStr = threeDays.toISOString().slice(0, 10)
 
-    // Find upcoming bajas
-    const { data: upcoming, error } = await supabase
-      .from("baja_notifications")
-      .select("*")
-      .gte("fecha_baja", todayStr)
-      .lte("fecha_baja", threeDaysStr)
-
-    if (error) throw error
-    if (!upcoming?.length) {
-      return NextResponse.json({ warnings: 0, message: "No upcoming bajas" })
-    }
-
-    // Get all push subscriptions (users with push_bajas_warning enabled)
-    const { data: prefs } = await supabase
-      .from("notification_preferences")
-      .select("user_id")
-      .eq("push_bajas_warning", true)
-
-    const userIds = prefs?.map((p) => p.user_id) || []
-
-    // Send push for each upcoming baja via our send-push API
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL
       || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+    const apiKey = process.env.PUSH_API_KEY
 
-    let sentCount = 0
-    for (const baja of upcoming) {
-      const daysLeft = Math.ceil(
-        (new Date(baja.fecha_baja).getTime() - today.getTime()) / 86400000
-      )
-      const dayLabel = daysLeft === 0 ? "hoy" : daysLeft === 1 ? "mañana" : `en ${daysLeft} días`
+    // Usuarios con rol admin o dev que tienen push habilitado
+    const { data: adminUsers } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .in("role", ["dev", "admin"])
 
-      const res = await fetch(`${baseUrl}/api/send-push`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.PUSH_API_KEY}`,
-        },
-        body: JSON.stringify({
-          title: `⚠️ Baja ${dayLabel}`,
-          body: `${baja.employee_name}${baja.employee_numero ? ` #${baja.employee_numero}` : ""} – Fecha de baja: ${baja.fecha_baja}`,
-          tag: `baja-warning-${baja.id}`,
-          url: "/",
-          userIds: userIds.length ? userIds : undefined,
-        }),
-      })
+    const userIds = adminUsers?.map((p) => p.user_id) ?? []
 
-      if (res.ok) sentCount++
+    const results = { bajas: 0, rg: 0, contratos: 0 }
+
+    // ── 1. Bajas ──────────────────────────────────────────────────────────────
+    for (const daysBefore of BAJA_DAYS) {
+      const targetDate = new Date(today)
+      targetDate.setDate(targetDate.getDate() + daysBefore)
+      const targetStr = targetDate.toISOString().slice(0, 10)
+
+      const { data: bajas } = await supabase
+        .from("baja_notifications")
+        .select("id, employee_name, employee_numero, fecha_baja")
+        .eq("fecha_baja", targetStr)
+
+      for (const baja of bajas ?? []) {
+        if (await alreadySent(supabase, baja.id, "baja", daysBefore)) continue
+
+        const label = daysBefore === 0 ? "hoy" : daysBefore === 1 ? "mañana" : `en ${daysBefore} días`
+        const sent = await sendPush(
+          baseUrl, apiKey,
+          `Baja ${label}`,
+          `${baja.employee_name}${baja.employee_numero ? ` #${baja.employee_numero}` : ""} – Fecha de baja: ${baja.fecha_baja}`,
+          `baja-${baja.id}-${daysBefore}d`,
+          userIds
+        )
+        if (sent) { await markSent(supabase, baja.id, "baja", daysBefore); results.bajas++ }
+      }
     }
 
-    return NextResponse.json({
-      warnings: upcoming.length,
-      sent: sentCount,
-    })
+    // ── 2. RG-REC-048 ─────────────────────────────────────────────────────────
+    for (const daysBefore of RG_DAYS) {
+      const targetDate = new Date(today)
+      targetDate.setDate(targetDate.getDate() + daysBefore)
+      const targetStr = targetDate.toISOString().slice(0, 10)
+
+      const { data: registros } = await supabase
+        .from("nuevo_ingreso")
+        .select("id, nombre, puesto, departamento, fecha_vencimiento_rg")
+        .eq("rg_rec_048", "Pendiente")
+        .eq("fecha_vencimiento_rg", targetStr)
+
+      for (const r of registros ?? []) {
+        if (await alreadySent(supabase, r.id, "rg", daysBefore)) continue
+
+        const label = daysBefore === 0 ? "hoy" : `en ${daysBefore} días`
+        const sent = await sendPush(
+          baseUrl, apiKey,
+          `RG-REC-048 vence ${label}`,
+          `${r.nombre} — ${r.puesto} · ${r.departamento}`,
+          `rg-${r.id}-${daysBefore}d`,
+          userIds
+        )
+        if (sent) { await markSent(supabase, r.id, "rg", daysBefore); results.rg++ }
+      }
+    }
+
+    // ── 3. Términos de contrato ───────────────────────────────────────────────
+    for (const daysBefore of CONTRATO_DAYS) {
+      const targetDate = new Date(today)
+      targetDate.setDate(targetDate.getDate() + daysBefore)
+      const targetStr = targetDate.toISOString().slice(0, 10)
+
+      const { data: registros } = await supabase
+        .from("nuevo_ingreso")
+        .select("id, nombre, puesto, departamento, termino_contrato, tipo_contrato")
+        .neq("tipo_contrato", "Indeterminado")
+        .eq("termino_contrato", targetStr)
+
+      for (const r of registros ?? []) {
+        if (await alreadySent(supabase, r.id, "contrato", daysBefore)) continue
+
+        const label = daysBefore === 0 ? "hoy" : `en ${daysBefore} días`
+        const sent = await sendPush(
+          baseUrl, apiKey,
+          `Contrato vence ${label}`,
+          `${r.nombre} — ${r.tipo_contrato} · ${r.departamento}`,
+          `contrato-${r.id}-${daysBefore}d`,
+          userIds
+        )
+        if (sent) { await markSent(supabase, r.id, "contrato", daysBefore); results.contratos++ }
+      }
+    }
+
+    return NextResponse.json({ sent: results, date: todayStr })
   } catch (err: any) {
     console.error("cron/baja-warnings error:", err)
     return NextResponse.json({ error: err?.message }, { status: 500 })
   }
 }
+
