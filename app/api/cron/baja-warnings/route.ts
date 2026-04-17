@@ -75,7 +75,7 @@ export async function GET(request: Request) {
         },
         body: JSON.stringify({
           title: `⚠️ Baja ${dayLabel}`,
-          body: `${baja.employee_name}${baja.employee_numero ? ` (#${baja.employee_numero})` : ""} — Fecha de baja: ${baja.fecha_baja}`,
+          body: `${baja.employee_name}${baja.employee_numero ? ` #${baja.employee_numero}` : ""} – Fecha de baja: ${baja.fecha_baja}`,
           tag: `baja-warning-${baja.id}`,
           url: "/",
           userIds: userIds.length ? userIds : undefined,

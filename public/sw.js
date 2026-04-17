@@ -1,6 +1,6 @@
-const CACHE_NAME = "vinoplastic-v3"
-const STATIC_CACHE = "vinoplastic-static-v3"
-const API_CACHE = "vinoplastic-api-v3"
+const CACHE_NAME = "vinoplastic-v4"
+const STATIC_CACHE = "vinoplastic-static-v4"
+const API_CACHE = "vinoplastic-api-v4"
 
 // Recursos a pre-cachear en la instalación
 const PRECACHE_URLS = ["/", "/login", "/capacitacion", "/nuevo-ingreso"]
@@ -156,12 +156,7 @@ function openBadgeDB() {
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
-  console.log("[SW] Push event received", event.data?.text())
-  // Notificar a la página principal para que aparezca en su consola
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((c) => c.postMessage({ type: "SW_PUSH_RECEIVED", data: event.data?.text() }))
-  })
-  const fallback = { title: "Notificación", body: "" }
+  const fallback = { title: "Viño Plastic", body: "" }
   let data = fallback
   try {
     data = event.data ? event.data.json() : fallback
@@ -169,52 +164,37 @@ self.addEventListener("push", (event) => {
     data = { ...fallback, body: event.data?.text() || "" }
   }
 
-  // Tipo de notificación para agrupar
-  const tag = data.tag || "general"
-  const notifId = data.id || ""
+  const tag     = data.tag || "general"
+  const notifId = data.id  || ""
+
+  // Formatear el body para que sea más limpio:
+  // "NOMBRE APELLIDO – Fecha de baja: 2026-04-20" → "NOMBRE APELLIDO\n📅 20 abr 2026"
+  let body = data.body || ""
+  const fechaMatch = body.match(/Fecha de baja:\s*(\d{4}-\d{2}-\d{2})/)
+  if (fechaMatch) {
+    const [yyyy, mm, dd] = fechaMatch[1].split("-")
+    const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+    const fechaLegible = `${parseInt(dd)} ${meses[parseInt(mm) - 1]} ${yyyy}`
+    body = body.replace(/\s*–\s*Fecha de baja:\s*\d{4}-\d{2}-\d{2}/, `\n📅 ${fechaLegible}`)
+  }
 
   const options = {
-    body: data.body,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    tag: tag,                          // Agrupa notificaciones del mismo tipo
-    renotify: true,                    // Vibra incluso si ya hay una con el mismo tag
-    vibrate: [200, 100, 200],          // Vibración: 200ms vibra, 100ms pausa, 200ms vibra
-    data: {
-      url: data.url || "/",
-      id: notifId,
-      tag: tag,
-    },
+    body,
+    icon:    "/icons/icon-192.png",
+    badge:   "/icons/icon-192.png",
+    tag,
+    renotify: true,
+    silent:   false,
+    data: { url: data.url || "/", id: notifId, tag },
     actions: [
-      {
-        action: "mark-read",
-        title: "Marcar leída",
-        icon: "/icons/icon-192.png",
-      },
-      {
-        action: "view",
-        title: "Ver detalle",
-        icon: "/icons/icon-192.png",
-      },
+      { action: "view",      title: "Ver"    },
+      { action: "mark-read", title: "Leída"  },
     ],
-    requireInteraction: false,          // Se cierra automáticamente en desktop
   }
 
   event.waitUntil(
     self.registration.showNotification(data.title || fallback.title, options)
-      .then(() => {
-        console.log("[SW] Notification shown successfully")
-        self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-          clients.forEach((c) => c.postMessage({ type: "SW_NOTIFICATION_SHOWN" }))
-        })
-        return incrementBadge()
-      })
-      .catch((err) => {
-        console.error("[SW] showNotification error:", err)
-        self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-          clients.forEach((c) => c.postMessage({ type: "SW_NOTIFICATION_ERROR", error: String(err) }))
-        })
-      })
+      .then(() => incrementBadge())
   )
 })
 
