@@ -57,9 +57,8 @@ export async function GET(request: Request) {
     const userIds = prefs?.map((p) => p.user_id) || []
 
     // Send push for each upcoming baja via our send-push API
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
     let sentCount = 0
     for (const baja of upcoming) {

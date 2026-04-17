@@ -36,6 +36,19 @@ export function PWARegister() {
       .catch((err) => {
         console.warn("SW registration failed:", err)
       })
+
+    // Escuchar mensajes del SW para debug en consola normal
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "SW_PUSH_RECEIVED") {
+        console.log("[SW→Page] Push recibido en SW:", event.data.data)
+      }
+      if (event.data?.type === "SW_NOTIFICATION_SHOWN") {
+        console.log("[SW→Page] Notificación mostrada correctamente")
+      }
+      if (event.data?.type === "SW_NOTIFICATION_ERROR") {
+        console.error("[SW→Page] Error mostrando notificación:", event.data.error)
+      }
+    })
   }, [])
 
   return null

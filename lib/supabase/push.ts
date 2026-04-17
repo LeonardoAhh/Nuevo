@@ -32,7 +32,20 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
     return null
   }
 
-  // Verificar si ya existe suscripción activa
+  // Forzar suscripción fresca: primero desuscribir si hay una existente
+  // para evitar suscripciones stale con VAPID keys viejas
+  const existing = await reg.pushManager.getSubscription()
+  if (existing) {
+    // Verificar que use el mismo VAPID key
+    const existingKey = existing.options?.applicationServerKey
+    const newKey = urlBase64ToUint8Array(vapidKey)
+    const keysMatch = existingKey && arrayBufferEquals(existingKey, newKey.buffer as ArrayBuffer)
+    if (!keysMatch) {
+      console.log("[Push] VAPID key cambió — desuscribiendo suscripción anterior")
+      await existing.unsubscribe()
+    }
+  }
+
   let subscription = await reg.pushManager.getSubscription()
 
   if (!subscription) {
@@ -40,6 +53,7 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
     })
+    console.log("[Push] Nueva suscripción creada")
   }
 
   // Persistir en Supabase
@@ -48,15 +62,16 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
     console.log("[Push] Guardando suscripción para user:", user.id)
-    const { error: upsertError } = await supabase.from("push_subscriptions").upsert(
-      {
-        user_id: user.id,
-        endpoint: subscription.endpoint,
-        p256dh: keys.p256dh!,
-        auth: keys.auth!,
-      },
-      { onConflict: "user_id,endpoint" }   // la constraint es UNIQUE(user_id, endpoint)
-    )
+
+    // Borrar suscripciones anteriores del mismo usuario (evita envíos a endpoints stale)
+    await supabase.from("push_subscriptions").delete().eq("user_id", user.id)
+
+    const { error: upsertError } = await supabase.from("push_subscriptions").insert({
+      user_id: user.id,
+      endpoint: subscription.endpoint,
+      p256dh: keys.p256dh!,
+      auth: keys.auth!,
+    })
     if (upsertError) {
       console.error("[Push] ERROR guardando suscripción:", upsertError.code, upsertError.message, upsertError.details)
     } else {
@@ -113,4 +128,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const arr = new Uint8Array(raw.length)
   for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
   return arr
+}
+
+function arrayBufferEquals(a: ArrayBuffer, b: ArrayBuffer): boolean {
+  if (a.byteLength !== b.byteLength) return false
+  const va = new Uint8Array(a)
+  const vb = new Uint8Array(b)
+  for (let i = 0; i < va.length; i++) {
+    if (va[i] !== vb[i]) return false
+  }
+  return true
 }

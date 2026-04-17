@@ -1,6 +1,6 @@
-const CACHE_NAME = "vinoplastic-v2"
-const STATIC_CACHE = "vinoplastic-static-v2"
-const API_CACHE = "vinoplastic-api-v2"
+const CACHE_NAME = "vinoplastic-v3"
+const STATIC_CACHE = "vinoplastic-static-v3"
+const API_CACHE = "vinoplastic-api-v3"
 
 // Recursos a pre-cachear en la instalación
 const PRECACHE_URLS = ["/", "/login", "/capacitacion", "/nuevo-ingreso"]
@@ -156,6 +156,11 @@ function openBadgeDB() {
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
+  console.log("[SW] Push event received", event.data?.text())
+  // Notificar a la página principal para que aparezca en su consola
+  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+    clients.forEach((c) => c.postMessage({ type: "SW_PUSH_RECEIVED", data: event.data?.text() }))
+  })
   const fallback = { title: "Notificación", body: "" }
   let data = fallback
   try {
@@ -197,7 +202,19 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(
     self.registration.showNotification(data.title || fallback.title, options)
-      .then(() => incrementBadge())
+      .then(() => {
+        console.log("[SW] Notification shown successfully")
+        self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+          clients.forEach((c) => c.postMessage({ type: "SW_NOTIFICATION_SHOWN" }))
+        })
+        return incrementBadge()
+      })
+      .catch((err) => {
+        console.error("[SW] showNotification error:", err)
+        self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+          clients.forEach((c) => c.postMessage({ type: "SW_NOTIFICATION_ERROR", error: String(err) }))
+        })
+      })
   )
 })
 
