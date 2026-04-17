@@ -7,7 +7,7 @@ import { useEffect } from "react"
 import { toast } from "sonner"
 
 function PromocionesWrapper() {
-  const { empleados, loading, error, recargar } = usePromociones()
+  const { empleados, loading, error, recargar, guardarDesempeño, promoverEmpleado, guardarExamen } = usePromociones()
 
   useEffect(() => {
     if (error) toast.error(`Error al cargar datos: ${error}`)
@@ -33,7 +33,15 @@ function PromocionesWrapper() {
     )
   }
 
-  return <PromocionesContent empleados={empleados} onDatosActualizados={recargar} />
+  return (
+    <PromocionesContent
+      empleados={empleados}
+      onDatosActualizados={recargar}
+      guardarDesempeño={guardarDesempeño}
+      promoverEmpleado={promoverEmpleado}
+      guardarExamen={guardarExamen}
+    />
+  )
 }
 
 export default function PromocionesPage() {

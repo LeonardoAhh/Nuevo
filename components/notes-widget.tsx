@@ -18,10 +18,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import {
-  Dialog, DialogContent, DialogDescription,
-  DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
-import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -34,6 +30,7 @@ import {
   Tooltip, TooltipContent,
   TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 
 import { useUser }    from "@/lib/hooks/useUser"
 import { useProfile } from "@/lib/hooks/useProfile"
@@ -458,15 +455,22 @@ function NoteFormDialog({
   const fileRef = useRef<HTMLInputElement>(null)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md w-full">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Formulario para {title.toLowerCase()}
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveShell
+      open={open}
+      onClose={() => onOpenChange(false)}
+      title={title}
+      description={`Formulario para ${title.toLowerCase()}`}
+      maxWidth="sm:max-w-md"
+    >
+      <ModalToolbar
+        title={title}
+        saving={submitting || uploading}
+        onClose={() => onOpenChange(false)}
+        onConfirm={onSubmit}
+        confirmDisabled={submitting || uploading || !isFormValid(form)}
+      />
 
+      <div className="flex-1 overflow-y-auto p-4">
         <form
           className="space-y-4"
           onSubmit={e => { e.preventDefault(); onSubmit() }}
@@ -551,25 +555,9 @@ function NoteFormDialog({
             </div>
           )}
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting || uploading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={submitting || uploading || !isFormValid(form)}
-            >
-              {submitting ? "Guardando..." : submitLabel}
-            </Button>
-          </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </ResponsiveShell>
   )
 }
 

@@ -7,7 +7,7 @@ import type {
   ReglaPromocion,
   CursoRequerido,
   EvaluacionDesempeño,
-} from "@/components/content/promociones"
+} from "@/lib/promociones/types"
 
 /** Igual que useCapacitacion: mayúsculas, sin acentos, sin puntuación, trim */
 function norm(s: string | null | undefined): string {
@@ -224,5 +224,87 @@ export function usePromociones() {
 
   useEffect(() => { cargarDatos() }, [cargarDatos])
 
-  return { empleados, loading, error, recargar: cargarDatos }
+  const guardarDesempeño = useCallback(async (
+    numero: string,
+    calificacion: number,
+    periodo?: string,
+  ): Promise<void> => {
+    const { error: dbErr } = await supabase
+      .from("datos_promocion")
+      .upsert(
+        {
+          numero,
+          desempeño_actual: calificacion,
+          periodo_evaluacion: periodo?.trim() || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "numero" }
+      )
+    if (dbErr) throw new Error(dbErr.message)
+    await cargarDatos()
+  }, [cargarDatos])
+
+  const promoverEmpleado = useCallback(async (
+    empleadoId: string,
+    numero: string | undefined,
+    nuevoPuesto: string,
+    datos: {
+      fechaInicio?: string
+      fechaExamen?: string
+      calExamen?: number
+      intentosPrevios?: number
+    },
+  ): Promise<void> => {
+    const { error: empErr } = await supabase
+      .from("employees")
+      .update({ puesto: nuevoPuesto })
+      .eq("id", empleadoId)
+    if (empErr) throw new Error(empErr.message)
+
+    if (numero) {
+      const { error: dpErr } = await supabase
+        .from("datos_promocion")
+        .upsert(
+          {
+            numero,
+            fecha_inicio_puesto: datos.fechaInicio || null,
+            fecha_examen: datos.fechaExamen || null,
+            ultima_calificacion_examen: datos.calExamen ?? null,
+            intentos_examen: (datos.intentosPrevios ?? 0) + (datos.calExamen != null ? 1 : 0),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "numero" }
+        )
+      if (dpErr) throw new Error(dpErr.message)
+    }
+    await cargarDatos()
+  }, [cargarDatos])
+
+  const guardarExamen = useCallback(async (
+    numero: string,
+    datos: {
+      fechaInicio?: string
+      fechaExamen?: string
+      calExamen: number
+      intentosPrevios?: number
+    },
+  ): Promise<void> => {
+    const { error: dpErr } = await supabase
+      .from("datos_promocion")
+      .upsert(
+        {
+          numero,
+          fecha_inicio_puesto: datos.fechaInicio || null,
+          fecha_examen: datos.fechaExamen || null,
+          ultima_calificacion_examen: datos.calExamen,
+          intentos_examen: (datos.intentosPrevios ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "numero" }
+      )
+    if (dpErr) throw new Error(dpErr.message)
+    await cargarDatos()
+  }, [cargarDatos])
+
+  return { empleados, loading, error, recargar: cargarDatos, guardarDesempeño, promoverEmpleado, guardarExamen }
 }

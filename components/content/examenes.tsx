@@ -9,6 +9,7 @@ import {
   Loader2,
   ClipboardCheck,
   X,
+  Check,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -33,14 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { PaginationBar } from "@/components/ui/pagination-bar"
 import type { PreguntaExamen, PreguntaInsert } from "@/lib/hooks/useExamenes"
 import { CATALOGO_ORGANIZACIONAL } from "@/lib/catalogo"
 
@@ -67,6 +62,7 @@ interface ExamenesContentProps {
 }
 
 const RESPUESTA_LABELS: Record<string, string> = { a: "A", b: "B", c: "C" }
+const PAGE_SIZE = 20
 
 const EMPTY_FORM: PreguntaInsert = {
   departamento: "",
@@ -100,8 +96,14 @@ export default function ExamenesContent({
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Paginación
+  const [page, setPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(preguntas.length / PAGE_SIZE))
+  const paginadas = preguntas.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   const handleSearch = useCallback(() => {
     setHasSearched(true)
+    setPage(1)
     onBuscar(searchTerm)
   }, [searchTerm, onBuscar])
 
@@ -229,9 +231,14 @@ export default function ExamenesContent({
         </div>
       ) : (
         <>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <PaginationBar currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          )}
+
           {/* Vista móvil: tarjetas */}
           <div className="flex flex-col gap-3 md:hidden">
-            {preguntas.map((p) => (
+            {paginadas.map((p) => (
               <Card key={p.id} className="overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -274,7 +281,7 @@ export default function ExamenesContent({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {preguntas.map((p) => (
+                  {paginadas.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         <Badge variant="secondary">{p.departamento}</Badge>
@@ -311,18 +318,24 @@ export default function ExamenesContent({
       )}
 
       {/* Dialog crear / editar */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Pregunta" : "Nueva Pregunta"}</DialogTitle>
-            <DialogDescription>
-              {editingId
-                ? "Modifica los campos y guarda los cambios."
-                : "Llena los campos para agregar una nueva pregunta al banco."}
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveShell
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="sm:max-w-2xl"
+        title={editingId ? "Editar Pregunta" : "Nueva Pregunta"}
+        description={editingId ? "Modifica los campos y guarda los cambios." : "Llena los campos para agregar una nueva pregunta al banco."}
+      >
+        <ModalToolbar
+          title={editingId ? "Editar Pregunta" : "Nueva Pregunta"}
+          subtitle={form.departamento || "Sin departamento"}
+          saving={saving}
+          onClose={() => setDialogOpen(false)}
+          onConfirm={handleSave}
+          confirmIcon={<Check size={16} />}
+          confirmDisabled={isReadOnly || !form.departamento || !form.pregunta || !form.opcion_a || !form.opcion_b || !form.opcion_c}
+        />
 
-          <div className="space-y-4 py-2">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             <div className="space-y-2">
               <Label>Departamento</Label>
               <Select
@@ -402,19 +415,8 @@ export default function ExamenesContent({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={isReadOnly || saving}>
-              {saving && <Loader2 size={16} className="mr-2 animate-spin" />}
-              {editingId ? "Guardar Cambios" : "Crear Pregunta"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </ResponsiveShell>
 
       {/* Dialog confirmar eliminación */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

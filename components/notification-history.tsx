@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
 import { Calendar, Filter, Search, UserMinus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,80 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { supabase } from "@/lib/supabase/client"
-import type { BajaNotification } from "@/lib/hooks/useBajaNotifications"
-
-type TipoFilter = "all" | "manual" | "scheduled"
+import {
+  useNotificationHistory,
+  formatDateMX,
+  formatDateTimeMX,
+  type TipoFilter,
+} from "@/lib/hooks/useNotificationHistory"
 
 export default function NotificationHistory() {
-  const [notifications, setNotifications] = useState<BajaNotification[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [tipo, setTipo] = useState<TipoFilter>("all")
-  const [dateFrom, setDateFrom] = useState(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - 30)
-    return d.toISOString().slice(0, 10)
-  })
-  const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10))
-
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    let query = supabase
-      .from("baja_notifications")
-      .select("*")
-      .gte("created_at", `${dateFrom}T00:00:00`)
-      .lte("created_at", `${dateTo}T23:59:59`)
-      .order("created_at", { ascending: false })
-
-    if (tipo !== "all") {
-      query = query.eq("tipo", tipo)
-    }
-
-    const { data } = await query
-    setNotifications((data as BajaNotification[]) || [])
-    setLoading(false)
-  }, [dateFrom, dateTo, tipo])
-
-  useEffect(() => {
-    fetch()
-  }, [fetch])
-
-  const filtered = notifications.filter((n) => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return (
-      n.employee_name.toLowerCase().includes(q) ||
-      (n.employee_numero?.toLowerCase().includes(q) ?? false) ||
-      (n.motivo?.toLowerCase().includes(q) ?? false)
-    )
-  })
-
-  const formatDate = (d: string) => {
-    try {
-      return new Intl.DateTimeFormat("es-MX", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(d.includes("T") ? d : d + "T00:00:00"))
-    } catch {
-      return d
-    }
-  }
-
-  const formatDateTime = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat("es-MX", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(iso))
-    } catch {
-      return iso
-    }
-  }
+  const {
+    loading, notifications, totalCount, unreadCount,
+    search, setSearch, tipo, setTipo,
+    dateFrom, setDateFrom, dateTo, setDateTo,
+  } = useNotificationHistory()
 
   return (
     <div className="space-y-4">
@@ -158,11 +96,11 @@ export default function NotificationHistory() {
 
           {/* Stats */}
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{filtered.length} notificación{filtered.length !== 1 ? "es" : ""}</span>
-            {filtered.length > 0 && (
+            <span>{totalCount} notificación{totalCount !== 1 ? "es" : ""}</span>
+            {totalCount > 0 && (
               <>
                 <span>·</span>
-                <span>{filtered.filter((n) => !n.read).length} sin leer</span>
+                <span>{unreadCount} sin leer</span>
               </>
             )}
           </div>
@@ -173,7 +111,7 @@ export default function NotificationHistory() {
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
               Cargando…
             </div>
-          ) : filtered.length === 0 ? (
+          ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               Sin notificaciones en este rango
             </div>
@@ -193,7 +131,7 @@ export default function NotificationHistory() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {filtered.map((n) => (
+                    {notifications.map((n) => (
                       <tr key={n.id} className="hover:bg-muted/30 transition-colors">
                         <td className="px-3 py-2">
                           {n.read ? (
@@ -214,14 +152,14 @@ export default function NotificationHistory() {
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
                             <Calendar size={12} className="text-muted-foreground" />
-                            {formatDate(n.fecha_baja)}
+                            {formatDateMX(n.fecha_baja)}
                           </div>
                         </td>
                         <td className="px-3 py-2 hidden md:table-cell text-muted-foreground">
                           <span className="truncate max-w-[200px] block">{n.motivo || "—"}</span>
                         </td>
                         <td className="px-3 py-2 hidden lg:table-cell text-muted-foreground text-xs">
-                          {formatDateTime(n.created_at)}
+                          {formatDateTimeMX(n.created_at)}
                         </td>
                         <td className="px-3 py-2 hidden sm:table-cell">
                           <Badge variant="secondary" className="text-[10px]">

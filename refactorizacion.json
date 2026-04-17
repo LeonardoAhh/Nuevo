@@ -1,0 +1,223 @@
+# Refactorización de `promociones.tsx` — Aplicación de Buenas Prácticas
+
+## Contexto
+
+`promociones.tsx` tiene 1,633 líneas y mezcla tipos, helpers puros, 5 sub-componentes (algunos >200 líneas), llamadas directas a Supabase y lógica de UI en un solo archivo. El proyecto ya tiene un patrón modular bien establecido en el módulo de capacitación (`cap-*-dialog.tsx`, hooks en `lib/hooks/`, tipos en `lib/capacitacion/`). Esta refactorización aplica ese mismo patrón a promociones.
+
+**Resultado esperado:** El archivo orquestador baja de 1,633 a ~320 líneas. Cero cambios en funcionalidad ni en la API pública del componente.
+
+---
+
+## Inventario actual de `promociones.tsx`
+
+| Bloque | Líneas | Problema |
+|---|---|---|
+| Tipos y interfaces JSON | 52–115 | Deben estar en `lib/` (no en `components/`) |
+| Helpers puros (`calcularAptitud`, etc.) | 119–171 | Sin extracción; se recalculan en cada render |
+| `AptitudBadge`, `CriterioRow`, `SummaryCard` | 175–427 | Micro-componentes anidados, no reutilizables |
+| `CapturarDesempeñoDialog` | 431–547 | 116 líneas anidadas + Supabase directo |
+| `PromoverDialog` | 551–794 | 243 líneas anidadas + 2 llamadas Supabase directas |
+| `DetalleEmpleado` | 245–396 | 152 líneas anidadas |
+| `PromocionesContent` (orquestador) | 798–1615 | 817 líneas: filtros, paginación, previews JSON, vistas móvil y desktop |
+| `EmptyState` | 1619–1633 | Inline innecesario |
+
+**Problema raíz de acoplamiento:** `lib/hooks/usePromociones.ts` importa sus tipos desde `@/components/content/promociones` — dependencia inversa (`lib → components`) que el refactor debe romper.
+
+---
+
+## Estructura objetivo
+
+```
+lib/promociones/
+├── types.ts                    # Todos los tipos del dominio + interfaces JSON
+└── utils.ts                    # Funciones puras (calcularAptitud, mesesEnPuesto, etc.)
+
+lib/hooks/
+├── usePromociones.ts           # MODIFICADO: importa de lib/promociones/types
+│                               # AMPLIADO: expone guardarDesempeño() y promoverEmpleado()
+└── usePromocionesImport.ts     # NUEVO: estado y handlers para importación JSON
+
+components/content/
+├── promociones.tsx             # ~320 líneas — orquestador puro
+├── prom-shared.tsx             # AptitudBadge, CriterioRow, SummaryCard
+├── prom-detalle-dialog.tsx     # DetalleEmpleado → ~170 líneas
+├── prom-promover-dialog.tsx    # PromoverDialog → ~220 líneas
+├── prom-desempeno-dialog.tsx   # CapturarDesempeñoDialog → ~100 líneas
+└── prom-import-tab.tsx         # Paneles JSON de reglas y datos → ~250 líneas
+```
+
+---
+
+## Plan de Implementación
+
+### PASO 1 — Crear `lib/promociones/types.ts` _(sin romper nada)_
+
+Copiar (no mover aún) las líneas 52–115 de `promociones.tsx`:
+- `AptitudStatus`, `CursoRequerido`, `ReglaPromocion`, `EvaluacionDesempeño`, `EmpleadoPromocion`
+- Interfaces JSON: `ReglaPromocionJSON`, `DatosPromocionJSON` (exportarlas)
+
+Verificar: `npx tsc --noEmit` pasa sin errores.
+
+### PASO 2 — Crear `lib/promociones/utils.ts` _(sin romper nada)_
+
+Copiar (no mover aún) las funciones puras de líneas 119–171:
+- `isHabilitado`, `mesesEnPuesto`, `formatMeses`, `porcentajeCursos`, `ultimaEvaluacion`, `calcularAptitud`
+
+Importa solo de `@/lib/promociones/types`. Verificar compilación.
+
+### PASO 3 — Migrar `usePromociones.ts`
+
+**a) Cambiar import de tipos:**
+```typescript
+// ANTES: from "@/components/content/promociones"
+// DESPUÉS: from "@/lib/promociones/types"
+```
+
+**b) Añadir mutaciones al retorno del hook:**
+```typescript
+const guardarDesempeño = useCallback(async (
+  numero: string, calificacion: number, periodo?: string
+): Promise<void> => { /* lógica de líneas 461–480 */ }, [])
+
+const promoverEmpleado = useCallback(async (
+  empleadoId: string, numero: string | undefined,
+  nuevoPuesto: string, datos: ExamenDatos
+): Promise<void> => { /* lógica de líneas 583–615 */ }, [])
+
+return { empleados, loading, error, recargar, guardarDesempeño, promoverEmpleado }
+```
+
+Verificar: `app/promociones/page.tsx` compila sin cambios.
+
+### PASO 4 — Actualizar imports en `promociones.tsx`
+
+Añadir imports desde los nuevos archivos y eliminar las definiciones de tipos (líneas 52–115) y helpers (119–171). El componente principal ya no define nada de dominio.
+
+### PASO 5 — Extraer `prom-shared.tsx`
+
+Mover `AptitudBadge` (línea 175), `CriterioRow` (210), `SummaryCard` (400) a este archivo. Los exporta para que `prom-detalle-dialog.tsx` y `prom-promover-dialog.tsx` los consuman.
+
+### PASO 6 — Extraer `prom-desempeno-dialog.tsx`
+
+Props del componente:
+```typescript
+interface PromDesempenoDialogProps {
+  empleado: EmpleadoPromocion
+  open: boolean
+  isReadOnly: boolean
+  onClose: () => void
+  onGuardar: (calificacion: number, periodo: string) => Promise<void>
+}
+```
+- Estado local: `calificacion`, `periodo`, `error`, `guardando`
+- Supabase delegado a `onGuardar` (proviene de `usePromociones.guardarDesempeño`)
+- Usar `ResponsiveShell` + `ModalToolbar` de `@/components/ui/responsive-shell`
+
+### PASO 7 — Extraer `prom-detalle-dialog.tsx`
+
+Props:
+```typescript
+interface PromDetalleDialogProps {
+  empleado: EmpleadoPromocion | null
+  open: boolean
+  onClose: () => void
+}
+```
+Importa `AptitudBadge`, `CriterioRow` de `prom-shared`, utils de `@/lib/promociones/utils`. Usar `ResponsiveShell`.
+
+### PASO 8 — Extraer `prom-promover-dialog.tsx`
+
+Props:
+```typescript
+interface PromPromoverDialogProps {
+  empleado: EmpleadoPromocion | null
+  open: boolean
+  isReadOnly: boolean
+  onClose: () => void
+  onSoloGuardarExamen: (datos: ExamenDatos) => Promise<void>
+  onConfirmarPromocion: (datos: PromocionDatos) => Promise<void>
+}
+```
+- Corregir botón "Solo guardar examen" (líneas 747–774): convertir el `async onClick` inline en llamada a `onSoloGuardarExamen`
+- Importar `CriterioRow`, `AptitudBadge` de `prom-shared`
+
+### PASO 9 — Crear `usePromocionesImport.ts` y extraer `prom-import-tab.tsx`
+
+**Hook `usePromocionesImport.ts`** encapsula:
+- Los 8 `useState` de importación (líneas 819–827)
+- Los 2 `useRef` para inputs de archivo
+- `handleFileChange`, `handleDatosFileChange`, `handleCargarReglas`, `handleCargarDatos`
+- **Corregir cast inseguro:** `ev.target?.result as string` → validar `typeof result === "string"` antes de `JSON.parse`
+
+**Componente `prom-import-tab.tsx`** recibe el retorno del hook como props y renderiza los dos paneles de preview.
+
+### PASO 10 — Limpiar y optimizar `promociones.tsx`
+
+1. Añadir `useCallback` a `toggleExpand` (actualmente sin memoización)
+2. Reemplazar paginación manual (líneas 1538–1568) por `<PaginationBar>` de `@/components/ui/pagination-bar`
+3. Corregir `key={i}` en listas:
+   - `cursosRequeridos` → `key={curso.nombre}`
+   - Preview reglas JSON → `key={r["Puesto Actual"]}`
+   - Preview datos JSON → `key={r["N.N"]}`
+4. Eliminar `EmptyState` inline y convertirlo en función local pequeña o JSX directo
+
+---
+
+## Orden de dependencias
+
+```
+Paso 1 (types) ─┬─▶ Paso 3 (hook migra imports)
+Paso 2 (utils)  ┘        │
+                          ▼
+                    Paso 4 (promociones.tsx actualiza imports)
+                          │
+             ┌────────────┼────────────┐
+             ▼            ▼            ▼
+        Paso 5        Paso 6       Paso 7 + 8
+      (shared)     (detalle)   (desempeño + promover)
+             └────────────┼────────────┘
+                          ▼
+                      Paso 9 (import)
+                          │
+                          ▼
+                     Paso 10 (limpieza)
+```
+
+Los pasos 1 y 2 son paralelos. Los pasos 6, 7 y 8 son paralelos entre sí.
+
+---
+
+## Archivos críticos a modificar
+
+| Archivo | Acción |
+|---|---|
+| [components/content/promociones.tsx](components/content/promociones.tsx) | Reducir de 1,633 a ~320 líneas |
+| [lib/hooks/usePromociones.ts](lib/hooks/usePromociones.ts) | Cambiar import de tipos + añadir 2 mutaciones |
+| [components/ui/responsive-shell.tsx](components/ui/responsive-shell.tsx) | Consumir (no modificar) |
+| [components/ui/pagination-bar.tsx](components/ui/pagination-bar.tsx) | Consumir (no modificar) |
+
+**Archivos nuevos a crear:**
+- `lib/promociones/types.ts`
+- `lib/promociones/utils.ts`
+- `lib/hooks/usePromocionesImport.ts`
+- `components/content/prom-shared.tsx`
+- `components/content/prom-desempeno-dialog.tsx`
+- `components/content/prom-detalle-dialog.tsx`
+- `components/content/prom-promover-dialog.tsx`
+- `components/content/prom-import-tab.tsx`
+
+**No cambiar:** `app/promociones/page.tsx` — su API no varía.
+
+---
+
+## Verificación
+
+1. `npx tsc --noEmit` — cero errores TypeScript
+2. Navegar a `/promociones` — carga correctamente
+3. Filtrar y paginar — paginación se resetea al cambiar filtros
+4. Expandir fila desktop — cursos con íconos correcto/incorrecto
+5. Clic "Info" → `prom-detalle-dialog` abre con criterios
+6. Clic empleado habilitado → `prom-promover-dialog` confirma promoción y recarga
+7. Botón estrella en inhabilitado → `prom-desempeno-dialog` guarda y recarga
+8. Importar JSON de reglas → preview → confirmar → toast éxito
+9. Importar JSON de datos → preview → confirmar → toast éxito

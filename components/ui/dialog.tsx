@@ -30,8 +30,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { raw?: boolean }
+>(({ className, children, raw, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -66,27 +66,33 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      {/* Drag handle — solo en móvil */}
-      <div className="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-1">
-        <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
-      </div>
+      {raw ? (
+        children
+      ) : (
+        <>
+          {/* Drag handle — solo en móvil */}
+          <div className="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
+          </div>
 
-      {/* Área scrollable */}
-      <div
-        className="flex-1 overflow-y-auto overscroll-contain px-6 pt-1 sm:pt-6"
-        style={{
-          paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
-          scrollbarGutter: "stable",
-        }}
-      >
-        {children}
-      </div>
+          {/* Área scrollable */}
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain px-6 pt-1 sm:pt-6"
+            style={{
+              paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+              scrollbarGutter: "stable",
+            }}
+          >
+            {children}
+          </div>
 
-      {/* Botón cerrar */}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 opacity-60 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Cerrar</span>
-      </DialogPrimitive.Close>
+          {/* Botón cerrar */}
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 opacity-60 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Cerrar</span>
+          </DialogPrimitive.Close>
+        </>
+      )}
     </DialogPrimitive.Content>
   </DialogPortal>
 ))

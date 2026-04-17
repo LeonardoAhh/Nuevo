@@ -9,6 +9,9 @@ export type { BajaNotification, BajaNotificationInsert } from './useBajaNotifica
 export { useCapacitacion } from './useCapacitacion'
 export { useExamenes } from './useExamenes'
 export type { PreguntaExamen, PreguntaInsert, PreguntaUpdate } from './useExamenes'
+export { useGeneradorExamen, transicionesDesde, extraerCategoria, TRANSICION_ORDEN, TRANSICION_LABEL } from './useGeneradorExamen'
+export { useReglasCRUD } from './useGeneradorExamen'
+export type { EmpleadoBusqueda, Categoria, TransicionExamen, ExamenGenerado, ReglaExamen, TransicionKey } from './useGeneradorExamen'
 export { useNuevoIngreso } from './useNuevoIngreso'
 export { useCursos } from './useCursos'
 export type { Curso } from './useCursos'
@@ -30,3 +33,16 @@ export type {
   CourseProgress,
   EmployeeProgress,
 } from './useCapacitacion'
+export { usePromociones } from './usePromociones'
+export { usePromocionesImport } from './usePromocionesImport'
+export { useNotificationHistory, formatDateMX, formatDateTimeMX } from './useNotificationHistory'
+export type { TipoFilter } from './useNotificationHistory'
+export type {
+  AptitudStatus,
+  CursoRequerido,
+  ReglaPromocion,
+  EvaluacionDesempeño,
+  EmpleadoPromocion,
+  ReglaPromocionJSON,
+  DatosPromocionJSON,
+} from '@/lib/promociones/types'

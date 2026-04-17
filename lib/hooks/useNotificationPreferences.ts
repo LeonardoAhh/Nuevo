@@ -2,29 +2,17 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 export interface NotificationPreferences {
-  pushBajas: boolean
-  pushBajasWarning: boolean
-  emailBajas: boolean
-  emailProductUpdates: boolean
-  emailComments: boolean
-  emailMentions: boolean
-  emailMarketing: boolean
-  pushComments: boolean
-  pushMentions: boolean
-  pushDirectMessages: boolean
+  pushBajas: boolean          // Baja registrada al momento
+  pushBajasWarning: boolean   // Aviso anticipado de baja (3d, 1d, hoy)
+  pushRg: boolean             // RG-REC-048 próximo a vencer
+  pushContrato: boolean       // Término de contrato próximo
 }
 
 const defaultPreferences: NotificationPreferences = {
   pushBajas: true,
   pushBajasWarning: true,
-  emailBajas: false,
-  emailProductUpdates: false,
-  emailComments: true,
-  emailMentions: true,
-  emailMarketing: false,
-  pushComments: true,
-  pushMentions: true,
-  pushDirectMessages: true,
+  pushRg: true,
+  pushContrato: true,
 }
 
 export function useNotificationPreferences(userId?: string) {
@@ -56,14 +44,8 @@ export function useNotificationPreferences(userId?: string) {
         setPreferences({
           pushBajas: data.push_bajas ?? true,
           pushBajasWarning: data.push_bajas_warning ?? true,
-          emailBajas: data.email_bajas ?? false,
-          emailProductUpdates: data.email_product_updates,
-          emailComments: data.email_comments,
-          emailMentions: data.email_mentions,
-          emailMarketing: data.email_marketing,
-          pushComments: data.push_comments,
-          pushMentions: data.push_mentions,
-          pushDirectMessages: data.push_direct_messages,
+          pushRg: data.push_rg ?? true,
+          pushContrato: data.push_contrato ?? true,
         })
       }
     } catch (err) {
@@ -90,14 +72,8 @@ export function useNotificationPreferences(userId?: string) {
           user_id: userId,
           push_bajas: preferences.pushBajas,
           push_bajas_warning: preferences.pushBajasWarning,
-          email_bajas: preferences.emailBajas,
-          email_product_updates: preferences.emailProductUpdates,
-          email_comments: preferences.emailComments,
-          email_mentions: preferences.emailMentions,
-          email_marketing: preferences.emailMarketing,
-          push_comments: preferences.pushComments,
-          push_mentions: preferences.pushMentions,
-          push_direct_messages: preferences.pushDirectMessages,
+          push_rg: preferences.pushRg,
+          push_contrato: preferences.pushContrato,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' })
 

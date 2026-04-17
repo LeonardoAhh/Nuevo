@@ -9,14 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -291,42 +284,25 @@ export default function NotificationBell() {
       </Popover>
 
       {/* Create dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserMinus size={18} className="text-destructive" />
-              Nueva notificación de Baja
-            </DialogTitle>
-            <DialogDescription>
-              Ingresa el número del empleado para buscar sus datos
-              automáticamente.
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveShell
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        title="Nueva notificación de Baja"
+        description="Ingresa el número del empleado para buscar sus datos automáticamente."
+        maxWidth="sm:max-w-md"
+      >
+        <ModalToolbar
+          title="Nueva notificación de Baja"
+          subtitle="Busca por número de empleado"
+          saving={submitting}
+          onClose={() => { resetForm(); setDialogOpen(false) }}
+          onConfirm={handleCreate}
+          confirmDisabled={!form.employee_name.trim() || !form.fecha_baja || submitting}
+          confirmVariant="destructive"
+        />
 
-          {/* Botones arriba en móvil */}
-          <div className="grid grid-cols-2 gap-2 sm:hidden">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetForm()
-                setDialogOpen(false)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={
-                !form.employee_name.trim() || !form.fecha_baja || submitting
-              }
-              onClick={handleCreate}
-            >
-              {submitting ? "Guardando…" : "Registrar baja"}
-            </Button>
-          </div>
-
-          <div className="grid gap-4 py-2">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid gap-4">
             {/* Número de empleado — campo principal */}
             <div className="grid gap-2">
               <Label htmlFor="emp-num">
@@ -393,30 +369,8 @@ export default function NotificationBell() {
               />
             </div>
           </div>
-
-          {/* Botones en desktop (abajo) */}
-          <DialogFooter className="hidden sm:flex">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetForm()
-                setDialogOpen(false)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={
-                !form.employee_name.trim() || !form.fecha_baja || submitting
-              }
-              onClick={handleCreate}
-            >
-              {submitting ? "Guardando…" : "Registrar baja"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </ResponsiveShell>
     </>
   )
 }

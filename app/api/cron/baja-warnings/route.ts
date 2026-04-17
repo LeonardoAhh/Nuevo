@@ -89,13 +89,26 @@ export async function GET(request: Request) {
       || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
     const apiKey = process.env.PUSH_API_KEY
 
-    // Usuarios con rol admin o dev que tienen push habilitado
+    // Usuarios admin/dev con cada preferencia habilitada
     const { data: adminUsers } = await supabase
       .from("profiles")
       .select("user_id")
       .in("role", ["dev", "admin"])
 
-    const userIds = adminUsers?.map((p) => p.user_id) ?? []
+    const allAdminIds = adminUsers?.map((p) => p.user_id) ?? []
+
+    // Filtrar por preferencia individual
+    const { data: prefs } = await supabase
+      .from("notification_preferences")
+      .select("user_id, push_bajas, push_bajas_warning, push_rg, push_contrato")
+      .in("user_id", allAdminIds)
+
+    const usersFor = (key: "push_bajas" | "push_bajas_warning" | "push_rg" | "push_contrato") => {
+      // Usuarios con preferencia explícitamente desactivada se excluyen;
+      // los que no tienen registro reciben (default = true)
+      const disabled = new Set(prefs?.filter((p) => p[key] === false).map((p) => p.user_id) ?? [])
+      return allAdminIds.filter((id) => !disabled.has(id))
+    }
 
     const results = { bajas: 0, rg: 0, contratos: 0 }
 
@@ -119,7 +132,7 @@ export async function GET(request: Request) {
           `Baja ${label}`,
           `${baja.employee_name}${baja.employee_numero ? ` #${baja.employee_numero}` : ""} – Fecha de baja: ${baja.fecha_baja}`,
           `baja-${baja.id}-${daysBefore}d`,
-          userIds
+          daysBefore === 0 ? usersFor("push_bajas") : usersFor("push_bajas_warning")
         )
         if (sent) { await markSent(supabase, baja.id, "baja", daysBefore); results.bajas++ }
       }
@@ -146,7 +159,7 @@ export async function GET(request: Request) {
           `RG-REC-048 vence ${label}`,
           `${r.nombre} — ${r.puesto} · ${r.departamento}`,
           `rg-${r.id}-${daysBefore}d`,
-          userIds
+          usersFor("push_rg")
         )
         if (sent) { await markSent(supabase, r.id, "rg", daysBefore); results.rg++ }
       }
@@ -173,7 +186,7 @@ export async function GET(request: Request) {
           `Contrato vence ${label}`,
           `${r.nombre} — ${r.tipo_contrato} · ${r.departamento}`,
           `contrato-${r.id}-${daysBefore}d`,
-          userIds
+          usersFor("push_contrato")
         )
         if (sent) { await markSent(supabase, r.id, "contrato", daysBefore); results.contratos++ }
       }

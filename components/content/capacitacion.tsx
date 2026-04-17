@@ -1,109 +1,34 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import {
-  Upload,
-  FileJson,
-  Search,
-  BookOpen,
-  Briefcase,
-  Building2,
-  CheckCircle2,
-  AlertCircle,
-  ChevronRight,
-  ChevronLeft,
-  X,
-  RotateCcw,
-  ClipboardList,
-  AlertTriangle,
-  Clock,
-  XCircle,
-  Trash2,
-  Pencil,
-  UserPlus,
-  Plus,
-  Minus,
-  Layers,
-  Loader2,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect, useCallback } from "react"
+import { Briefcase, BookOpen, ClipboardList, Upload } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { useCapacitacion, useRole } from "@/lib/hooks"
-import type {
-  Department, Position, Course, ImportPreview,
-  CourseMatch, HistorialPreview, EmployeeCourse, Employee, EmployeeProgress, PositionCourse,
-} from "@/lib/hooks"
-import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
+import type { Department, Position, Course, PositionCourse, Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
-import { STATUS_META } from "@/lib/constants/status"
 import { toast } from "sonner"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers de UI
-// ─────────────────────────────────────────────────────────────────────────────
+// Existing dialogs
+import { CapEditEmployeeDialog }      from "@/components/content/cap-edit-employee-dialog"
+import { CapNewEmployeeDialog }       from "@/components/content/cap-new-employee-dialog"
+import { CapAddCoursesDialog }        from "@/components/content/cap-add-courses-dialog"
+import { CapConfirmClearDialog }      from "@/components/content/cap-confirm-clear-dialog"
+import { CapDeleteEmployeeDialog }    from "@/components/content/cap-delete-employee-dialog"
+import { CapPositionCoursesDialog }   from "@/components/content/cap-position-courses-dialog"
+import { CapEmployeeProgressDialog }  from "@/components/content/cap-employee-progress-dialog"
+import { CapNewPositionDialog }       from "@/components/content/cap-new-position-dialog"
+import { CapNewCourseDialog }         from "@/components/content/cap-new-course-dialog"
 
-function StatusBadge({ status }: { status: CourseMatch['status'] }) {
-  const meta = STATUS_META[status]
-  const Icon = meta.Icon
-  return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${meta.color} ${meta.bg} ${meta.border}`}>
-      <Icon className="h-3 w-3" />
-      {meta.label}
-    </span>
-  )
-}
+// Tab components
+import { CapPositionsTab }   from "@/components/content/cap-positions-tab"
+import { CapCoursesTab }     from "@/components/content/cap-courses-tab"
+import { CapHistorialTab }   from "@/components/content/cap-historial-tab"
+import { CapImportTab }      from "@/components/content/cap-import-tab"
+import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
 
-const NEW_COURSE_VALUE = '__new__'
-const PAGE_SIZE = 15
-
-function PaginationBar({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void }) {
-  const safePage = Math.min(currentPage, totalPages)
-  return (
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-sm text-muted-foreground">Página {safePage} de {totalPages}</span>
-      <div className="flex items-center gap-1">
-        <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => onPageChange(safePage - 1)} className="h-8 w-8 p-0">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1)
-          .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
-          .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-            if (idx > 0 && p - arr[idx - 1] > 1) acc.push('ellipsis')
-            acc.push(p)
-            return acc
-          }, [])
-          .map((item, idx) =>
-            item === 'ellipsis'
-              ? <span key={`e${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
-              : <Button key={item} variant={item === safePage ? 'default' : 'outline'} size="sm" onClick={() => onPageChange(item)} className="h-8 w-8 p-0 text-xs">{item}</Button>
-          )}
-        <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => onPageChange(safePage + 1)} className="h-8 w-8 p-0">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Componente principal
-// ─────────────────────────────────────────────────────────────────────────────
+// Hooks
+import { useBulkImport }  from "@/lib/hooks/useBulkImport"
+import { useJsonImport }  from "@/lib/hooks/useJsonImport"
 
 export default function CapacitacionContent() {
   const { isReadOnly } = useRole()
@@ -112,431 +37,108 @@ export default function CapacitacionContent() {
     parseJSON, importData,
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
-    clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee, addCoursesToEmployee, bulkImportCourseRecords,
+    clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee,
+    addCoursesToEmployee, bulkImportCourseRecords,
     createPosition, createCourse,
     addCourseToPosition, removeCourseFromPosition,
   } = useCapacitacion()
 
-  // ── Estado: Importar catálogo ─────────────────────────────────────────────
-  const [jsonText, setJsonText] = useState("")
-  const [preview, setPreview] = useState<ImportPreview | null>(null)
-  const [parseError, setParseError] = useState<string | null>(null)
-  const [importSuccess, setImportSuccess] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // ── Estado: Puestos ───────────────────────────────────────────────────────
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [positions, setPositions] = useState<Position[]>([])
-  const [selectedDept, setSelectedDept] = useState<string>("all")
-  const [posSearch, setPosSearch] = useState("")
-  const [loadingPositions, setLoadingPositions] = useState(false)
-  const [posPage, setPosPage] = useState(1)
-
-  // ── Estado: Cursos ────────────────────────────────────────────────────────
-  const [courses, setCourses] = useState<Course[]>([])
-  const [courseSearch, setCourseSearch] = useState("")
-  const [loadingCourses, setLoadingCourses] = useState(false)
-  const [coursePage, setCoursePage] = useState(1)
-
-  // ── Estado: Dialog cursos del puesto ─────────────────────────────────────
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
+  // ── Shared data ───────────────────────────────────────────────────────────
+  const [departments, setDepartments]   = useState<Department[]>([])
+  const [positions, setPositions]       = useState<Position[]>([])
+  const [courses, setCourses]           = useState<Course[]>([])
+  const [employees, setEmployees]       = useState<Employee[]>([])
+  const [empCourses, setEmpCourses]     = useState<EmployeeCourse[]>([])
   const [positionCourses, setPositionCourses] = useState<PositionCourse[]>([])
-  const [loadingDialog, setLoadingDialog] = useState(false)
+  const [progressMap, setProgressMap]   = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
 
-  // ── Estado: Asignar curso a puesto ────────────────────────────────────────
-  const [assignCourseId, setAssignCourseId] = useState("")
-  const [assignCourseSaving, setAssignCourseSaving] = useState(false)
-  const [assignCourseError, setAssignCourseError] = useState<string | null>(null)
-
-  // ── Estado: Nuevo puesto dialog ───────────────────────────────────────────
-  const [newPosOpen, setNewPosOpen] = useState(false)
-  const [newPosName, setNewPosName] = useState("")
-  const [newPosDeptId, setNewPosDeptId] = useState("")
-  const [newPosSaving, setNewPosSaving] = useState(false)
-  const [newPosError, setNewPosError] = useState<string | null>(null)
-
-  // ── Estado: Nuevo curso dialog ────────────────────────────────────────────
-  const [newCourseOpen, setNewCourseOpen] = useState(false)
-  const [newCourseName, setNewCourseName] = useState("")
-  const [newCourseSaving, setNewCourseSaving] = useState(false)
-  const [newCourseError, setNewCourseError] = useState<string | null>(null)
-
-  // ── Estado: Historial – empleados ─────────────────────────────────────────
-  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loadingPositions, setLoadingPositions] = useState(false)
+  const [loadingCourses, setLoadingCourses]     = useState(false)
   const [loadingEmployees, setLoadingEmployees] = useState(false)
-  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
-  const [empSearch, setEmpSearch] = useState("")
-  const [empFilterDept, setEmpFilterDept] = useState<string>("all")
-  const [empFilterTurno, setEmpFilterTurno] = useState<string>("all")
-  const [empPage, setEmpPage] = useState(1)
-  const [empDialogOpen, setEmpDialogOpen] = useState(false)
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [empCourses, setEmpCourses] = useState<EmployeeCourse[]>([])
-  const [empProgress, setEmpProgress] = useState<EmployeeProgress | null>(null)
-  const [loadingEmpCourses, setLoadingEmpCourses] = useState(false)
-  const [empDialogTab, setEmpDialogTab] = useState<'requeridos' | 'historial'>('requeridos')
+
+  // ── Position-courses dialog ───────────────────────────────────────────────
+  const [dialogOpen, setDialogOpen]           = useState(false)
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
+  const [posCoursesDlg, setPosCoursesDlg]     = useState<PositionCourse[]>([])
+  const [loadingPosDlg, setLoadingPosDlg]     = useState(false)
+  const [assignCourseId, setAssignCourseId]   = useState("")
+  const [assignSaving, setAssignSaving]       = useState(false)
+  const [assignError, setAssignError]         = useState<string | null>(null)
+
+  // ── New position / new course dialogs ────────────────────────────────────
+  const [newPosOpen, setNewPosOpen]     = useState(false)
+  const [newPosSaving, setNewPosSaving] = useState(false)
+  const [newCourseOpen, setNewCourseOpen]   = useState(false)
+  const [newCourseSaving, setNewCourseSaving] = useState(false)
+
+  // ── Employee-progress dialog ──────────────────────────────────────────────
+  const [empDlgOpen, setEmpDlgOpen]               = useState(false)
+  const [selectedEmp, setSelectedEmp]             = useState<Employee | null>(null)
+  const [selectedEmpCourses, setSelectedEmpCourses] = useState<EmployeeCourse[]>([])
+  const [empProgress, setEmpProgress]             = useState<EmployeeProgress | null>(null)
+  const [loadingEmpDlg, setLoadingEmpDlg]         = useState(false)
+  const [empDlgTab, setEmpDlgTab]                 = useState<'requeridos' | 'historial'>('requeridos')
+
+  // ── Employee CRUD dialogs ─────────────────────────────────────────────────
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
-  const [deleteEmpTarget, setDeleteEmpTarget] = useState<Employee | null>(null)
-  const [deletingEmp, setDeletingEmp] = useState(false)
-  const [deleteEmpError, setDeleteEmpError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget]         = useState<Employee | null>(null)
+  const [deletingSaving, setDeletingSaving]     = useState(false)
+  const [deleteError, setDeleteError]           = useState<string | null>(null)
 
-  // ── Estado: Editar empleado dialog ────────────────────────────────────────
-  const [editEmpOpen, setEditEmpOpen] = useState(false)
+  const [editEmpOpen, setEditEmpOpen]   = useState(false)
   const [editEmpTarget, setEditEmpTarget] = useState<Employee | null>(null)
-  const [editEmpForm, setEditEmpForm] = useState({ numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '', evaluacion_desempeno: '' })
   const [editEmpSaving, setEditEmpSaving] = useState(false)
-  const [editEmpError, setEditEmpError] = useState<string | null>(null)
 
-  const openEditEmpDlg = (emp: Employee) => {
-    setEditEmpTarget(emp)
-    setEditEmpForm({
-      numero:        emp.numero ?? '',
-      nombre:        emp.nombre,
-      departamento:  emp.departamento ?? '',
-      area:          emp.area ?? '',
-      puesto:        emp.puesto ?? '',
-      turno:         emp.turno ?? '',
-      fecha_ingreso: emp.fecha_ingreso ?? '',
-      jefe_directo:  emp.jefe_directo ?? '',
-      evaluacion_desempeno: emp.evaluacion_desempeno ?? '',
-    })
-    setEditEmpError(null)
-    setEditEmpOpen(true)
-  }
-
-  const handleSaveEditEmp = async () => {
-    if (!editEmpTarget) return
-    if (!editEmpForm.nombre.trim()) { setEditEmpError('El nombre es requerido'); return }
-    setEditEmpSaving(true); setEditEmpError(null)
-    const result = await updateEmployee(editEmpTarget.id, {
-      numero:        editEmpForm.numero.trim() || null,
-      nombre:        editEmpForm.nombre.trim(),
-      puesto:        editEmpForm.puesto || null,
-      departamento:  editEmpForm.departamento || null,
-      area:          editEmpForm.area || null,
-      turno:         editEmpForm.turno || null,
-      fecha_ingreso: editEmpForm.fecha_ingreso || null,
-      jefe_directo:  editEmpForm.jefe_directo || null,
-      evaluacion_desempeno: editEmpForm.evaluacion_desempeno.trim() || null,
-    })
-    setEditEmpSaving(false)
-    if (result.success) {
-      setEditEmpOpen(false)
-      setEditEmpTarget(null)
-      loadEmployees()
-      toast.success('Empleado actualizado')
-    } else {
-      setEditEmpError(result.error ?? 'Error al guardar')
-      toast.error(result.error ?? 'Error al actualizar')
-    }
-  }
-
-  const editEmpAreas   = editEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[editEmpForm.departamento]?.areas   ?? []) : []
-  const editEmpPuestos = editEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[editEmpForm.departamento]?.puestos ?? []) : []
-
-  // ── Estado: Nuevo empleado dialog ─────────────────────────────────────────
-  type NewEmpCourseRow = { course_id: string; course_name: string; fecha_aplicacion: string; calificacion: string }
-  const EMPTY_EMP = { numero: '', nombre: '', departamento: '', area: '', puesto: '', turno: '', fecha_ingreso: '', jefe_directo: '', evaluacion_desempeno: '' }
-  const [newEmpOpen, setNewEmpOpen] = useState(false)
-  const [newEmpStep, setNewEmpStep] = useState<1 | 2>(1)
-  const [newEmpForm, setNewEmpForm] = useState(EMPTY_EMP)
-  const [newEmpCourseRows, setNewEmpCourseRows] = useState<NewEmpCourseRow[]>([])
+  const [newEmpOpen, setNewEmpOpen]     = useState(false)
   const [newEmpSaving, setNewEmpSaving] = useState(false)
-  const [newEmpError, setNewEmpError] = useState<string | null>(null)
   const [newEmpSuccess, setNewEmpSuccess] = useState(false)
 
-  const newEmpAreas   = newEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[newEmpForm.departamento]?.areas   ?? []) : []
-  const newEmpPuestos = newEmpForm.departamento ? (CATALOGO_ORGANIZACIONAL[newEmpForm.departamento]?.puestos ?? []) : []
-
-  const resetNewEmp = () => {
-    setNewEmpStep(1); setNewEmpForm(EMPTY_EMP); setNewEmpCourseRows([]); setNewEmpError(null)
-  }
-
-  const handleNewEmpNext = () => {
-    if (!newEmpForm.nombre.trim()) { setNewEmpError('El nombre del empleado es requerido'); return }
-    setNewEmpError(null); setNewEmpStep(2)
-    if (courses.length === 0) loadCoursesData()
-  }
-
-  const handleSaveNewEmp = async () => {
-    setNewEmpSaving(true); setNewEmpError(null)
-    const result = await createEmployeeManual(
-      {
-        numero:        newEmpForm.numero.trim() || null,
-        nombre:        newEmpForm.nombre.trim(),
-        puesto:        newEmpForm.puesto || null,
-        departamento:  newEmpForm.departamento || null,
-        area:          newEmpForm.area || null,
-        turno:         newEmpForm.turno || null,
-        fecha_ingreso: newEmpForm.fecha_ingreso || null,
-        jefe_directo:  newEmpForm.jefe_directo || null,
-        evaluacion_desempeno: newEmpForm.evaluacion_desempeno.trim() || null,
-      },
-      newEmpCourseRows
-        .filter(r => r.course_id)
-        .map(r => ({
-          course_id:        r.course_id,
-          course_name:      r.course_name,
-          fecha_aplicacion: r.fecha_aplicacion || null,
-          calificacion:     r.calificacion ? (parseInt(r.calificacion) || null) : null,
-        }))
-    )
-    setNewEmpSaving(false)
-    if (result.success) {
-      setNewEmpOpen(false); resetNewEmp(); setNewEmpSuccess(true); setEmpSearch(''); loadEmployees()
-      toast.success('Empleado creado')
-    } else {
-      setNewEmpError(result.error ?? 'Error al guardar')
-      toast.error(result.error ?? 'Error al crear empleado')
-    }
-  }
-
-  const addCourseRow = () =>
-    setNewEmpCourseRows(prev => [...prev, { course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
-
-  const removeCourseRow = (i: number) =>
-    setNewEmpCourseRows(prev => prev.filter((_, idx) => idx !== i))
-
-  const updateCourseRow = (i: number, field: keyof NewEmpCourseRow, value: string) =>
-    setNewEmpCourseRows(prev => prev.map((r, idx) => {
-      if (idx !== i) return r
-      if (field === 'course_id') {
-        const course = courses.find(c => c.id === value)
-        return { ...r, course_id: value, course_name: course?.name ?? '' }
-      }
-      return { ...r, [field]: value }
-    }))
-
-  // ── Estado: Carga masiva de cursos ────────────────────────────────────────
-  type BulkCourseRow = {
-    id: number
-    numero: string
-    employeeId: string | null
-    employeeName: string
-    cursoRaw: string
-    courseId: string | null
-    fecha: string
-    calificacion: string
-  }
-  const [bulkOpen, setBulkOpen] = useState(false)
-  const [bulkText, setBulkText] = useState('')
-  const [bulkParseError, setBulkParseError] = useState<string | null>(null)
-  const [bulkRows, setBulkRows] = useState<BulkCourseRow[]>([])
-  const [bulkSaving, setBulkSaving] = useState(false)
-  const [bulkError, setBulkError] = useState<string | null>(null)
-  const [bulkSuccess, setBulkSuccess] = useState<number | null>(null)
-  const bulkFileRef = useRef<HTMLInputElement>(null)
-
-  // ── Estado: Agregar cursos a empleado existente ────────────────────────────
   const [addCoursesDlgOpen, setAddCoursesDlgOpen] = useState(false)
-  const [addCoursesDlgEmp, setAddCoursesDlgEmp] = useState<Employee | null>(null)
-  const [addCoursesRows, setAddCoursesRows] = useState<NewEmpCourseRow[]>([{ course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
-  const [addCoursesSaving, setAddCoursesSaving] = useState(false)
-  const [addCoursesError, setAddCoursesError] = useState<string | null>(null)
+  const [addCoursesDlgEmp, setAddCoursesDlgEmp]   = useState<Employee | null>(null)
+  const [addCoursesSaving, setAddCoursesSaving]   = useState(false)
   const [addCoursesSuccess, setAddCoursesSuccess] = useState(false)
 
-  const openAddCoursesDlg = (emp: Employee) => {
-    setAddCoursesDlgEmp(emp)
-    setAddCoursesRows([{ course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
-    setAddCoursesError(null)
-    setAddCoursesDlgOpen(true)
-    if (courses.length === 0) loadCoursesData()
-  }
+  // ── Feature hooks ─────────────────────────────────────────────────────────
+  const jsonImport = useJsonImport({ parseJSON, importData })
 
-  const handleSaveAddCourses = async () => {
-    if (!addCoursesDlgEmp) return
-    const valid = addCoursesRows.filter(r => r.course_id)
-    if (valid.length === 0) { setAddCoursesError('Selecciona al menos un curso'); return }
-    setAddCoursesSaving(true); setAddCoursesError(null)
-    const result = await addCoursesToEmployee(
-      addCoursesDlgEmp.id,
-      valid.map(r => ({
-        course_id: r.course_id,
-        course_name: r.course_name,
-        fecha_aplicacion: r.fecha_aplicacion || null,
-        calificacion: r.calificacion ? (parseInt(r.calificacion) || null) : null,
-      }))
-    )
-    setAddCoursesSaving(false)
-    if (result.success) {
-      setAddCoursesDlgOpen(false); setAddCoursesSuccess(true)
-    } else {
-      setAddCoursesError(result.error ?? 'Error al guardar')
-    }
-  }
+  // ── Data loaders ──────────────────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadCoursesData = useCallback(async () => {
+    setLoadingCourses(true)
+    try { setCourses(await fetchCourses()) }
+    catch (err) { console.error("Error loading courses:", err) }
+    finally { setLoadingCourses(false) }
+  }, [])
 
-  const addAddCoursesRow = () =>
-    setAddCoursesRows(prev => [...prev, { course_id: '', course_name: '', fecha_aplicacion: '', calificacion: '' }])
-
-  const removeAddCoursesRow = (i: number) =>
-    setAddCoursesRows(prev => prev.filter((_, idx) => idx !== i))
-
-  const updateAddCoursesRow = (i: number, field: keyof NewEmpCourseRow, value: string) =>
-    setAddCoursesRows(prev => prev.map((r, idx) => {
-      if (idx !== i) return r
-      if (field === 'course_id') {
-        const course = courses.find(c => c.id === value)
-        return { ...r, course_id: value, course_name: course?.name ?? '' }
-      }
-      return { ...r, [field]: value }
-    }))
-
-  // ── Helpers: normalizar fechas ─────────────────────────────────────────────
-  const normalizeDateToISO = (raw: string): string => {
-    if (!raw) return ''
-    // Already YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
-    // DD/MM/YYYY or DD-MM-YYYY
-    const dmy = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/)
-    if (dmy) {
-      const [, d, m, y] = dmy
-      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
-    }
-    // YYYY/MM/DD
-    const ymd = raw.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/)
-    if (ymd) {
-      const [, y, m, d] = ymd
-      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
-    }
-    // Try native Date parse as fallback
-    const d = new Date(raw)
-    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
-    return raw
-  }
-
-  // ── Handlers: Carga masiva de cursos ─────────────────────────────────────
-  const parseBulkJSON = (text: string) => {
-    setBulkParseError(null)
-    try {
-      const parsed = JSON.parse(text)
-      const arr: any[] = Array.isArray(parsed) ? parsed : [parsed]
-      if (arr.length === 0) throw new Error('El JSON está vacío')
-      const rows: BulkCourseRow[] = arr.map((item, i) => {
-        const numero    = String(item.numero ?? item.nn ?? item.NN ?? '').trim()
-        const cursoRaw  = String(item.curso ?? item.course ?? item.Curso ?? '').trim()
-        const fechaRaw  = String(item.fecha ?? item.date ?? item.Fecha ?? '').trim()
-        const fecha     = normalizeDateToISO(fechaRaw)
-        const calificacion = String(item.calificacion ?? item.Calificacion ?? item.score ?? '').trim()
-        const emp    = employees.find(e => (e.numero ?? '') === numero && numero !== '')
-        const course = courses.find(c => c.name === cursoRaw)
-                    ?? courses.find(c => c.name.toLowerCase() === cursoRaw.toLowerCase())
-        return { id: i, numero, employeeId: emp?.id ?? null, employeeName: emp?.nombre ?? '', cursoRaw, courseId: course?.id ?? null, fecha, calificacion }
+  const loadProgressInBackground = useCallback(async (emps: Employee[]) => {
+    const BATCH = 8
+    for (let i = 0; i < emps.length; i += BATCH) {
+      const batch   = emps.slice(i, i + BATCH)
+      const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
+      const chunk: Record<string, { aprobados: number; reprobados: number; total: number }> = {}
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled')
+          chunk[batch[idx].id] = { aprobados: r.value.aprobados, reprobados: r.value.reprobados, total: r.value.totalRequired }
       })
-      setBulkRows(rows)
-    } catch (err) {
-      setBulkParseError(err instanceof Error ? err.message : 'JSON inválido')
-      setBulkRows([])
+      setProgressMap(prev => ({ ...prev, ...chunk }))
     }
-  }
+  }, [fetchEmployeeProgress])
 
-  const handleBulkParse = () => {
-    if (courses.length === 0) loadCoursesData()
-    parseBulkJSON(bulkText)
-  }
-
-  const handleBulkFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const text = ev.target?.result as string
-      setBulkText(text)
-      setBulkParseError(null)
-      setBulkRows([])
-    }
-    reader.readAsText(file)
-    if (bulkFileRef.current) bulkFileRef.current.value = ''
-  }
-
-  const updateBulkRow = (id: number, field: 'numero' | 'fecha' | 'calificacion', value: string) => {
-    setBulkRows(prev => prev.map(r => {
-      if (r.id !== id) return r
-      const updated = { ...r, [field]: value }
-      if (field === 'numero') {
-        const emp = employees.find(e => (e.numero ?? '') === value && value !== '')
-        updated.employeeId = emp?.id ?? null
-        updated.employeeName = emp?.nombre ?? ''
-      }
-      return updated
-    }))
-  }
-
-  const selectBulkRowCourse = (id: number, courseId: string) => {
-    setBulkRows(prev => prev.map(r => {
-      if (r.id !== id) return r
-      const course = courses.find(c => c.id === courseId)
-      return { ...r, courseId: courseId || null, cursoRaw: course?.name ?? r.cursoRaw }
-    }))
-  }
-
-  const handleBulkImport = async () => {
-    const valid = bulkRows.filter(r => r.employeeId && r.courseId)
-    if (valid.length === 0) { setBulkError('No hay registros válidos con empleado y curso resueltos'); toast.error('No hay registros válidos con empleado y curso resueltos'); return }
-    setBulkSaving(true); setBulkError(null)
-    const records = valid.map(r => ({
-      employee_id:      r.employeeId!,
-      course_id:        r.courseId!,
-      raw_course_name:  r.cursoRaw,
-      fecha_aplicacion: r.fecha || null,
-      calificacion:     r.calificacion ? (parseInt(r.calificacion) || null) : null,
-    }))
-    const result = await bulkImportCourseRecords(records)
-    setBulkSaving(false)
-    if (result.success) {
-      setBulkSuccess(result.inserted)
-      setBulkRows([])
-      setBulkText('')
-      toast.success(`${result.inserted} registros importados correctamente`)
-    } else {
-      setBulkError(result.error ?? 'Error al importar')
-      toast.error(result.error ?? 'Error al importar')
-    }
-  }
-
-  // ── Handlers: Importar catálogo ───────────────────────────────────────────
-  const handleParse = useCallback(() => {
-    setParseError(null); setPreview(null); setImportSuccess(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadEmployees = useCallback(async () => {
+    setLoadingEmployees(true)
     try {
-      const parsed = JSON.parse(jsonText)
-      const arr = Array.isArray(parsed) ? parsed : [parsed]
-      if (arr.length === 0) throw new Error("El JSON está vacío")
-      setPreview(parseJSON(arr))
+      const emps = await fetchEmployees()
+      setEmployees(emps)
+      setLoadingEmployees(false)
+      loadProgressInBackground(emps)
     } catch (err) {
-      setParseError(err instanceof Error ? err.message : "JSON inválido")
+      console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
+      setLoadingEmployees(false)
     }
-  }, [jsonText, parseJSON])
+  }, [loadProgressInBackground])
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string
-      setJsonText(text); setParseError(null); setPreview(null); setImportSuccess(false)
-      try {
-        const parsed = JSON.parse(text)
-        setPreview(parseJSON(Array.isArray(parsed) ? parsed : [parsed]))
-      } catch { setParseError("No se pudo parsear el archivo JSON") }
-    }
-    reader.readAsText(file)
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }
-
-  const handleImport = async () => {
-    if (!preview) return
-    const result = await importData(preview)
-    if (result.success) {
-      setImportSuccess(true); setPreview(null); setJsonText("")
-      toast.success('Catálogo importado correctamente')
-    } else {
-      toast.error(result.error ?? 'Error al importar catálogo')
-    }
-  }
-
-  const handleReset = () => { setJsonText(""); setPreview(null); setParseError(null); setImportSuccess(false) }
-
-  // ── Handlers: Puestos ─────────────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadPositionData = useCallback(async () => {
     setLoadingPositions(true)
     try {
@@ -548,2133 +150,365 @@ export default function CapacitacionContent() {
 
   useEffect(() => { loadPositionData() }, [loadPositionData])
 
-  const filteredPositions = positions.filter(p => {
-    const matchesDept = selectedDept === "all" || p.department_id === selectedDept
-    const matchesSearch =
-      p.name.toLowerCase().includes(posSearch.toLowerCase()) ||
-      (p.department as any)?.name?.toLowerCase().includes(posSearch.toLowerCase())
-    return matchesDept && matchesSearch
-  })
+  const bulkImport = useBulkImport({ employees, courses, bulkImportCourseRecords, onLoadCourses: loadCoursesData })
 
-  const posTotalPages = Math.max(1, Math.ceil(filteredPositions.length / PAGE_SIZE))
-  const posSafePage = Math.min(posPage, posTotalPages)
-  const paginatedPositions = filteredPositions.slice((posSafePage - 1) * PAGE_SIZE, posSafePage * PAGE_SIZE)
-  useEffect(() => { setPosPage(1) }, [posSearch, selectedDept])
+  // ── Tab change ────────────────────────────────────────────────────────────
+  const handleTabChange = useCallback(async (v: string) => {
+    if (v === "cursos") {
+      loadCoursesData()
+      setLoadingEmployees(true)
+      try {
+        const [emps, poss] = await Promise.all([fetchEmployees(), fetchPositions()])
+        setEmployees(emps); setPositions(poss)
+        const allPosCourses = (await Promise.all(poss.map(p => fetchPositionCourses(p.id)))).flat()
+        setPositionCourses(allPosCourses)
+        const allEmpCourses = (await Promise.all(emps.map(e => fetchEmployeeCourses(e.id)))).flat()
+        setEmpCourses(allEmpCourses)
+      } catch {
+        setEmployees([]); setEmpCourses([]); setPositions([]); setPositionCourses([])
+      } finally {
+        setLoadingEmployees(false)
+      }
+    }
+    if (v === "historial") loadEmployees()
+  }, [loadCoursesData, loadEmployees, fetchEmployees, fetchPositions, fetchPositionCourses, fetchEmployeeCourses])
 
-  const handleViewCourses = async (position: Position) => {
-    setSelectedPosition(position); setDialogOpen(true); setLoadingDialog(true)
-    setAssignCourseId(''); setAssignCourseError(null)
-    if (courses.length === 0) loadCoursesData()
-    try { setPositionCourses(await fetchPositionCourses(position.id)) }
-    catch (err) { console.error("Error loading courses:", err) }
-    finally { setLoadingDialog(false) }
-  }
-
-  const reloadPositionCourses = async () => {
+  // ── Position handlers ─────────────────────────────────────────────────────
+  const reloadPosCoursesDlg = useCallback(async () => {
     if (!selectedPosition) return
-    try { setPositionCourses(await fetchPositionCourses(selectedPosition.id)) }
-    catch (err) { console.error("Error reloading courses:", err) }
-  }
+    try { setPosCoursesDlg(await fetchPositionCourses(selectedPosition.id)) }
+    catch (err) { console.error(err) }
+  }, [selectedPosition, fetchPositionCourses])
 
-  const handleAssignCourse = async () => {
+  const handleViewCourses = useCallback(async (pos: Position) => {
+    setSelectedPosition(pos); setDialogOpen(true); setLoadingPosDlg(true)
+    setAssignCourseId(''); setAssignError(null)
+    if (courses.length === 0) loadCoursesData()
+    try { setPosCoursesDlg(await fetchPositionCourses(pos.id)) }
+    catch (err) { console.error(err) }
+    finally { setLoadingPosDlg(false) }
+  }, [courses.length, loadCoursesData, fetchPositionCourses])
+
+  const handleAssignCourse = useCallback(async () => {
     if (!assignCourseId || !selectedPosition) return
-    const alreadyAssigned = positionCourses.some(pc => pc.course_id === assignCourseId)
-    if (alreadyAssigned) { setAssignCourseError('Este curso ya está asignado al puesto'); return }
-    setAssignCourseSaving(true); setAssignCourseError(null)
-    const nextOrder = positionCourses.length > 0
-      ? Math.max(...positionCourses.map(pc => pc.order_index)) + 1
-      : 1
+    if (posCoursesDlg.some(pc => pc.course_id === assignCourseId)) {
+      setAssignError('Este curso ya está asignado al puesto'); return
+    }
+    setAssignSaving(true); setAssignError(null)
+    const nextOrder = posCoursesDlg.length > 0 ? Math.max(...posCoursesDlg.map(pc => pc.order_index)) + 1 : 1
     const result = await addCourseToPosition(selectedPosition.id, assignCourseId, nextOrder)
-    setAssignCourseSaving(false)
+    setAssignSaving(false)
     if (result.success) {
-      setAssignCourseId('')
-      await reloadPositionCourses()
+      setAssignCourseId(''); await reloadPosCoursesDlg()
       toast.success('Curso asignado correctamente')
     } else {
-      setAssignCourseError(result.error ?? 'Error al asignar curso')
+      setAssignError(result.error ?? 'Error al asignar curso')
       toast.error(result.error ?? 'Error al asignar curso')
     }
-  }
+  }, [assignCourseId, selectedPosition, posCoursesDlg, addCourseToPosition, reloadPosCoursesDlg])
 
-  const handleRemoveCourseFromPosition = async (positionCourseId: string) => {
-    const result = await removeCourseFromPosition(positionCourseId)
-    if (result.success) {
-      await reloadPositionCourses()
-      toast.success('Curso quitado')
-    } else {
-      toast.error(result.error ?? 'Error al quitar curso')
-    }
-  }
+  const handleRemoveCourseFromPos = useCallback(async (id: string) => {
+    const result = await removeCourseFromPosition(id)
+    if (result.success) { await reloadPosCoursesDlg(); toast.success('Curso quitado') }
+    else toast.error(result.error ?? 'Error al quitar curso')
+  }, [removeCourseFromPosition, reloadPosCoursesDlg])
 
-  // ── Handlers: Cursos ──────────────────────────────────────────────────────
-  const loadCoursesData = useCallback(async () => {
-    setLoadingCourses(true)
-    try { setCourses(await fetchCourses()) }
-    catch (err) { console.error("Error loading courses:", err) }
-    finally { setLoadingCourses(false) }
-  }, [])
-
-  const filteredCourses = courses.filter(c =>
-    c.name.toLowerCase().includes(courseSearch.toLowerCase())
-  )
-
-  const courseTotalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE))
-  const courseSafePage = Math.min(coursePage, courseTotalPages)
-  const paginatedCourses = filteredCourses.slice((courseSafePage - 1) * PAGE_SIZE, courseSafePage * PAGE_SIZE)
-  useEffect(() => { setCoursePage(1) }, [courseSearch])
-
-  // ── Handlers: Nuevo puesto ────────────────────────────────────────────────
-  const handleSaveNewPos = async () => {
-    if (!newPosName.trim()) { setNewPosError('El nombre del puesto es requerido'); return }
-    if (!newPosDeptId) { setNewPosError('Selecciona un departamento'); return }
-    setNewPosSaving(true); setNewPosError(null)
-    const result = await createPosition(newPosName, newPosDeptId)
+  const handleSaveNewPos = useCallback(async (name: string, departmentId: string) => {
+    setNewPosSaving(true)
+    const result = await createPosition(name, departmentId)
     setNewPosSaving(false)
-    if (result.success) {
-      setNewPosOpen(false); setNewPosName(''); setNewPosDeptId('')
-      loadPositionData()
-      toast.success('Puesto creado correctamente')
-    } else {
-      setNewPosError(result.error ?? 'Error al crear puesto')
-      toast.error(result.error ?? 'Error al crear puesto')
-    }
-  }
+    if (result.success) { setNewPosOpen(false); loadPositionData(); toast.success('Puesto creado correctamente') }
+    else toast.error(result.error ?? 'Error al crear puesto')
+  }, [createPosition, loadPositionData])
 
-  // ── Handlers: Nuevo curso ─────────────────────────────────────────────────
-  const handleSaveNewCourse = async () => {
-    if (!newCourseName.trim()) { setNewCourseError('El nombre del curso es requerido'); return }
-    setNewCourseSaving(true); setNewCourseError(null)
-    const result = await createCourse(newCourseName)
+  const handleSaveNewCourse = useCallback(async (name: string) => {
+    setNewCourseSaving(true)
+    const result = await createCourse(name)
     setNewCourseSaving(false)
-    if (result.success) {
-      setNewCourseOpen(false); setNewCourseName('')
-      loadCoursesData()
-      toast.success('Curso creado correctamente')
-    } else {
-      setNewCourseError(result.error ?? 'Error al crear curso')
-      toast.error(result.error ?? 'Error al crear curso')
-    }
-  }
+    if (result.success) { setNewCourseOpen(false); loadCoursesData(); toast.success('Curso creado correctamente') }
+    else toast.error(result.error ?? 'Error al crear curso')
+  }, [createCourse, loadCoursesData])
 
-  const handleClearHistorial = async () => {
-    const result = await clearHistorial()
-    if (result.success) {
-      setConfirmClearOpen(false)
-      setEmployees([])
-      toast.success(`Historial eliminado (${employees.length} empleados)`)
-    } else {
-      toast.error(result.error ?? 'Error al eliminar historial')
-    }
-  }
-
-  // ── Handlers: Empleados ───────────────────────────────────────────────────
-  const loadProgressInBackground = useCallback(async (emps: Employee[]) => {
-    const batchSize = 8
-    for (let i = 0; i < emps.length; i += batchSize) {
-      const batch = emps.slice(i, i + batchSize)
-      const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
-      const chunk: Record<string, { aprobados: number; reprobados: number; total: number }> = {}
-      results.forEach((r, idx) => {
-        if (r.status === 'fulfilled') {
-          chunk[batch[idx].id] = { aprobados: r.value.aprobados, reprobados: r.value.reprobados, total: r.value.totalRequired }
-        }
-      })
-      setProgressMap(prev => ({ ...prev, ...chunk }))
-    }
-  }, [fetchEmployeeProgress])
-
-  const loadEmployees = useCallback(async () => {
-    setLoadingEmployees(true)
+  // ── Employee handlers ─────────────────────────────────────────────────────
+  const handleViewEmployee = useCallback(async (emp: Employee) => {
+    setSelectedEmp(emp); setEmpDlgOpen(true)
+    setLoadingEmpDlg(true); setEmpProgress(null); setSelectedEmpCourses([])
+    setEmpDlgTab('requeridos')
     try {
-      const emps = await fetchEmployees()
-      setEmployees(emps)
-      setLoadingEmployees(false)
-      // Carga el progreso en segundo plano (no bloquea la tabla)
-      loadProgressInBackground(emps)
-    } catch (err) {
-      console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
-      setLoadingEmployees(false)
-    }
-  }, [loadProgressInBackground])
+      const [c, p] = await Promise.all([fetchEmployeeCourses(emp.id), fetchEmployeeProgress(emp)])
+      setSelectedEmpCourses(c); setEmpProgress(p)
+    } catch (err) { console.error(err) }
+    finally { setLoadingEmpDlg(false) }
+  }, [fetchEmployeeCourses, fetchEmployeeProgress])
 
-  const handleViewEmployee = async (emp: Employee) => {
-    setSelectedEmployee(emp)
-    setEmpDialogOpen(true)
-    setLoadingEmpCourses(true)
-    setEmpProgress(null)
-    setEmpCourses([])
-    setEmpDialogTab('requeridos')
-    try {
-      const [courses, progress] = await Promise.all([
-        fetchEmployeeCourses(emp.id),
-        fetchEmployeeProgress(emp),
-      ])
-      setEmpCourses(courses)
-      setEmpProgress(progress)
-    } catch (err) {
-      console.error("Error loading employee data:", err instanceof Error ? err.message : JSON.stringify(err))
-    } finally {
-      setLoadingEmpCourses(false)
-    }
-  }
-
-  const filteredEmployees = employees
-    .filter(e =>
-      e.nombre.toLowerCase().includes(empSearch.toLowerCase()) ||
-      (e.numero ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
-      (e.departamento ?? '').toLowerCase().includes(empSearch.toLowerCase()) ||
-      (e.puesto ?? '').toLowerCase().includes(empSearch.toLowerCase())
-    )
-    .filter(e => empFilterDept === 'all' || (e.departamento ?? '') === empFilterDept)
-    .filter(e => empFilterTurno === 'all' || (e.turno ?? '') === empFilterTurno)
-    .sort((a, b) => {
-      const na = parseInt(a.numero ?? '0', 10)
-      const nb = parseInt(b.numero ?? '0', 10)
-      return nb - na
+  const handleSaveEditEmp = useCallback(async (form: {
+    numero: string; nombre: string; departamento: string; area: string;
+    puesto: string; turno: string; fecha_ingreso: string; jefe_directo: string; evaluacion_desempeno: string
+  }) => {
+    if (!editEmpTarget) return
+    setEditEmpSaving(true)
+    const result = await updateEmployee(editEmpTarget.id, {
+      numero: form.numero.trim() || null, nombre: form.nombre.trim(),
+      puesto: form.puesto || null, departamento: form.departamento || null,
+      area: form.area || null, turno: form.turno || null,
+      fecha_ingreso: form.fecha_ingreso || null, jefe_directo: form.jefe_directo || null,
+      evaluacion_desempeno: form.evaluacion_desempeno.trim() || null,
     })
+    setEditEmpSaving(false)
+    if (result.success) {
+      setEditEmpOpen(false); setEditEmpTarget(null); loadEmployees()
+      toast.success('Empleado actualizado')
+    } else {
+      toast.error(result.error ?? 'Error al actualizar')
+    }
+  }, [editEmpTarget, updateEmployee, loadEmployees])
 
-  const empTotalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE))
-  const empSafePage = Math.min(empPage, empTotalPages)
-  const paginatedEmployees = filteredEmployees.slice((empSafePage - 1) * PAGE_SIZE, empSafePage * PAGE_SIZE)
-  useEffect(() => { setEmpPage(1) }, [empSearch, empFilterDept, empFilterTurno])
+  const handleSaveNewEmp = useCallback(async (
+    emp: { numero: string; nombre: string; puesto: string; departamento: string; area: string; turno: string; fecha_ingreso: string; jefe_directo: string; evaluacion_desempeno: string },
+    courseRows: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
+  ) => {
+    setNewEmpSaving(true)
+    const result = await createEmployeeManual(
+      {
+        numero: emp.numero.trim() || null, nombre: emp.nombre.trim(),
+        puesto: emp.puesto || null, departamento: emp.departamento || null,
+        area: emp.area || null, turno: emp.turno || null,
+        fecha_ingreso: emp.fecha_ingreso || null, jefe_directo: emp.jefe_directo || null,
+        evaluacion_desempeno: emp.evaluacion_desempeno.trim() || null,
+      },
+      courseRows.map(r => ({ course_id: r.course_id, course_name: r.course_name, fecha_aplicacion: r.fecha_aplicacion, calificacion: r.calificacion }))
+    )
+    setNewEmpSaving(false)
+    if (result.success) { setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(); toast.success('Empleado creado') }
+    else toast.error(result.error ?? 'Error al crear empleado')
+  }, [createEmployeeManual, loadEmployees])
 
-  // ── Grupos de matches ─────────────────────────────────────────────────────
-  // ─────────────────────────────────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────────────────────────────────
+  const handleSaveAddCourses = useCallback(async (rows: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]) => {
+    if (!addCoursesDlgEmp || rows.length === 0) return
+    setAddCoursesSaving(true)
+    const result = await addCoursesToEmployee(
+      addCoursesDlgEmp.id,
+      rows.map(r => ({ course_id: r.course_id, course_name: r.course_name, fecha_aplicacion: r.fecha_aplicacion, calificacion: r.calificacion }))
+    )
+    setAddCoursesSaving(false)
+    if (result.success) { setAddCoursesDlgOpen(false); setAddCoursesSuccess(true) }
+    else toast.error(result.error ?? 'Error al guardar')
+  }, [addCoursesDlgEmp, addCoursesToEmployee])
+
+  const handleClearHistorial = useCallback(async () => {
+    const result = await clearHistorial()
+    if (result.success) { setConfirmClearOpen(false); setEmployees([]); toast.success(`Historial eliminado`) }
+    else toast.error(result.error ?? 'Error al eliminar historial')
+  }, [clearHistorial])
+
+  const handleDeleteEmployee = useCallback(async () => {
+    if (!deleteTarget) return
+    setDeletingSaving(true); setDeleteError(null)
+    const result = await deleteEmployee(deleteTarget.id, deleteTarget.numero)
+    setDeletingSaving(false)
+    if (result.success) {
+      setEmployees(prev => prev.filter(e => e.id !== deleteTarget.id))
+      setDeleteTarget(null); toast.success('Empleado eliminado')
+    } else {
+      setDeleteError(result.error ?? 'Error al eliminar')
+      toast.error(result.error ?? 'Error al eliminar')
+    }
+  }, [deleteTarget, deleteEmployee])
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       <ReadOnlyBanner />
-      <Tabs
-        defaultValue="puestos"
-        onValueChange={async (v) => {
-          if (v === "cursos") {
-            loadCoursesData();
-            setLoadingEmployees(true);
-            try {
-              const [emps, poss] = await Promise.all([
-                fetchEmployees(),
-                fetchPositions()
-              ]);
-              setEmployees(emps);
-              setPositions(poss);
-              // Cargar todos los positionCourses
-              const allPositionCourses = (await Promise.all(
-                poss.map(p => fetchPositionCourses(p.id))
-              )).flat();
-              setPositionCourses(allPositionCourses);
-              // Obtener todos los cursos de todos los empleados
-              const allEmpCourses = (await Promise.all(
-                emps.map(e => fetchEmployeeCourses(e.id))
-              )).flat();
-              setEmpCourses(allEmpCourses);
-            } catch (err) {
-              setEmployees([]);
-              setEmpCourses([]);
-              setPositions([]);
-              setPositionCourses([]);
-            } finally {
-              setLoadingEmployees(false);
-            }
-          }
-          if (v === "historial") loadEmployees();
-        }}
-      >
+      <Tabs defaultValue="puestos" onValueChange={handleTabChange}>
         <TabsList className="flex w-full mb-4">
-          <TabsTrigger value="puestos"  className="flex-1 text-xs sm:text-sm">
-            <Briefcase className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
+          <TabsTrigger value="puestos"   className="flex-1 text-xs sm:text-sm">
+            <Briefcase    className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
           </TabsTrigger>
-          <TabsTrigger value="cursos"   className="flex-1 text-xs sm:text-sm">
-            <BookOpen className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
+          <TabsTrigger value="cursos"    className="flex-1 text-xs sm:text-sm">
+            <BookOpen     className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
           </TabsTrigger>
           <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
             <ClipboardList className="mr-1 sm:mr-2 h-4 w-4" /><span>Historial</span>
           </TabsTrigger>
-          <TabsTrigger value="importar" className="hidden">
+          <TabsTrigger value="importar"  className="hidden">
             <Upload className="mr-1 sm:mr-2 h-4 w-4" /><span>Importar</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* ── TAB: PUESTOS ──────────────────────────────────────────────────── */}
         <TabsContent value="puestos">
-          <Card className="bg-card ">
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="">Puestos registrados</CardTitle>
-                  <CardDescription className="">
-                    Consulta los puestos y sus cursos requeridos por departamento.
-                  </CardDescription>
-                </div>
-                {!isReadOnly && (
-                  <Button size="sm" className="gap-1.5 shrink-0"
-                    onClick={() => { setNewPosName(''); setNewPosDeptId(''); setNewPosError(null); setNewPosOpen(true) }}>
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Nuevo puesto</span>
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder=""
-                    value={posSearch} onChange={e => setPosSearch(e.target.value)}
-                    className="pl-9 bg-muted  text-foreground"
-                  />
-                </div>
-                <Select value={selectedDept} onValueChange={setSelectedDept}>
-                  <SelectTrigger className="w-full sm:w-56 bg-muted  text-foreground">
-                    <SelectValue placeholder="" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card ">
-                    <SelectItem value="all">Departamentos</SelectItem>
-                    {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {loadingPositions ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : filteredPositions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  {positions.length === 0
-                    ? "No hay puestos cargados. Usa la pestaña Importar para cargar datos."
-                    : "No se encontraron puestos con ese filtro."}
-                </div>
-              ) : (
-                <>
-                {filteredPositions.length > PAGE_SIZE && (
-                  <PaginationBar currentPage={posPage} totalPages={posTotalPages} onPageChange={setPosPage} />
-                )}
-                <div className="rounded-xl border  overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className=" bg-background/50">
-                        <TableHead className="">Puesto</TableHead>
-                        <TableHead className="">Departamento</TableHead>
-                        <TableHead className=" text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedPositions.map(pos => (
-                        <TableRow key={pos.id} className=" hover:bg-muted/50">
-                          <TableCell className="font-medium text-foreground">{pos.name}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="bg-muted text-foreground">
-                              {(pos.department as any)?.name ?? "—"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="gap-1 text-foreground dark:hover:bg-gray-700"
-                              onClick={() => handleViewCourses(pos)}>
-                              Ver cursos <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                </>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {filteredPositions.length} de {positions.length} puestos
-              </p>
-            </CardContent>
-          </Card>
+          <CapPositionsTab
+            departments={departments}
+            positions={positions}
+            loadingPositions={loadingPositions}
+            isReadOnly={isReadOnly}
+            onNewPosition={() => setNewPosOpen(true)}
+            onViewCourses={handleViewCourses}
+          />
         </TabsContent>
 
-        {/* ── TAB: CURSOS ───────────────────────────────────────────────────── */}
         <TabsContent value="cursos">
-          <Card className="bg-card ">
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="">Catálogo de cursos</CardTitle>
-                  <CardDescription className="">
-                    Todos los cursos únicos registrados en el sistema.
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2 items-center">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-2 border-primary text-primary hover:bg-primary/10 rounded-lg shadow-sm font-semibold"
-                    onClick={async () => {
-                      // Generar Excel seguro con exceljs y file-saver
-                      const ExcelJS = await import('exceljs');
-                      // @ts-ignore
-                      const { saveAs } = await import('file-saver');
-                      const workbook = new ExcelJS.Workbook();
-                      const sheet = workbook.addWorksheet('Reporte');
-                      // Encabezados
-                      sheet.columns = [
-                        { header: 'Curso', key: 'Curso', width: 32 },
-                        { header: 'Empleado', key: 'Empleado', width: 32 },
-                        { header: 'Departamento', key: 'Departamento', width: 24 },
-                        { header: 'Puesto', key: 'Puesto', width: 24 },
-                        { header: 'Fecha', key: 'Fecha', width: 14 },
-                        { header: 'Calificación', key: 'Calificacion', width: 14 },
-                        { header: 'Estado', key: 'Estado', width: 14 },
-                      ];
-                      type FilaRow = { Curso: string; Empleado: string; Departamento: string; Puesto: string; Fecha: string; Calificacion: string; Estado: string }
-                      let filas: FilaRow[] = [];
-                      filteredCourses.forEach(course => {
-                        const puestosAsignados = positions
-                          .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
-                          .map(pos => pos.name);
-                        employees
-                          .filter(emp => puestosAsignados.includes(emp.puesto ?? ''))
-                          .forEach(emp => {
-                            const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id);
-                            let estado = 'Pendiente', calificacion = '', fecha = '';
-                            if (match) {
-                              calificacion = match.calificacion != null ? String(match.calificacion) : '';
-                              fecha = match.fecha_aplicacion ? match.fecha_aplicacion.split('-').reverse().join('/') : '';
-                              if (match.calificacion != null) {
-                                estado = match.calificacion >= 70 ? 'Aprobado' : 'Reprobado';
-                              }
-                            }
-                            filas.push({
-                              Curso: course.name,
-                              Empleado: emp.nombre,
-                              Departamento: emp.departamento ?? '',
-                              Puesto: emp.puesto ?? '',
-                              Fecha: fecha,
-                              Calificacion: calificacion,
-                              Estado: estado,
-                            });
-                          });
-                      });
-                      // Ordenar: Departamento A-Z, luego Pendientes, Reprobados, Aprobados
-                      const ordenEstado: Record<string, number> = { 'Pendiente': 0, 'Reprobado': 1, 'Aprobado': 2 };
-                      filas = filas.sort((a, b) => {
-                        const depA = (a.Departamento || '').localeCompare(b.Departamento || '');
-                        if (depA !== 0) return depA;
-                        return ordenEstado[a.Estado] - ordenEstado[b.Estado];
-                      });
-                      filas.forEach(row => sheet.addRow(row));
-                      // Estilos cabecera shadcn/ui y Daytona
-                      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Daytona', size: 12 };
-                      sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF18181B' } };
-                      sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-                      sheet.columns.forEach(col => { col.alignment = { vertical: 'middle', horizontal: 'left' }; });
-                      // Estilo filas
-                      sheet.eachRow((row, idx) => {
-                        if (idx > 1) {
-                          row.font = { name: 'Daytona', size: 11 };
-                          row.alignment = { vertical: 'middle', horizontal: 'left' };
-                        }
-                      });
-                      // Descargar
-                      const buffer = await workbook.xlsx.writeBuffer();
-                      const fecha = new Date().toISOString().slice(0, 10);
-                      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `reporte-cursos-${fecha}.xlsx`);
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6V4a2 2 0 00-2-2H10a2 2 0 00-2 2v2" />
-                    </svg>
-                    <span className="hidden sm:inline">Descargar Excel</span>
-                  </Button>
-                  {!isReadOnly && (
-                    <Button size="sm" className="gap-1.5 shrink-0"
-                      onClick={() => { setNewCourseName(''); setNewCourseError(null); setNewCourseOpen(true) }}>
-                      <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Nuevo curso</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder=""
-                  value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
-                  className="pl-9 bg-muted  text-foreground"
-                />
-              </div>
-              {loadingCourses ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : filteredCourses.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  {courses.length === 0 ? "No hay cursos registrados. Importa datos primero." : "No se encontraron cursos."}
-                </div>
-              ) : (
-                <>
-                {filteredCourses.length > PAGE_SIZE && (
-                  <PaginationBar currentPage={coursePage} totalPages={courseTotalPages} onPageChange={setCoursePage} />
-                )}
-                <Accordion type="single" collapsible className="w-full space-y-2">
-                  {paginatedCourses.map((course, idx) => {
-                    // Mostrar TODOS los empleados, con su estado para este curso
-                    // Solo empleados asignados a este curso por puesto
-                    const puestosAsignados = positions
-                      .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
-                      .map(pos => pos.name)
-
-                    const empleadosConEstado = employees
-                      .filter(emp => puestosAsignados.includes(emp.puesto ?? ''))
-                      .map(emp => {
-                        const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id)
-                        let estado = 'pendiente', calificacion = null, fecha = null
-                        if (match) {
-                          calificacion = match.calificacion
-                          fecha = match.fecha_aplicacion
-                          if (calificacion != null) {
-                            estado = calificacion >= 70 ? 'aprobado' : 'reprobado'
-                          }
-                        }
-                        return {
-                          ...emp,
-                          calificacion,
-                          fecha,
-                          estado,
-                        }
-                      })
-                      // Mostrar todos: aprobados, pendientes y reprobados
-                    return (
-                      <AccordionItem key={course.id} value={course.id}>
-                        <AccordionTrigger>
-                          <div className="flex items-center gap-3 w-full">
-                            <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">{(courseSafePage - 1) * PAGE_SIZE + idx + 1}</span>
-                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                            <span className="text-sm text-foreground leading-tight flex-1 text-left">{course.name}</span>
-                            <Badge variant="secondary" className="bg-muted text-foreground ml-2">{empleadosConEstado.length}</Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          {empleadosConEstado.length === 0 ? (
-                            <div className="text-xs text-muted-foreground py-2">Ningún empleado tiene este curso asignado.</div>
-                          ) : (
-                            <>
-                              {/* Mobile: lista/card */}
-                              <div className="flex flex-col gap-2 sm:hidden">
-                                {empleadosConEstado.map((row, i) => (
-                                  <div key={row.id + '-' + i} className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium text-foreground flex-1 truncate">{row.nombre}</span>
-                                      <Badge
-                                        className={
-                                          row.estado === 'aprobado' ? 'bg-success/15 text-success border border-success/30' :
-                                          row.estado === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' :
-                                          'bg-muted text-muted-foreground border'
-                                        }
-                                      >
-                                        {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
-                                      </Badge>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                      <span><b>Puesto:</b> {row.puesto ?? '—'}</span>
-                                      <span><b>Fecha:</b> {row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</span>
-                                      <span><b>Calificación:</b> {row.calificacion != null ? row.calificacion : '—'}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              {/* Desktop: tabla */}
-                              <div className="overflow-x-auto hidden sm:block">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>Empleado</TableHead>
-                                      <TableHead>Puesto</TableHead>
-                                      <TableHead>Fecha</TableHead>
-                                      <TableHead>Calificación</TableHead>
-                                      <TableHead>Estado</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {empleadosConEstado.map((row, i) => (
-                                      <TableRow key={row.id + '-' + i}>
-                                        <TableCell>{row.nombre}</TableCell>
-                                        <TableCell>{row.puesto ?? '—'}</TableCell>
-                                        <TableCell>{row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</TableCell>
-                                        <TableCell>
-                                          {row.calificacion != null ? (
-                                            <Badge variant={row.calificacion >= 70 ? 'default' : 'destructive'}>
-                                              {row.calificacion}
-                                            </Badge>
-                                          ) : '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                          <Badge
-                                            className={
-                                              row.estado === 'aprobado' ? 'bg-success/15 text-success border border-success/30' :
-                                              row.estado === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' :
-                                              'bg-muted text-muted-foreground border'
-                                            }
-                                          >
-                                            {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
-                                          </Badge>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </div>
-                            </>
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    )
-                  })}
-                </Accordion>
-                </>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {filteredCourses.length} de {courses.length} cursos
-              </p>
-            </CardContent>
-          </Card>
+          <CapCoursesTab
+            courses={courses}
+            loadingCourses={loadingCourses}
+            isReadOnly={isReadOnly}
+            positions={positions}
+            positionCourses={positionCourses}
+            employees={employees}
+            empCourses={empCourses}
+            onNewCourse={() => setNewCourseOpen(true)}
+          />
         </TabsContent>
 
-        {/* ── TAB: HISTORIAL ────────────────────────────────────────────────── */}
         <TabsContent value="historial">
-          <div className="space-y-4">
-
-            {/* Alertas de éxito */}
-            {(newEmpSuccess || addCoursesSuccess) && (
-              <Alert className="border-success/30 bg-success/10">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <AlertDescription className="text-success">
-                  {newEmpSuccess ? 'Empleado registrado correctamente.' : 'Cursos guardados correctamente.'}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* ── Lista de empleados ────────────────────────────────────────── */}
-            <Card className="bg-card ">
-              <CardHeader className="pb-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="">Empleados</CardTitle>
-                    <CardDescription className="">
-                      Registro de cursos tomados por empleado.
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="hidden gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setConfirmClearOpen(true)}
-                    >
-                      <Trash2 className="h-4 w-4" /> Borrar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
-                      onClick={() => {
-                        setBulkSuccess(null); setBulkError(null); setBulkParseError(null)
-                        setBulkRows([]); setBulkText(''); setBulkOpen(true)
-                        if (courses.length === 0) loadCoursesData()
-                      }}
-                    >
-                      <Layers className="h-4 w-4" />
-                      <span className="hidden sm:inline">Carga masiva</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => { setNewEmpSuccess(false); resetNewEmp(); setNewEmpOpen(true) }}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Nuevo empleado</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-                      placeholder="Buscar empleado..."
-                      className="pl-9 bg-muted text-foreground"
-                    />
-                  </div>
-                  <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
-                    <SelectTrigger className="w-full sm:w-44 bg-muted text-foreground">
-                      <SelectValue placeholder="Departamento" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card">
-                      <SelectItem value="all">Departamentos</SelectItem>
-                      {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={empFilterTurno} onValueChange={setEmpFilterTurno}>
-                    <SelectTrigger className="w-full sm:w-36 bg-muted text-foreground">
-                      <SelectValue placeholder="Turno" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card">
-                      <SelectItem value="all">Turnos</SelectItem>
-                      {TURNOS.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {loadingEmployees ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : filteredEmployees.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {employees.length === 0
-                      ? "Sin empleados registrados. Usa el botón \"Nuevo empleado\" para agregar."
-                      : "No se encontraron empleados con esa búsqueda."}
-                  </div>
-                ) : (
-                  <>
-                  {filteredEmployees.length > PAGE_SIZE && (
-                    <PaginationBar currentPage={empPage} totalPages={empTotalPages} onPageChange={setEmpPage} />
-                  )}
-                  <div className="rounded-xl border overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-background/50">
-                          <TableHead className="w-14 hidden sm:table-cell">N.N.</TableHead>
-                          <TableHead>Empleado</TableHead>
-                          <TableHead className="hidden sm:table-cell">Puesto</TableHead>
-                          <TableHead className="hidden md:table-cell">Departamento</TableHead>
-                          <TableHead className="hidden sm:table-cell w-28">Avance</TableHead>
-                          <TableHead className="text-right w-28 sm:w-auto">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedEmployees.map(emp => (
-                          <TableRow key={emp.id} className="hover:bg-muted/50">
-                            <TableCell className="text-sm text-muted-foreground font-mono hidden sm:table-cell">{emp.numero ?? "—"}</TableCell>
-                            <TableCell className="font-medium text-foreground">
-                              <div className="flex flex-col">
-                                <span>{emp.nombre}</span>
-                                <span className="text-xs text-muted-foreground font-mono sm:hidden">{emp.numero ?? ""}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {emp.departamento && (
-                                <Badge variant="secondary" className="bg-muted text-foreground text-xs">
-                                  {emp.departamento}
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell w-32">
-                              {(() => {
-                                const p = progressMap[emp.id]
-                                if (!p || p.total === 0) return null
-                                const pct = Math.round((p.aprobados / p.total) * 100)
-                                return (
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex h-1.5 flex-1 rounded-full overflow-hidden bg-muted">
-                                      {p.aprobados > 0 && (
-                                        <div className="bg-success transition-all" style={{ width: `${(p.aprobados / p.total) * 100}%` }} />
-                                      )}
-                                      {p.reprobados > 0 && (
-                                        <div className="bg-destructive transition-all" style={{ width: `${(p.reprobados / p.total) * 100}%` }} />
-                                      )}
-                                    </div>
-                                    <span className="text-[11px] tabular-nums text-muted-foreground w-7 text-right">{pct}%</span>
-                                  </div>
-                                )
-                              })()}
-                            </TableCell>
-                            <TableCell className="text-right p-2">
-                              <div className="flex items-center justify-end gap-0.5">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
-                                  onClick={() => openAddCoursesDlg(emp)}
-                                  title="Agregar cursos"
-                                >
-                                  <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                                  <span className="hidden sm:inline text-xs">+Curso</span>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-foreground"
-                                  onClick={() => openEditEmpDlg(emp)}
-                                  title="Editar"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
-                                  onClick={() => handleViewEmployee(emp)}
-                                  title="Ver detalle"
-                                >
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => { setDeleteEmpError(null); setDeleteEmpTarget(emp) }}
-                                  title="Eliminar"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  </>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {filteredEmployees.length} de {employees.length} empleados
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <CapHistorialTab
+            employees={employees}
+            loadingEmployees={loadingEmployees}
+            progressMap={progressMap}
+            isReadOnly={isReadOnly}
+            newEmpSuccess={newEmpSuccess}
+            addCoursesSuccess={addCoursesSuccess}
+            onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
+            onBulkImport={bulkImport.openDialog}
+            onViewEmployee={handleViewEmployee}
+            onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
+            onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
+            onDeleteEmployee={(emp) => { setDeleteError(null); setDeleteTarget(emp) }}
+          />
         </TabsContent>
 
-        {/* ── TAB: IMPORTAR CATÁLOGO ────────────────────────────────────────── */}
         <TabsContent value="importar">
-          <div className="space-y-4">
-            {importSuccess && (
-              <Alert className="border-success/30 bg-success/10">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <AlertDescription className="text-success">
-                  Catálogo importado correctamente a Supabase.
-                </AlertDescription>
-              </Alert>
-            )}
-            {(parseError || importError) && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{parseError || importError}</AlertDescription>
-              </Alert>
-            )}
-
-            <Card className="bg-card ">
-              <CardHeader>
-                <CardTitle className="">Cargar catálogo JSON</CardTitle>
-                <CardDescription className="">
-                  Estructura con{" "}
-                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">position</code>,{" "}
-                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">department</code> y{" "}
-                  <code className="text-xs bg-gray-100 bg-muted px-1 rounded">requiredCourses_*</code>.
-                  Los campos vacíos se ignorarán automáticamente.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className="border-2 border-dashed  rounded-lg p-8 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <FileJson className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-sm font-medium text-foreground">Arrastra un archivo JSON o haz clic para seleccionar</p>
-                  <p className="text-xs text-muted-foreground mt-1">Solo archivos .json</p>
-                  <input ref={fileInputRef} type="file" accept=".json,application/json"
-                    onChange={handleFileUpload} className="hidden" />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Separator className="flex-1 bg-muted" />
-                  <span className="text-xs text-muted-foreground">o pega el JSON</span>
-                  <Separator className="flex-1 bg-muted" />
-                </div>
-
-                <textarea
-                  value={jsonText}
-                  onChange={e => { setJsonText(e.target.value); setPreview(null); setParseError(null) }}
-                  placeholder='[{ "position": "...", "department": "...", "requiredCourses_1": "..." }]'
-                  rows={8}
-                  className="w-full rounded-xl border  bg-muted text-foreground p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-
-                <div className="flex gap-2 justify-end">
-                  {(jsonText || preview || importSuccess) && (
-                    <Button variant="outline" onClick={handleReset} className="gap-2  text-foreground">
-                      <RotateCcw className="h-4 w-4" /> Limpiar
-                    </Button>
-                  )}
-                  <Button onClick={handleParse} disabled={!jsonText.trim()} className="gap-2">
-                    <Search className="h-4 w-4" /> Analizar JSON
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {preview && (
-              <Card className="bg-card ">
-                <CardHeader>
-                  <CardTitle className=" flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-success" />
-                    Vista previa de importación
-                  </CardTitle>
-                  <CardDescription className="">
-                    Revisa los datos antes de confirmar. Se usará upsert: no se duplicarán registros existentes.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { label: "Registros JSON", value: preview.totalRecords, Icon: FileJson },
-                      { label: "Departamentos",  value: preview.departments.length, Icon: Building2 },
-                      { label: "Puestos",        value: preview.positions.length,   Icon: Briefcase },
-                      { label: "Cursos únicos",  value: preview.courses.length,     Icon: BookOpen },
-                    ].map(({ label, value, Icon }) => (
-                      <div key={label} className="rounded-lg border  p-3 text-center">
-                        <Icon className="h-5 w-5 mx-auto mb-1 text-primary" />
-                        <p className="text-xl font-bold ">{value}</p>
-                        <p className="text-xs text-muted-foreground">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Departamentos detectados</p>
-                    <div className="flex flex-wrap gap-2">
-                      {preview.departments.map(d => (
-                        <Badge key={d} variant="secondary" className="bg-muted text-foreground">{d}</Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-2">
-                      Puestos (mostrando {Math.min(5, preview.positions.length)} de {preview.positions.length})
-                    </p>
-                    <div className="rounded-xl border  overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className=" bg-background/50">
-                            <TableHead className="">Puesto</TableHead>
-                            <TableHead className="">Departamento</TableHead>
-                            <TableHead className=" text-right">Cursos</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {preview.positions.slice(0, 5).map((pos, i) => (
-                            <TableRow key={i} className="">
-                              <TableCell className="font-medium text-foreground text-sm">{pos.name}</TableCell>
-                              <TableCell className=" text-sm">{pos.department}</TableCell>
-                              <TableCell className="text-right">
-                                <Badge variant="outline" className=" text-foreground">{pos.courses.length}</Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button onClick={handleImport} disabled={isReadOnly || importing} className="gap-2">
-                      {importing ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
-                      ) : (
-                        <><Upload className="h-4 w-4" /> Confirmar e importar</>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <CapImportTab
+            jsonText={jsonImport.jsonText}
+            setJsonText={jsonImport.setJsonText}
+            preview={jsonImport.preview}
+            parseError={jsonImport.parseError}
+            importSuccess={jsonImport.importSuccess}
+            fileInputRef={jsonImport.fileInputRef}
+            isReadOnly={isReadOnly}
+            importing={importing}
+            importError={importError}
+            handleParse={jsonImport.handleParse}
+            handleFileUpload={jsonImport.handleFileUpload}
+            handleImport={jsonImport.handleImport}
+            handleReset={jsonImport.handleReset}
+          />
         </TabsContent>
       </Tabs>
 
-      {/* ── Dialog: Agregar cursos a empleado ────────────────────────────── */}
-      <Dialog open={addCoursesDlgOpen} onOpenChange={open => { if (!open) { setAddCoursesError(null); setAddCoursesDlgOpen(open) } }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              Agregar cursos
-            </DialogTitle>
-            <DialogDescription>
-              {addCoursesDlgEmp?.nombre}
-              {addCoursesDlgEmp?.puesto ? ` · ${addCoursesDlgEmp.puesto}` : ''}
-            </DialogDescription>
-          </DialogHeader>
+      {/* ── Dialogs ─────────────────────────────────────────────────────── */}
+      <CapBulkImportDialog
+        open={bulkImport.open}
+        text={bulkImport.text}
+        parseError={bulkImport.parseError}
+        rows={bulkImport.rows}
+        saving={bulkImport.saving}
+        error={bulkImport.error}
+        success={bulkImport.success}
+        fileRef={bulkImport.fileRef}
+        courses={courses}
+        isReadOnly={isReadOnly}
+        onOpenChange={bulkImport.closeDialog}
+        onTextChange={bulkImport.setText}
+        onParse={bulkImport.handleParse}
+        onFile={bulkImport.handleFile}
+        onUpdateRow={bulkImport.updateRow}
+        onSelectCourse={bulkImport.selectCourse}
+        onImport={bulkImport.handleImport}
+        onBack={bulkImport.backToEdit}
+      />
 
-          {addCoursesError && (
-            <Alert variant="destructive" className="py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{addCoursesError}</AlertDescription>
-            </Alert>
-          )}
+      <CapAddCoursesDialog
+        employee={addCoursesDlgEmp}
+        open={addCoursesDlgOpen}
+        saving={addCoursesSaving}
+        isReadOnly={isReadOnly}
+        courses={courses}
+        loadingCourses={loadingCourses}
+        onClose={() => setAddCoursesDlgOpen(false)}
+        onSave={handleSaveAddCourses}
+      />
 
-          <div className="space-y-2 overflow-y-auto">
-            {loadingCourses ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  {addCoursesRows.map((row, i) => (
-                    <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border bg-muted/50">
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1 space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Curso</label>
-                          <Select value={row.course_id} onValueChange={v => updateAddCoursesRow(i, 'course_id', v)}>
-                            <SelectTrigger className="bg-muted  text-foreground text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card  max-h-60">
-                              {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {addCoursesRows.length > 1 && (
-                          <button
-                            onClick={() => removeAddCoursesRow(i)}
-                            className="mt-5 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Fecha aplicación</label>
-                          <Input type="date"
-                            value={row.fecha_aplicacion}
-                            onChange={e => updateAddCoursesRow(i, 'fecha_aplicacion', e.target.value)}
-                            className="bg-muted text-foreground"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Calificación</label>
-                          <Input type="number" min="0" max="100"
-                            value={row.calificacion}
-                            onChange={e => updateAddCoursesRow(i, 'calificacion', e.target.value)}
-                            className="text-sm bg-muted  text-foreground"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" onClick={addAddCoursesRow}
-                  className="w-full gap-2  text-foreground">
-                  <Plus className="h-4 w-4" /> Agregar otro curso
-                </Button>
-              </>
-            )}
-          </div>
+      <CapNewEmployeeDialog
+        open={newEmpOpen}
+        saving={newEmpSaving}
+        isReadOnly={isReadOnly}
+        courses={courses}
+        loadingCourses={loadingCourses}
+        onClose={() => setNewEmpOpen(false)}
+        onLoadCourses={loadCoursesData}
+        onSave={handleSaveNewEmp}
+      />
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddCoursesDlgOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveAddCourses} disabled={isReadOnly || addCoursesSaving} className="gap-2">
-              {addCoursesSaving
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
-                : 'Guardar cursos'
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CapConfirmClearDialog
+        open={confirmClearOpen}
+        saving={importing}
+        isReadOnly={isReadOnly}
+        employeeCount={employees.length}
+        error={importError}
+        onClose={() => setConfirmClearOpen(false)}
+        onConfirm={handleClearHistorial}
+      />
 
-      {/* ── Dialog: Carga masiva de cursos ───────────────────────────────── */}
-      <Dialog open={bulkOpen} onOpenChange={open => { if (!open) { setBulkRows([]); setBulkError(null); setBulkParseError(null) } setBulkOpen(open) }}>
-        <DialogContent className="sm:max-w-5xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              Carga masiva de cursos
-            </DialogTitle>
-            <DialogDescription>
-              Importa cursos tomados por múltiples empleados desde un archivo JSON.
-            </DialogDescription>
-          </DialogHeader>
+      <CapEditEmployeeDialog
+        employee={editEmpTarget}
+        open={editEmpOpen}
+        saving={editEmpSaving}
+        isReadOnly={isReadOnly}
+        onClose={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
+        onSave={handleSaveEditEmp}
+      />
 
-          {bulkSuccess !== null && (
-            <Alert className="border-success/30 bg-success/10">
-              <CheckCircle2 className="h-4 w-4 text-success" />
-              <AlertDescription className="text-success">
-                {bulkSuccess} registros importados correctamente.
-              </AlertDescription>
-            </Alert>
-          )}
+      <CapDeleteEmployeeDialog
+        employee={deleteTarget}
+        open={!!deleteTarget}
+        saving={deletingSaving}
+        isReadOnly={isReadOnly}
+        error={deleteError}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteEmployee}
+      />
 
-          {bulkError && (
-            <Alert variant="destructive" className="py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{bulkError}</AlertDescription>
-            </Alert>
-          )}
+      <CapPositionCoursesDialog
+        position={selectedPosition}
+        open={dialogOpen}
+        isReadOnly={isReadOnly}
+        loading={loadingPosDlg}
+        positionCourses={posCoursesDlg}
+        courses={courses}
+        assignCourseId={assignCourseId}
+        assignSaving={assignSaving}
+        assignError={assignError}
+        onClose={() => setDialogOpen(false)}
+        onAssignCourseChange={(v: string) => { setAssignCourseId(v); setAssignError(null) }}
+        onAssignCourse={handleAssignCourse}
+        onRemoveCourse={handleRemoveCourseFromPos}
+      />
 
-          {/* ── Fase 1: Entrada JSON ──────────────────────────────────────── */}
-          {bulkRows.length === 0 && bulkSuccess === null && (
-            <div className="space-y-4">
-              <div className="rounded-xl border bg-muted p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Formato esperado:</p>
-                <pre className="text-xs text-foreground font-mono overflow-x-auto whitespace-pre-wrap">{`[
-  { "numero": "1234", "curso": "Seguridad Industrial", "fecha": "2025-03-15", "calificacion": 85 },
-  { "numero": "5678", "curso": "Calidad Total", "fecha": "2025-04-01" }
-]`}</pre>
-              </div>
+      <CapEmployeeProgressDialog
+        employee={selectedEmp}
+        open={empDlgOpen}
+        loading={loadingEmpDlg}
+        courses={selectedEmpCourses}
+        progress={empProgress}
+        tab={empDlgTab}
+        onTabChange={(v) => setEmpDlgTab(v as 'requeridos' | 'historial')}
+        onClose={() => setEmpDlgOpen(false)}
+      />
 
-              {bulkParseError && (
-                <Alert variant="destructive" className="py-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{bulkParseError}</AlertDescription>
-                </Alert>
-              )}
+      <CapNewPositionDialog
+        open={newPosOpen}
+        saving={newPosSaving}
+        departments={departments}
+        onClose={() => setNewPosOpen(false)}
+        onSave={handleSaveNewPos}
+      />
 
-              <div
-                className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
-                onClick={() => bulkFileRef.current?.click()}
-              >
-                <FileJson className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">Haz clic para seleccionar un archivo JSON</p>
-                <p className="text-xs text-muted-foreground mt-1">Solo archivos .json</p>
-                <input ref={bulkFileRef} type="file" accept=".json,application/json" onChange={handleBulkFile} className="hidden" />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Separator className="flex-1 bg-muted" />
-                <span className="text-xs text-muted-foreground">o pega el JSON</span>
-                <Separator className="flex-1 bg-muted" />
-              </div>
-
-              <textarea
-                value={bulkText}
-                onChange={e => { setBulkText(e.target.value); setBulkParseError(null) }}
-                placeholder='[{ "numero": "1234", "curso": "...", "fecha": "2025-01-01", "calificacion": 90 }]'
-                rows={6}
-                className="w-full rounded-xl border bg-muted text-foreground p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-
-              <div className="flex justify-end">
-                <Button onClick={handleBulkParse} disabled={!bulkText.trim()} className="gap-2">
-                  <Search className="h-4 w-4" /> Previsualizar
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Fase 2: Preview editable ──────────────────────────────────── */}
-          {bulkRows.length > 0 && (() => {
-            const validCount = bulkRows.filter(r => r.employeeId && r.courseId).length
-            const invalidCount = bulkRows.length - validCount
-            return (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 text-sm flex-wrap">
-                  <span className="text-muted-foreground">{bulkRows.length} registros</span>
-                  <span className="text-success font-medium flex items-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> {validCount} válidos
-                  </span>
-                  {invalidCount > 0 && (
-                    <span className="text-warning font-medium flex items-center gap-1">
-                      <AlertTriangle className="h-3.5 w-3.5" /> {invalidCount} con errores
-                    </span>
-                  )}
-                </div>
-
-                <div className="rounded-xl border overflow-hidden">
-                  <div className="overflow-y-auto max-h-72">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-background/50 sticky top-0 z-10">
-                          <TableHead className="w-20">N.N.</TableHead>
-                          <TableHead>Empleado</TableHead>
-                          <TableHead>Curso</TableHead>
-                          <TableHead className="w-32">Fecha</TableHead>
-                          <TableHead className="w-24">Cal.</TableHead>
-                          <TableHead className="w-8 text-center"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bulkRows.map(row => {
-                          const isOk = !!(row.employeeId && row.courseId)
-                          const noEmp = !row.employeeId
-                          return (
-                            <TableRow key={row.id} className={isOk ? '' : 'bg-warning/5'}>
-                              <TableCell className="p-1.5">
-                                <Input
-                                  value={row.numero}
-                                  onChange={e => updateBulkRow(row.id, 'numero', e.target.value)}
-                                  className="h-8 font-mono text-xs bg-muted text-foreground"
-                                />
-                              </TableCell>
-                              <TableCell className="p-1.5 max-w-[140px]">
-                                <span className={`text-xs leading-tight block truncate ${noEmp ? 'text-destructive font-medium' : 'text-foreground'}`}>
-                                  {noEmp
-                                    ? (row.numero ? `"${row.numero}" no encontrado` : 'Sin número')
-                                    : row.employeeName}
-                                </span>
-                              </TableCell>
-                              <TableCell className="p-1.5 min-w-[160px]">
-                                <Select value={row.courseId ?? ''} onValueChange={v => selectBulkRowCourse(row.id, v)}>
-                                  <SelectTrigger className="h-8 text-xs bg-muted text-foreground">
-                                    <SelectValue placeholder={row.cursoRaw || 'Selecciona curso'} />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-card max-h-48">
-                                    {courses.map(c => (
-                                      <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                {!row.courseId && row.cursoRaw && (
-                                  <p className="text-xs text-warning mt-0.5 truncate" title={row.cursoRaw}>{row.cursoRaw}</p>
-                                )}
-                              </TableCell>
-                              <TableCell className="p-1.5">
-                                <Input
-                                  type="date"
-                                  value={row.fecha}
-                                  onChange={e => updateBulkRow(row.id, 'fecha', e.target.value)}
-                                  className="h-8 text-xs bg-muted text-foreground"
-                                />
-                              </TableCell>
-                              <TableCell className="p-1.5">
-                                <Input
-                                  type="number" min="0" max="100"
-                                  value={row.calificacion}
-                                  onChange={e => updateBulkRow(row.id, 'calificacion', e.target.value)}
-                                  className="h-8 text-xs bg-muted text-foreground"
-                                />
-                              </TableCell>
-                              <TableCell className="p-1.5 text-center">
-                                {isOk
-                                  ? <CheckCircle2 className="h-4 w-4 text-success mx-auto" />
-                                  : <AlertTriangle className="h-4 w-4 text-warning mx-auto" />}
-                              </TableCell>
-                            </TableRow>
-                          )
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                <button
-                  className="text-xs text-muted-foreground underline hover:text-foreground"
-                  onClick={() => { setBulkRows([]); setBulkError(null) }}
-                >
-                  ← Volver a editar JSON
-                </button>
-              </div>
-            )
-          })()}
-
-          {(bulkRows.length > 0 || bulkSuccess !== null) && (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBulkOpen(false)}>
-                {bulkSuccess !== null ? 'Cerrar' : 'Cancelar'}
-              </Button>
-              {bulkRows.length > 0 && (() => {
-                const validCount = bulkRows.filter(r => r.employeeId && r.courseId).length
-                return (
-                  <Button
-                    onClick={handleBulkImport}
-                    disabled={isReadOnly || bulkSaving || validCount === 0}
-                    className="gap-2"
-                  >
-                    {bulkSaving
-                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
-                      : <><Upload className="h-4 w-4" /> Importar {validCount} registros</>
-                    }
-                  </Button>
-                )
-              })()}
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Nuevo Empleado ───────────────────────────────────────── */}
-      <Dialog open={newEmpOpen} onOpenChange={open => { if (!open) resetNewEmp(); setNewEmpOpen(open) }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
-              Nuevo empleado
-            </DialogTitle>
-            <DialogDescription>
-              Paso {newEmpStep} de 2 — {newEmpStep === 1 ? 'Datos del empleado' : 'Cursos tomados (opcional)'}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Indicador de pasos */}
-          <div className="flex items-center gap-2 mb-1">
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 1 ? 'bg-primary' : 'bg-muted'}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${newEmpStep >= 2 ? 'bg-primary' : 'bg-muted'}`} />
-          </div>
-
-          {newEmpError && (
-            <Alert variant="destructive" className="py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{newEmpError}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* ── Paso 1: Datos ─────────────────────────────────────────────── */}
-          {newEmpStep === 1 && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">N.N</label>
-                  <Input
-                    value={newEmpForm.numero}
-                    onChange={e => setNewEmpForm(f => ({ ...f, numero: e.target.value }))}
-                    className="bg-muted  text-foreground"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Fecha de ingreso</label>
-                  <Input type="date"
-                    value={newEmpForm.fecha_ingreso}
-                    onChange={e => setNewEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                    className="bg-muted text-foreground min-w-0"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Nombre completo <span className="text-destructive">*</span></label>
-                <Input
-                  value={newEmpForm.nombre}
-                  onChange={e => setNewEmpForm(f => ({ ...f, nombre: e.target.value }))}
-                  className="bg-muted  text-foreground"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Departamento</label>
-                <Select
-                  value={newEmpForm.departamento}
-                  onValueChange={v => setNewEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Área</label>
-                  <Select
-                    value={newEmpForm.area}
-                    onValueChange={v => setNewEmpForm(f => ({ ...f, area: v }))}
-                    disabled={newEmpAreas.length === 0}
-                  >
-                    <SelectTrigger className="bg-muted  text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card  max-h-60">
-                      {newEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Turno</label>
-                  <Select
-                    value={newEmpForm.turno}
-                    onValueChange={v => setNewEmpForm(f => ({ ...f, turno: v }))}
-                  >
-                    <SelectTrigger className="bg-muted  text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card ">
-                      {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Puesto</label>
-                <Select
-                  value={newEmpForm.puesto}
-                  onValueChange={v => setNewEmpForm(f => ({ ...f, puesto: v }))}
-                  disabled={newEmpPuestos.length === 0}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {newEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-[1fr_auto] gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
-                  <Select
-                    value={newEmpForm.jefe_directo}
-                    onValueChange={v => setNewEmpForm(f => ({ ...f, jefe_directo: v }))}
-                  >
-                    <SelectTrigger className="bg-muted  text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card  max-h-60">
-                      {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1 w-20">
-                  <label className="text-xs font-medium text-muted-foreground">Eval. desemp.</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={99}
-                    maxLength={2}
-                    className="bg-muted text-foreground text-center"
-                    placeholder="00"
-                    value={newEmpForm.evaluacion_desempeno}
-                    onChange={e => {
-                      const v = e.target.value.slice(0, 2)
-                      setNewEmpForm(f => ({ ...f, evaluacion_desempeno: v }))
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Paso 2: Cursos ────────────────────────────────────────────── */}
-          {newEmpStep === 2 && (
-            <div className="space-y-3 overflow-y-auto max-h-[60dvh] pr-1">
-              {loadingCourses ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : (
-                <>
-                  {newEmpCourseRows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Sin cursos agregados. Puedes guardar así o agregar cursos tomados.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {newEmpCourseRows.map((row, i) => (
-                        <div key={i} className="flex flex-col gap-2 p-3 rounded-xl border bg-muted/50">
-                          <div className="flex items-start gap-2">
-                            <div className="flex-1 space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Curso</label>
-                              <Select
-                                value={row.course_id}
-                                onValueChange={v => updateCourseRow(i, 'course_id', v)}
-                              >
-                                <SelectTrigger className="bg-muted  text-foreground text-sm">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-card  max-h-60">
-                                  {courses.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <button
-                              onClick={() => removeCourseRow(i)}
-                              className="mt-5 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Fecha aplicación</label>
-                              <Input type="date"
-                                value={row.fecha_aplicacion}
-                                onChange={e => updateCourseRow(i, 'fecha_aplicacion', e.target.value)}
-                                className="bg-muted text-foreground"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Calificación</label>
-                              <Input type="number" min="0" max="100"
-                                value={row.calificacion}
-                                onChange={e => updateCourseRow(i, 'calificacion', e.target.value)}
-                                className="text-sm bg-muted  text-foreground"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <Button variant="outline" size="sm" onClick={addCourseRow}
-                    className="w-full gap-2  text-foreground">
-                    <Plus className="h-4 w-4" /> Agregar curso
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            {newEmpStep === 1 ? (
-              <>
-                <Button variant="outline" onClick={() => { resetNewEmp(); setNewEmpOpen(false) }}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleNewEmpNext}>
-                  Siguiente →
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setNewEmpStep(1)}>
-                  ← Anterior
-                </Button>
-                <Button onClick={handleSaveNewEmp} disabled={isReadOnly || newEmpSaving} className="gap-2">
-                  {newEmpSaving
-                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
-                    : 'Guardar'
-                  }
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Confirmación borrar historial ─────────────────────────── */}
-      <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              Borrar historial
-            </DialogTitle>
-            <DialogDescription>
-              Se eliminarán <strong>{employees.length} empleados</strong> y
-              todos sus registros de cursos tomados. Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          {importError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{importError}</AlertDescription>
-            </Alert>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmClearOpen(false)}
-              disabled={importing}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleClearHistorial}
-              disabled={isReadOnly || importing}
-              className="gap-2"
-            >
-              {importing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Borrando...</>
-              ) : (
-                <><Trash2 className="h-4 w-4" /> Sí, borrar todo</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Editar Empleado ──────────────────────────────────────── */}
-      <Dialog open={editEmpOpen} onOpenChange={open => { if (!open) { setEditEmpOpen(false); setEditEmpTarget(null) } }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-primary" />
-              Editar empleado
-            </DialogTitle>
-            <DialogDescription>
-              Modifica los datos de <strong>{editEmpTarget?.nombre}</strong>
-            </DialogDescription>
-          </DialogHeader>
-
-          {editEmpError && (
-            <Alert variant="destructive" className="py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{editEmpError}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">N.N</label>
-                <Input
-                  value={editEmpForm.numero}
-                  onChange={e => setEditEmpForm(f => ({ ...f, numero: e.target.value }))}
-                  className="bg-muted  text-foreground"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Fecha de ingreso</label>
-                <Input type="date"
-                  value={editEmpForm.fecha_ingreso}
-                  onChange={e => setEditEmpForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
-                  className="bg-muted text-foreground min-w-0"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Nombre completo <span className="text-destructive">*</span></label>
-              <Input
-                value={editEmpForm.nombre}
-                onChange={e => setEditEmpForm(f => ({ ...f, nombre: e.target.value }))}
-                className="bg-muted  text-foreground"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Departamento</label>
-                <Select
-                  value={editEmpForm.departamento}
-                  onValueChange={v => setEditEmpForm(f => ({ ...f, departamento: v, area: '', puesto: '' }))}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Área</label>
-                <Select
-                  value={editEmpForm.area}
-                  onValueChange={v => setEditEmpForm(f => ({ ...f, area: v }))}
-                  disabled={editEmpAreas.length === 0}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {editEmpAreas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Puesto</label>
-              <Select
-                value={editEmpForm.puesto}
-                onValueChange={v => setEditEmpForm(f => ({ ...f, puesto: v }))}
-                disabled={editEmpPuestos.length === 0}
-              >
-                <SelectTrigger className="bg-muted  text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card  max-h-60">
-                  {editEmpPuestos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Turno</label>
-                <Select
-                  value={editEmpForm.turno}
-                  onValueChange={v => setEditEmpForm(f => ({ ...f, turno: v }))}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card ">
-                    {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-[1fr_auto] gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Jefe directo</label>
-                <Select
-                  value={editEmpForm.jefe_directo}
-                  onValueChange={v => setEditEmpForm(f => ({ ...f, jefe_directo: v }))}
-                >
-                  <SelectTrigger className="bg-muted  text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card  max-h-60">
-                    {JEFES_DE_AREA.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1 w-20">
-                <label className="text-xs font-medium text-muted-foreground">Eval. desemp.</label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={99}
-                  maxLength={2}
-                  className="bg-muted text-foreground text-center"
-                  placeholder="00"
-                  value={editEmpForm.evaluacion_desempeno}
-                  onChange={e => {
-                    const v = e.target.value.slice(0, 2)
-                    setEditEmpForm(f => ({ ...f, evaluacion_desempeno: v }))
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
-              disabled={editEmpSaving}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveEditEmp} disabled={isReadOnly || editEmpSaving} className="gap-2">
-              {editEmpSaving
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</>
-                : <><Pencil className="h-4 w-4" /> Guardar cambios</>
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Confirmar borrar empleado individual ────────────────────────── */}
-      <Dialog open={!!deleteEmpTarget} onOpenChange={(o) => { if (!o) setDeleteEmpTarget(null) }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              Eliminar empleado
-            </DialogTitle>
-            <DialogDescription>
-              Se eliminará a <strong>{deleteEmpTarget?.nombre}</strong> y
-              todos sus datos del sistema: cursos, evaluaciones de desempeño, datos de promoción y nuevo ingreso.
-              Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          {deleteEmpError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{deleteEmpError}</AlertDescription>
-            </Alert>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteEmpTarget(null)}
-              disabled={deletingEmp}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={isReadOnly || deletingEmp}
-              className="gap-2"
-              onClick={async () => {
-                if (!deleteEmpTarget) return
-                setDeletingEmp(true)
-                setDeleteEmpError(null)
-                const result = await deleteEmployee(deleteEmpTarget.id, deleteEmpTarget.numero)
-                setDeletingEmp(false)
-                if (result.success) {
-                  setEmployees(prev => prev.filter(e => e.id !== deleteEmpTarget.id))
-                  setDeleteEmpTarget(null)
-                  toast.success('Empleado eliminado')
-                } else {
-                  setDeleteEmpError(result.error ?? 'Error al eliminar')
-                  toast.error(result.error ?? 'Error al eliminar')
-                }
-              }}
-            >
-              {deletingEmp ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Eliminando...</>
-              ) : (
-                <><Trash2 className="h-4 w-4" /> Sí, eliminar</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Cursos requeridos del puesto ──────────────────────────── */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="flex flex-col w-full max-w-lg max-h-[85dvh] p-0 gap-0">
-          {/* Header fijo */}
-          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-            <DialogTitle className="text-base leading-snug">{selectedPosition?.name}</DialogTitle>
-            <DialogDescription className="text-xs">
-              {(selectedPosition?.department as any)?.name} · Cursos requeridos
-            </DialogDescription>
-          </DialogHeader>
-
-          {loadingDialog ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="flex flex-col min-h-0 flex-1">
-              {/* Lista scrolleable */}
-              <div className="flex-1 overflow-y-auto px-6 pb-2">
-                {positionCourses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    No hay cursos asignados a este puesto.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {positionCourses.map((pc) => (
-                      <div key={pc.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
-                        <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
-                        <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-sm text-foreground flex-1 min-w-0 truncate">{pc.course.name}</span>
-                        {!isReadOnly && (
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
-                            onClick={() => handleRemoveCourseFromPosition(pc.id)}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Sección asignar — fija al fondo */}
-              {!isReadOnly && (
-                <div className="shrink-0 border-t bg-card px-6 py-4 space-y-3">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Asignar curso</p>
-                  <div className="flex gap-2">
-                    <Select value={assignCourseId} onValueChange={v => { setAssignCourseId(v); setAssignCourseError(null) }}>
-                      <SelectTrigger className="bg-muted text-foreground flex-1 text-sm min-w-0">
-                        <SelectValue placeholder="Selecciona un curso…" />
-                      </SelectTrigger>
-                      <SelectContent
-                        className="bg-card"
-                        position="popper"
-                        side="top"
-                        sideOffset={6}
-                        avoidCollisions
-                        collisionPadding={12}
-                        style={{ width: 'var(--radix-select-trigger-width)', maxHeight: '40dvh' }}
-                      >
-                        {courses
-                          .filter(c => !positionCourses.some(pc => pc.course_id === c.id))
-                          .map(c => (
-                            <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      className="shrink-0"
-                      disabled={!assignCourseId || assignCourseSaving}
-                      onClick={handleAssignCourse}
-                    >
-                      {assignCourseSaving
-                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                        : <Plus className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  {assignCourseError && (
-                    <p className="text-xs text-destructive">{assignCourseError}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Progreso del empleado ─────────────────────────────────── */}
-      <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{selectedEmployee?.nombre}</DialogTitle>
-            <DialogDescription>
-              {selectedEmployee?.puesto}{selectedEmployee?.departamento ? ` · ${selectedEmployee.departamento}` : ''}
-            </DialogDescription>
-          </DialogHeader>
-
-              {loadingEmpCourses ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Barra de progreso y resumen (solo si hay puesto en catálogo) */}
-              {empProgress?.positionFound && empProgress.totalRequired > 0 && (
-                <div className="space-y-2 p-3 rounded-lg bg-muted/50 border border-muted/30">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">
-                      {empProgress.aprobados} / {empProgress.totalRequired} cursos requeridos
-                    </span>
-                    <span className="text-muted-foreground">
-                      {Math.round((empProgress.aprobados / empProgress.totalRequired) * 100)}%
-                    </span>
-                  </div>
-                  {/* Barra segmentada */}
-                  <div className="flex h-2 rounded-full overflow-hidden bg-muted gap-px">
-                    {empProgress.aprobados > 0 && (
-                      <div
-                        className="bg-success transition-all"
-                        style={{ width: `${(empProgress.aprobados / empProgress.totalRequired) * 100}%` }}
-                      />
-                    )}
-                    {empProgress.reprobados > 0 && (
-                      <div
-                        className="bg-destructive transition-all"
-                        style={{ width: `${(empProgress.reprobados / empProgress.totalRequired) * 100}%` }}
-                      />
-                    )}
-                  </div>
-                  <div className="flex gap-4 text-xs">
-                    <span className="flex items-center gap-1 text-success">
-                      <CheckCircle2 className="h-3 w-3" /> {empProgress.aprobados} aprobados
-                    </span>
-                    <span className="flex items-center gap-1 text-destructive">
-                      <XCircle className="h-3 w-3" /> {empProgress.reprobados} reprobados
-                    </span>
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3 w-3" /> {empProgress.pendientes} pendientes
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {empProgress && !empProgress.positionFound && (
-                <div className="flex items-center gap-2 text-sm text-warning p-3 rounded-lg bg-warning/10 border border-warning/30">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
-                  Puesto no encontrado en el catálogo. Importa primero el JSON de puestos.
-                </div>
-              )}
-
-              {/* Tabs Requeridos / Historial */}
-              <Tabs value={empDialogTab} onValueChange={v => setEmpDialogTab(v as any)}>
-                <TabsList className="flex w-full">
-                  <TabsTrigger value="requeridos" className="flex-1 text-xs sm:text-sm">
-                    <Briefcase className="mr-1.5 h-3.5 w-3.5" />
-                    Requeridos
-                    {empProgress?.totalRequired ? (
-                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 bg-muted">
-                        {empProgress.totalRequired}
-                      </Badge>
-                    ) : null}
-                  </TabsTrigger>
-                  <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
-                    <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
-                    Historial completo
-                    {empCourses.length > 0 && (
-                      <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 bg-muted">
-                        {empCourses.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* ── Requeridos ───────────────────────────────────────── */}
-                <TabsContent value="requeridos" className="mt-3">
-                  {!empProgress?.positionFound || empProgress.totalRequired === 0 ? (
-                    <p className="text-sm text-muted-foreground py-6 text-center">
-                      {!empProgress?.positionFound
-                        ? "No se encontró el puesto en el catálogo."
-                        : "Este puesto no tiene cursos requeridos registrados."}
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5 pb-2">
-                      {empProgress.courses.map((c) => (
-                        <div
-                          key={c.courseId}
-                          className={`flex items-center gap-2.5 p-2.5 rounded-lg border
-                            ${c.status === 'aprobado'  ? 'bg-success/10 border-success/30' : ''}
-                            ${c.status === 'reprobado' ? 'bg-destructive/10 border-destructive/30'   : ''}
-                            ${c.status === 'pendiente' ? 'bg-muted/50 border-border'  : ''}
-                          `}
-                        >
-                          {c.status === 'aprobado'  && <CheckCircle2 className="h-4 w-4 text-success shrink-0" />}
-                          {c.status === 'reprobado' && <XCircle      className="h-4 w-4 text-destructive   shrink-0" />}
-                          {c.status === 'pendiente' && <Clock        className="h-4 w-4 text-muted-foreground    shrink-0" />}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground leading-tight truncate">{c.courseName}</p>
-                            {c.fechaAplicacion && (
-                              <p className="text-xs text-muted-foreground">
-                                {c.fechaAplicacion.split('-').reverse().join('/')}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0">
-                            {c.calificacion != null ? (
-                              <Badge
-                                className={`text-xs font-bold min-w-[2.5rem] justify-center
-                                  ${c.status === 'aprobado'  ? 'bg-success/15 text-success border border-success/30' : ''}
-                                  ${c.status === 'reprobado' ? 'bg-destructive/15 text-destructive border border-destructive/30' : ''}
-                                `}
-                              >
-                                {c.calificacion}
-                              </Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground w-16 text-right block">—</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* ── Historial completo ───────────────────────────────── */}
-                <TabsContent value="historial" className="mt-3">
-                  {empCourses.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-6 text-center">
-                      No hay cursos registrados para este empleado.
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5 pb-2">
-                      {empCourses.map((ec, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
-                          <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground truncate leading-tight">
-                              {ec.course?.name ?? ec.raw_course_name}
-                            </p>
-                            {ec.fecha_aplicacion && (
-                              <p className="text-xs text-muted-foreground">
-                                {ec.fecha_aplicacion.split('-').reverse().join('/')}
-                              </p>
-                            )}
-                          </div>
-                          {ec.calificacion != null && (
-                            <Badge
-                              variant={ec.calificacion >= 70 ? "default" : "destructive"}
-                              className="shrink-0 text-xs min-w-[2.5rem] justify-center"
-                            >
-                              {ec.calificacion}
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Nuevo puesto ────────────────────────────────────────────── */}
-      <Dialog open={newPosOpen} onOpenChange={setNewPosOpen}>
-        <DialogContent className="bg-card max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nuevo puesto</DialogTitle>
-            <DialogDescription>Agrega un puesto al catálogo.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Nombre del puesto</label>
-              <Input
-                placeholder="Ej. Operador de producción"
-                value={newPosName}
-                onChange={e => setNewPosName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleSaveNewPos() }}
-                className="bg-muted text-foreground"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Departamento</label>
-              <Select value={newPosDeptId} onValueChange={setNewPosDeptId}>
-                <SelectTrigger className="bg-muted text-foreground">
-                  <SelectValue placeholder="Selecciona departamento" />
-                </SelectTrigger>
-                <SelectContent className="bg-card">
-                  {departments.map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {newPosError && (
-              <Alert variant="destructive" className="py-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{newPosError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewPosOpen(false)} disabled={newPosSaving}>Cancelar</Button>
-            <Button onClick={handleSaveNewPos} disabled={newPosSaving}>
-              {newPosSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Nuevo curso ─────────────────────────────────────────────── */}
-      <Dialog open={newCourseOpen} onOpenChange={setNewCourseOpen}>
-        <DialogContent className="bg-card max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nuevo curso</DialogTitle>
-            <DialogDescription>Agrega un curso al catálogo.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Nombre del curso</label>
-              <Input
-                placeholder="Ej. Seguridad industrial básica"
-                value={newCourseName}
-                onChange={e => setNewCourseName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleSaveNewCourse() }}
-                className="bg-muted text-foreground"
-                autoFocus
-              />
-            </div>
-            {newCourseError && (
-              <Alert variant="destructive" className="py-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{newCourseError}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewCourseOpen(false)} disabled={newCourseSaving}>Cancelar</Button>
-            <Button onClick={handleSaveNewCourse} disabled={newCourseSaving}>
-              {newCourseSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CapNewCourseDialog
+        open={newCourseOpen}
+        saving={newCourseSaving}
+        onClose={() => setNewCourseOpen(false)}
+        onSave={handleSaveNewCourse}
+      />
     </>
   )
 }

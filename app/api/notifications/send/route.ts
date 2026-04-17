@@ -80,8 +80,7 @@ export async function POST(req: NextRequest) {
   results.forEach((result, i) => {
     if (
       result.status === "rejected" &&
-      // @ts-expect-error statusCode es parte de la respuesta de web-push
-      (result.reason?.statusCode === 410 || result.reason?.statusCode === 404)
+      ((result.reason as { statusCode?: number })?.statusCode === 410 || (result.reason as { statusCode?: number })?.statusCode === 404)
     ) {
       expired.push(subscriptions[i].endpoint)
     }

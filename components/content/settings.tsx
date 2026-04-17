@@ -630,166 +630,113 @@ export default function SettingsContent() {
             </Alert>
           )}
 
-          {/* Push subscription toggle */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {pushSubscribed ? <Bell className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
-                Notificaciones push
-              </CardTitle>
-              <CardDescription>
-                Recibe alertas en este dispositivo aunque la app esté cerrada.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">
-                    {pushSubscribed ? "Activadas en este dispositivo" : "Desactivadas en este dispositivo"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {pushSubscribed
-                      ? "Recibirás notificaciones push aunque no tengas la app abierta."
-                      : "Actívalas para recibir alertas aunque no tengas la app abierta."}
-                  </p>
+          {/* Fila superior: 2 columnas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+
+            {/* Col 1 — Push subscription toggle */}
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {pushSubscribed ? <Bell className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+                  Notificaciones push
+                </CardTitle>
+                <CardDescription>
+                  Recibe alertas en este dispositivo aunque la app esté cerrada.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {pushSubscribed ? "Activadas en este dispositivo" : "Desactivadas en este dispositivo"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {pushSubscribed
+                        ? "Recibirás notificaciones push aunque no tengas la app abierta."
+                        : "Actívalas para recibir alertas aunque no tengas la app abierta."}
+                    </p>
+                  </div>
+                  <Button
+                    variant={pushSubscribed ? "outline" : "default"}
+                    size="sm"
+                    disabled={pushLoading}
+                    onClick={handleTogglePush}
+                    className="ml-4 shrink-0"
+                  >
+                    {pushLoading
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : pushSubscribed ? "Desactivar" : "Activar push"}
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Col 2 — Alertas de empleados */}
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Alertas de empleados</CardTitle>
+                <CardDescription>Solo aplica a usuarios con rol admin o dev.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Baja registrada</Label>
+                    <p className="text-xs text-muted-foreground">Push inmediato al registrar una baja</p>
+                  </div>
+                  <Switch
+                    checked={notifPrefs.pushBajas}
+                    onCheckedChange={(v) => updateNotifPref("pushBajas", v)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Aviso anticipado de baja</Label>
+                    <p className="text-xs text-muted-foreground">3 días, 1 día y el día exacto</p>
+                  </div>
+                  <Switch
+                    checked={notifPrefs.pushBajasWarning}
+                    onCheckedChange={(v) => updateNotifPref("pushBajasWarning", v)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">RG-REC-048 por vencer</Label>
+                    <p className="text-xs text-muted-foreground">7 días, 3 días y el día del vencimiento</p>
+                  </div>
+                  <Switch
+                    checked={notifPrefs.pushRg}
+                    onCheckedChange={(v) => updateNotifPref("pushRg", v)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Término de contrato</Label>
+                    <p className="text-xs text-muted-foreground">7 días, 3 días y el día del vencimiento</p>
+                  </div>
+                  <Switch
+                    checked={notifPrefs.pushContrato}
+                    onCheckedChange={(v) => updateNotifPref("pushContrato", v)}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
                 <Button
-                  variant={pushSubscribed ? "outline" : "default"}
-                  size="sm"
-                  disabled={pushLoading}
-                  onClick={handleTogglePush}
-                  className="ml-4 shrink-0"
+                  disabled={notifSaving || notifLoading}
+                  onClick={async () => {
+                    const result = await saveNotifPrefs()
+                    if (result?.success) {
+                      setNotifSaved(true)
+                      setTimeout(() => setNotifSaved(false), 3000)
+                    }
+                  }}
                 >
-                  {pushLoading
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : pushSubscribed ? "Desactivar" : "Activar push"}
+                  {notifSaving ? "Guardando…" : notifSaved ? "Guardado" : "Guardar preferencias"}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardFooter>
+            </Card>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Notificaciones de Baja</CardTitle>
-              <CardDescription>Configura cómo recibir alertas cuando se registre o se acerque una baja de empleado.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push — Bajas nuevas</Label>
-                  <p className="text-xs text-muted-foreground">Recibir notificación push al registrar una baja</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.pushBajas}
-                  onCheckedChange={(v) => updateNotifPref("pushBajas", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push — Aviso anticipado (3 días)</Label>
-                  <p className="text-xs text-muted-foreground">Alerta automática antes de la fecha de baja</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.pushBajasWarning}
-                  onCheckedChange={(v) => updateNotifPref("pushBajasWarning", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Email — Bajas</Label>
-                  <p className="text-xs text-muted-foreground">Recibir resumen por correo electrónico</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.emailBajas}
-                  onCheckedChange={(v) => updateNotifPref("emailBajas", v)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Notificaciones generales</CardTitle>
-              <CardDescription>Push y correo para comentarios, menciones y mensajes directos.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push — Comentarios</Label>
-                  <p className="text-xs text-muted-foreground">Cuando alguien comenta</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.pushComments}
-                  onCheckedChange={(v) => updateNotifPref("pushComments", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push — Menciones</Label>
-                  <p className="text-xs text-muted-foreground">Cuando te mencionan</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.pushMentions}
-                  onCheckedChange={(v) => updateNotifPref("pushMentions", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Push — Mensajes directos</Label>
-                  <p className="text-xs text-muted-foreground">Mensajes privados</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.pushDirectMessages}
-                  onCheckedChange={(v) => updateNotifPref("pushDirectMessages", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Email — Comentarios</Label>
-                  <p className="text-xs text-muted-foreground">Resumen de comentarios por correo</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.emailComments}
-                  onCheckedChange={(v) => updateNotifPref("emailComments", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Email — Menciones</Label>
-                  <p className="text-xs text-muted-foreground">Aviso por correo cuando te mencionan</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.emailMentions}
-                  onCheckedChange={(v) => updateNotifPref("emailMentions", v)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm font-medium">Email — Marketing</Label>
-                  <p className="text-xs text-muted-foreground">Novedades y actualizaciones del producto</p>
-                </div>
-                <Switch
-                  checked={notifPrefs.emailMarketing}
-                  onCheckedChange={(v) => updateNotifPref("emailMarketing", v)}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button
-                disabled={notifSaving || notifLoading}
-                onClick={async () => {
-                  const result = await saveNotifPrefs()
-                  if (result?.success) {
-                    setNotifSaved(true)
-                    setTimeout(() => setNotifSaved(false), 3000)
-                  }
-                }}
-              >
-                {notifSaving ? "Guardando…" : "Guardar preferencias"}
-              </Button>
-            </CardFooter>
-          </Card>
-
+          {/* Fila inferior: historial a ancho completo */}
           <NotificationHistory />
         </TabsContent>
       </Tabs>

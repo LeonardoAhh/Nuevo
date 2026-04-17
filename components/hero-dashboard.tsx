@@ -7,6 +7,7 @@ import { useTheme } from "@/components/theme-context"
 import { useUser, useProfile } from "@/lib/hooks"
 import { CalendarDays, Clock, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { COMPANY_NAME } from "@/lib/constants/company"
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export default function HeroDashboard() {
             isCompact ? "text-xs sm:text-sm" : "text-sm sm:text-base md:text-lg"
           }`}
         >
-          VIÑOPLASTIC{" "}
+          {COMPANY_NAME.toUpperCase()}{" "}
           <span className="text-primary font-semibold">Planta Querétaro</span>
         </motion.p>
 

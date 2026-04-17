@@ -3,6 +3,7 @@
 import { forwardRef } from "react"
 import type { ExamenGenerado } from "@/lib/hooks/useGeneradorExamen"
 import type { PreguntaExamen } from "@/lib/hooks/useExamenes"
+import { COMPANY_NAME, COMPANY_SUBTITLE } from "@/lib/constants/company"
 
 interface ExamenPrintFormatProps {
   examen: ExamenGenerado
@@ -35,8 +36,8 @@ function CabeceraExamen({
             Examen de Conocimientos
           </h1>
           <div className="border-t-2 border-black mt-1 mb-2" />
-          <p className="text-base font-bold uppercase leading-tight">Viñoplastic</p>
-          <p className="text-[11px]">Ingeniería en Plásticos</p>
+          <p className="text-base font-bold uppercase leading-tight">{COMPANY_NAME}</p>
+          <p className="text-[11px]">{COMPANY_SUBTITLE}</p>
         </div>
       </div>
 
@@ -96,7 +97,7 @@ const ExamenPrintFormat = forwardRef<HTMLDivElement, ExamenPrintFormatProps>(
     }
 
     return (
-      <div ref={ref} className="examen-print-root font-sans text-black bg-white">
+      <div ref={ref} className="examen-print-root font-sans text-foreground bg-card print:text-black print:bg-white">
         {paginas.map((pagPreguntas, pIdx) => {
           const inicio = pIdx * PREGUNTAS_POR_PAGINA + 1
           return (
@@ -158,14 +159,14 @@ const ExamenPrintFormat = forwardRef<HTMLDivElement, ExamenPrintFormatProps>(
                     key={op}
                     className={`inline-flex items-center justify-center w-5 h-5 rounded-full border text-[11px] font-bold leading-none ${
                       p.respuesta_correcta === op
-                        ? "border-black bg-black text-white"
-                        : "border-gray-400 text-gray-400"
+                        ? "border-foreground bg-foreground text-background print:border-black print:bg-black print:text-white"
+                        : "border-muted-foreground/40 text-muted-foreground/40 print:border-gray-400 print:text-gray-400"
                     }`}
                   >
                     {OPCION_LABEL[op]}
                   </span>
                 ))}
-                <span className="text-[11px] text-gray-400 truncate ml-1">
+                <span className="text-[11px] text-muted-foreground/40 truncate ml-1 print:text-gray-400">
                   {p.pregunta.length > 50
                     ? p.pregunta.slice(0, 50) + "…"
                     : p.pregunta}

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
 import {
   BarChart,
   Bar,
@@ -19,55 +18,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { ShieldCheck, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase/client"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tipos
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface RegistroRaw {
-  fecha_vencimiento_rg: string | null
-  departamento: string | null
-  rg_rec_048: string
-}
-
-interface DeptData {
-  departamento: string
-  total: number
-  entregados: number
-  pct: number
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constantes
-// ─────────────────────────────────────────────────────────────────────────────
-
-const QUARTERS = [
-  { id: "Q1", label: "ENE – MAR", meses: [0, 1, 2] },
-  { id: "Q2", label: "ABR – JUN", meses: [3, 4, 5] },
-  { id: "Q3", label: "JUL – SEP", meses: [6, 7, 8] },
-  { id: "Q4", label: "OCT – DIC", meses: [9, 10, 11] },
-] as const
-
-type QuarterId = "Q1" | "Q2" | "Q3" | "Q4"
-
-function currentQuarter(): QuarterId {
-  const mes = new Date().getMonth()
-  if (mes <= 2) return "Q1"
-  if (mes <= 5) return "Q2"
-  if (mes <= 8) return "Q3"
-  return "Q4"
-}
-
-function currentYear(): string {
-  return String(new Date().getFullYear())
-}
+import {
+  useRgCumplimiento,
+  QUARTERS,
+  META_RG as META,
+  colorPctRg as colorPct,
+  type DeptDataRg as DeptData,
+  type QuarterId,
+} from "@/lib/hooks/useRgCumplimiento"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tooltip personalizado
 // ─────────────────────────────────────────────────────────────────────────────
-
-const META = 70  // % mínimo obligatorio
 
 interface RgTooltipEntry {
   payload: DeptData
@@ -104,85 +66,15 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Color por porcentaje
-// ─────────────────────────────────────────────────────────────────────────────
-
-function colorPct(pct: number): string {
-  if (pct >= META) return "hsl(var(--chart-2))" // green — cumple meta ≥70%
-  return "hsl(var(--destructive))"               // red — no cumple
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function RgCumplimientoChart() {
-  const [registros, setRegistros] = useState<RegistroRaw[]>([])
-  const [loading, setLoading] = useState(true)
-  const [quarter, setQuarter] = useState<QuarterId>(currentQuarter())
-  const [año, setAño] = useState(currentYear())
-
-  const cargar = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from("nuevo_ingreso")
-        .select("fecha_vencimiento_rg, departamento, rg_rec_048")
-        .not("fecha_vencimiento_rg", "is", null)
-      if (error) throw error
-      setRegistros((data ?? []) as RegistroRaw[])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { cargar() }, [cargar])
-
-  // ── Calcular datos del trimestre seleccionado ──────────────────────────────
-
-  const añoNum = parseInt(año, 10)
-  const mesesQ = QUARTERS.find((q) => q.id === quarter)!.meses
-
-  const filtrados = registros.filter((r) => {
-    if (!r.fecha_vencimiento_rg) return false
-    const d = new Date(r.fecha_vencimiento_rg + "T00:00:00")
-    return d.getFullYear() === añoNum && mesesQ.includes(d.getMonth())
-  })
-
-  // Agrupar por departamento
-  const deptMap = new Map<string, { total: number; entregados: number }>()
-  for (const r of filtrados) {
-    const dept = r.departamento ?? "Sin departamento"
-    if (!deptMap.has(dept)) deptMap.set(dept, { total: 0, entregados: 0 })
-    const entry = deptMap.get(dept)!
-    entry.total++
-    if (r.rg_rec_048 === "Entregado") entry.entregados++
-  }
-
-  const chartData: DeptData[] = Array.from(deptMap.entries())
-    .map(([departamento, { total, entregados }]) => ({
-      departamento,
-      total,
-      entregados,
-      pct: total > 0 ? Math.round((entregados / total) * 100) : 0,
-    }))
-    .filter((d) => d.total > 0)           // ocultar departamentos sin registros
-    .sort((a, b) => b.pct - a.pct)
-
-  // ── Resumen del trimestre ─────────────────────────────────────────────────
-
-  const totalGeneral     = filtrados.length
-  const entregadosGeneral = filtrados.filter((r) => r.rg_rec_048 === "Entregado").length
-  const pctGeneral       = totalGeneral > 0 ? Math.round((entregadosGeneral / totalGeneral) * 100) : 0
-
-  // ── Años disponibles ──────────────────────────────────────────────────────
-
-  const añosDisponibles = Array.from(
-    new Set(registros.map((r) => r.fecha_vencimiento_rg?.split("-")[0]).filter(Boolean))
-  ).sort((a, b) => Number(b) - Number(a))
-  if (!añosDisponibles.includes(año)) añosDisponibles.unshift(año)
-
-  // ── Nombre abreviado del departamento (para eje X) ───────────────────────
+  const {
+    loading, quarter, setQuarter, año, setAño,
+    chartData, totalGeneral, entregadosGeneral, pctGeneral,
+    añosDisponibles, cargar,
+  } = useRgCumplimiento()
 
   function abrevDept(nombre: string): string {
     if (nombre.length <= 12) return nombre

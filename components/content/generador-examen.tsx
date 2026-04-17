@@ -145,7 +145,7 @@ export default function GeneradorExamenContent() {
         {/* Hoja de examen — visible en pantalla y se imprime */}
         <div className="px-4 sm:px-6">
           <div
-            className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 shadow-sm print-area"
+            className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm print-area print:bg-white print:border-gray-200"
             ref={printRef}
           >
             <ExamenPrintFormat examen={examen} />
