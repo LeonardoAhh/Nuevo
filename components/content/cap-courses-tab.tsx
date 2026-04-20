@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, BookOpen, Loader2 } from "lucide-react"
+import { Search, Plus, BookOpen, X } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -50,8 +51,8 @@ export function CapCoursesTab({
   return (
     <Card className="bg-card">
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
             <CardTitle>Catálogo de cursos</CardTitle>
             <CardDescription>Todos los cursos únicos registrados en el sistema.</CardDescription>
           </div>
@@ -81,13 +82,29 @@ export function CapCoursesTab({
           <Input
             value={courseSearch}
             onChange={e => setCourseSearch(e.target.value)}
-            className="pl-9 bg-muted text-foreground"
+            className={`pl-9 bg-muted text-foreground ${courseSearch ? "pr-9" : ""}`}
           />
+          {courseSearch && (
+            <button
+              type="button"
+              aria-label="Limpiar búsqueda"
+              onClick={() => setCourseSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {loadingCourses ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-xl border px-4 py-3 flex items-center gap-3">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">

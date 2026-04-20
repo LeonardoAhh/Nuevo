@@ -3,6 +3,7 @@
 import { Calendar, Filter, Search, UserMinus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -107,9 +108,17 @@ export default function NotificationHistory() {
 
           {/* Table */}
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
-              Cargando…
+            <div className="border rounded-lg overflow-hidden">
+              <div className="divide-y">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+                    <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-20 hidden sm:block shrink-0" />
+                    <Skeleton className="h-4 w-24 shrink-0" />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">

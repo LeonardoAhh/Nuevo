@@ -20,6 +20,7 @@ import {
   X,
   ChevronsUpDown,
   Menu,
+  LayoutGrid,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -62,6 +63,7 @@ const NAV_SECTIONS: NavSection[] = [
     sectionLabel: "Capacitación",
     items: [
       { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
+      { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
     ],

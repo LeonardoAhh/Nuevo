@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { ShieldCheck, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   useRgCumplimiento,
   QUARTERS,
@@ -135,8 +136,20 @@ export default function RgCumplimientoChart() {
 
       <CardContent>
         {loading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl bg-muted/50 border space-y-2">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="space-y-1.5 py-2 border-b last:border-0">
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            ))}
           </div>
         ) : totalGeneral === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">

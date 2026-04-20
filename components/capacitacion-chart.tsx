@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { GraduationCap, Info, RefreshCw } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   useCapacitacionChart,
   YEARS,
@@ -107,8 +108,17 @@ export default function CapacitacionChart() {
 
       <CardContent>
         {loading ? (
-          <div className="flex justify-center items-center h-72">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="h-72 flex flex-col justify-end gap-2 pt-4">
+            <div className="flex items-end justify-between gap-1.5 flex-1">
+              {[40, 60, 35, 75, 50, 85, 45, 65, 55, 80, 38, 70].map((h, i) => (
+                <Skeleton key={i} className="flex-1 rounded-sm" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+            <div className="flex justify-between gap-1.5">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton key={i} className="h-3 flex-1" />
+              ))}
+            </div>
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center h-72 text-muted-foreground gap-2">

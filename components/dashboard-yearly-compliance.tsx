@@ -7,6 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   CheckCircle2,
   XCircle,
@@ -117,8 +118,18 @@ export default function DashboardYearlyCompliance() {
 
       <CardContent>
         {loading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-4 p-3 rounded-xl bg-muted/50 border">
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+            {[65, 82, 48].map((w, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-4 w-12 shrink-0" />
+                <Skeleton className="h-6 rounded-sm" style={{ width: `${w}%` }} />
+              </div>
+            ))}
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">

@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -219,9 +220,17 @@ export default function ExamenesContent({
           <p className="text-sm mt-1">Usa la barra de búsqueda para encontrar preguntas o crea una nueva.</p>
         </div>
       ) : loading ? (
-        <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <Loader2 size={20} className="mr-2 animate-spin" />
-          Buscando preguntas...
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border p-4 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <div className="flex gap-2 pt-1">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : preguntas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">

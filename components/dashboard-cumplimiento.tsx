@@ -15,7 +15,7 @@ import {
   Pie,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -218,8 +218,24 @@ export default function DashboardCumplimiento() {
 
       <CardContent>
         {loading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="space-y-5">
+            <div className="flex flex-col md:flex-row items-center gap-4 p-4 rounded-xl bg-muted/50 border">
+              <Skeleton className="h-[140px] w-[140px] rounded-full shrink-0" />
+              <div className="space-y-2.5 flex-1 w-full">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            ))}
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">

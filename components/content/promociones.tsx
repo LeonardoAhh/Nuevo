@@ -13,6 +13,7 @@ import {
   Info,
   TrendingUp,
   BarChart3,
+  X,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -158,8 +159,18 @@ export default function PromocionesContent({
             placeholder="Buscar empleado, puesto, número..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-8 h-9 w-full"
+            className={`pl-8 h-9 w-full ${busqueda ? "pr-9" : ""}`}
           />
+          {busqueda && (
+            <button
+              type="button"
+              aria-label="Limpiar búsqueda"
+              onClick={() => setBusqueda("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-2">
           <Select value={filtroDept} onValueChange={setFiltroDept}>

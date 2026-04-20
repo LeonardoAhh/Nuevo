@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react"
 import { Bell, Plus, Trash2, CheckCheck, UserMinus, Calendar, Loader2, Search, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Popover,
   PopoverContent,
@@ -197,9 +198,18 @@ export default function NotificationBell() {
           {/* List */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {loading ? (
-              <div className="p-6 text-center text-muted-foreground text-sm">
-                Cargando…
-              </div>
+              <ul className="divide-y">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="flex items-start gap-3 px-4 py-3">
+                    <Skeleton className="h-7 w-7 rounded-full shrink-0 mt-0.5" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-3 w-2/3" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground text-sm">
                 Sin notificaciones

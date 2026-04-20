@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { useRole } from "@/lib/hooks"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface RoleGateProps {
   children: ReactNode
@@ -20,7 +21,7 @@ interface RoleGateProps {
 export function RoleGate({ children, fallback, hide = false }: RoleGateProps) {
   const { canEdit, loading } = useRole()
 
-  if (loading) return null
+  if (loading) return <Skeleton className="h-8 w-8 rounded-md inline-block shrink-0" />
 
   if (canEdit) return <>{children}</>
 
