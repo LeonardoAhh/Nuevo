@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent } from "@/components/ui/card"
 import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "lucide-react"
 import { useTheme } from "@/components/theme-context"
 import { supabase } from "@/lib/supabase/client"
@@ -56,9 +55,8 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="login-fade-up shadow-xl border-border/50 backdrop-blur-sm bg-card/80 dark:bg-card/60" style={{ animationDelay: "550ms" }}>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="login-fade-up" style={{ animationDelay: "550ms" }}>
+      <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <div className="p-3 text-sm bg-destructive/10 text-destructive rounded-lg border border-destructive/20 login-shake">
               {error}
@@ -108,9 +106,9 @@ export default function LoginForm() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOffIcon className="h-5 w-5 text-gray-400" />
+                  <EyeOffIcon className="h-5 w-5 text-muted-foreground" />
                 ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
+                  <EyeIcon className="h-5 w-5 text-muted-foreground" />
                 )}
               </button>
             </div>
@@ -144,8 +142,7 @@ export default function LoginForm() {
             )}
           </Button>
 
-        </form>
-      </CardContent>
-    </Card>
+      </form>
+    </div>
   )
 }

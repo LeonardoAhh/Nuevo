@@ -3,16 +3,17 @@
 import React, { useState, useEffect, useCallback } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, CalendarCheck, Info, UserPlus,
-  ChevronLeft, ChevronRight,
+  XCircle, CalendarCheck, Info, UserPlus, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PaginationBar } from "@/components/ui/pagination-bar"
 import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, useRole } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, EvalStatus } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
@@ -175,16 +176,6 @@ export default function NuevoIngresoContent() {
   return (
     <>
       <ReadOnlyBanner />
-      <div className="flex justify-end mb-6">
-        <Button
-          size="sm"
-          className="gap-2"
-          disabled={isReadOnly}
-          onClick={() => setNuevoOpen(true)}
-        >
-          <UserPlus className="h-4 w-4" /> Nuevo Empleado
-        </Button>
-      </div>
 
       {/* Alertas */}
       {createSuccess && (
@@ -202,118 +193,109 @@ export default function NuevoIngresoContent() {
         </Alert>
       )}
 
-      {/* Filtros */}
-      <div className="space-y-2 mb-4">
-        {/* Búsqueda — fila completa */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder=""
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 bg-muted"
-          />
-        </div>
-        {/* Selects — 2 columnas en móvil, fila en desktop */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
-          <Select value={filterDept} onValueChange={setFilterDept}>
-            <SelectTrigger className="bg-muted text-sm">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="all">Departamentos</SelectItem>
-              {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterContrato} onValueChange={setFilterContrato}>
-            <SelectTrigger className="bg-muted text-sm">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="all">Tipo contrato</SelectItem>
-              <SelectItem value="A prueba">A prueba</SelectItem>
-              <SelectItem value="Indeterminado">Indeterminado</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterTurno} onValueChange={setFilterTurno}>
-            <SelectTrigger className="bg-muted text-sm">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="all">Turnos</SelectItem>
-              {turnos.map(t => <SelectItem key={t} value={t}>Turno {t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterRG} onValueChange={setFilterRG}>
-            <SelectTrigger className="bg-muted text-sm">
-              <SelectValue placeholder="" />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="all">Plan de Formación</SelectItem>
-              <SelectItem value="Pendiente">Pendiente</SelectItem>
-              <SelectItem value="Entregado">Entregado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Card principal con header + filtros */}
+      <Card className="bg-card mb-6">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <CardTitle>Nuevo Ingreso</CardTitle>
+              <CardDescription>Seguimiento de evaluaciones y documentación de empleados nuevos.</CardDescription>
+            </div>
+            {!isReadOnly && (
+              <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setNuevoOpen(true)}>
+                <UserPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nuevo Empleado</span>
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {/* Search — fila completa */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar empleado..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className={`pl-9 bg-muted text-foreground ${search ? 'pr-9' : ''}`}
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Limpiar búsqueda"
+                  onClick={() => setSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filters — flex wrap, 2 por fila en móvil */}
+          <div className="flex flex-wrap gap-2">
+            <Select value={filterDept} onValueChange={setFilterDept}>
+              <SelectTrigger className="flex-1 min-w-[140px] bg-muted text-foreground text-sm">
+                <SelectValue placeholder="Departamentos" />
+              </SelectTrigger>
+              <SelectContent className="bg-card">
+                <SelectItem value="all">Departamentos</SelectItem>
+                {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterContrato} onValueChange={setFilterContrato}>
+              <SelectTrigger className="flex-1 min-w-[140px] bg-muted text-foreground text-sm">
+                <SelectValue placeholder="Tipo contrato" />
+              </SelectTrigger>
+              <SelectContent className="bg-card">
+                <SelectItem value="all">Tipo contrato</SelectItem>
+                <SelectItem value="A prueba">A prueba</SelectItem>
+                <SelectItem value="Indeterminado">Indeterminado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterTurno} onValueChange={setFilterTurno}>
+              <SelectTrigger className="flex-1 min-w-[140px] bg-muted text-foreground text-sm">
+                <SelectValue placeholder="Turnos" />
+              </SelectTrigger>
+              <SelectContent className="bg-card">
+                <SelectItem value="all">Turnos</SelectItem>
+                {turnos.map(t => <SelectItem key={t} value={t}>Turno {t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterRG} onValueChange={setFilterRG}>
+              <SelectTrigger className="flex-1 min-w-[140px] bg-muted text-foreground text-sm">
+                <SelectValue placeholder="Plan de Formación" />
+              </SelectTrigger>
+              <SelectContent className="bg-card">
+                <SelectItem value="all">Plan de Formación</SelectItem>
+                <SelectItem value="Pendiente">Pendiente</SelectItem>
+                <SelectItem value="Entregado">Entregado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Paginación superior */}
       {filtered.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-muted-foreground">
-            Página {safePage} de {totalPages}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={safePage <= 1}
-              onClick={() => setCurrentPage(p => p - 1)}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
-              .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                if (idx > 0 && p - (arr[idx - 1]) > 1) acc.push('ellipsis')
-                acc.push(p)
-                return acc
-              }, [])
-              .map((item, idx) =>
-                item === 'ellipsis' ? (
-                  <span key={`e${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
-                ) : (
-                  <Button
-                    key={item}
-                    variant={item === safePage ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCurrentPage(item)}
-                    className="h-8 w-8 p-0 text-xs"
-                  >
-                    {item}
-                  </Button>
-                )
-              )}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={safePage >= totalPages}
-              onClick={() => setCurrentPage(p => p + 1)}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
       )}
 
       {/* Tabla */}
       <Card className="bg-card mb-6">
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center py-16">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            <div className="divide-y">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="h-4 w-16 shrink-0" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-5 w-20 rounded-full hidden sm:block" />
+                  <Skeleton className="h-5 w-20 rounded-full hidden md:block" />
+                </div>
+              ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
@@ -331,7 +313,7 @@ export default function NuevoIngresoContent() {
                   return (
                     <div
                       key={r.id}
-                      className="p-4 cursor-pointer active:bg-gray-50 dark:active:bg-gray-700/40"
+                      className="p-4 cursor-pointer active:bg-muted/50"
                       onClick={() => handleEdit(r)}
                     >
                       {/* Fila superior: nombre + RG pill */}
