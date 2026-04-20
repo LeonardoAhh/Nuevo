@@ -346,14 +346,19 @@ export default function NuevoIngresoContent() {
                           <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.puesto}</p>
                           <p className="text-xs text-muted-foreground">{r.departamento}</p>
                         </div>
-                        <div className={`shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
+                        <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                           : rgUrgente
                             ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
                             : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
                           }`}>
-                          {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                          RG
+                          <span className="flex items-center gap-1">
+                            {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                            RG
+                          </span>
+                          {r.fecha_vencimiento_rg && (
+                            <span className="text-[10px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
+                          )}
                         </div>
                       </div>
                       {/* Fila inferior: 3 evaluaciones en línea */}
@@ -446,14 +451,19 @@ export default function NuevoIngresoContent() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
+                            <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                               : rgUrgente
                                 ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
                                 : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
                               }`}>
-                              {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                              {r.rg_rec_048}
+                              <span className="flex items-center gap-1">
+                                {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                {r.rg_rec_048 === 'Entregado' ? 'Entregado' : 'Pendiente'}
+                              </span>
+                              {r.fecha_vencimiento_rg && (
+                                <span className="text-[10px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
