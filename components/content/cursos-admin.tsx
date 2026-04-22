@@ -33,6 +33,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { useCursosPublicos, type CursoPublico, type CursoPublicoInput } from "@/lib/hooks"
+import { useRole } from "@/lib/hooks"
 import { RoleGate } from "@/components/role-gate"
 import { notify } from "@/lib/notify"
 import { detectarCategoria, getToneClasses } from "@/lib/constants/cursos-categorias"
@@ -322,12 +323,13 @@ function CursoDialog({ open, saving, inicial, onClose, onSave }: CursoDialogProp
 
 interface CursoRowProps {
   curso: CursoPublico
+  canEdit: boolean
   onEdit: (c: CursoPublico) => void
   onToggle: (c: CursoPublico) => void
   onDelete: (c: CursoPublico) => void
 }
 
-function CursoRow({ curso, onEdit, onToggle, onDelete }: CursoRowProps) {
+function CursoRow({ curso, canEdit, onEdit, onToggle, onDelete }: CursoRowProps) {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(curso.url)}&margin=4`
 
   return (
@@ -366,36 +368,38 @@ function CursoRow({ curso, onEdit, onToggle, onDelete }: CursoRowProps) {
             </a>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onToggle(curso)}
-              title={curso.activo ? "Ocultar" : "Mostrar"}
-            >
-              {curso.activo ? <EyeOff size={15} /> : <Eye size={15} />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onEdit(curso)}
-              title="Editar"
-            >
-              <Pencil size={15} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => onDelete(curso)}
-              title="Eliminar"
-            >
-              <Trash2 size={15} />
-            </Button>
-          </div>
+          {/* Actions — solo dev */}
+          {canEdit && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onToggle(curso)}
+                title={curso.activo ? "Ocultar" : "Mostrar"}
+              >
+                {curso.activo ? <EyeOff size={15} /> : <Eye size={15} />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onEdit(curso)}
+                title="Editar"
+              >
+                <Pencil size={15} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={() => onDelete(curso)}
+                title="Eliminar"
+              >
+                <Trash2 size={15} />
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -405,6 +409,7 @@ function CursoRow({ curso, onEdit, onToggle, onDelete }: CursoRowProps) {
 // ─── Main content ─────────────────────────────────────────────────────────────
 
 export default function CursosAdminContent() {
+  const { canEdit } = useRole()
   const { cursos, loading, error, crear, actualizar, eliminar } = useCursosPublicos()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<CursoPublico | null>(null)
@@ -465,14 +470,13 @@ export default function CursosAdminContent() {
   }
 
   return (
-    <RoleGate hide>
-      <div className="space-y-5">
+    <div className="space-y-5">
         {/* Header bar */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="space-y-0.5">
             <h2 className="text-lg font-semibold">Cursos</h2>
             <p className="text-sm text-muted-foreground">
-              Administra los cursos visibles en{" "}
+              Cursos visibles en{" "}
               <a
                 href="/recursos"
                 target="_blank"
@@ -493,10 +497,12 @@ export default function CursosAdminContent() {
               <QrCode size={16} />
               <span className="hidden sm:inline">Mostrar QR</span>
             </Button>
-            <Button onClick={openCreate} className="gap-2">
-              <Plus size={16} />
-              <span className="hidden sm:inline">Nuevo curso</span>
-            </Button>
+            {canEdit && (
+              <Button onClick={openCreate} className="gap-2">
+                <Plus size={16} />
+                <span className="hidden sm:inline">Nuevo curso</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -521,11 +527,15 @@ export default function CursosAdminContent() {
         {!loading && !error && cursos.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 border rounded-lg bg-muted/30">
             <QrCode size={40} className="text-muted-foreground/40" />
-            <p className="text-muted-foreground text-sm">Sin cursos. Crea el primero.</p>
-            <Button variant="outline" onClick={openCreate} className="gap-2">
-              <Plus size={15} />
-              Nuevo curso
-            </Button>
+            <p className="text-muted-foreground text-sm">
+              {canEdit ? "Sin cursos. Crea el primero." : "Sin cursos disponibles."}
+            </p>
+            {canEdit && (
+              <Button variant="outline" onClick={openCreate} className="gap-2">
+                <Plus size={15} />
+                Nuevo curso
+              </Button>
+            )}
           </div>
         )}
 
@@ -536,6 +546,7 @@ export default function CursosAdminContent() {
               <CursoRow
                 key={curso.id}
                 curso={curso}
+                canEdit={canEdit}
                 onEdit={openEdit}
                 onToggle={handleToggle}
                 onDelete={setDeleteTarget}
@@ -550,9 +561,8 @@ export default function CursosAdminContent() {
             {cursos.filter((c) => c.activo).length} activos · {cursos.length} total
           </p>
         )}
-      </div>
 
-      {/* Create / Edit dialog */}
+        {/* Create / Edit dialog */}
       <CursoDialog
         open={dialogOpen}
         saving={saving}
@@ -588,7 +598,7 @@ export default function CursosAdminContent() {
 
       {/* Public QR dialog */}
       <PublicQrDialog open={qrPublicOpen} onClose={() => setQrPublicOpen(false)} />
-    </RoleGate>
+    </div>
   )
 }
 

@@ -76,7 +76,6 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     sectionLabel: "Público",
-    devOnly: true,
     items: [{ label: "Cursos", href: "/cursos", icon: BookOpen }],
   },
 ]
