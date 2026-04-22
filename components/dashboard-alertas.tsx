@@ -510,7 +510,7 @@ export default function DashboardAlertas() {
               {/* Footer */}
               <div className="shrink-0 border-t px-4 py-3">
                 <Link
-                  href="/nuevo-ingreso"
+                  href="/ingresos"
                   className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <User size={14} />
@@ -1070,7 +1070,7 @@ function DetalleEval({ item, badgeLabel, badgeClass, toneText, onCalificar, onAf
       </div>
 
       <Link
-        href={`/nuevo-ingreso?id=${item.dbId}`}
+        href={`/ingresos?id=${item.dbId}`}
         className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:underline"
       >
         <User size={14} aria-hidden />
@@ -1255,7 +1255,7 @@ function DetalleFecha({
       )}
 
       <Link
-        href={`/nuevo-ingreso?id=${item.id}`}
+        href={`/ingresos?id=${item.id}`}
         className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:underline"
       >
         <User size={14} aria-hidden />

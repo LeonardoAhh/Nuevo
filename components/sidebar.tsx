@@ -21,6 +21,7 @@ import {
   ChevronsUpDown,
   Menu,
   LayoutGrid,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -34,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme, type Theme } from "@/components/theme-context"
-import { useUser, useProfile } from "@/lib/hooks"
+import { useUser, useProfile, useRole } from "@/lib/hooks"
 import { notify } from "@/lib/notify"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ interface NavItem {
 interface NavSection {
   sectionLabel: string
   items: NavItem[]
+  devOnly?: boolean
 }
 
 const NAV_SECTIONS: NavSection[] = [
@@ -57,7 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     sectionLabel: "Contratos",
-    items: [{ label: "Nuevo Ingreso", href: "/nuevo-ingreso", icon: UserPlus }],
+    items: [{ label: "Nuevo Ingreso", href: "/ingresos", icon: UserPlus }],
   },
   {
     sectionLabel: "Capacitación",
@@ -71,6 +73,11 @@ const NAV_SECTIONS: NavSection[] = [
   {
     sectionLabel: "Edición",
     items: [{ label: "Flayers", href: "/flayers", icon: Paintbrush }],
+  },
+  {
+    sectionLabel: "Público",
+    devOnly: true,
+    items: [{ label: "Cursos", href: "/cursos", icon: BookOpen }],
   },
 ]
 
@@ -143,6 +150,7 @@ export default function Sidebar({
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
+  const { canEdit } = useRole()
 
   const showExpanded = isMobileView || !collapsed
 
@@ -213,7 +221,7 @@ export default function Sidebar({
         {/* Nav links */}
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-3 p-2">
-            {NAV_SECTIONS.map((section, idx) => (
+            {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => (
               <div key={section.sectionLabel}>
                 {showExpanded ? (
                   <div className="px-3 pt-2 pb-1">
