@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,21 +52,26 @@ export function useCalificaciones() {
       if (empErr) throw empErr
 
       const result: EmpleadoCalificaciones[] = (employees ?? []).map((emp) => {
-        const rawCourses = (emp.employee_courses ?? []) as Array<{
+        const rawCourses = ((emp.employee_courses ?? []) as unknown) as Array<{
           id: string
           raw_course_name: string
           fecha_aplicacion: string | null
           calificacion: number | null
-          course: { name: string } | null
+          course: { name: string } | { name: string }[] | null
         }>
 
-        const cursos: CalificacionCurso[] = rawCourses.map((c) => ({
-          id: c.id,
-          raw_course_name: c.raw_course_name,
-          course_name: c.course?.name ?? null,
-          fecha_aplicacion: c.fecha_aplicacion,
-          calificacion: c.calificacion,
-        }))
+        const cursos: CalificacionCurso[] = rawCourses.map((c) => {
+          const courseName = Array.isArray(c.course)
+            ? c.course[0]?.name ?? null
+            : c.course?.name ?? null
+          return {
+            id: c.id,
+            raw_course_name: c.raw_course_name,
+            course_name: courseName,
+            fecha_aplicacion: c.fecha_aplicacion,
+            calificacion: c.calificacion,
+          }
+        })
 
         const withCal = cursos.filter((c) => c.calificacion !== null)
         const promedio =
@@ -95,6 +101,7 @@ export function useCalificaciones() {
       setData(result)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar calificaciones")
+      notify.error("Error al cargar calificaciones")
     } finally {
       setLoading(false)
     }

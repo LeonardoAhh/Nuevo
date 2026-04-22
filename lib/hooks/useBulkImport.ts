@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from "react"
 import type { Employee, Course } from "@/lib/hooks/useCapacitacion"
 import type { BulkCourseRow } from "@/lib/capacitacion/types"
 import { normalizeDateToISO } from "@/lib/capacitacion/utils"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 interface BulkImportRecord {
   employee_id: string
@@ -115,7 +115,7 @@ export function useBulkImport({ employees, courses, bulkImportCourseRecords, onL
     const valid = rows.filter(r => r.employeeId && r.courseId)
     if (valid.length === 0) {
       const msg = 'No hay registros válidos con empleado y curso resueltos'
-      setError(msg); toast.error(msg); return
+      setError(msg); notify.error(msg); return
     }
     setSaving(true); setError(null)
     const records = valid.map(r => ({
@@ -129,10 +129,10 @@ export function useBulkImport({ employees, courses, bulkImportCourseRecords, onL
     setSaving(false)
     if (result.success) {
       setSuccess(result.inserted); setRows([]); setText('')
-      toast.success(`${result.inserted} registros importados correctamente`)
+      notify.success(`${result.inserted} registros importados correctamente`)
     } else {
       setError(result.error ?? 'Error al importar')
-      toast.error(result.error ?? 'Error al importar')
+      notify.error(result.error ?? 'Error al importar')
     }
   }, [rows, bulkImportCourseRecords])
 

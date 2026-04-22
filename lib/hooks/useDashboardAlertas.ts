@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { daysFromToday, formatDate } from "@/lib/hooks/useNuevoIngreso"
+import { notify } from "@/lib/notify"
 import type { NuevoIngreso } from "@/lib/hooks/useNuevoIngreso"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -160,6 +161,7 @@ export function useDashboardAlertas() {
       setTermVenc(_termVenc); setTermProx(_termProx)
     } catch (err) {
       console.error("DashboardAlertas error:", err)
+      notify.error("No se pudieron cargar las alertas")
     } finally {
       setLoading(false)
     }

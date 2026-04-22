@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { fetchAllRows } from "@/lib/supabase/fetchAll"
+import { notify } from "@/lib/notify"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -132,6 +133,7 @@ export function useCumplimiento() {
       setDeptData(deptArr)
     } catch (err) {
       console.error("Cumplimiento error:", err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error("Error al cargar cumplimiento")
     } finally {
       setLoading(false)
     }

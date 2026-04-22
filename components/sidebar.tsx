@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme, type Theme } from "@/components/theme-context"
 import { useUser, useProfile } from "@/lib/hooks"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ export default function Sidebar({
   const handleLogout = async () => {
     const { supabase } = await import("@/lib/supabase/client")
     await supabase.auth.signOut()
-    toast.success("Sesión cerrada correctamente")
+    notify.success("Sesión cerrada correctamente")
     setTimeout(() => {
       window.location.href = "/login"
     }, 1200)

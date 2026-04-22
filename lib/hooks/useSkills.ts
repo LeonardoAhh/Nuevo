@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notify'
 
 export interface ApiResponse<T> {
   success: boolean
@@ -71,11 +72,13 @@ export function useSkills(userId?: string) {
       // Actualizar el estado local
       setSkills(prev => [...prev, trimmedSkill])
 
+      notify.success('Habilidad agregada')
       return { success: true, message: 'Skill added successfully' }
     } catch (err) {
       const errorMessage = 'Failed to add skill'
       setError(errorMessage)
       console.error('Error adding skill:', err)
+      notify.error('No se pudo agregar la habilidad')
       return { success: false, error: errorMessage }
     }
   }
@@ -97,11 +100,13 @@ export function useSkills(userId?: string) {
       // Actualizar el estado local
       setSkills(prev => prev.filter(s => s !== skill))
 
+      notify.success('Habilidad eliminada')
       return { success: true, message: 'Skill removed successfully' }
     } catch (err) {
       const errorMessage = 'Failed to remove skill'
       setError(errorMessage)
       console.error('Error removing skill:', err)
+      notify.error('No se pudo eliminar la habilidad')
       return { success: false, error: errorMessage }
     }
   }

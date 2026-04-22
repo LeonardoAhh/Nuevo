@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import { Loader2 } from "lucide-react"
 
 export function AuthForm() {
@@ -32,7 +32,7 @@ export function AuthForm() {
         })
         if (error) throw error
         setMessage("Check your email for the confirmation link!")
-        toast.success("Revisa tu correo para confirmar tu cuenta")
+        notify.success("Revisa tu correo para confirmar tu cuenta")
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -40,12 +40,12 @@ export function AuthForm() {
         })
         if (error) throw error
         setMessage("Successfully signed in!")
-        toast.success("Inicio de sesión exitoso")
+        notify.success("Inicio de sesión exitoso")
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Ocurrió un error inesperado"
       setError(msg)
-      toast.error(msg)
+      notify.error(msg)
     } finally {
       setLoading(false)
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 
 export interface Curso {
   id: string
@@ -47,6 +48,7 @@ export function useCursos(): UseCursosReturn {
       .order("orden", { ascending: true, nullsFirst: false })
     if (sbError) {
       setError(sbError.message)
+      notify.error("Error al cargar cursos")
     } else {
       setCursos(data ?? [])
     }

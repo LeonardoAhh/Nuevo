@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 import type { ReglaPromocionJSON, DatosPromocionJSON } from "@/lib/promociones/types"
 
 interface CargaResult {
@@ -87,10 +88,12 @@ export function usePromocionesImport(onDatosActualizados?: () => void) {
 
       if (error) throw new Error(error.message)
       setCargaResult({ ok: true, msg: `${rows.length} regla${rows.length !== 1 ? "s" : ""} cargada${rows.length !== 1 ? "s" : ""} correctamente` })
+      notify.success(`${rows.length} reglas cargadas`)
       setReglasPreview(null)
       onDatosActualizados?.()
     } catch (err: unknown) {
       setCargaResult({ ok: false, msg: err instanceof Error ? err.message : "Error al guardar en Supabase" })
+      notify.error("Error al cargar reglas")
     } finally {
       setCargando(false)
     }
@@ -123,10 +126,12 @@ export function usePromocionesImport(onDatosActualizados?: () => void) {
 
       if (error) throw new Error(error.message)
       setDatosResult({ ok: true, msg: `${rows.length} empleado${rows.length !== 1 ? "s" : ""} cargado${rows.length !== 1 ? "s" : ""} correctamente` })
+      notify.success(`${rows.length} empleados cargados`)
       setDatosPreview(null)
       onDatosActualizados?.()
     } catch (err: unknown) {
       setDatosResult({ ok: false, msg: err instanceof Error ? err.message : "Error al guardar en Supabase" })
+      notify.error("Error al cargar datos")
     } finally {
       setDatosCargando(false)
     }

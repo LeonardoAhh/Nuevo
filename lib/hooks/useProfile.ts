@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notify'
 
 export interface ThemePreferences {
   theme?: 'light' | 'dark' | 'system'
@@ -156,11 +157,13 @@ export function useProfile(userId?: string) {
       if (error) throw error
 
       setProfile(prev => prev ? { ...prev, ...updates } : prev)
+      notify.success('Perfil actualizado')
       return { success: true, message: 'Profile updated successfully' }
     } catch (err) {
       const errorMessage = 'Failed to update profile'
       setError(errorMessage)
       console.error('Error updating profile:', err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error('No se pudo actualizar el perfil')
       return { success: false, error: errorMessage }
     }
   }
@@ -196,6 +199,7 @@ export function useProfile(userId?: string) {
       const errorMessage = 'Failed to upload avatar'
       setError(errorMessage)
       console.error('Error uploading avatar:', err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error('No se pudo subir el avatar')
       return { success: false, error: errorMessage }
     }
   }

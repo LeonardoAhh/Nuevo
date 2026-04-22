@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -136,6 +137,7 @@ export function useCapacitacionChart() {
       setYearTotals(YEARS.map(y => ({ year: y, total: rawValues[y].reduce((s, v) => s + v, 0) })))
     } catch (err) {
       console.error("Chart error:", err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error("Error al cargar gráfica")
     } finally {
       setLoading(false)
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notify'
 
 export interface NotificationPreferences {
   pushBajas: boolean          // Baja registrada al momento
@@ -78,11 +79,13 @@ export function useNotificationPreferences(userId?: string) {
         }, { onConflict: 'user_id' })
 
       if (error) throw error
+      notify.success('Preferencias guardadas')
       return { success: true }
     } catch (err) {
       const msg = 'Failed to save preferences'
       setError(msg)
       console.error('Error saving preferences:', err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error('No se pudieron guardar las preferencias')
       return { success: false, error: msg }
     } finally {
       setSaving(false)

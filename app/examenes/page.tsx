@@ -8,13 +8,13 @@ import { useExamenes } from "@/lib/hooks/useExamenes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileText, BookOpen, Settings2 } from "lucide-react"
 import { useEffect } from "react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 export default function ExamenesPage() {
   const { preguntas, loading, error, buscar, crear, actualizar, eliminar } = useExamenes()
 
   useEffect(() => {
-    if (error) toast.error(`Error al cargar datos: ${error}`)
+    if (error) notify.error(`Error al cargar datos: ${error}`)
   }, [error])
 
   return (

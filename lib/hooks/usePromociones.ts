@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 import type {
   EmpleadoPromocion,
   ReglaPromocion,
@@ -217,6 +218,7 @@ export function usePromociones() {
       setEmpleados(result)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al cargar datos")
+      notify.error("Error al cargar promociones")
     } finally {
       setLoading(false)
     }

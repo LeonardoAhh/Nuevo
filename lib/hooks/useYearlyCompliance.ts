@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { fetchAllRows } from "@/lib/supabase/fetchAll"
+import { notify } from "@/lib/notify"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,7 @@ export function useYearlyCompliance() {
       setYearStats(stats)
     } catch (err) {
       console.error("YearlyCompliance error:", err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error("Error al cargar cumplimiento anual")
     } finally {
       setLoading(false)
     }

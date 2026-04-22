@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
 import type { PreguntaExamen } from "./useExamenes"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -167,6 +168,7 @@ export function useGeneradorExamen() {
         const todas = data ?? []
         if (todas.length === 0) {
           setError(`No hay preguntas cargadas para el departamento ${empleado.departamento ?? "desconocido"}.`)
+          notify.warning(`Sin preguntas para ${empleado.departamento ?? "este departamento"}`)
           return
         }
 
@@ -190,6 +192,7 @@ export function useGeneradorExamen() {
         })
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Error al generar el examen")
+        notify.error("Error al generar examen")
       } finally {
         setGenerando(false)
       }

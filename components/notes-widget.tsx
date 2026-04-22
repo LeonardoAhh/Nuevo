@@ -9,7 +9,7 @@ import {
   Plus, Search, X, Upload, FileText, ListChecks,
   Download, Eye, ImageIcon, FileIcon,
 } from "lucide-react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,11 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel,
-  AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
@@ -595,9 +590,8 @@ export default function NotesWidget() {
   const [editSubmitting,setEditSubmitting]= useState(false)
   const [editUploading, setEditUploading] = useState(false)
 
-  // ── Delete dialog ───────────────────────────────────────────────────────────
-  const [deleteId,       setDeleteId]       = useState<string | null>(null)
-  const [deleteSubmitting,setDeleteSubmitting] = useState(false)
+  // ── Delete state ────────────────────────────────────────────────────────────
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false)
 
   // ── Filtered list ───────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -624,11 +618,11 @@ export default function NotesWidget() {
 
     setAddSubmitting(false)
     if (error) {
-      toast.error("No se pudo agregar la nota")
+      notify.error("No se pudo agregar la nota")
     } else {
       setAddForm(EMPTY_FORM)
       setAddOpen(false)
-      toast.success("Nota agregada")
+      notify.success("Nota agregada")
     }
   }
 
@@ -641,25 +635,30 @@ export default function NotesWidget() {
 
     setEditSubmitting(false)
     if (error) {
-      toast.error("No se pudo actualizar la nota")
+      notify.error("No se pudo actualizar la nota")
     } else {
       setEditNote(null)
-      toast.success("Nota actualizada")
+      notify.success("Nota actualizada")
     }
   }
 
-  async function handleDelete() {
-    if (!deleteId) return
+  async function handleDelete(id: string) {
+    const ok = await notify.confirm({
+      title: "Eliminar nota",
+      description: "No se puede deshacer.",
+      confirmLabel: "Eliminar",
+      tone: "destructive",
+    })
+    if (!ok) return
+
     setDeleteSubmitting(true)
-
-    const { error } = await deleteNote(deleteId)
-
+    const { error } = await deleteNote(id)
     setDeleteSubmitting(false)
+
     if (error) {
-      toast.error("No se pudo eliminar la nota")
+      notify.error("No se pudo eliminar la nota")
     } else {
-      setDeleteId(null)
-      toast.success("Nota eliminada")
+      notify.success("Nota eliminada")
     }
   }
 
@@ -671,7 +670,7 @@ export default function NotesWidget() {
     if (result) {
       setAddForm(f => ({ ...f, attachmentUrl: result.url, attachmentName: result.name }))
     } else {
-      toast.error("Error al subir el archivo")
+      notify.error("Error al subir el archivo")
     }
   }
 
@@ -683,7 +682,7 @@ export default function NotesWidget() {
     if (result) {
       setEditForm(f => ({ ...f, attachmentUrl: result.url, attachmentName: result.name }))
     } else {
-      toast.error("Error al subir el archivo")
+      notify.error("Error al subir el archivo")
     }
   }
 
@@ -787,7 +786,7 @@ export default function NotesWidget() {
                   onToggleChecklist={idx => toggleChecklistItem(note.id, idx)}
                   onPin={() => togglePin(note.id)}
                   onEdit={() => openEdit(note)}
-                  onDelete={() => setDeleteId(note.id)}
+                  onDelete={() => handleDelete(note.id)}
                   onPreview={setPreviewTarget}
                 />
               ))}
@@ -834,33 +833,6 @@ export default function NotesWidget() {
         onFileSelect={handleEditFile}
         uploading={editUploading}
       />
-
-      {/* ── Delete confirmation ──────────────────────────────────────────────── */}
-      <AlertDialog
-        open={!!deleteId}
-        onOpenChange={v => { if (!v) setDeleteId(null) }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar nota?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteSubmitting}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleteSubmitting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteSubmitting ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* ── Attachment preview ───────────────────────────────────────────────── */}
       <AttachmentPreviewDialog

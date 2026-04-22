@@ -4,14 +4,14 @@ import Dashboard from "@/components/Dashboard"
 import PromocionesContent from "@/components/content/promociones"
 import { usePromociones } from "@/lib/hooks/usePromociones"
 import { useEffect } from "react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import { Skeleton } from "@/components/ui/skeleton"
 
 function PromocionesWrapper() {
   const { empleados, loading, error, recargar, guardarDesempeño, promoverEmpleado, guardarExamen } = usePromociones()
 
   useEffect(() => {
-    if (error) toast.error(`Error al cargar datos: ${error}`)
+    if (error) notify.error(`Error al cargar datos: ${error}`)
   }, [error])
 
   if (loading && empleados.length === 0) {

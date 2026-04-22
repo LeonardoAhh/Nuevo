@@ -4,6 +4,7 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
+import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 
 export const viewport: Viewport = {
   themeColor: [
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>{children}</ThemeProvider>
         <PWARegister />
         <SonnerProvider />
+        <ConfirmProvider />
       </body>
     </html>
   )

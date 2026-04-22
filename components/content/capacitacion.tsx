@@ -6,14 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type { Department, Position, Course, PositionCourse, Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 // Existing dialogs
 import { CapEditEmployeeDialog }      from "@/components/content/cap-edit-employee-dialog"
 import { CapNewEmployeeDialog }       from "@/components/content/cap-new-employee-dialog"
 import { CapAddCoursesDialog }        from "@/components/content/cap-add-courses-dialog"
-import { CapConfirmClearDialog }      from "@/components/content/cap-confirm-clear-dialog"
-import { CapDeleteEmployeeDialog }    from "@/components/content/cap-delete-employee-dialog"
 import { CapPositionCoursesDialog }   from "@/components/content/cap-position-courses-dialog"
 import { CapEmployeeProgressDialog }  from "@/components/content/cap-employee-progress-dialog"
 import { CapNewPositionDialog }       from "@/components/content/cap-new-position-dialog"
@@ -81,9 +79,6 @@ export default function CapacitacionContent() {
 
   // ── Employee CRUD dialogs ─────────────────────────────────────────────────
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget]         = useState<Employee | null>(null)
-  const [deletingSaving, setDeletingSaving]     = useState(false)
-  const [deleteError, setDeleteError]           = useState<string | null>(null)
 
   const [editEmpOpen, setEditEmpOpen]   = useState(false)
   const [editEmpTarget, setEditEmpTarget] = useState<Employee | null>(null)
@@ -106,7 +101,7 @@ export default function CapacitacionContent() {
   const loadCoursesData = useCallback(async () => {
     setLoadingCourses(true)
     try { setCourses(await fetchCourses()) }
-    catch (err) { console.error("Error loading courses:", err) }
+    catch (err) { console.error("Error loading courses:", err); notify.error("Error al cargar cursos") }
     finally { setLoadingCourses(false) }
   }, [])
 
@@ -134,6 +129,7 @@ export default function CapacitacionContent() {
       loadProgressInBackground(emps)
     } catch (err) {
       console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
+      notify.error("Error al cargar empleados")
       setLoadingEmployees(false)
     }
   }, [loadProgressInBackground])
@@ -144,7 +140,7 @@ export default function CapacitacionContent() {
     try {
       const [depts, pos] = await Promise.all([fetchDepartments(), fetchPositions()])
       setDepartments(depts); setPositions(pos)
-    } catch (err) { console.error("Error loading positions:", err) }
+    } catch (err) { console.error("Error loading positions:", err); notify.error("Error al cargar puestos") }
     finally { setLoadingPositions(false) }
   }, [])
 
@@ -200,33 +196,33 @@ export default function CapacitacionContent() {
     setAssignSaving(false)
     if (result.success) {
       setAssignCourseId(''); await reloadPosCoursesDlg()
-      toast.success('Curso asignado correctamente')
+      notify.success('Curso asignado correctamente')
     } else {
       setAssignError(result.error ?? 'Error al asignar curso')
-      toast.error(result.error ?? 'Error al asignar curso')
+      notify.error(result.error ?? 'Error al asignar curso')
     }
   }, [assignCourseId, selectedPosition, posCoursesDlg, addCourseToPosition, reloadPosCoursesDlg])
 
   const handleRemoveCourseFromPos = useCallback(async (id: string) => {
     const result = await removeCourseFromPosition(id)
-    if (result.success) { await reloadPosCoursesDlg(); toast.success('Curso quitado') }
-    else toast.error(result.error ?? 'Error al quitar curso')
+    if (result.success) { await reloadPosCoursesDlg(); notify.success('Curso quitado') }
+    else notify.error(result.error ?? 'Error al quitar curso')
   }, [removeCourseFromPosition, reloadPosCoursesDlg])
 
   const handleSaveNewPos = useCallback(async (name: string, departmentId: string) => {
     setNewPosSaving(true)
     const result = await createPosition(name, departmentId)
     setNewPosSaving(false)
-    if (result.success) { setNewPosOpen(false); loadPositionData(); toast.success('Puesto creado correctamente') }
-    else toast.error(result.error ?? 'Error al crear puesto')
+    if (result.success) { setNewPosOpen(false); loadPositionData(); notify.success('Puesto creado correctamente') }
+    else notify.error(result.error ?? 'Error al crear puesto')
   }, [createPosition, loadPositionData])
 
   const handleSaveNewCourse = useCallback(async (name: string) => {
     setNewCourseSaving(true)
     const result = await createCourse(name)
     setNewCourseSaving(false)
-    if (result.success) { setNewCourseOpen(false); loadCoursesData(); toast.success('Curso creado correctamente') }
-    else toast.error(result.error ?? 'Error al crear curso')
+    if (result.success) { setNewCourseOpen(false); loadCoursesData(); notify.success('Curso creado correctamente') }
+    else notify.error(result.error ?? 'Error al crear curso')
   }, [createCourse, loadCoursesData])
 
   // ── Employee handlers ─────────────────────────────────────────────────────
@@ -257,9 +253,9 @@ export default function CapacitacionContent() {
     setEditEmpSaving(false)
     if (result.success) {
       setEditEmpOpen(false); setEditEmpTarget(null); loadEmployees()
-      toast.success('Empleado actualizado')
+      notify.success('Empleado actualizado')
     } else {
-      toast.error(result.error ?? 'Error al actualizar')
+      notify.error(result.error ?? 'Error al actualizar')
     }
   }, [editEmpTarget, updateEmployee, loadEmployees])
 
@@ -279,8 +275,8 @@ export default function CapacitacionContent() {
       courseRows.map(r => ({ course_id: r.course_id, course_name: r.course_name, fecha_aplicacion: r.fecha_aplicacion, calificacion: r.calificacion }))
     )
     setNewEmpSaving(false)
-    if (result.success) { setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(); toast.success('Empleado creado') }
-    else toast.error(result.error ?? 'Error al crear empleado')
+    if (result.success) { setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(); notify.success('Empleado creado') }
+    else notify.error(result.error ?? 'Error al crear empleado')
   }, [createEmployeeManual, loadEmployees])
 
   const handleSaveAddCourses = useCallback(async (rows: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]) => {
@@ -292,28 +288,38 @@ export default function CapacitacionContent() {
     )
     setAddCoursesSaving(false)
     if (result.success) { setAddCoursesDlgOpen(false); setAddCoursesSuccess(true) }
-    else toast.error(result.error ?? 'Error al guardar')
+    else notify.error(result.error ?? 'Error al guardar')
   }, [addCoursesDlgEmp, addCoursesToEmployee])
 
   const handleClearHistorial = useCallback(async () => {
+    const ok = await notify.confirm({
+      title: "Borrar historial",
+      description: `Se eliminarán ${employees.length} empleados y sus registros. No se puede deshacer.`,
+      confirmLabel: "Borrar",
+      tone: "destructive",
+    })
+    if (!ok) return
     const result = await clearHistorial()
-    if (result.success) { setConfirmClearOpen(false); setEmployees([]); toast.success(`Historial eliminado`) }
-    else toast.error(result.error ?? 'Error al eliminar historial')
-  }, [clearHistorial])
+    if (result.success) { setConfirmClearOpen(false); setEmployees([]); notify.success(`Historial eliminado`) }
+    else notify.error(result.error ?? 'Error al eliminar historial')
+  }, [clearHistorial, employees.length])
 
-  const handleDeleteEmployee = useCallback(async () => {
-    if (!deleteTarget) return
-    setDeletingSaving(true); setDeleteError(null)
-    const result = await deleteEmployee(deleteTarget.id, deleteTarget.numero)
-    setDeletingSaving(false)
+  const handleDeleteEmployee = useCallback(async (emp: Employee) => {
+    const ok = await notify.confirm({
+      title: "Eliminar empleado",
+      description: `Se eliminará a ${emp.nombre} y todos sus datos. No se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      tone: "destructive",
+    })
+    if (!ok) return
+    const result = await deleteEmployee(emp.id, emp.numero)
     if (result.success) {
-      setEmployees(prev => prev.filter(e => e.id !== deleteTarget.id))
-      setDeleteTarget(null); toast.success('Empleado eliminado')
+      setEmployees(prev => prev.filter(e => e.id !== emp.id))
+      notify.success('Empleado eliminado')
     } else {
-      setDeleteError(result.error ?? 'Error al eliminar')
-      toast.error(result.error ?? 'Error al eliminar')
+      notify.error(result.error ?? 'Error al eliminar')
     }
-  }, [deleteTarget, deleteEmployee])
+  }, [deleteEmployee])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -372,7 +378,7 @@ export default function CapacitacionContent() {
             onViewEmployee={handleViewEmployee}
             onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
             onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
-            onDeleteEmployee={(emp) => { setDeleteError(null); setDeleteTarget(emp) }}
+            onDeleteEmployee={handleDeleteEmployee}
           />
         </TabsContent>
 
@@ -439,16 +445,6 @@ export default function CapacitacionContent() {
         onSave={handleSaveNewEmp}
       />
 
-      <CapConfirmClearDialog
-        open={confirmClearOpen}
-        saving={importing}
-        isReadOnly={isReadOnly}
-        employeeCount={employees.length}
-        error={importError}
-        onClose={() => setConfirmClearOpen(false)}
-        onConfirm={handleClearHistorial}
-      />
-
       <CapEditEmployeeDialog
         employee={editEmpTarget}
         open={editEmpOpen}
@@ -456,16 +452,6 @@ export default function CapacitacionContent() {
         isReadOnly={isReadOnly}
         onClose={() => { setEditEmpOpen(false); setEditEmpTarget(null) }}
         onSave={handleSaveEditEmp}
-      />
-
-      <CapDeleteEmployeeDialog
-        employee={deleteTarget}
-        open={!!deleteTarget}
-        saving={deletingSaving}
-        isReadOnly={isReadOnly}
-        error={deleteError}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteEmployee}
       />
 
       <CapPositionCoursesDialog

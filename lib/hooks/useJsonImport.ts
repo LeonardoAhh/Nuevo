@@ -1,7 +1,7 @@
 "use client"
 import { useState, useRef, useCallback } from "react"
 import type { ImportPreview } from "@/lib/hooks/useCapacitacion"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 interface UseJsonImportOptions {
   parseJSON: (arr: any[]) => ImportPreview
@@ -50,9 +50,9 @@ export function useJsonImport({ parseJSON, importData }: UseJsonImportOptions) {
     const result = await importData(preview)
     if (result.success) {
       setImportSuccess(true); setPreview(null); setJsonText("")
-      toast.success('Catálogo importado correctamente')
+      notify.success('Catálogo importado correctamente')
     } else {
-      toast.error(result.error ?? 'Error al importar catálogo')
+      notify.error(result.error ?? 'Error al importar catálogo')
     }
   }, [preview, importData])
 

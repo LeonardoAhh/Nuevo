@@ -5,6 +5,7 @@ import { Bell, Plus, Trash2, CheckCheck, UserMinus, Calendar, Loader2, Search, H
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { notify } from "@/lib/notify"
 import {
   Popover,
   PopoverContent,
@@ -108,8 +109,10 @@ export default function NotificationBell() {
       await create(form)
       resetForm()
       setDialogOpen(false)
+      notify.success("Notificación creada")
     } catch (e) {
       console.error("Error creating notification:", e)
+      notify.error("No se pudo crear la notificación")
     } finally {
       setSubmitting(false)
     }
