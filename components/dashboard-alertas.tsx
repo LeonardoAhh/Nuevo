@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   AlertTriangle,
   Clock,
@@ -10,15 +10,26 @@ import {
   User,
   Calendar,
   ChevronRight,
+  ChevronLeft,
   GraduationCap,
   FileText,
   ShieldAlert,
   Pencil,
+  Search,
+  Briefcase,
+  Building2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import Link from "next/link"
 import {
@@ -413,7 +424,7 @@ export default function DashboardAlertas() {
         onClose={() => setDialogTipo(null)}
         title={dialogActivo?.titulo ?? ""}
         description={dialogActivo?.descripcion}
-        maxWidth="sm:max-w-lg"
+        maxWidth="sm:max-w-lg lg:max-w-6xl xl:max-w-7xl"
       >
         {dialogActivo && (
           <>
@@ -424,7 +435,7 @@ export default function DashboardAlertas() {
               onClose={() => setDialogTipo(null)}
             />
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-0 sm:space-y-3 sm:overflow-y-auto sm:p-4 lg:flex lg:flex-col lg:space-y-0 lg:overflow-hidden lg:p-0">
               {/* ── Evaluaciones ────────────────────────────────────────── */}
               {([
                 { tipo: "eval1_vencidas",    items: eval1Venc, setter: setEval1Venc, vencida: true,  col: "eval_1_calificacion", vacio: "No hay evaluaciones de 1er mes vencidas" },
@@ -497,7 +508,7 @@ export default function DashboardAlertas() {
               )}
 
               {/* Footer */}
-              <div className="pt-2 border-t">
+              <div className="shrink-0 border-t px-4 py-3">
                 <Link
                   href="/nuevo-ingreso"
                   className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -615,78 +626,16 @@ function ListaEvals({ items, vencida, vacio, onCalificar }: {
   }
 
   const grupos = agruparPorDepto(items)
-  const TAB_ALL = "__all__"
-  const compactDepto = (nombre: string) => (nombre.length > 14 ? `${nombre.slice(0, 12)}…` : nombre)
 
   return (
     <>
-      {/* Mobile: tabs por departamento (solo muestra los que tienen evaluaciones) */}
-      <div className="sm:hidden">
-        <Tabs defaultValue={TAB_ALL} className="w-full">
-          <div className="sticky top-0 z-10 -mx-1 rounded-xl bg-card/95 px-1 pb-1.5 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 overflow-visible rounded-xl p-1">
-              <TabsTrigger value={TAB_ALL} className="min-h-8 gap-1 px-2 py-1 text-[11px] leading-none">
-                Todo
-                <Badge variant="secondary" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
-                  {items.length}
-                </Badge>
-              </TabsTrigger>
-              {grupos.map(([depto, miembros]) => (
-                <TabsTrigger
-                  key={depto}
-                  value={depto}
-                  aria-label={`${depto}: ${miembros.length} evaluaciones`}
-                  className="min-h-8 max-w-[48%] gap-1 px-2 py-1 text-[11px] leading-none"
-                >
-                  <span className="truncate">{compactDepto(depto)}</span>
-                  <Badge variant="secondary" className="h-4 min-w-4 rounded-full px-1 text-[10px]">
-                    {miembros.length}
-                  </Badge>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-
-          <TabsContent value={TAB_ALL} className="mt-2 space-y-2">
-            {items.map((item) => (
-              <FilaEval
-                key={item.id}
-                item={item}
-                colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
-                colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
-                colorBadge={vencida
-                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
-                colorBorde={vencida ? "border-red-400" : "border-amber-400"}
-                badgeLabel={vencida ? "Vencida" : "Por vencer"}
-                onCalificar={onCalificar}
-              />
-            ))}
-          </TabsContent>
-
-          {grupos.map(([depto, miembros]) => (
-            <TabsContent key={depto} value={depto} className="mt-2 space-y-2">
-              {miembros.map((item) => (
-                <FilaEval
-                  key={item.id}
-                  item={item}
-                  colorAvatar={vencida ? "bg-red-500" : "bg-amber-500"}
-                  colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
-                  colorBadge={vencida
-                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
-                  colorBorde={vencida ? "border-red-400" : "border-amber-400"}
-                  badgeLabel={vencida ? "Vencida" : "Por vencer"}
-                  onCalificar={onCalificar}
-                />
-              ))}
-            </TabsContent>
-          ))}
-        </Tabs>
+      {/* Mobile (<sm): stack lista → detalle */}
+      <div className="flex min-h-0 flex-1 flex-col sm:hidden">
+        <MobileStackEvals items={items} vencida={vencida} onCalificar={onCalificar} />
       </div>
 
-      {/* Desktop: agrupado por departamento */}
-      <div className="hidden space-y-3 sm:block">
+      {/* Tablet (sm–md): agrupado por departamento */}
+      <div className="hidden space-y-3 sm:block lg:hidden">
         {grupos.map(([depto, miembros]) => (
           <div key={depto}>
             <DeptoHeader nombre={depto} count={miembros.length} />
@@ -708,6 +657,11 @@ function ListaEvals({ items, vencida, vacio, onCalificar }: {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Desktop (lg+): master-detail */}
+      <div className="hidden lg:block">
+        <MasterDetailEvals items={items} vencida={vencida} onCalificar={onCalificar} />
       </div>
     </>
   )
@@ -735,24 +689,966 @@ function ListaFechasPorDepto({
   const grupos = agruparPorDepto(items)
 
   return (
-    <div className="space-y-3">
-      {grupos.map(([depto, miembros]) => (
-        <div key={depto}>
-          <DeptoHeader nombre={depto} count={miembros.length} />
-          <div className="space-y-2 mt-1.5">
-            {miembros.map((item) => (
-              <FilaFecha key={item.id} item={item}
-                colorAvatar={colorAvatar}
-                colorBadge={colorBadge}
-                colorDias={colorDias}
-                colorBorde={colorBorde}
-                onEntregado={onEntregado}
-                onIndeterminado={onIndeterminado}
-              />
+    <>
+      {/* Mobile (<sm): stack lista → detalle */}
+      <div className="flex min-h-0 flex-1 flex-col sm:hidden">
+        <MobileStackFechas
+          items={items}
+          colorBadge={colorBadge}
+          colorDias={colorDias}
+          onEntregado={onEntregado}
+          onIndeterminado={onIndeterminado}
+        />
+      </div>
+
+      {/* Tablet (sm–md): agrupado por departamento */}
+      <div className="hidden space-y-3 sm:block lg:hidden">
+        {grupos.map(([depto, miembros]) => (
+          <div key={depto}>
+            <DeptoHeader nombre={depto} count={miembros.length} />
+            <div className="space-y-2 mt-1.5">
+              {miembros.map((item) => (
+                <FilaFecha key={item.id} item={item}
+                  colorAvatar={colorAvatar}
+                  colorBadge={colorBadge}
+                  colorDias={colorDias}
+                  colorBorde={colorBorde}
+                  onEntregado={onEntregado}
+                  onIndeterminado={onIndeterminado}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop (lg+): master-detail */}
+      <div className="hidden lg:block">
+        <MasterDetailFechas
+          items={items}
+          colorBadge={colorBadge}
+          colorDias={colorDias}
+          onEntregado={onEntregado}
+          onIndeterminado={onIndeterminado}
+        />
+      </div>
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: iniciales para avatar
+// ─────────────────────────────────────────────────────────────────────────────
+
+function iniciales(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/).filter(Boolean)
+  if (partes.length === 0) return "?"
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase()
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componentes compartidos master-detail
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MasterHeaderProps {
+  total: number
+  filtrados: number
+  search: string
+  onSearchChange: (v: string) => void
+  depto: string
+  onDeptoChange: (v: string) => void
+  deptos: string[]
+}
+
+function MasterHeader({
+  total, filtrados, search, onSearchChange, depto, onDeptoChange, deptos,
+}: MasterHeaderProps) {
+  return (
+    <div className="sticky top-0 z-10 flex flex-col gap-2 border-b bg-card/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="relative">
+        <Search
+          size={14}
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Buscar por nombre o departamento…"
+          className="h-9 pl-8 text-sm"
+          aria-label="Buscar en alertas"
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <Select
+          value={depto || "__all__"}
+          onValueChange={(v) => onDeptoChange(v === "__all__" ? "" : v)}
+        >
+          <SelectTrigger
+            aria-label="Filtrar por departamento"
+            className="h-8 max-w-[60%] flex-1 truncate rounded-md px-2 text-xs"
+          >
+            <SelectValue placeholder="Todos los departamentos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los departamentos</SelectItem>
+            {deptos.map((d) => (
+              <SelectItem key={d} value={d}>{d}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <span
+          aria-live="polite"
+          className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+        >
+          {filtrados}{filtrados !== total ? ` / ${total}` : ""}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+interface MasterListItemProps {
+  nombre: string
+  meta: string
+  diasLabel: string
+  fechaLabel: string
+  selected: boolean
+  tone: "destructive" | "warning"
+  onSelect: () => void
+}
+
+function MasterListItem({ nombre, meta, diasLabel, fechaLabel, selected, tone, onSelect }: MasterListItemProps) {
+  const toneText = tone === "destructive" ? "text-destructive" : "text-warning"
+  const toneBgSel = tone === "destructive"
+    ? "bg-destructive/5 border-l-destructive"
+    : "bg-warning/5 border-l-warning"
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`
+        group flex w-full items-start gap-3 border-l-2 px-3 py-2.5 text-left transition-colors
+        ${selected ? toneBgSel : "border-l-transparent hover:bg-muted/60"}
+      `}
+    >
+      <span
+        aria-hidden
+        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+          tone === "destructive"
+            ? "bg-destructive/10 text-destructive"
+            : "bg-warning/10 text-warning"
+        }`}
+      >
+        {iniciales(nombre)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">{nombre}</p>
+        <p className="truncate text-[11px] text-muted-foreground">{meta}</p>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className={`text-[11px] font-medium ${toneText}`}>{diasLabel}</span>
+          <span className="text-[11px] text-muted-foreground">{fechaLabel}</span>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function MasterEmpty({ mensaje }: { mensaje: string }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-muted-foreground">
+      <CheckCircle2 className="h-10 w-10 opacity-40" />
+      <p className="text-sm">{mensaje}</p>
+    </div>
+  )
+}
+
+function DetalleStat({
+  label, value, icon, valueClass,
+}: { label: string; value: string; icon: React.ReactNode; valueClass?: string }) {
+  return (
+    <div className="rounded-xl border bg-card p-3">
+      <dt className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {label}
+      </dt>
+      <dd className={`mt-1 text-sm font-semibold ${valueClass ?? "text-foreground"}`}>{value}</dd>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Master-Detail desktop: Evaluaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MasterDetailEvalsProps {
+  items: EvalItem[]
+  vencida: boolean
+  onCalificar: (dbId: string, calificacion: number) => Promise<void>
+}
+
+function MasterDetailEvals({ items, vencida, onCalificar }: MasterDetailEvalsProps) {
+  const tone: "destructive" | "warning" = vencida ? "destructive" : "warning"
+  const badgeLabel = vencida ? "Vencida" : "Por vencer"
+  const badgeClass = vencida
+    ? "bg-destructive/10 text-destructive"
+    : "bg-warning/10 text-warning"
+  const toneText = vencida ? "text-destructive" : "text-warning"
+
+  const [search, setSearch] = useState("")
+  const [depto, setDepto]   = useState("")
+  const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null)
+
+  const deptos = useMemo(
+    () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
+    [items],
+  )
+
+  const filtrados = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return items.filter(i => {
+      const dep = i.departamento?.trim() || "Sin departamento"
+      if (depto && dep !== depto) return false
+      if (!q) return true
+      return (
+        i.nombre.toLowerCase().includes(q) ||
+        dep.toLowerCase().includes(q) ||
+        (i.turno ?? "").toLowerCase().includes(q)
+      )
+    })
+  }, [items, search, depto])
+
+  const seleccionado = useMemo(
+    () => filtrados.find(i => i.id === selectedId) ?? filtrados[0] ?? null,
+    [filtrados, selectedId],
+  )
+
+  return (
+    <div className="grid h-[70vh] grid-cols-[minmax(0,360px)_1fr] overflow-hidden rounded-b-xl border-t">
+      <aside className="flex h-full flex-col overflow-hidden border-r">
+        <MasterHeader
+          total={items.length}
+          filtrados={filtrados.length}
+          search={search}
+          onSearchChange={setSearch}
+          depto={depto}
+          onDeptoChange={setDepto}
+          deptos={deptos}
+        />
+        <div className="scrollbar-thin flex-1 overflow-y-auto">
+          {filtrados.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Sin resultados con los filtros actuales.
+            </p>
+          ) : (
+            filtrados.map(i => (
+              <MasterListItem
+                key={i.id}
+                nombre={i.nombre}
+                meta={[i.departamento, i.turno ? `Turno ${i.turno}` : null].filter(Boolean).join(" · ") || "Sin departamento"}
+                diasLabel={dias(i.diasDiff)}
+                fechaLabel={formatDate(i.fecha)}
+                selected={seleccionado?.id === i.id}
+                tone={tone}
+                onSelect={() => setSelectedId(i.id)}
+              />
+            ))
+          )}
+        </div>
+      </aside>
+
+      <section className="scrollbar-thin h-full overflow-y-auto p-6">
+        {!seleccionado ? (
+          <MasterEmpty mensaje="Selecciona una evaluación para ver el detalle." />
+        ) : (
+          <DetalleEval
+            key={seleccionado.id}
+            item={seleccionado}
+            badgeLabel={badgeLabel}
+            badgeClass={badgeClass}
+            toneText={toneText}
+            onCalificar={onCalificar}
+            onAfterSave={() => {
+              const idx = filtrados.findIndex(i => i.id === seleccionado.id)
+              const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+              setSelectedId(next?.id ?? null)
+            }}
+          />
+        )}
+      </section>
+    </div>
+  )
+}
+
+interface DetalleEvalProps {
+  item: EvalItem
+  badgeLabel: string
+  badgeClass: string
+  toneText: string
+  onCalificar: (dbId: string, calificacion: number) => Promise<void>
+  onAfterSave: () => void
+}
+
+function DetalleEval({ item, badgeLabel, badgeClass, toneText, onCalificar, onAfterSave }: DetalleEvalProps) {
+  const [calStr, setCalStr] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  async function handleGuardar() {
+    const cal = parseInt(calStr, 10)
+    if (isNaN(cal) || cal < 0 || cal > 100) return
+    setSaving(true)
+    try {
+      await onCalificar(item.dbId, cal)
+      setCalStr("")
+      onAfterSave()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <header className="flex items-start gap-4">
+        <span
+          aria-hidden
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold ${badgeClass}`}
+        >
+          {iniciales(item.nombre)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-xl font-semibold text-foreground">{item.nombre}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Building2 size={14} aria-hidden />
+            <span>{item.departamento ?? "Sin departamento"}</span>
+            {item.turno && (
+              <>
+                <span aria-hidden>·</span>
+                <span>Turno {item.turno}</span>
+              </>
+            )}
           </div>
         </div>
-      ))}
+        <Badge className={`shrink-0 ${badgeClass}`} variant="secondary">{badgeLabel}</Badge>
+      </header>
+
+      <dl className="grid grid-cols-2 gap-3">
+        <DetalleStat label="Fecha programada" value={formatDate(item.fecha)} icon={<Calendar size={14} aria-hidden />} />
+        <DetalleStat label="Antigüedad" value={dias(item.diasDiff)} icon={<Clock size={14} aria-hidden />} valueClass={toneText} />
+      </dl>
+
+      <div className="rounded-2xl border bg-muted/30 p-4">
+        <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <Pencil size={14} aria-hidden /> Calificar evaluación
+        </h4>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={calStr}
+            onChange={(e) => setCalStr(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleGuardar() }}
+            placeholder="Calificación 0 – 100"
+            className="h-10 w-40"
+            aria-label="Calificación"
+          />
+          <Button
+            onClick={handleGuardar}
+            disabled={saving || calStr === ""}
+            className="h-10"
+          >
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
+          <p className="ml-auto text-xs text-muted-foreground">
+            Pulsa <kbd className="rounded border bg-background px-1 text-[10px]">Enter</kbd> para guardar.
+          </p>
+        </div>
+      </div>
+
+      <Link
+        href={`/nuevo-ingreso?id=${item.dbId}`}
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:underline"
+      >
+        <User size={14} aria-hidden />
+        Ver expediente completo
+        <ChevronRight size={14} aria-hidden />
+      </Link>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Master-Detail desktop: Fechas (RG / Término)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MasterDetailFechasProps {
+  items: FechaItem[]
+  colorBadge: string
+  colorDias: string
+  onEntregado?:     (id: string) => Promise<void>
+  onIndeterminado?: (id: string) => Promise<void>
+}
+
+function MasterDetailFechas({
+  items, colorBadge, colorDias, onEntregado, onIndeterminado,
+}: MasterDetailFechasProps) {
+  const tone: "destructive" | "warning" =
+    items.some(i => i.diasDiff < 0) ? "destructive" : "warning"
+
+  const [search, setSearch] = useState("")
+  const [depto, setDepto]   = useState("")
+  const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null)
+
+  const deptos = useMemo(
+    () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
+    [items],
+  )
+
+  const filtrados = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return items.filter(i => {
+      const dep = i.departamento?.trim() || "Sin departamento"
+      if (depto && dep !== depto) return false
+      if (!q) return true
+      return (
+        i.nombre.toLowerCase().includes(q) ||
+        dep.toLowerCase().includes(q) ||
+        (i.puesto ?? "").toLowerCase().includes(q)
+      )
+    })
+  }, [items, search, depto])
+
+  const seleccionado = useMemo(
+    () => filtrados.find(i => i.id === selectedId) ?? filtrados[0] ?? null,
+    [filtrados, selectedId],
+  )
+
+  function avanzar() {
+    if (!seleccionado) return
+    const idx = filtrados.findIndex(i => i.id === seleccionado.id)
+    const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+    setSelectedId(next?.id ?? null)
+  }
+
+  return (
+    <div className="grid h-[70vh] grid-cols-[minmax(0,360px)_1fr] overflow-hidden rounded-b-xl border-t">
+      <aside className="flex h-full flex-col overflow-hidden border-r">
+        <MasterHeader
+          total={items.length}
+          filtrados={filtrados.length}
+          search={search}
+          onSearchChange={setSearch}
+          depto={depto}
+          onDeptoChange={setDepto}
+          deptos={deptos}
+        />
+        <div className="scrollbar-thin flex-1 overflow-y-auto">
+          {filtrados.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Sin resultados con los filtros actuales.
+            </p>
+          ) : (
+            filtrados.map(i => (
+              <MasterListItem
+                key={i.id}
+                nombre={i.nombre}
+                meta={[i.puesto, i.departamento].filter(Boolean).join(" · ") || "Sin información"}
+                diasLabel={dias(i.diasDiff)}
+                fechaLabel={formatDate(i.fecha)}
+                selected={seleccionado?.id === i.id}
+                tone={tone}
+                onSelect={() => setSelectedId(i.id)}
+              />
+            ))
+          )}
+        </div>
+      </aside>
+
+      <section className="scrollbar-thin h-full overflow-y-auto p-6">
+        {!seleccionado ? (
+          <MasterEmpty mensaje="Selecciona un registro para ver el detalle." />
+        ) : (
+          <DetalleFecha
+            key={seleccionado.id}
+            item={seleccionado}
+            colorBadge={colorBadge}
+            colorDias={colorDias}
+            onEntregado={onEntregado}
+            onIndeterminado={onIndeterminado}
+            onAfterAction={avanzar}
+          />
+        )}
+      </section>
+    </div>
+  )
+}
+
+interface DetalleFechaProps {
+  item: FechaItem
+  colorBadge: string
+  colorDias: string
+  onEntregado?:     (id: string) => Promise<void>
+  onIndeterminado?: (id: string) => Promise<void>
+  onAfterAction: () => void
+}
+
+function DetalleFecha({
+  item, colorBadge, colorDias, onEntregado, onIndeterminado, onAfterAction,
+}: DetalleFechaProps) {
+  const [saving, setSaving] = useState(false)
+
+  async function handle(action?: (id: string) => Promise<void>) {
+    if (!action) return
+    setSaving(true)
+    try { await action(item.id); onAfterAction() } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <header className="flex items-start gap-4">
+        <span
+          aria-hidden
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold ${colorBadge}`}
+        >
+          {iniciales(item.nombre)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-xl font-semibold text-foreground">{item.nombre}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Briefcase size={14} aria-hidden />
+            <span>{item.puesto ?? "Sin puesto"}</span>
+            <span aria-hidden>·</span>
+            <Building2 size={14} aria-hidden />
+            <span>{item.departamento ?? "Sin departamento"}</span>
+          </div>
+        </div>
+        <Badge className={`shrink-0 ${colorBadge}`} variant="secondary">{item.etiqueta}</Badge>
+      </header>
+
+      <dl className="grid grid-cols-2 gap-3">
+        <DetalleStat label="Fecha" value={formatDate(item.fecha)} icon={<Calendar size={14} aria-hidden />} />
+        <DetalleStat label="Antigüedad" value={dias(item.diasDiff)} icon={<Clock size={14} aria-hidden />} valueClass={colorDias} />
+      </dl>
+
+      {(onEntregado || onIndeterminado) && (
+        <div className="rounded-2xl border bg-muted/30 p-4">
+          <h4 className="mb-3 text-sm font-semibold text-foreground">Acción rápida</h4>
+          <div className="flex flex-wrap items-center gap-2">
+            {onEntregado && (
+              <Button onClick={() => handle(onEntregado)} disabled={saving} className="h-10 gap-1.5">
+                <CheckCircle2 size={14} aria-hidden />
+                {saving ? "Guardando…" : "Marcar entregado"}
+              </Button>
+            )}
+            {onIndeterminado && (
+              <Button onClick={() => handle(onIndeterminado)} disabled={saving} className="h-10 gap-1.5">
+                <CheckCircle2 size={14} aria-hidden />
+                {saving ? "Guardando…" : "Marcar como Indeterminado"}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Link
+        href={`/nuevo-ingreso?id=${item.id}`}
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:underline"
+      >
+        <User size={14} aria-hidden />
+        Ver expediente completo
+        <ChevronRight size={14} aria-hidden />
+      </Link>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile stack: toolbar + lista → detalle. Reutiliza piezas master-detail.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function MobileToolbar({
+  total, filtrados, search, onSearchChange, depto, onDeptoChange, deptos,
+}: MasterHeaderProps) {
+  return (
+    <div className="sticky top-0 z-10 flex flex-col gap-2 border-b bg-card/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="relative">
+        <Search
+          size={16}
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Buscar nombre o depto…"
+          inputMode="search"
+          className="h-11 pl-9 text-sm"
+          aria-label="Buscar en alertas"
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <Select
+          value={depto || "__all__"}
+          onValueChange={(v) => onDeptoChange(v === "__all__" ? "" : v)}
+        >
+          <SelectTrigger
+            aria-label="Filtrar por departamento"
+            className="h-10 max-w-[60%] flex-1 truncate rounded-md px-2 text-sm"
+          >
+            <SelectValue placeholder="Todos los departamentos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los departamentos</SelectItem>
+            {deptos.map((d) => (
+              <SelectItem key={d} value={d}>{d}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span
+          aria-live="polite"
+          className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+        >
+          {filtrados}{filtrados !== total ? ` / ${total}` : ""}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function MobileDetailHeader({
+  nombre, badgeLabel, badgeClass, onBack,
+}: { nombre: string; badgeLabel: string; badgeClass: string; onBack: () => void }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card/95 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onBack}
+        aria-label="Volver a la lista"
+        className="h-10 w-10"
+      >
+        <ChevronLeft size={20} aria-hidden />
+      </Button>
+      <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{nombre}</p>
+      <Badge className={`shrink-0 ${badgeClass}`} variant="secondary">{badgeLabel}</Badge>
+    </div>
+  )
+}
+
+function MobileStackEvals({
+  items, vencida, onCalificar,
+}: {
+  items: EvalItem[]
+  vencida: boolean
+  onCalificar: (dbId: string, calificacion: number) => Promise<void>
+}) {
+  const tone: "destructive" | "warning" = vencida ? "destructive" : "warning"
+  const badgeLabel = vencida ? "Vencida" : "Por vencer"
+  const badgeClass = vencida
+    ? "bg-destructive/10 text-destructive"
+    : "bg-warning/10 text-warning"
+  const toneText = vencida ? "text-destructive" : "text-warning"
+
+  const [search, setSearch] = useState("")
+  const [depto, setDepto]   = useState("")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [calStr, setCalStr] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  const deptos = useMemo(
+    () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
+    [items],
+  )
+
+  const filtrados = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return items.filter(i => {
+      const dep = i.departamento?.trim() || "Sin departamento"
+      if (depto && dep !== depto) return false
+      if (!q) return true
+      return i.nombre.toLowerCase().includes(q) || dep.toLowerCase().includes(q)
+    })
+  }, [items, search, depto])
+
+  const seleccionado = useMemo(
+    () => items.find(i => i.id === selectedId) ?? null,
+    [items, selectedId],
+  )
+
+  function back() { setSelectedId(null); setCalStr("") }
+
+  async function guardar() {
+    if (!seleccionado) return
+    const cal = parseInt(calStr, 10)
+    if (isNaN(cal) || cal < 0 || cal > 100) return
+    setSaving(true)
+    try {
+      await onCalificar(seleccionado.dbId, cal)
+      setCalStr("")
+      const idx = filtrados.findIndex(i => i.id === seleccionado.id)
+      const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+      setSelectedId(next?.id ?? null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (seleccionado) {
+    return (
+      <div className="flex h-full flex-col">
+        <MobileDetailHeader
+          nombre={seleccionado.nombre}
+          badgeLabel={badgeLabel}
+          badgeClass={badgeClass}
+          onBack={back}
+        />
+        <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl text-base font-semibold ${badgeClass}`}
+            >
+              {iniciales(seleccionado.nombre)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold text-foreground">{seleccionado.nombre}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {[seleccionado.departamento, seleccionado.turno && `Turno ${seleccionado.turno}`]
+                  .filter(Boolean).join(" · ") || "Sin departamento"}
+              </p>
+            </div>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-2">
+            <DetalleStat label="Fecha" value={formatDate(seleccionado.fecha)} icon={<Calendar size={12} aria-hidden />} />
+            <DetalleStat label="Antigüedad" value={dias(seleccionado.diasDiff)} icon={<Clock size={12} aria-hidden />} valueClass={toneText} />
+          </dl>
+
+          <div className="rounded-2xl border bg-muted/30 p-3">
+            <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <Pencil size={14} aria-hidden /> Calificación
+            </h4>
+            <Input
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              min={0}
+              max={100}
+              value={calStr}
+              onChange={(e) => setCalStr(e.target.value)}
+              placeholder="0 – 100"
+              className="h-11 text-base"
+              aria-label="Calificación"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div
+          className="sticky bottom-0 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <Button
+            onClick={guardar}
+            disabled={saving || calStr === ""}
+            className="h-12 w-full text-base"
+          >
+            {saving ? "Guardando…" : "Guardar calificación"}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <MobileToolbar
+        total={items.length}
+        filtrados={filtrados.length}
+        search={search}
+        onSearchChange={setSearch}
+        depto={depto}
+        onDeptoChange={setDepto}
+        deptos={deptos}
+      />
+      <div className="scrollbar-thin flex-1 overflow-y-auto">
+        {filtrados.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            Sin resultados con los filtros actuales.
+          </p>
+        ) : (
+          filtrados.map(i => (
+            <MasterListItem
+              key={i.id}
+              nombre={i.nombre}
+              meta={[i.departamento, i.turno ? `Turno ${i.turno}` : null].filter(Boolean).join(" · ") || "Sin departamento"}
+              diasLabel={dias(i.diasDiff)}
+              fechaLabel={formatDate(i.fecha)}
+              selected={false}
+              tone={tone}
+              onSelect={() => setSelectedId(i.id)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MobileStackFechas({
+  items, colorBadge, colorDias, onEntregado, onIndeterminado,
+}: {
+  items: FechaItem[]
+  colorBadge: string
+  colorDias: string
+  onEntregado?:     (id: string) => Promise<void>
+  onIndeterminado?: (id: string) => Promise<void>
+}) {
+  const tone: "destructive" | "warning" =
+    items.some(i => i.diasDiff < 0) ? "destructive" : "warning"
+
+  const [search, setSearch] = useState("")
+  const [depto, setDepto]   = useState("")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const deptos = useMemo(
+    () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
+    [items],
+  )
+
+  const filtrados = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return items.filter(i => {
+      const dep = i.departamento?.trim() || "Sin departamento"
+      if (depto && dep !== depto) return false
+      if (!q) return true
+      return (
+        i.nombre.toLowerCase().includes(q) ||
+        dep.toLowerCase().includes(q) ||
+        (i.puesto ?? "").toLowerCase().includes(q)
+      )
+    })
+  }, [items, search, depto])
+
+  const seleccionado = useMemo(
+    () => items.find(i => i.id === selectedId) ?? null,
+    [items, selectedId],
+  )
+
+  function back() { setSelectedId(null) }
+
+  async function ejecutar(action?: (id: string) => Promise<void>) {
+    if (!seleccionado || !action) return
+    setSaving(true)
+    try {
+      await action(seleccionado.id)
+      const idx = filtrados.findIndex(i => i.id === seleccionado.id)
+      const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+      setSelectedId(next?.id ?? null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (seleccionado) {
+    return (
+      <div className="flex h-full flex-col">
+        <MobileDetailHeader
+          nombre={seleccionado.nombre}
+          badgeLabel={seleccionado.etiqueta}
+          badgeClass={colorBadge}
+          onBack={back}
+        />
+        <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl text-base font-semibold ${colorBadge}`}
+            >
+              {iniciales(seleccionado.nombre)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold text-foreground">{seleccionado.nombre}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {[seleccionado.puesto, seleccionado.departamento].filter(Boolean).join(" · ") || "Sin información"}
+              </p>
+            </div>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-2">
+            <DetalleStat label="Fecha" value={formatDate(seleccionado.fecha)} icon={<Calendar size={12} aria-hidden />} />
+            <DetalleStat label="Antigüedad" value={dias(seleccionado.diasDiff)} icon={<Clock size={12} aria-hidden />} valueClass={colorDias} />
+          </dl>
+        </div>
+
+        {(onEntregado || onIndeterminado) && (
+          <div
+            className="sticky bottom-0 flex flex-col gap-2 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          >
+            {onEntregado && (
+              <Button
+                onClick={() => ejecutar(onEntregado)}
+                disabled={saving}
+                className="h-12 w-full gap-1.5 text-base"
+              >
+                <CheckCircle2 size={16} aria-hidden />
+                {saving ? "Guardando…" : "Marcar entregado"}
+              </Button>
+            )}
+            {onIndeterminado && (
+              <Button
+                onClick={() => ejecutar(onIndeterminado)}
+                disabled={saving}
+                className="h-12 w-full gap-1.5 text-base"
+              >
+                <CheckCircle2 size={16} aria-hidden />
+                {saving ? "Guardando…" : "Marcar como Indeterminado"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <MobileToolbar
+        total={items.length}
+        filtrados={filtrados.length}
+        search={search}
+        onSearchChange={setSearch}
+        depto={depto}
+        onDeptoChange={setDepto}
+        deptos={deptos}
+      />
+      <div className="scrollbar-thin flex-1 overflow-y-auto">
+        {filtrados.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            Sin resultados con los filtros actuales.
+          </p>
+        ) : (
+          filtrados.map(i => (
+            <MasterListItem
+              key={i.id}
+              nombre={i.nombre}
+              meta={[i.puesto, i.departamento].filter(Boolean).join(" · ") || "Sin información"}
+              diasLabel={dias(i.diasDiff)}
+              fechaLabel={formatDate(i.fecha)}
+              selected={false}
+              tone={tone}
+              onSelect={() => setSelectedId(i.id)}
+            />
+          ))
+        )}
+      </div>
     </div>
   )
 }
