@@ -11,6 +11,7 @@ import {
   X,
   Sparkles,
   GraduationCap,
+  Info,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -157,6 +158,21 @@ export default function RecursosPage() {
                   {cursos.length === 1 ? "curso disponible" : "cursos disponibles"}
                 </p>
               )}
+
+              {/* ── Nota ── */}
+              <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                <Info size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                    Nota importante
+                  </p>
+                  <p className="text-xs text-foreground/80 leading-relaxed">
+                    Al visualizar el curso en línea, debes presentarte al departamento de{" "}
+                    <span className="font-semibold text-foreground">Capacitación</span>{" "}
+                    para realizar el examen correspondiente.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
