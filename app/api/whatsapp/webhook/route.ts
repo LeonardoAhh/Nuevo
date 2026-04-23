@@ -78,6 +78,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
 
   // Validar que sea número de empleado (solo dígitos, 1–10 chars)
   if (!/^\d{1,10}$/.test(normalized)) {
+    console.warn(`[WhatsApp webhook] Formato inválido de '${from}': "${text.slice(0, 50)}"`)
     await sendWhatsAppMessage(
       from,
       "⚠️ Envía únicamente tu *número de empleado* (solo números).\n\nEjemplo: *12345*\n\nEscribe *hola* si necesitas ayuda."
@@ -103,8 +104,9 @@ async function handleMessage(from: string, text: string): Promise<void> {
   try {
     const result = await getComplianceByNumero(normalized)
     const message = formatComplianceMessage(result)
-    await markAsQueried(normalized)
+    // Enviar primero — si falla, NO registrar (evita bloquear empleado sin haber recibido resultado)
     await sendWhatsAppMessage(from, message + "\n\n_Esta fue tu única consulta disponible._")
+    await markAsQueried(normalized, from)
   } catch (err) {
     console.error("[WhatsApp webhook] Error Supabase:", err)
     await sendWhatsAppMessage(

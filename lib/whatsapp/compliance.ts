@@ -104,10 +104,10 @@ export async function hasAlreadyQueried(numero: string): Promise<boolean> {
   return !!data
 }
 
-/** Registra que el empleado ya realizó su consulta */
-export async function markAsQueried(numero: string): Promise<void> {
+/** Registra que el empleado ya realizó su consulta (incluye teléfono para auditoría) */
+export async function markAsQueried(numero: string, phone: string): Promise<void> {
   const supabase = getServerClient()
-  await supabase.from("whatsapp_consultas").insert({ numero: numero.trim() })
+  await supabase.from("whatsapp_consultas").insert({ numero: numero.trim(), phone })
 }
 
 /** Formatea el resultado como mensaje de texto para WhatsApp */
