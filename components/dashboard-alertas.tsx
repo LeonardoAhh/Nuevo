@@ -33,7 +33,6 @@ import {
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import Link from "next/link"
 import {
-  useDashboardAlertas,
   dias,
   formatDate,
   EVAL_UMBRAL_DIAS,
@@ -43,6 +42,7 @@ import {
   type FechaItem,
   type DialogTipo,
 } from "@/lib/hooks/useDashboardAlertas"
+import { useDashboardAlertasShared } from "@/components/dashboard-alertas-context"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-componente: métrica clickeable
@@ -270,7 +270,7 @@ export default function DashboardAlertas() {
     termVenc, termProx, setTermVenc, setTermProx,
     totalAlertas,
     calificarEval, marcarRgEntregado, marcarIndeterminado,
-  } = useDashboardAlertas()
+  } = useDashboardAlertasShared()
 
   // ── Config de dialogs ──────────────────────────────────────────────────────
 
