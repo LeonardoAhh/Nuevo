@@ -8,10 +8,8 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  GripVertical,
   QrCode,
   AlertCircle,
-  Check,
   Copy,
   Download,
 } from "lucide-react"
@@ -34,7 +32,6 @@ import {
 } from "@/components/ui/dialog"
 import { useCursosPublicos, type CursoPublico, type CursoPublicoInput } from "@/lib/hooks"
 import { useRole } from "@/lib/hooks"
-import { RoleGate } from "@/components/role-gate"
 import { notify } from "@/lib/notify"
 import { detectarCategoria, getToneClasses } from "@/lib/constants/cursos-categorias"
 
@@ -45,11 +42,14 @@ function CategoriaCover({
   imagenUrl,
   className,
   iconSize = 32,
+  compact = false,
 }: {
   nombre: string
   imagenUrl?: string | null
   className?: string
   iconSize?: number
+  /** Versión reducida: solo icono sobre gradiente, sin label ni decoración */
+  compact?: boolean
 }) {
   if (imagenUrl) {
     return (
@@ -67,21 +67,36 @@ function CategoriaCover({
   const cat = detectarCategoria(nombre || "general")
   const tone = getToneClasses(cat.tone)
   const Icon = cat.icon
+
+  if (compact) {
+    return (
+      <div
+        className={`relative overflow-hidden flex items-center justify-center ${className ?? ""}`}
+        style={{ backgroundImage: tone.gradient }}
+        aria-label={cat.label}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.2),transparent_40%)]" />
+        <Icon className="relative text-white" size={iconSize} strokeWidth={1.75} />
+      </div>
+    )
+  }
+
   return (
     <div
-      className={`relative overflow-hidden bg-gradient-to-br ${tone.gradient} flex items-center justify-center ${className ?? ""}`}
+      className={`relative overflow-hidden flex items-center justify-center ${className ?? ""}`}
+      style={{ backgroundImage: tone.gradient }}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
       <div className="relative flex flex-col items-center justify-center text-white">
         <div className="rounded-full bg-white/15 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-          <Icon className={`${tone.iconColor}`} size={iconSize} strokeWidth={1.5} />
+          <Icon className="text-white" size={iconSize} strokeWidth={1.5} />
         </div>
         <span className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/80">
           {cat.label}
         </span>
       </div>
       <Icon
-        className={`absolute -right-3 -bottom-3 ${tone.patternColor}`}
+        className="absolute -right-3 -bottom-3 text-white/15"
         size={Math.round(iconSize * 2.6)}
         strokeWidth={1}
       />
@@ -338,29 +353,36 @@ interface CursoRowProps {
 }
 
 function CursoRow({ curso, canEdit, onEdit, onToggle, onDelete }: CursoRowProps) {
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(curso.url)}&margin=4`
-
   return (
     <Card className={`transition-opacity ${curso.activo ? "" : "opacity-60"}`}>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Thumbnail mini */}
-          <div className="shrink-0 hidden sm:block">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          {/* Thumbnail — visible en todos los tamaños */}
+          <div className="shrink-0">
             <CategoriaCover
               nombre={curso.nombre}
               imagenUrl={curso.imagen_url}
-              className="w-16 h-16 rounded border"
-              iconSize={24}
+              compact
+              className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-md border"
+              iconSize={20}
             />
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-sm truncate">{curso.nombre}</span>
-              <Badge variant={curso.activo ? "default" : "secondary"} className="text-xs shrink-0">
-                {curso.activo ? "Activo" : "Oculto"}
-              </Badge>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-semibold text-sm leading-tight truncate">
+                {curso.nombre}
+              </span>
+              {/* Solo mostramos badge cuando está oculto — señal informativa, no ruido */}
+              {!curso.activo && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 px-1.5 text-[10px] leading-none shrink-0"
+                >
+                  Oculto
+                </Badge>
+              )}
             </div>
             {curso.descripcion && (
               <p className="text-xs text-muted-foreground line-clamp-2">{curso.descripcion}</p>
@@ -369,40 +391,43 @@ function CursoRow({ curso, canEdit, onEdit, onToggle, onDelete }: CursoRowProps)
               href={curso.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline inline-flex items-center gap-1 truncate max-w-full"
+              className="text-xs text-primary hover:underline flex items-center gap-1 min-w-0"
             >
-              <ExternalLink size={11} />
+              <ExternalLink size={11} className="shrink-0" />
               <span className="truncate">{curso.url}</span>
             </a>
           </div>
 
-          {/* Actions — solo dev */}
+          {/* Actions — solo dev. Tap targets grandes en móvil. */}
           {canEdit && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0 -mr-1 -mt-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 sm:h-8 sm:w-8"
                 onClick={() => onToggle(curso)}
                 title={curso.activo ? "Ocultar" : "Mostrar"}
+                aria-label={curso.activo ? "Ocultar curso" : "Mostrar curso"}
               >
                 {curso.activo ? <EyeOff size={15} /> : <Eye size={15} />}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 sm:h-8 sm:w-8"
                 onClick={() => onEdit(curso)}
                 title="Editar"
+                aria-label="Editar curso"
               >
                 <Pencil size={15} />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
+                className="h-8 w-8 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
                 onClick={() => onDelete(curso)}
                 title="Eliminar"
+                aria-label="Eliminar curso"
               >
                 <Trash2 size={15} />
               </Button>
@@ -478,12 +503,12 @@ export default function CursosAdminContent() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
         {/* Header bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-semibold">Cursos</h2>
-            <p className="text-sm text-muted-foreground">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-0.5">
+            <h2 className="text-base sm:text-lg font-semibold">Cursos</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Cursos visibles en{" "}
               <a
                 href="/recursos"
@@ -499,14 +524,19 @@ export default function CursosAdminContent() {
             <Button
               variant="outline"
               onClick={() => setQrPublicOpen(true)}
-              className="gap-2"
+              className="gap-2 px-2.5 sm:px-4"
               title="Mostrar QR público"
+              aria-label="Mostrar QR público"
             >
               <QrCode size={16} />
               <span className="hidden sm:inline">Mostrar QR</span>
             </Button>
             {canEdit && (
-              <Button onClick={openCreate} className="gap-2">
+              <Button
+                onClick={openCreate}
+                className="gap-2 px-2.5 sm:px-4"
+                aria-label="Nuevo curso"
+              >
                 <Plus size={16} />
                 <span className="hidden sm:inline">Nuevo curso</span>
               </Button>
@@ -524,9 +554,9 @@ export default function CursosAdminContent() {
 
         {/* Loading skeletons */}
         {loading && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+              <Skeleton key={i} className="h-[84px] sm:h-24 w-full rounded-lg" />
             ))}
           </div>
         )}
@@ -549,7 +579,7 @@ export default function CursosAdminContent() {
 
         {/* List */}
         {!loading && cursos.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
             {cursos.map((curso) => (
               <CursoRow
                 key={curso.id}
