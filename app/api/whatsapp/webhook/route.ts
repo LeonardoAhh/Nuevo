@@ -47,10 +47,12 @@ export async function POST(req: NextRequest) {
     return new NextResponse("OK", { status: 200 })
   }
 
-  // Procesar de forma asíncrona — responder 200 inmediato a Twilio (evita timeout)
-  handleMessage(from, body).catch((err) =>
+  // Procesar de forma síncrona — Vercel mata la función al retornar, el fire-and-forget no funciona
+  try {
+    await handleMessage(from, body)
+  } catch (err) {
     console.error("[WhatsApp webhook] Error al procesar mensaje:", err)
-  )
+  }
 
   // Twilio espera respuesta vacía o TwiML — 200 vacío es suficiente
   return new NextResponse("", {
