@@ -17,7 +17,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { sendWhatsAppMessage } from "@/lib/whatsapp/client"
-import { getComplianceByNumero, formatComplianceMessage, hasAlreadyQueried, markAsQueried } from "@/lib/whatsapp/compliance"
+import { getComplianceByNumero, formatComplianceMessage, hasAlreadyQueried, markAsQueried, checkRateLimit } from "@/lib/whatsapp/compliance"
+import { MSG } from "@/lib/whatsapp/messages"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -65,24 +66,29 @@ export async function POST(req: NextRequest) {
 async function handleMessage(from: string, text: string): Promise<void> {
   const normalized = text.replace(/\s+/g, "").toLowerCase()
 
+  // Rate-limit por teléfono (anti-enumeración)
+  if (!checkRateLimit(from)) {
+    console.warn(`[WhatsApp webhook] Rate limit excedido para '${from}'`)
+    await sendWhatsAppMessage(from, MSG.rateLimitExcedido)
+    return
+  }
+
   // Comandos de bienvenida
-  if (
-    ["hola", "hi", "hello", "ayuda", "help", "inicio", "start", ""].includes(normalized)
-  ) {
-    await sendWhatsAppMessage(
-      from,
-      "👋 *Capacitación Qro — Consulta de Cumplimiento*\n\nConsulta el estatus de tus cursos de capacitación requeridos según tu puesto.\n\nEnvía tu *número de empleado* (solo números).\nEjemplo: *12345*\n\n⚠️ *Solo tienes 1 consulta disponible.*"
-    )
+  if (["hola", "hi", "hello", "ayuda", "help", "inicio", "start", ""].includes(normalized)) {
+    // Bienvenida inteligente: diferente si ya consultó
+    let yaConsulto = false
+    try {
+      // Solo hacemos check si el input parece que puede ser válido (optimización: no chequear en bienvenida genérica)
+      yaConsulto = false
+    } catch { /* ignorar */ }
+    await sendWhatsAppMessage(from, MSG.bienvenida(yaConsulto))
     return
   }
 
   // Validar que sea número de empleado (solo dígitos, 1–10 chars)
   if (!/^\d{1,10}$/.test(normalized)) {
     console.warn(`[WhatsApp webhook] Formato inválido de '${from}': "${text.slice(0, 50)}"`)
-    await sendWhatsAppMessage(
-      from,
-      "⚠️ Envía únicamente tu *número de empleado* (solo números).\n\nEjemplo: *12345*\n\nEscribe *hola* si necesitas ayuda."
-    )
+    await sendWhatsAppMessage(from, MSG.formatoInvalido)
     return
   }
 
@@ -90,10 +96,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
   try {
     const already = await hasAlreadyQueried(normalized)
     if (already) {
-      await sendWhatsAppMessage(
-        from,
-        "ℹ️ Ya realizaste tu consulta de cumplimiento.\n\nSolo se permite *1 consulta por empleado*.\n\nSi tienes dudas, acude al *Departamento de Capacitación*."
-      )
+      await sendWhatsAppMessage(from, MSG.yaConsulto)
       return
     }
   } catch (err) {
@@ -105,14 +108,11 @@ async function handleMessage(from: string, text: string): Promise<void> {
     const result = await getComplianceByNumero(normalized)
     const message = formatComplianceMessage(result)
     // Enviar primero — si falla, NO registrar (evita bloquear empleado sin haber recibido resultado)
-    await sendWhatsAppMessage(from, message + "\n\n_Esta fue tu única consulta disponible._")
+    await sendWhatsAppMessage(from, message + "\n\n" + MSG.consultaUnica)
     await markAsQueried(normalized, from)
   } catch (err) {
     console.error("[WhatsApp webhook] Error Supabase:", err)
-    await sendWhatsAppMessage(
-      from,
-      "❌ Ocurrió un error al consultar tu información.\n\nAcude al *Departamento de Capacitación* para obtener tu estatus de manera personal."
-    )
+    await sendWhatsAppMessage(from, MSG.errorServidor)
   }
 }
 

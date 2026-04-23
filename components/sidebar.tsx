@@ -10,6 +10,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Moon,
   Sun,
   Monitor,
@@ -68,6 +69,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
+      { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
     ],
   },
   {

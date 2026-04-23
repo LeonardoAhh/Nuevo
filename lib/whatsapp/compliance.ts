@@ -3,17 +3,42 @@
  * Tablas: employees, employee_courses, courses, position_courses
  */
 
-import { createClient } from "@supabase/supabase-js"
+import { createClient, SupabaseClient } from "@supabase/supabase-js"
+import { MSG } from "@/lib/whatsapp/messages"
 
 type ComplianceRow =
   | { found: true; nombre: string; puesto: string; departamento: string; completados: number; requeridos: number; porcentaje: number; pendientes: string[]; aprobados: string[] }
   | { found: false; message: string }
 
-function getServerClient() {
+// ─── Singleton Supabase client ────────────────────────────────
+// Evita crear nuevo cliente en cada request serverless
+let _client: SupabaseClient | null = null
+
+function getServerClient(): SupabaseClient {
+  if (_client) return _client
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error("Supabase env vars no configuradas")
-  return createClient(url, key)
+  _client = createClient(url, key)
+  return _client
+}
+
+// ─── Rate-limit por teléfono ─────────────────────────────────
+// Max 5 intentos por phone en ventana de 10 minutos
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
+const _attempts = new Map<string, { count: number; first: number }>()
+
+export function checkRateLimit(phone: string): boolean {
+  const now = Date.now()
+  const entry = _attempts.get(phone)
+  if (!entry || now - entry.first > RATE_LIMIT_WINDOW_MS) {
+    _attempts.set(phone, { count: 1, first: now })
+    return true // permitido
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false // bloqueado
+  entry.count++
+  return true
 }
 
 export async function getComplianceByNumero(numero: string): Promise<ComplianceRow> {
@@ -29,7 +54,7 @@ export async function getComplianceByNumero(numero: string): Promise<ComplianceR
   if (empError) throw empError
 
   if (!employee) {
-    return { found: false, message: `❌ No encontré empleado con número *${numero}*.\n\nVerifica que sea tu número de empleado correcto.\n\nSi el problema persiste, acude al *Departamento de Capacitación*.` }
+    return { found: false, message: MSG.noEncontrado(numero) }
   }
 
   // 2. Cursos completados por el empleado
@@ -107,7 +132,11 @@ export async function hasAlreadyQueried(numero: string): Promise<boolean> {
 /** Registra que el empleado ya realizó su consulta (incluye teléfono para auditoría) */
 export async function markAsQueried(numero: string, phone: string): Promise<void> {
   const supabase = getServerClient()
-  await supabase.from("whatsapp_consultas").insert({ numero: numero.trim(), phone })
+  const { error } = await supabase.from("whatsapp_consultas").insert({ numero: numero.trim(), phone })
+  if (error) {
+    // Log explícito: registro falló pero empleado ya recibió resultado
+    console.error(`[WhatsApp] CRITICAL: markAsQueried falló para numero=${numero} phone=${phone}:`, error.message)
+  }
 }
 
 /** Formatea el resultado como mensaje de texto para WhatsApp */
@@ -138,16 +167,11 @@ export function formatComplianceMessage(result: ComplianceRow): string {
     result.pendientes.forEach((c) => lines.push(`   • ${c}`))
   }
 
-  if (result.requeridos === 0) {
-    lines.push(``, `ℹ️ No hay cursos requeridos registrados para este puesto.`)
-  }
+  if (result.requeridos === 0) lines.push(``, MSG.sinCursosRequeridos)
+  if (result.porcentaje === 100) lines.push(``, MSG.felicidades)
 
-  if (result.porcentaje === 100) {
-    lines.push(``, `🎉 *¡Felicidades! Tienes todos tus cursos al día.*`)
-  }
-
-  lines.push(``, `ℹ️ _Si tus datos son incorrectos, acude al Departamento de Capacitación._`)
-  lines.push(``, `_Capacitación Planta Qro_`)
+  lines.push(``, MSG.datosIncorrectos)
+  lines.push(``, MSG.footer)
 
   return lines.join("\n")
 }
