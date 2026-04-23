@@ -29,7 +29,7 @@ export async function getComplianceByNumero(numero: string): Promise<ComplianceR
   if (empError) throw empError
 
   if (!employee) {
-    return { found: false, message: `No encontré empleado con número *${numero}*. Verifica el número e intenta de nuevo.` }
+    return { found: false, message: `❌ No encontré empleado con número *${numero}*.\n\nVerifica que sea tu número de empleado correcto.\n\nSi el problema persiste, acude al *Departamento de Capacitación*.` }
   }
 
   // 2. Cursos completados por el empleado
@@ -115,7 +115,7 @@ export function formatComplianceMessage(result: ComplianceRow): string {
   if (!result.found) return result.message
 
   const bar = buildBar(result.porcentaje)
-  const emoji = result.porcentaje === 100 ? "✅" : result.porcentaje >= 70 ? "⚠️" : "❌"
+  const emoji = result.porcentaje === 100 ? "🎉" : result.porcentaje >= 70 ? "⚠️" : "❌"
 
   const lines: string[] = [
     `${emoji} *Cumplimiento de Capacitación*`,
@@ -142,7 +142,12 @@ export function formatComplianceMessage(result: ComplianceRow): string {
     lines.push(``, `ℹ️ No hay cursos requeridos registrados para este puesto.`)
   }
 
-  lines.push(``, `_Consulta realizada por Capacitación Planta Qro_`)
+  if (result.porcentaje === 100) {
+    lines.push(``, `🎉 *¡Felicidades! Tienes todos tus cursos al día.*`)
+  }
+
+  lines.push(``, `ℹ️ _Si tus datos son incorrectos, acude al Departamento de Capacitación._`)
+  lines.push(``, `_Capacitación Planta Qro_`)
 
   return lines.join("\n")
 }

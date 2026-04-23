@@ -71,7 +71,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
   ) {
     await sendWhatsAppMessage(
       from,
-      "👋 *Capacitación Qro — Consulta de Cumplimiento*\n\nEnvía tu *número de empleado* para ver tu cumplimiento.\n\nEjemplo: *12345*\n\n⚠️ _Solo tienes *1 consulta disponible*_"
+      "👋 *Capacitación Qro — Consulta de Cumplimiento*\n\nConsulta el estatus de tus cursos de capacitación requeridos según tu puesto.\n\nEnvía tu *número de empleado* (solo números).\nEjemplo: *12345*\n\n⚠️ *Solo tienes 1 consulta disponible.*"
     )
     return
   }
@@ -91,7 +91,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
     if (already) {
       await sendWhatsAppMessage(
         from,
-        "⚠️ Ya realizaste tu consulta de cumplimiento.\n\nSolo se permite *1 consulta por empleado*.\n\nSi tienes dudas, contacta directamente a Capacitación."
+        "ℹ️ Ya realizaste tu consulta de cumplimiento.\n\nSolo se permite *1 consulta por empleado*.\n\nSi tienes dudas, acude al *Departamento de Capacitación*."
       )
       return
     }
@@ -104,12 +104,12 @@ async function handleMessage(from: string, text: string): Promise<void> {
     const result = await getComplianceByNumero(normalized)
     const message = formatComplianceMessage(result)
     await markAsQueried(normalized)
-    await sendWhatsAppMessage(from, message + "\n\n_Esta fue tu consulta única. Ya no podrás volver a consultar por este medio._")
+    await sendWhatsAppMessage(from, message + "\n\n_Esta fue tu única consulta disponible._")
   } catch (err) {
     console.error("[WhatsApp webhook] Error Supabase:", err)
     await sendWhatsAppMessage(
       from,
-      "❌ Ocurrió un error al consultar tu información. Intenta más tarde o contacta a Capacitación."
+      "❌ Ocurrió un error al consultar tu información.\n\nAcude al *Departamento de Capacitación* para obtener tu estatus de manera personal."
     )
   }
 }
