@@ -1,5 +1,3 @@
-"use client"
-
 import type { Metadata } from "next"
 import Dashboard from "@/components/Dashboard"
 import CapacitacionContent from "@/components/content/capacitacion"

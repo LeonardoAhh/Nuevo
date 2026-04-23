@@ -128,8 +128,6 @@ export function detectarCategoria(nombre: string): CursoCategoria {
   return DEFAULT_CATEGORIA
 }
 
-// ─── Mapeo tono → clases tailwind (sin colores hardcoded) ─────────────────────
-
 interface ToneClasses {
   /** Gradiente del cover */
   gradient: string
@@ -142,48 +140,52 @@ interface ToneClasses {
   patternColor: string
 }
 
+interface ToneClasses {
+  /** Gradiente CSS listo para `style={{ backgroundImage }}` */
+  gradient: string
+  /** Color sólido para icono / badge accent */
+  solid: string
+  /** Clases del badge inferior (footer card) */
+  badgeBg: string
+  badgeText: string
+}
+
 const TONE_CLASSES: Record<CursoTone, ToneClasses> = {
   primary: {
-    gradient: "from-primary/90 via-primary/70 to-primary/50",
-    iconColor: "text-primary-foreground",
-    badgeBg: "bg-primary/10",
-    badgeText: "text-primary",
-    patternColor: "text-primary-foreground/20",
+    gradient: "linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #1d4ed8 100%)",
+    solid: "#2563eb",
+    badgeBg: "bg-sky-500/10",
+    badgeText: "text-sky-700 dark:text-sky-300",
   },
   info: {
-    gradient: "from-info/90 via-info/70 to-info/50",
-    iconColor: "text-info-foreground",
-    badgeBg: "bg-info/10",
-    badgeText: "text-info",
-    patternColor: "text-info-foreground/20",
+    gradient: "linear-gradient(135deg, #6366f1 0%, #7c3aed 55%, #5b21b6 100%)",
+    solid: "#6366f1",
+    badgeBg: "bg-indigo-500/10",
+    badgeText: "text-indigo-700 dark:text-indigo-300",
   },
   success: {
-    gradient: "from-success/90 via-success/70 to-success/50",
-    iconColor: "text-success-foreground",
-    badgeBg: "bg-success/10",
-    badgeText: "text-success",
-    patternColor: "text-success-foreground/20",
+    gradient: "linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%)",
+    solid: "#059669",
+    badgeBg: "bg-emerald-500/10",
+    badgeText: "text-emerald-700 dark:text-emerald-300",
   },
   warning: {
-    gradient: "from-warning/90 via-warning/70 to-warning/50",
-    iconColor: "text-warning-foreground",
-    badgeBg: "bg-warning/10",
-    badgeText: "text-warning",
-    patternColor: "text-warning-foreground/20",
+    gradient: "linear-gradient(135deg, #f59e0b 0%, #ea580c 55%, #c2410c 100%)",
+    solid: "#ea580c",
+    badgeBg: "bg-amber-500/10",
+    badgeText: "text-amber-700 dark:text-amber-300",
   },
   destructive: {
-    gradient: "from-destructive/90 via-destructive/70 to-destructive/50",
-    iconColor: "text-destructive-foreground",
-    badgeBg: "bg-destructive/10",
-    badgeText: "text-destructive",
-    patternColor: "text-destructive-foreground/20",
+    gradient: "linear-gradient(135deg, #f43f5e 0%, #dc2626 55%, #b91c1c 100%)",
+    solid: "#dc2626",
+    badgeBg: "bg-rose-500/10",
+    badgeText: "text-rose-700 dark:text-rose-300",
   },
   accent: {
-    gradient: "from-accent via-muted to-secondary",
-    iconColor: "text-foreground/80",
-    badgeBg: "bg-accent",
-    badgeText: "text-accent-foreground",
-    patternColor: "text-foreground/10",
+    gradient: "linear-gradient(135deg, #a855f7 0%, #9333ea 55%, #7e22ce 100%)",
+    solid: "#9333ea",
+    badgeBg: "bg-violet-500/10",
+    badgeText: "text-violet-700 dark:text-violet-300",
   },
 }
 
