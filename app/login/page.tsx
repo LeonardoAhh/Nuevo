@@ -4,7 +4,7 @@ import LoginForm from "@/components/login-form"
 import LoginHero from "@/components/login-hero"
 
 export const metadata: Metadata = {
-  title: "Login | Dashboard",
+  title: "Login | Capacitación Qro",
   description: "Login to your dashboard account",
 }
 

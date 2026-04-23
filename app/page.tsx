@@ -1,5 +1,6 @@
 "use client"
 
+import type { Metadata } from "next"
 import { useState } from "react"
 import Dashboard from "@/components/Dashboard"
 import CapacitacionChart from "@/components/capacitacion-chart"
@@ -11,6 +12,10 @@ import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
 import NotesWidget from "@/components/notes-widget"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StickyNote, Bell, GraduationCap } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Dashboard | Capacitación Qro",
+}
 
 export default function Page() {
   return <Dashboard pageTitle="Dashboard" content={<DashboardContent />} />

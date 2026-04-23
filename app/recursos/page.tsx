@@ -1,5 +1,6 @@
 "use client"
 
+import type { Metadata } from "next"
 import { useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -13,6 +14,10 @@ import {
   GraduationCap,
   Info,
 } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Recursos",
+}
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"

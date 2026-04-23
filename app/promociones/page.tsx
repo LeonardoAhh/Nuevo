@@ -1,11 +1,16 @@
 "use client"
 
+import type { Metadata } from "next"
 import Dashboard from "@/components/Dashboard"
 import PromocionesContent from "@/components/content/promociones"
 import { usePromociones } from "@/lib/hooks/usePromociones"
 import { useEffect } from "react"
 import { notify } from "@/lib/notify"
 import { Skeleton } from "@/components/ui/skeleton"
+
+export const metadata: Metadata = {
+  title: "Promociones",
+}
 
 function PromocionesWrapper() {
   const { empleados, loading, error, recargar, guardarDesempeño, promoverEmpleado, guardarExamen } = usePromociones()
