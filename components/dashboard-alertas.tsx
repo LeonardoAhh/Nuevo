@@ -165,6 +165,7 @@ function FilaEval({ item, colorAvatar, colorDias, colorBadge, colorBorde, badgeL
             onChange={e => setCalStr(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleGuardar(); if (e.key === "Escape") { setEditando(false); setCalStr("") } }}
             autoFocus
+            aria-label="Calificación (0 a 100)"
             className="h-8 w-24 rounded-md border bg-muted px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <button

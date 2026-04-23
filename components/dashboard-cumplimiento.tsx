@@ -254,7 +254,11 @@ export default function DashboardCumplimiento() {
             {/* ── Resumen general con dona ──────────────────────────────── */}
             <div className="flex flex-col md:flex-row items-center gap-4 mb-5 p-4 rounded-xl bg-muted/50 border">
               {/* Dona */}
-              <div className="relative w-[140px] h-[140px] shrink-0">
+              <div
+                className="relative w-[140px] h-[140px] shrink-0"
+                role="img"
+                aria-label={`Cumplimiento general: ${pctGeneral}%`}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -412,7 +416,11 @@ export default function DashboardCumplimiento() {
                     Cumplimiento por departamento
                   </span>
                 </div>
-                <div className="w-full overflow-x-auto">
+                <div
+                  className="w-full overflow-x-auto"
+                  role="img"
+                  aria-label={`Cumplimiento por departamento: ${filteredDeptData.length} departamentos`}
+                >
                   <ResponsiveContainer
                     width="100%"
                     height={filteredDeptData.length * 48 + 40}
