@@ -100,7 +100,7 @@ export default function DashboardYearlyCompliance() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="hidden sm:flex flex-wrap items-center gap-3">
               {yearStats.map(s => (
                 <div key={s.year} className="flex items-center gap-1.5">
                   <Users size={12} className="text-muted-foreground" />
@@ -109,7 +109,14 @@ export default function DashboardYearlyCompliance() {
                 </div>
               ))}
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cargar} disabled={loading}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={cargar}
+              disabled={loading}
+              aria-label="Actualizar"
+            >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             </Button>
           </div>

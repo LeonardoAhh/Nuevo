@@ -777,7 +777,7 @@ export default function NotesWidget() {
             </div>
           ) : (
             /* Notes list */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:max-h-[400px] md:overflow-y-auto md:pr-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-2 md:max-h-[400px] md:overflow-y-auto md:pr-1">
               {filtered.map(note => (
                 <NoteCard
                   key={note.id}

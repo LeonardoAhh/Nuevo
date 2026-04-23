@@ -339,7 +339,7 @@ export default function DashboardAlertas() {
           </Button>
         </CardHeader>
 
-        <CardContent className="grid grid-cols-1 gap-3 pt-0 lg:grid-cols-2 xl:grid-cols-3">
+        <CardContent className="grid grid-cols-1 gap-3 pt-0 md:grid-cols-2 xl:grid-cols-3">
 
           {/* ── Eval 1er Mes ──────────────────────────────────────────────── */}
           <Seccion
