@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import DashboardAlertas from "@/components/dashboard-alertas"
 import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
 import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
@@ -36,6 +36,13 @@ function AlertasTabTrigger() {
 
 export default function DashboardHome() {
   const [tab, setTab] = useState("alertas")
+  // Keep-alive: mount each tab's heavy content only after first visit,
+  // then keep it mounted (preserves scroll/state without refetching).
+  const [visited, setVisited] = useState<Set<string>>(new Set(["alertas"]))
+
+  useEffect(() => {
+    setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)))
+  }, [tab])
 
   return (
     <DashboardAlertasProvider>
@@ -57,18 +64,22 @@ export default function DashboardHome() {
           </TabsList>
 
           <TabsContent value="alertas" className="space-y-6 mt-4">
-            <DashboardAlertas />
+            {visited.has("alertas") && <DashboardAlertas />}
           </TabsContent>
 
           <TabsContent value="notas" className="space-y-6 mt-4">
-            <NotesWidget />
+            {visited.has("notas") && <NotesWidget />}
           </TabsContent>
 
           <TabsContent value="capacitacion" className="space-y-6 mt-4">
-            <DashboardCumplimiento />
-            <RgCumplimientoChart />
-            <CapacitacionChart />
-            <DashboardYearlyCompliance />
+            {visited.has("capacitacion") && (
+              <>
+                <DashboardCumplimiento />
+                <RgCumplimientoChart />
+                <CapacitacionChart />
+                <DashboardYearlyCompliance />
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
