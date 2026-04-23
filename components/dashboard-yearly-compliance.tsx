@@ -170,6 +170,7 @@ export default function DashboardYearlyCompliance() {
             </div>
 
             {/* Gráfica de barras apiladas */}
+            <div role="img" aria-label={`Cumplimiento por año de ingreso: ${pctGlobal}% global`}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={yearStats} layout="vertical" margin={{ top: 0, right: 16, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} />
@@ -190,6 +191,7 @@ export default function DashboardYearlyCompliance() {
                 <Bar dataKey="pendientes" stackId="a" fill={COLORS.pendiente} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            </div>
 
             {/* Barras de porcentaje por año */}
             <div className="mt-5 space-y-3">

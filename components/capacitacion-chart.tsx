@@ -127,6 +127,7 @@ export default function CapacitacionChart() {
           </div>
         ) : (
           <>
+            <div role="img" aria-label="Capacitaciones completadas por mes y año">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData} margin={{ top: 10, right: 16, left: -10, bottom: 0 }}>
                 <CartesianGrid
@@ -193,6 +194,7 @@ export default function CapacitacionChart() {
                 ))}
               </LineChart>
             </ResponsiveContainer>
+            </div>
 
             {/* Nota al pie */}
             <div className="flex items-start gap-1.5 mt-3 text-xs text-muted-foreground">
