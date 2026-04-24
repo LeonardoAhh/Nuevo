@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -73,11 +74,8 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
+      { label: "Flayers", href: "/flayers", icon: Paintbrush },
     ],
-  },
-  {
-    sectionLabel: "Edición",
-    items: [{ label: "Flayers", href: "/flayers", icon: Paintbrush }],
   },
   {
     sectionLabel: "Público",
@@ -252,25 +250,84 @@ export default function Sidebar({
 
         {/* Nav links */}
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-          <div className="space-y-3 p-2">
-            {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => (
-              <div key={section.sectionLabel}>
-                {showExpanded ? (
-                  <div className="px-3 pt-2 pb-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {section.sectionLabel}
-                    </span>
+          <div className="space-y-1 p-2">
+            {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => {
+              const sectionItems = section.items
+              const hasActiveItem = sectionItems.some((i) => i.href === pathname)
+
+              // Icon-only mode (desktop collapsed): keep the existing flat
+              // rendering — separator + icons with tooltips. No collapsing.
+              if (!showExpanded) {
+                return (
+                  <div key={section.sectionLabel}>
+                    {idx > 0 && <div className="mx-3 my-1 border-t" />}
+                    <div className="space-y-1">
+                      {sectionItems.map((item) => {
+                        const active = pathname === item.href
+                        return (
+                          <Tooltip key={item.href}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className={`w-full justify-start px-2 ${
+                                  active ? "border-l-4 border-primary bg-primary/10" : ""
+                                }`}
+                                aria-current={active ? "page" : undefined}
+                                asChild
+                              >
+                                <Link href={item.href}>
+                                  <item.icon size={18} className="mx-auto" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">{item.label}</TooltipContent>
+                          </Tooltip>
+                        )
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  idx > 0 && <div className="mx-3 my-1 border-t" />
-                )}
-                <div className="space-y-1">
-                  {section.items.map((item) => {
+                )
+              }
+
+              // Single-item sections render as a plain link — an accordion
+              // header for a single child is noise.
+              if (sectionItems.length === 1) {
+                const item = sectionItems[0]
+                const active = pathname === item.href
+                return (
+                  <Button
+                    key={section.sectionLabel}
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      active ? "border-l-4 border-primary bg-primary/10" : ""
+                    }`}
+                    aria-current={active ? "page" : undefined}
+                    asChild
+                  >
+                    <Link
+                      href={item.href}
+                      onClick={() => isMobileView && setShowMobileSidebar(false)}
+                    >
+                      <item.icon size={18} className="mr-2" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </Button>
+                )
+              }
+
+              return (
+                <CollapsibleSection
+                  key={section.sectionLabel}
+                  label={section.sectionLabel}
+                  defaultOpen={hasActiveItem}
+                >
+                  {sectionItems.map((item) => {
                     const active = pathname === item.href
-                    const button = (
+                    return (
                       <Button
+                        key={item.href}
                         variant="ghost"
-                        className={`w-full justify-start ${showExpanded ? "" : "px-2"} ${
+                        className={`w-full justify-start pl-8 text-sm ${
                           active ? "border-l-4 border-primary bg-primary/10" : ""
                         }`}
                         aria-current={active ? "page" : undefined}
@@ -280,24 +337,15 @@ export default function Sidebar({
                           href={item.href}
                           onClick={() => isMobileView && setShowMobileSidebar(false)}
                         >
-                          <item.icon size={18} className={showExpanded ? "mr-2" : "mx-auto"} />
-                          {showExpanded && <span>{item.label}</span>}
+                          <item.icon size={16} className="mr-2" />
+                          <span>{item.label}</span>
                         </Link>
                       </Button>
                     )
-
-                    if (showExpanded) return <div key={item.href}>{button}</div>
-
-                    return (
-                      <Tooltip key={item.href}>
-                        <TooltipTrigger asChild>{button}</TooltipTrigger>
-                        <TooltipContent side="right">{item.label}</TooltipContent>
-                      </Tooltip>
-                    )
                   })}
-                </div>
-              </div>
-            ))}
+                </CollapsibleSection>
+              )
+            })}
           </div>
         </nav>
 
@@ -402,5 +450,82 @@ export default function Sidebar({
         </div>
       </aside>
     </TooltipProvider>
+  )
+}
+
+// ─── CollapsibleSection ──────────────────────────────────────────────────────
+
+/**
+ * Shadcn-style collapsible group used inside the sidebar. The section
+ * remembers its open state in localStorage (scoped by label) so it survives
+ * reloads. Animated via framer-motion height tween.
+ */
+function CollapsibleSection({
+  label,
+  defaultOpen,
+  children,
+}: {
+  label: string
+  defaultOpen: boolean
+  children: React.ReactNode
+}) {
+  const storageKey = `sidebar:section:${label}`
+  const [open, setOpen] = useState(defaultOpen)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey)
+    if (stored === "true" || stored === "false") setOpen(stored === "true")
+    setHydrated(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Whenever the active route forces this section to be open, respect that
+  // without overwriting the user's manual preference for the other direction.
+  useEffect(() => {
+    if (defaultOpen) setOpen(true)
+  }, [defaultOpen])
+
+  useEffect(() => {
+    if (hydrated) localStorage.setItem(storageKey, String(open))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hydrated])
+
+  const contentId = `sidebar-section-${label.replace(/\s+/g, "-").toLowerCase()}`
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={contentId}
+        className="flex w-full items-center justify-between rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span>{label}</span>
+        <motion.span
+          animate={{ rotate: open ? 0 : -90 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="inline-flex text-muted-foreground"
+        >
+          <ChevronDown size={14} />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            id={contentId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-0.5 pb-1 pt-0.5">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
