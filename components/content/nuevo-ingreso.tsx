@@ -95,7 +95,7 @@ export default function NuevoIngresoContent() {
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
-  }, [])
+  }, [fetchAll])
 
   useEffect(() => { load() }, [load])
 
@@ -287,7 +287,7 @@ export default function NuevoIngresoContent() {
       <Card className="bg-card mb-6">
         <CardContent className="p-0">
           {loading ? (
-            <div className="divide-y">
+            <div className="divide-y" aria-busy="true" aria-label="Cargando empleados">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-3">
                   <Skeleton className="h-4 w-16 shrink-0" />
@@ -298,29 +298,40 @@ export default function NuevoIngresoContent() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
+            <div className="text-center py-16 text-muted-foreground text-sm">
               {records.length === 0
-                ? 'No hay registros. Usa el botón Importar para cargar el JSON.'
-                : 'No se encontraron empleados con ese filtro.'}
+                ? (isReadOnly
+                    ? 'No hay empleados registrados.'
+                    : 'No hay empleados registrados. Usa el botón “Nuevo Empleado” para crear el primero.')
+                : 'Sin empleados que coincidan con el filtro.'}
             </div>
           ) : (
             <>
               {/* ── Móvil: tarjetas ──────────────────────────────────────── */}
-              <div className="sm:hidden divide-y dark:divide-gray-700">
+              <div className="sm:hidden divide-y divide-border">
                 {paginatedFiltered.map(r => {
                   const rgVencido = daysFromToday(r.fecha_vencimiento_rg)
                   const rgUrgente = r.rg_rec_048 === 'Pendiente' && rgVencido !== null && rgVencido <= 7
                   return (
                     <div
                       key={r.id}
-                      className="p-4 cursor-pointer active:bg-muted/50"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Editar empleado ${r.nombre}`}
+                      className="p-4 cursor-pointer active:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                       onClick={() => handleEdit(r)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleEdit(r)
+                        }
+                      }}
                     >
                       {/* Fila superior: nombre + RG pill */}
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="min-w-0">
                           {r.numero && (
-                            <p className="text-[10px] font-mono text-muted-foreground leading-none mb-0.5">
+                            <p className="text-[11px] font-mono text-muted-foreground leading-none mb-0.5">
                               #{r.numero}
                             </p>
                           )}
@@ -339,22 +350,22 @@ export default function NuevoIngresoContent() {
                             RG
                           </span>
                           {r.fecha_vencimiento_rg && (
-                            <span className="text-[10px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
+                            <span className="text-[11px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
                           )}
                         </div>
                       </div>
                       {/* Fila inferior: 3 evaluaciones en línea */}
                       <div className="flex gap-2">
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-muted-foreground">1er mes</span>
+                          <span className="text-[11px] text-muted-foreground">1er mes</span>
                           <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-muted-foreground">2do mes</span>
+                          <span className="text-[11px] text-muted-foreground">2do mes</span>
                           <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] text-muted-foreground">3er mes</span>
+                          <span className="text-[11px] text-muted-foreground">3er mes</span>
                           <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
                         </div>
                       </div>
@@ -367,16 +378,16 @@ export default function NuevoIngresoContent() {
               <div className="hidden sm:block overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className=" bg-background/50">
-                      <TableHead className=" w-[90px]">N.N</TableHead>
-                      <TableHead className=" min-w-[180px]">Empleado</TableHead>
-                      <TableHead className=" hidden md:table-cell">Ingreso</TableHead>
-                      <TableHead className=" text-center">Eval. 1er mes</TableHead>
-                      <TableHead className=" text-center hidden md:table-cell">Eval. 2do mes</TableHead>
-                      <TableHead className=" text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
-                      <TableHead className=" hidden md:table-cell">Término</TableHead>
-                      <TableHead className=" hidden md:table-cell">Contrato</TableHead>
-                      <TableHead className=" text-center">RG-REC-048</TableHead>
+                    <TableRow className="bg-background/50">
+                      <TableHead className="w-[90px]">N.N</TableHead>
+                      <TableHead className="min-w-[180px]">Empleado</TableHead>
+                      <TableHead className="hidden md:table-cell">Ingreso</TableHead>
+                      <TableHead className="text-center">Eval. 1er mes</TableHead>
+                      <TableHead className="text-center hidden md:table-cell">Eval. 2do mes</TableHead>
+                      <TableHead className="text-center hidden lg:table-cell">Eval. 3er mes</TableHead>
+                      <TableHead className="hidden md:table-cell">Término</TableHead>
+                      <TableHead className="hidden md:table-cell">Contrato</TableHead>
+                      <TableHead className="text-center">RG-REC-048</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -386,7 +397,7 @@ export default function NuevoIngresoContent() {
                       return (
                         <TableRow
                           key={r.id}
-                          className=" hover:bg-muted/40 cursor-pointer"
+                          className="hover:bg-muted/40 cursor-pointer"
                           onClick={() => handleEdit(r)}
                         >
                           <TableCell>
@@ -423,11 +434,8 @@ export default function NuevoIngresoContent() {
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <Badge
-                              variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
-                              className={`text-xs whitespace-nowrap ${r.tipo_contrato === 'Indeterminado'
-                                ? 'bg-info/10 text-info border-info/30'
-                                : 'bg-muted'
-                                }`}
+                              variant={r.tipo_contrato === 'Indeterminado' ? 'info' : 'secondary'}
+                              className="whitespace-nowrap"
                             >
                               {r.tipo_contrato}
                             </Badge>
@@ -444,7 +452,7 @@ export default function NuevoIngresoContent() {
                                 {r.rg_rec_048 === 'Entregado' ? 'Entregado' : 'Pendiente'}
                               </span>
                               {r.fecha_vencimiento_rg && (
-                                <span className="text-[10px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
+                                <span className="text-[11px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
                               )}
                             </div>
                           </TableCell>
