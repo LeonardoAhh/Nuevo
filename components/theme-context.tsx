@@ -28,17 +28,25 @@ const THEME_COLOR_MAP: Record<"light" | "dark", string> = {
   dark: "#1a1a1f",
 }
 
+const THEME_COLOR_META_ID = "dynamic-theme-color"
+
 function setMetaThemeColor(color: string) {
   if (typeof document === "undefined") return
-  // Remove any OS-media variants Next injected server-side; keep a single
-  // unconditional tag that always reflects the active in-app theme.
-  document
-    .querySelectorAll('meta[name="theme-color"]')
-    .forEach((el) => el.parentNode?.removeChild(el))
-  const meta = document.createElement("meta")
-  meta.name = "theme-color"
-  meta.content = color
-  document.head.appendChild(meta)
+  // We keep an unconditional, non-media tag that wins over any OS-media
+  // variants Next injected from `viewport.themeColor` (last matching wins).
+  // We must NOT remove React-managed nodes — doing so crashes the reconciler
+  // with `removeChild` on next render. So we own a single tag by id and only
+  // mutate its `content`.
+  let meta = document.getElementById(THEME_COLOR_META_ID) as HTMLMetaElement | null
+  if (!meta) {
+    meta = document.createElement("meta")
+    meta.id = THEME_COLOR_META_ID
+    meta.name = "theme-color"
+    document.head.appendChild(meta)
+  }
+  if (meta.content !== color) {
+    meta.content = color
+  }
 }
 
 type ThemeContextType = {
