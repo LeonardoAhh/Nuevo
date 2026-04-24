@@ -1,12 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },
   turbopack: {},
+  async headers() {
+    // Defensive defaults. CSP is intentionally not set here because the app
+    // bootstraps theme/color-scheme via an inline <script dangerouslySetInnerHTML>
+    // in app/layout.tsx, which would require either 'unsafe-inline' or a nonce —
+    // defer until the layout is refactored.
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
