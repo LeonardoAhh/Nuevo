@@ -22,7 +22,7 @@ const STEPS = [
     icon: ListChecks,
     n: "03",
     title: "Revisa tu estatus",
-    body: "Recibirás tu porcentaje de cumplimiento, cursos completados y los que te faltan por tomar.",
+    body: "Lee tu resultado al instante, directo en el chat. Sin esperas ni formularios.",
   },
 ]
 

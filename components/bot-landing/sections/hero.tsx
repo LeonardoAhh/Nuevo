@@ -54,8 +54,8 @@ export default function Hero() {
             variants={fadeUp}
             className="max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
           >
-            Envía tu número de empleado y recibe en segundos los cursos que tienes al día,
-            los que te faltan y tu porcentaje de cumplimiento.
+            Envía tu número de empleado y recibe tu estatus en segundos, directo en el
+            chat.
           </motion.p>
 
           <motion.div

@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { motion } from "framer-motion"
-import { BarChart3, BookOpen, Briefcase, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react"
-import { Eyebrow, RECURSOS_URL, Reveal, RevealItem, Section } from "../_shared"
+import { BarChart3, Briefcase, CheckCircle2, AlertTriangle } from "lucide-react"
+import { Eyebrow, Reveal, RevealItem, Section } from "../_shared"
 
 const FEATURES = [
   {
@@ -25,11 +24,6 @@ const FEATURES = [
     icon: Briefcase,
     title: "Puesto y departamento",
     body: "Valida que tu información de posición está registrada correctamente.",
-  },
-  {
-    icon: BookOpen,
-    title: "Link a cursos disponibles",
-    body: "Accede al catálogo completo de recursos para tomar los cursos pendientes.",
   },
 ]
 
@@ -53,7 +47,7 @@ export default function ConsultarHoy() {
         </RevealItem>
       </Reveal>
 
-      <Reveal className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Reveal className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {FEATURES.map((f) => (
           <RevealItem key={f.title}>
             <motion.article
@@ -73,26 +67,6 @@ export default function ConsultarHoy() {
             </motion.article>
           </RevealItem>
         ))}
-
-        <RevealItem>
-          <Link
-            href={RECURSOS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-full flex-col justify-between gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 p-6 transition-colors hover:border-primary/60 hover:bg-muted/40"
-          >
-            <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <ExternalLink className="size-5" strokeWidth={1.75} aria-hidden />
-            </span>
-            <div>
-              <h3 className="text-base font-semibold tracking-tight">Catálogo público</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Explora todos los cursos disponibles en nuestra página de recursos.
-              </p>
-            </div>
-            <span className="text-xs font-medium text-primary">Ir al catálogo →</span>
-          </Link>
-        </RevealItem>
       </Reveal>
     </Section>
   )
