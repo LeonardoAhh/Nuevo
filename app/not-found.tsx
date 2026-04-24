@@ -1,3 +1,5 @@
+"use client"
+
 import { FileQuestion } from "lucide-react"
 import { ErrorState } from "@/components/ui/error-state"
 
