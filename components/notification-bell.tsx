@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { Bell, Plus, Trash2, CheckCheck, UserMinus, Calendar, Loader2, Search, History } from "lucide-react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -149,16 +150,36 @@ export default function NotificationBell() {
             variant="ghost"
             size="icon"
             className="relative"
-            aria-label="Notificaciones"
+            aria-label={unreadCount > 0 ? `Notificaciones (${unreadCount} sin leer)` : "Notificaciones"}
           >
-            <Bell size={18} />
+            <motion.span
+              key={unreadCount > 0 ? "ring" : "idle"}
+              animate={
+                unreadCount > 0
+                  ? { rotate: [0, -12, 12, -8, 8, 0] }
+                  : { rotate: 0 }
+              }
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="inline-flex"
+            >
+              <Bell size={18} />
+            </motion.span>
             {unreadCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] leading-none flex items-center justify-center pointer-events-none"
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                className="absolute -top-1 -right-1 pointer-events-none"
               >
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </Badge>
+                <Badge
+                  variant="destructive"
+                  className="h-4 min-w-4 px-1 text-[10px] leading-none flex items-center justify-center"
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Badge>
+              </motion.span>
             )}
           </Button>
         </PopoverTrigger>

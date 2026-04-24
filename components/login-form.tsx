@@ -138,18 +138,31 @@ export default function LoginForm() {
               className="pl-10 pr-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10"
               required
             />
-            <button
+            <motion.button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              {showPassword ? (
-                <EyeOffIcon className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <EyeIcon className="h-5 w-5 text-muted-foreground" />
-              )}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={showPassword ? "off" : "on"}
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.15 }}
+                  className="inline-flex"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </motion.span>
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 

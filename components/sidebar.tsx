@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react"
 import { createPortal } from "react-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -230,7 +231,18 @@ export default function Sidebar({
               isMobileView ? setShowMobileSidebar(false) : setCollapsed(!collapsed)
             }
           >
-            {isMobileView ? <X size={16} /> : collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={isMobileView ? "x" : collapsed ? "right" : "left"}
+                initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="inline-flex"
+              >
+                {isMobileView ? <X size={16} /> : collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </motion.span>
+            </AnimatePresence>
           </Button>
         </div>
 
@@ -356,7 +368,18 @@ export default function Sidebar({
                 className="flex items-center gap-2 cursor-pointer"
                 aria-label={`Tema actual: ${THEME_LABEL[theme]}. Click para cambiar.`}
               >
-                <ThemeIcon size={16} />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={theme}
+                    initial={{ opacity: 0, rotate: -45, scale: 0.7 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 45, scale: 0.7 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="inline-flex"
+                  >
+                    <ThemeIcon size={16} />
+                  </motion.span>
+                </AnimatePresence>
                 <span>Tema</span>
                 <span className="ml-auto text-xs text-muted-foreground">{THEME_LABEL[theme]}</span>
               </DropdownMenuItem>
