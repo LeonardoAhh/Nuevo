@@ -66,7 +66,7 @@ export function ModalToolbar({
         whileTap={{ scale: 0.88 }}
         onClick={onClose}
         disabled={saving}
-        className="h-9 w-9 rounded-full flex items-center justify-center bg-muted hover:bg-muted-foreground/15 border border-border/40 shadow-sm transition-colors shrink-0 disabled:opacity-50"
+        className="h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center bg-muted hover:bg-muted-foreground/15 border border-border/40 shadow-sm transition-colors shrink-0 disabled:opacity-50"
         aria-label="Cancelar"
       >
         <X className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function ModalToolbar({
             whileTap={{ scale: 0.95 }}
             onClick={secondaryAction.onClick}
             disabled={saving || secondaryAction.disabled}
-            className={cn("h-9 rounded-full px-3 flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity", secondaryClasses)}
+            className={cn("h-10 sm:h-9 rounded-full px-3 flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity", secondaryClasses)}
             aria-label={secondaryAction.label}
           >
             {secondaryAction.icon}
@@ -102,7 +102,7 @@ export function ModalToolbar({
             whileTap={{ scale: 0.88 }}
             onClick={onConfirm}
             disabled={saving || confirmDisabled}
-            className={cn("h-9 w-9 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shrink-0", confirmClasses)}
+            className={cn("h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shrink-0", confirmClasses)}
             aria-label="Confirmar"
           >
             {saving
@@ -110,7 +110,7 @@ export function ModalToolbar({
               : (confirmIcon ?? <Check className="h-4 w-4" />)}
           </motion.button>
         ) : (
-          <div className="h-9 w-9 shrink-0" />
+          <div className="h-10 w-10 sm:h-9 sm:w-9 shrink-0" />
         )}
       </div>
     </div>
