@@ -1,6 +1,31 @@
 "use client"
 
 import Image from "next/image"
+import { motion, type Variants } from "framer-motion"
+
+const easeOutExpo = [0.16, 1, 0.3, 1] as const
+
+const heroContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+  },
+}
+
+const heroLogo: Variants = {
+  hidden: { opacity: 0, scale: 0.6, y: 20 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: easeOutExpo },
+  },
+}
+
+const heroFadeUp: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
+}
 
 export default function LoginHero() {
   return (
@@ -20,9 +45,14 @@ export default function LoginHero() {
       <div className="absolute inset-0 login-grid-overlay opacity-[0.06] dark:opacity-[0.08]" />
 
       {/* ── Contenido central ── */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 sm:px-12 lg:px-16 max-w-lg pb-8 lg:pb-0">
+      <motion.div
+        className="relative z-10 flex flex-col items-center text-center px-6 sm:px-12 lg:px-16 max-w-lg pb-8 lg:pb-0"
+        variants={heroContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Logo */}
-        <div className="login-logo-entrance mb-4 lg:mb-8">
+        <motion.div variants={heroLogo} className="mb-4 lg:mb-8">
           <div className="relative w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36 login-logo-float">
             <Image
               src="/logo-vino-plastic.png"
@@ -31,22 +61,28 @@ export default function LoginHero() {
               className="object-contain drop-shadow-2xl"
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Texto */}
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight login-fade-up" style={{ animationDelay: "400ms" }}>
+        <motion.h2
+          variants={heroFadeUp}
+          className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight"
+        >
           VIÑOPLASTIC
-        </h2>
-        <p className="text-base sm:text-lg lg:text-xl font-medium text-white/80 mt-1 login-fade-up" style={{ animationDelay: "550ms" }}>
+        </motion.h2>
+        <motion.p
+          variants={heroFadeUp}
+          className="text-base sm:text-lg lg:text-xl font-medium text-white/80 mt-1"
+        >
           Planta Querétaro
-        </p>
+        </motion.p>
 
-        <div className="mt-4 lg:mt-8 login-fade-up" style={{ animationDelay: "700ms" }}>
+        <motion.div variants={heroFadeUp} className="mt-4 lg:mt-8">
           <span className="inline-block text-[0.65rem] sm:text-sm font-semibold uppercase tracking-[0.25em] text-white/60 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/15 backdrop-blur-sm bg-white/5">
             Vertx System v2.0
           </span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ── Curva lateral derecha (solo desktop) ── */}
       <div className="absolute top-0 right-0 bottom-0 hidden lg:block w-16 xl:w-20 overflow-hidden">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -37,6 +38,7 @@ import {
 import { useTheme, type Theme } from "@/components/theme-context"
 import { useUser, useProfile, useRole } from "@/lib/hooks"
 import { notify } from "@/lib/notify"
+import SignOutOverlay from "@/components/signout-overlay"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
@@ -151,6 +153,12 @@ export default function Sidebar({
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
   const { canEdit } = useRole()
+  const [signingOut, setSigningOut] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const showExpanded = isMobileView || !collapsed
 
@@ -161,12 +169,18 @@ export default function Sidebar({
   const displayName = profile?.displayName || user?.email?.split("@")[0] || "Usuario"
 
   const handleLogout = async () => {
-    const { supabase } = await import("@/lib/supabase/client")
-    await supabase.auth.signOut()
-    notify.success("Sesión cerrada correctamente")
+    setSigningOut(true)
+    try {
+      const { supabase } = await import("@/lib/supabase/client")
+      await supabase.auth.signOut()
+      notify.success("Sesión cerrada correctamente")
+    } catch {
+      // continue to redirect even on error — session should be cleared
+    }
+    // Give the overlay + toast ~900ms to animate in before hard redirect
     setTimeout(() => {
       window.location.href = "/login"
-    }, 1200)
+    }, 900)
   }
 
   const cycleTheme = () => setTheme(THEME_NEXT[theme])
@@ -174,6 +188,8 @@ export default function Sidebar({
 
   return (
     <TooltipProvider delayDuration={0}>
+      {mounted && createPortal(<SignOutOverlay show={signingOut} />, document.body)}
+
       {/* Backdrop */}
       {isMobileView && showMobileSidebar && (
         <div
