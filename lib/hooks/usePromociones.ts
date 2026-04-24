@@ -242,7 +242,11 @@ export function usePromociones() {
         },
         { onConflict: "numero" }
       )
-    if (dbErr) throw new Error(dbErr.message)
+    if (dbErr) {
+      notify.error("Error al guardar evaluación")
+      throw new Error(dbErr.message)
+    }
+    notify.success("Evaluación guardada")
     await cargarDatos()
   }, [cargarDatos])
 
@@ -261,7 +265,10 @@ export function usePromociones() {
       .from("employees")
       .update({ puesto: nuevoPuesto })
       .eq("id", empleadoId)
-    if (empErr) throw new Error(empErr.message)
+    if (empErr) {
+      notify.error("Error al promover empleado")
+      throw new Error(empErr.message)
+    }
 
     if (numero) {
       const { error: dpErr } = await supabase
@@ -277,8 +284,12 @@ export function usePromociones() {
           },
           { onConflict: "numero" }
         )
-      if (dpErr) throw new Error(dpErr.message)
+      if (dpErr) {
+        notify.error("Error al guardar datos de promoción")
+        throw new Error(dpErr.message)
+      }
     }
+    notify.success(`Empleado promovido a ${nuevoPuesto}`)
     await cargarDatos()
   }, [cargarDatos])
 
@@ -304,7 +315,11 @@ export function usePromociones() {
         },
         { onConflict: "numero" }
       )
-    if (dpErr) throw new Error(dpErr.message)
+    if (dpErr) {
+      notify.error("Error al guardar examen")
+      throw new Error(dpErr.message)
+    }
+    notify.success("Examen guardado")
     await cargarDatos()
   }, [cargarDatos])
 
