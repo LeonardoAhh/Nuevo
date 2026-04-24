@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useState, useTransition, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -13,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { MessageSquare, RotateCcw, Search } from "lucide-react"
-import { toast } from "sonner"
+import { MessageSquare, RotateCcw, Search, X, RefreshCw } from "lucide-react"
+import { notify } from "@/lib/notify"
 
 interface Consulta {
   numero: string
@@ -28,7 +29,7 @@ export default function WhatsAppDashboard() {
   const [search, setSearch] = useState("")
   const [isPending, startTransition] = useTransition()
 
-  async function fetchConsultas() {
+  const fetchConsultas = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from("whatsapp_consultas")
@@ -36,57 +37,88 @@ export default function WhatsAppDashboard() {
       .order("queried_at", { ascending: false })
     if (error) {
       console.error("[WhatsApp dashboard] Supabase error:", error)
-      toast.error(`Error al cargar consultas: ${error.message}`)
+      notify.error(`Error al cargar consultas: ${error.message}`)
     } else {
-      console.log("[WhatsApp dashboard] Consultas cargadas:", data?.length ?? 0)
       setConsultas(data ?? [])
     }
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetchConsultas() }, [])
+  useEffect(() => { fetchConsultas() }, [fetchConsultas])
 
   async function handleReset(numero: string) {
+    const ok = await notify.confirm({
+      title: "Resetear consulta",
+      description: `El empleado #${numero} podrá volver a consultar su cumplimiento por WhatsApp. Esta acción no se puede deshacer.`,
+      confirmLabel: "Resetear",
+      tone: "destructive",
+    })
+    if (!ok) return
+
     startTransition(async () => {
       try {
         const res = await fetch(`/api/whatsapp/reset/${numero}`, { method: "DELETE" })
         if (!res.ok) throw new Error()
-        toast.success(`Consulta de #${numero} eliminada`)
+        notify.success(`Consulta de #${numero} eliminada`)
         setConsultas((prev) => prev.filter((c) => c.numero !== numero))
       } catch {
-        toast.error("Error al eliminar consulta")
+        notify.error("Error al eliminar consulta")
       }
     })
   }
 
   const filtered = consultas.filter(
-    (c) => c.numero.includes(search) || (c.phone ?? "").includes(search)
+    (c) => c.numero.includes(search) || (c.phone ?? "").includes(search),
   )
 
   return (
     <div className="space-y-4">
       {/* Header stats */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MessageSquare size={16} />
-          <span>
-            <span className="font-semibold text-foreground">{consultas.length}</span> empleados consultaron
-          </span>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MessageSquare size={16} />
+            <span>
+              <span className="font-semibold text-foreground">{consultas.length}</span> empleados consultaron
+            </span>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            1 consulta por empleado
+          </Badge>
         </div>
-        <Badge variant="secondary" className="text-xs">
-          1 consulta por empleado
-        </Badge>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={fetchConsultas}
+          disabled={loading}
+          title="Actualizar"
+          aria-label="Actualizar consultas"
+          className="shrink-0 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+        </Button>
       </div>
 
       {/* Buscador */}
       <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Buscar por número o teléfono..."
-          className="pl-8 h-9 text-sm"
+          aria-label="Buscar consultas de WhatsApp"
+          className={`pl-8 h-9 text-sm ${search ? "pr-9" : ""}`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <button
+            type="button"
+            aria-label="Limpiar búsqueda"
+            onClick={() => setSearch("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Tabla */}
@@ -102,11 +134,14 @@ export default function WhatsAppDashboard() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
-                  Cargando...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                </TableRow>
+              ))
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
@@ -130,11 +165,12 @@ export default function WhatsAppDashboard() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+                      className="h-9 gap-1.5 text-xs text-muted-foreground hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
                       disabled={isPending}
                       onClick={() => handleReset(c.numero)}
+                      aria-label={`Resetear consulta del empleado #${c.numero}`}
                     >
-                      <RotateCcw size={12} />
+                      <RotateCcw size={14} />
                       Resetear
                     </Button>
                   </TableCell>
