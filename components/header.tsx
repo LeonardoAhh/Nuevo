@@ -15,7 +15,7 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
   return (
     <header
       role="banner"
-      className="bg-card border-b px-3 sm:px-6 h-[50px] sticky top-0 z-20"
+      className="sticky top-0 z-20 h-[50px] border-b bg-card/95 supports-[backdrop-filter]:bg-card/80 backdrop-blur px-3 sm:px-6"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="flex items-center gap-2 h-full">
@@ -23,7 +23,7 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden shrink-0"
             onClick={onOpenSidebar}
             aria-label="Abrir menú"
           >
@@ -31,10 +31,12 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
           </Button>
         )}
         {title && (
-          <h1 className="text-lg sm:text-xl font-semibold truncate">{title}</h1>
+          <h1 className="text-base sm:text-lg md:text-xl font-semibold truncate min-w-0 flex-1">
+            {title}
+          </h1>
         )}
 
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <NotificationBell />
         </div>
       </div>
