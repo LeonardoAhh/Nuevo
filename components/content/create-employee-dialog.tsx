@@ -162,9 +162,16 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
               </FormField>
             </div>
             <FormField id="curp" label="CURP">
-              <Input id="curp" value={form.curp}
-                onChange={e => set('curp', e.target.value.toUpperCase())}
-                placeholder="PELJ900101HDFRZN09" className="bg-muted" />
+              <Input
+                id="curp"
+                value={form.curp}
+                onChange={e => set('curp', e.target.value.toUpperCase().slice(0, 18))}
+                placeholder="PELJ900101HDFRZN09"
+                maxLength={18}
+                autoComplete="off"
+                spellCheck={false}
+                className="bg-muted uppercase tracking-wide"
+              />
             </FormField>
           </fieldset>
 

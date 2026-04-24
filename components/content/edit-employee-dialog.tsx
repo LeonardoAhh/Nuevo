@@ -38,6 +38,9 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
     }
   }, [record])
 
+  // Reset delete-confirm state when the dialog is closed so reopening starts clean.
+  useEffect(() => { if (!open) setConfirmDelete(false) }, [open])
+
   if (!record) return null
 
   const set = (key: keyof NuevoIngresoUpdate, value: unknown) =>
@@ -84,9 +87,15 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
                   <span className="block text-muted-foreground font-normal">{formatDate(fecha)}</span>
                 </Label>
                 <Input
-                  type="number" min={0} max={100}
+                  type="number" min={0} max={100} inputMode="numeric"
                   value={form[key] ?? ''}
-                  onChange={e => set(key, e.target.value === '' ? null : parseInt(e.target.value))}
+                  onChange={e => {
+                    const raw = e.target.value
+                    if (raw === '') return set(key, null)
+                    const n = parseInt(raw, 10)
+                    if (Number.isNaN(n)) return
+                    set(key, Math.max(0, Math.min(100, n)))
+                  }}
                   className="text-base md:text-sm bg-muted"
                 />
               </div>
