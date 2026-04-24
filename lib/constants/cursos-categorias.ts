@@ -129,18 +129,6 @@ export function detectarCategoria(nombre: string): CursoCategoria {
 }
 
 interface ToneClasses {
-  /** Gradiente del cover */
-  gradient: string
-  /** Color del icono central */
-  iconColor: string
-  /** Badge de categoría */
-  badgeBg: string
-  badgeText: string
-  /** Decoración de patrón */
-  patternColor: string
-}
-
-interface ToneClasses {
   /** Gradiente CSS listo para `style={{ backgroundImage }}` */
   gradient: string
   /** Color sólido para icono / badge accent */
