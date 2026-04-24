@@ -32,7 +32,7 @@ export default function RouteError({
         description="No pudimos mostrar esta sección. Intenta de nuevo; si el problema continúa, recarga la página."
         tone="destructive"
         primaryAction={{ label: "Reintentar", onClick: reset }}
-        secondaryAction={{ label: "Ir al inicio", onClick: () => {}, href: "/" }}
+        secondaryAction={{ label: "Ir al inicio", href: "/" }}
       />
     </main>
   )

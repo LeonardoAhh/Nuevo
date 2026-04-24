@@ -7,14 +7,19 @@ import { Button } from "@/components/ui/button"
 
 export type ErrorStateTone = "neutral" | "warning" | "destructive"
 
+type Action = { label: string } & (
+  | { href: string; onClick?: () => void }
+  | { href?: undefined; onClick: () => void }
+)
+
 interface ErrorStateProps {
   icon?: LucideIcon
   code?: string
   title: string
   description?: string
   tone?: ErrorStateTone
-  primaryAction?: { label: string; onClick: () => void; href?: string }
-  secondaryAction?: { label: string; onClick: () => void; href?: string }
+  primaryAction?: Action
+  secondaryAction?: Action
   className?: string
 }
 
