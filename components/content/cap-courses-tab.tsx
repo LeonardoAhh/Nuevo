@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, BookOpen, X } from "lucide-react"
+import { Search, Plus, BookOpen, X, Download } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,12 +59,11 @@ export function CapCoursesTab({
           <div className="flex gap-2 items-center">
             <Button
               size="sm" variant="outline"
-              className="gap-2 border-primary text-primary hover:bg-primary/10 rounded-lg shadow-sm font-semibold"
+              className="gap-1.5 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={handleExcel}
+              aria-label="Descargar reporte Excel"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6V4a2 2 0 00-2-2H10a2 2 0 00-2 2v2" />
-              </svg>
+              <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Descargar Excel</span>
             </Button>
             {!isReadOnly && (

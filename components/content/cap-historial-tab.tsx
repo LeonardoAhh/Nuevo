@@ -217,37 +217,41 @@ export function CapHistorialTab({
                           })()}
                         </TableCell>
                         <TableCell className="text-right p-2">
-                          <div className="flex items-center justify-end gap-0.5">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="outline" size="sm"
-                              className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
+                              className="h-9 w-9 p-0 sm:w-auto sm:px-3 sm:gap-1 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => onAddCourses(emp)}
                               title="Agregar cursos"
+                              aria-label={`Agregar cursos a ${emp.nombre}`}
                             >
-                              <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                              <BookOpen className="h-4 w-4 shrink-0" />
                               <span className="hidden sm:inline text-xs">+Curso</span>
                             </Button>
                             <Button
                               variant="ghost" size="sm"
-                              className="h-8 w-8 p-0 text-foreground"
+                              className="h-9 w-9 p-0 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => onEditEmployee(emp)}
                               title="Editar"
+                              aria-label={`Editar ${emp.nombre}`}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost" size="sm"
-                              className="h-8 w-8 p-0 sm:w-auto sm:px-2 sm:gap-1 text-foreground"
+                              className="h-9 w-9 p-0 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => onViewEmployee(emp)}
                               title="Ver detalle"
+                              aria-label={`Ver detalle de ${emp.nombre}`}
                             >
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost" size="sm"
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => onDeleteEmployee(emp)}
                               title="Eliminar"
+                              aria-label={`Eliminar ${emp.nombre}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

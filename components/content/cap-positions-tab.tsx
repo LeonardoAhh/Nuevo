@@ -29,11 +29,13 @@ export function CapPositionsTab({
   const [selectedDept, setSelectedDept] = useState("all")
   const [posPage, setPosPage]         = useState(1)
 
+  const getDeptName = (p: Position): string | undefined =>
+    (p.department as { name?: string } | null | undefined)?.name
   const filtered = positions.filter(p => {
     const matchesDept   = selectedDept === "all" || p.department_id === selectedDept
     const matchesSearch =
       p.name.toLowerCase().includes(posSearch.toLowerCase()) ||
-      (p.department as any)?.name?.toLowerCase().includes(posSearch.toLowerCase())
+      (getDeptName(p) ?? "").toLowerCase().includes(posSearch.toLowerCase())
     return matchesDept && matchesSearch
   })
 
@@ -133,7 +135,7 @@ export function CapPositionsTab({
                       <TableCell className="font-medium text-foreground">{pos.name}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="bg-muted text-foreground">
-                          {(pos.department as any)?.name ?? "—"}
+                          {getDeptName(pos) ?? "—"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
