@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notify'
+import { describeSupabaseError } from '@/lib/supabase/errors'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaces
@@ -101,9 +102,9 @@ export function useNuevoIngreso() {
       if (error) throw new Error(error.message)
       return (data ?? []) as NuevoIngreso[]
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      const msg = describeSupabaseError(err, 'Error al cargar registros')
       setError(msg)
-      notify.error('Error al cargar registros')
+      notify.error(msg)
       return []
     } finally {
       setLoading(false)
@@ -116,13 +117,13 @@ export function useNuevoIngreso() {
     try {
       if (raw.length === 0) throw new Error('El array está vacío')
       const { error } = await supabase.from('nuevo_ingreso').insert(raw)
-      if (error) throw new Error(error.message)
+      if (error) throw error
       notify.success(`${raw.length} registros importados`)
       return { success: true }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      const msg = describeSupabaseError(err, 'Error al importar')
       setError(msg)
-      notify.error('Error al importar')
+      notify.error(msg)
       return { success: false, error: msg }
     } finally {
       setSaving(false)
@@ -137,13 +138,13 @@ export function useNuevoIngreso() {
         .from('nuevo_ingreso')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
-      if (error) throw new Error(error.message)
+      if (error) throw error
       notify.success('Registro actualizado')
       return { success: true }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      const msg = describeSupabaseError(err, 'Error al actualizar')
       setError(msg)
-      notify.error('Error al actualizar')
+      notify.error(msg)
       return { success: false, error: msg }
     } finally {
       setSaving(false)
@@ -154,12 +155,12 @@ export function useNuevoIngreso() {
     setSaving(true)
     try {
       const { error } = await supabase.from('nuevo_ingreso').delete().eq('id', id)
-      if (error) throw new Error(error.message)
+      if (error) throw error
       notify.success('Registro eliminado')
       return { success: true }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      notify.error('Error al eliminar')
+      const msg = describeSupabaseError(err, 'Error al eliminar')
+      notify.error(msg)
       return { success: false, error: msg }
     } finally {
       setSaving(false)
@@ -173,13 +174,13 @@ export function useNuevoIngreso() {
     setError(null)
     try {
       const { error } = await supabase.from('nuevo_ingreso').insert([data])
-      if (error) throw new Error(error.message)
+      if (error) throw error
       notify.success('Registro creado')
       return { success: true }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      const msg = describeSupabaseError(err, 'Error al crear registro')
       setError(msg)
-      notify.error('Error al crear registro')
+      notify.error(msg)
       return { success: false, error: msg }
     } finally {
       setSaving(false)
