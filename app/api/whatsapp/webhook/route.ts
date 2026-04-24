@@ -73,15 +73,10 @@ async function handleMessage(from: string, text: string): Promise<void> {
     return
   }
 
-  // Comandos de bienvenida
+  // Comandos de bienvenida — no hacemos lookup de consulta previa porque el saludo
+  // llega antes de que el usuario envíe su número, así que el estado "ya consultó" no aplica.
   if (["hola", "hi", "hello", "ayuda", "help", "inicio", "start", ""].includes(normalized)) {
-    // Bienvenida inteligente: diferente si ya consultó
-    let yaConsulto = false
-    try {
-      // Solo hacemos check si el input parece que puede ser válido (optimización: no chequear en bienvenida genérica)
-      yaConsulto = false
-    } catch { /* ignorar */ }
-    await sendWhatsAppMessage(from, MSG.bienvenida(yaConsulto))
+    await sendWhatsAppMessage(from, MSG.bienvenida(false))
     return
   }
 
