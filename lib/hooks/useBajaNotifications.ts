@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { syncBadge, clearBadge } from "@/lib/supabase/push"
+import { buildPush } from "@/lib/push/format"
 
 export interface BajaNotification {
   id: string
@@ -66,25 +67,24 @@ export function useBajaNotifications() {
     // Actualizar UI inmediatamente (no esperar el websocket)
     setNotifications((prev) => [inserted as BajaNotification, ...prev])
 
-    // Enviar push notification a todos los usuarios suscritos via servidor
+    // Enviar push notification a todos los usuarios suscritos via servidor.
+    // Formato unificado vía lib/push/format.
     const { data: { session } } = await supabase.auth.getSession()
+    const payload = buildPush({
+      kind: "baja-created",
+      id: inserted.id,
+      employeeName: record.employee_name,
+      employeeNumero: record.employee_numero,
+      fechaBaja: record.fecha_baja,
+    })
     window.fetch("/api/send-push", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
       },
-      body: JSON.stringify({
-        id: inserted?.id,
-        title: "Baja de empleado",
-        body: `${record.employee_name} – Fecha de baja: ${record.fecha_baja}`,
-        url: "/",
-        tag: "baja-notification",
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => console.log("[Push] send-push response:", JSON.stringify(data)))
-      .catch((err) => console.error("[Push] send-push fetch error:", err))
+      body: JSON.stringify(payload),
+    }).catch((err) => console.error("[Push] send-push fetch error:", err))
   }, [])
 
   const markAsRead = useCallback(async (id: string) => {

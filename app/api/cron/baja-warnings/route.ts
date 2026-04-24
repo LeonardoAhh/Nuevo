@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { buildPush, type PushPayload } from "@/lib/push/format"
 
 /**
  * Cron diario — 8:00 AM
@@ -57,9 +58,7 @@ async function markSent(
 async function sendPush(
   baseUrl: string,
   apiKey: string | undefined,
-  title: string,
-  body: string,
-  tag: string,
+  payload: PushPayload,
   userIds: string[]
 ) {
   const res = await fetch(`${baseUrl}/api/send-push`, {
@@ -68,7 +67,10 @@ async function sendPush(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ title, body, tag, url: "/", userIds: userIds.length ? userIds : undefined }),
+    body: JSON.stringify({
+      ...payload,
+      userIds: userIds.length ? userIds : undefined,
+    }),
   })
   return res.ok
 }
@@ -126,12 +128,16 @@ export async function GET(request: Request) {
       for (const baja of bajas ?? []) {
         if (await alreadySent(supabase, baja.id, "baja", daysBefore)) continue
 
-        const label = daysBefore === 0 ? "hoy" : daysBefore === 1 ? "mañana" : `en ${daysBefore} días`
         const sent = await sendPush(
           baseUrl, apiKey,
-          `Baja ${label}`,
-          `${baja.employee_name}${baja.employee_numero ? ` #${baja.employee_numero}` : ""} – Fecha de baja: ${baja.fecha_baja}`,
-          `baja-${baja.id}-${daysBefore}d`,
+          buildPush({
+            kind: "baja-warning",
+            id: baja.id,
+            daysBefore,
+            employeeName: baja.employee_name,
+            employeeNumero: baja.employee_numero,
+            fechaBaja: baja.fecha_baja,
+          }),
           daysBefore === 0 ? usersFor("push_bajas") : usersFor("push_bajas_warning")
         )
         if (sent) { await markSent(supabase, baja.id, "baja", daysBefore); results.bajas++ }
@@ -153,12 +159,16 @@ export async function GET(request: Request) {
       for (const r of registros ?? []) {
         if (await alreadySent(supabase, r.id, "rg", daysBefore)) continue
 
-        const label = daysBefore === 0 ? "hoy" : `en ${daysBefore} días`
         const sent = await sendPush(
           baseUrl, apiKey,
-          `RG-REC-048 vence ${label}`,
-          `${r.nombre} — ${r.puesto} · ${r.departamento}`,
-          `rg-${r.id}-${daysBefore}d`,
+          buildPush({
+            kind: "rg-warning",
+            id: r.id,
+            daysBefore,
+            nombre: r.nombre,
+            puesto: r.puesto,
+            departamento: r.departamento,
+          }),
           usersFor("push_rg")
         )
         if (sent) { await markSent(supabase, r.id, "rg", daysBefore); results.rg++ }
@@ -180,12 +190,16 @@ export async function GET(request: Request) {
       for (const r of registros ?? []) {
         if (await alreadySent(supabase, r.id, "contrato", daysBefore)) continue
 
-        const label = daysBefore === 0 ? "hoy" : `en ${daysBefore} días`
         const sent = await sendPush(
           baseUrl, apiKey,
-          `Contrato vence ${label}`,
-          `${r.nombre} — ${r.tipo_contrato} · ${r.departamento}`,
-          `contrato-${r.id}-${daysBefore}d`,
+          buildPush({
+            kind: "contrato-warning",
+            id: r.id,
+            daysBefore,
+            nombre: r.nombre,
+            tipoContrato: r.tipo_contrato,
+            departamento: r.departamento,
+          }),
           usersFor("push_contrato")
         )
         if (sent) { await markSent(supabase, r.id, "contrato", daysBefore); results.contratos++ }
