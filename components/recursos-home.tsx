@@ -103,7 +103,7 @@ function CursoCardList({
 
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Button variant="default" className="h-10 w-full" asChild>
-            <a href={curso.url} target="_blank" rel="noreferrer">
+            <a href={curso.url} target="_blank" rel="noopener noreferrer">
               <ExternalLink size={16} />
               <span className="ml-2">Ir al curso</span>
             </a>
