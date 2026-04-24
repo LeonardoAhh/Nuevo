@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
+import BottomNav from "@/components/bottom-nav"
 
 interface DashboardProps {
   content?: ReactNode
@@ -43,10 +44,14 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
           onOpenSidebar={openMobileSidebar}
         />
 
-        <main id="main-content" className="px-3 sm:px-6 py-6 bg-background">
+        <main
+          id="main-content"
+          className="bg-background px-3 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-6"
+        >
           {content}
         </main>
       </div>
+      <BottomNav />
     </div>
   )
 }
