@@ -1,9 +1,11 @@
-const CACHE_NAME = "vinoplastic-v4"
-const STATIC_CACHE = "vinoplastic-static-v4"
-const API_CACHE = "vinoplastic-api-v4"
+const CACHE_NAME = "vinoplastic-v5"
+const STATIC_CACHE = "vinoplastic-static-v5"
+const API_CACHE = "vinoplastic-api-v5"
 
-// Recursos a pre-cachear en la instalación
-const PRECACHE_URLS = ["/", "/login", "/capacitacion", "/nuevo-ingreso"]
+// Recursos a pre-cachear en la instalación. `/offline` es la ruta de
+// fallback cuando una navegación falla y no hay copia en caché.
+const PRECACHE_URLS = ["/", "/login", "/offline", "/capacitacion", "/nuevo-ingreso"]
+const OFFLINE_URL = "/offline"
 
 // ─── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
@@ -72,9 +74,17 @@ async function networkFirst(request, cacheName, maxAgeSeconds = 3600) {
     const cached = await caches.match(request)
     if (cached) return cached
     if (request.destination === "document") {
-      return caches.match("/") || new Response("Sin conexión", { status: 503 })
+      // Prefer the dedicated /offline route; fall back to the last-cached
+      // root if the offline page isn't in the cache yet (first visit).
+      const offlinePage = await caches.match(OFFLINE_URL)
+      if (offlinePage) return offlinePage
+      const rootCached = await caches.match("/")
+      if (rootCached) return rootCached
     }
-    return new Response("Sin conexión", { status: 503 })
+    return new Response("Sin conexión", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
   }
 }
 
