@@ -171,6 +171,7 @@ export function formatComplianceMessage(result: ComplianceRow): string {
   if (result.porcentaje === 100) lines.push(``, MSG.felicidades)
 
   lines.push(``, MSG.datosIncorrectos)
+  lines.push(``, MSG.recursos)
   lines.push(``, MSG.footer)
 
   return lines.join("\n")
