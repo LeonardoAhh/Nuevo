@@ -69,19 +69,20 @@ function CategoriaCover({
   const Icon = cat.icon
   return (
     <div
-      className={`relative overflow-hidden bg-gradient-to-br ${tone.gradient} flex items-center justify-center ${className ?? ""}`}
+      className={`relative overflow-hidden flex items-center justify-center ${className ?? ""}`}
+      style={{ backgroundImage: tone.gradient }}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
       <div className="relative flex flex-col items-center justify-center text-white">
         <div className="rounded-full bg-white/15 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-          <Icon className={`${tone.iconColor}`} size={iconSize} strokeWidth={1.5} />
+          <Icon className="text-white" size={iconSize} strokeWidth={1.5} />
         </div>
         <span className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/80">
           {cat.label}
         </span>
       </div>
       <Icon
-        className={`absolute -right-3 -bottom-3 ${tone.patternColor}`}
+        className="absolute -right-3 -bottom-3 text-white/10"
         size={Math.round(iconSize * 2.6)}
         strokeWidth={1}
       />

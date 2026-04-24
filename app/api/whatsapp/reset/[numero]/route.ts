@@ -14,16 +14,16 @@ export const dynamic = "force-dynamic"
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { numero: string } }
+  { params }: { params: Promise<{ numero: string }> }
 ) {
-  const { numero } = params
+  const { numero } = await params
 
   if (!numero || !/^\d{1,10}$/.test(numero)) {
     return NextResponse.json({ error: "Número inválido" }, { status: 400 })
   }
 
   // Verificar sesión activa (usuario autenticado)
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabaseAuth = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
