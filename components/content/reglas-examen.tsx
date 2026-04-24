@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Loader2, Save, Settings2 } from "lucide-react"
+import { useMemo, useState } from "react"
+import { Loader2, Save, Search, Settings2, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,10 +15,12 @@ import { CATALOGO_ORGANIZACIONAL } from "@/lib/catalogo"
 
 const DEPARTAMENTOS = Object.keys(CATALOGO_ORGANIZACIONAL)
 
+// Semantic tones (tokens from globals.css) — adapt to light/dark and accent.
+// D→C = warming / next step (warning), C→B = info, B→A = final / success.
 const TRANSICION_COLOR: Record<TransicionKey, string> = {
-  D_C: "bg-orange-50 border-orange-200 dark:bg-orange-900/20",
-  C_B: "bg-blue-50 border-blue-200 dark:bg-blue-900/20",
-  B_A: "bg-green-50 border-green-200 dark:bg-green-900/20",
+  D_C: "bg-warning/10 border-warning/30",
+  C_B: "bg-info/10 border-info/30",
+  B_A: "bg-success/10 border-success/30",
 }
 
 export default function ReglasExamenContent() {
@@ -26,6 +28,13 @@ export default function ReglasExamenContent() {
   const { reglas, loading, error, guardar, toggleActivo } = useReglasCRUD()
   const [saving, setSaving] = useState<string | null>(null) // "DEP_TRANSICION"
   const [editValues, setEditValues] = useState<Record<string, number>>({})
+  const [filter, setFilter] = useState("")
+
+  const filteredDeps = useMemo(() => {
+    const q = filter.trim().toLowerCase()
+    if (!q) return DEPARTAMENTOS
+    return DEPARTAMENTOS.filter((d) => d.toLowerCase().includes(q))
+  }, [filter])
 
   const getKey = (dep: string, t: TransicionKey) => `${dep}__${t}`
 
@@ -91,8 +100,34 @@ export default function ReglasExamenContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {DEPARTAMENTOS.map((dep) => (
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Filtrar departamento..."
+          className={`pl-9 ${filter ? "pr-9" : ""}`}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        {filter && (
+          <button
+            onClick={() => setFilter("")}
+            aria-label="Limpiar filtro"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
+
+      {filteredDeps.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Search size={40} className="mb-3 opacity-30" />
+          <p className="text-base font-medium">Sin coincidencias</p>
+          <p className="text-sm mt-1">Ningún departamento coincide con &quot;{filter}&quot;.</p>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredDeps.map((dep) => (
           <Card key={dep}>
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-sm font-semibold">{dep}</CardTitle>
@@ -121,7 +156,7 @@ export default function ReglasExamenContent() {
                       {dirty ? (
                         <Button
                           size="sm"
-                          className="h-7 text-xs px-2"
+                          className="h-9 text-xs px-3"
                           onClick={() => handleSave(dep, t)}
                           disabled={isReadOnly || isSaving}
                         >
@@ -146,7 +181,8 @@ export default function ReglasExamenContent() {
                         max={200}
                         value={getValue(dep, t)}
                         onChange={(e) => handleChange(dep, t, e.target.value)}
-                        className="w-20 h-7 text-sm text-center"
+                        aria-label={`Preguntas para ${dep} ${TRANSICION_LABEL[t]}`}
+                        className="w-24 h-9 text-sm text-center"
                         disabled={regla && !regla.activo}
                       />
                       <span className="text-xs text-muted-foreground">preguntas aleatorias</span>
@@ -158,6 +194,7 @@ export default function ReglasExamenContent() {
           </Card>
         ))}
       </div>
+      )}
     </div>
   )
 }

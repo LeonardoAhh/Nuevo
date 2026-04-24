@@ -196,6 +196,7 @@ export default function GeneradorExamenContent() {
             variant="outline"
             onClick={handleSearch}
             disabled={buscando || !searchTerm.trim()}
+            aria-label="Buscar empleado"
           >
             {buscando ? (
               <Loader2 size={16} className="animate-spin" />
@@ -216,7 +217,7 @@ export default function GeneradorExamenContent() {
                 <button
                   key={emp.id}
                   onClick={() => handleSeleccionarEmpleado(emp)}
-                  className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3 focus-visible:outline-none focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted shrink-0">
                     <User size={14} className="text-muted-foreground" />
@@ -269,9 +270,10 @@ export default function GeneradorExamenContent() {
               </div>
               <button
                 onClick={() => setEmpleadoSeleccionado(null)}
-                className="text-muted-foreground hover:text-foreground"
+                aria-label="Quitar empleado seleccionado"
+                className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             </CardContent>
           </Card>
@@ -297,7 +299,8 @@ export default function GeneradorExamenContent() {
                     <button
                       key={key}
                       onClick={() => setTransicionSeleccionada(key)}
-                      className={`rounded-lg border-2 p-4 text-left transition-all ${
+                      aria-pressed={selected}
+                      className={`rounded-lg border-2 p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         selected
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/40"
