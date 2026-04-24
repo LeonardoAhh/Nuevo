@@ -1609,13 +1609,13 @@ export default function FlayersContent() {
               <svg className="absolute inset-0 pointer-events-none" width={CANVAS_W} height={CANVAS_H} aria-hidden="true">
                 <defs>
                   <pattern id="grid" width={GRID_SIZE} height={GRID_SIZE} patternUnits="userSpaceOnUse">
-                    <path d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" />
+                    <path d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`} fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="0.5" />
                   </pattern>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
+                <rect width="100%" height="100%" fill="url(#grid)" className="text-foreground" />
               </svg>
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-blue-400/30 pointer-events-none" aria-hidden="true" />
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-blue-400/30 pointer-events-none" aria-hidden="true" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-primary/40 pointer-events-none" aria-hidden="true" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40 pointer-events-none" aria-hidden="true" />
             </>
           )}
 
@@ -2081,11 +2081,12 @@ export default function FlayersContent() {
                   ["layers", "Capas", Layers],
                 ] as const).map(([tab, label, Icon]) => (
                   <button key={tab} role="tab" aria-selected={mobileTab === tab}
-                    className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors ${
-                      mobileTab === tab ? "text-primary border-t-2 border-primary font-medium" : "text-muted-foreground hover:text-foreground"
+                    aria-label={label}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:bg-accent ${
+                      mobileTab === tab ? "text-primary border-t-2 border-primary" : "text-muted-foreground hover:text-foreground"
                     }`}
                     onClick={() => setMobileTab(tab)}>
-                    <Icon size={16} />
+                    <Icon size={18} />
                     {label}
                   </button>
                 ))}
