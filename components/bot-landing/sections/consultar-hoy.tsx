@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { BarChart3, BookOpen, Briefcase, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react"
 import { Eyebrow, RECURSOS_URL, Reveal, RevealItem, Section } from "../_shared"
 
@@ -55,13 +56,21 @@ export default function ConsultarHoy() {
       <Reveal className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((f) => (
           <RevealItem key={f.title}>
-            <article className="flex h-full flex-col gap-3 rounded-2xl border border-border/60 bg-card p-6">
-              <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <motion.article
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="group flex h-full flex-col gap-3 rounded-2xl border border-border/60 bg-card p-6 transition-colors hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+            >
+              <motion.span
+                whileHover={{ rotate: -4, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300, damping: 16 }}
+                className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"
+              >
                 <f.icon className="size-5" strokeWidth={1.75} aria-hidden />
-              </span>
+              </motion.span>
               <h3 className="text-base font-semibold tracking-tight">{f.title}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{f.body}</p>
-            </article>
+            </motion.article>
           </RevealItem>
         ))}
 

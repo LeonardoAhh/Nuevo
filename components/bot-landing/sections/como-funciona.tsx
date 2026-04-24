@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { MessageCircle, Send, ListChecks } from "lucide-react"
 import { Eyebrow, Reveal, RevealItem, Section } from "../_shared"
 
@@ -47,18 +48,34 @@ export default function ComoFunciona() {
       <Reveal className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {STEPS.map((s) => (
           <RevealItem key={s.n}>
-            <article className="group relative flex h-full flex-col gap-4 rounded-2xl border border-border/60 bg-card p-6 transition-colors hover:border-primary/40">
+            <motion.article
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card p-6 transition-colors hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                style={{
+                  background:
+                    "radial-gradient(600px circle at var(--x,50%) var(--y,50%), hsl(var(--primary)/0.08), transparent 40%)",
+                }}
+              />
               <div className="flex items-center justify-between">
-                <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <motion.span
+                  whileHover={{ rotate: -4, scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 16 }}
+                  className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"
+                >
                   <s.icon className="size-5" strokeWidth={1.75} aria-hidden />
-                </span>
+                </motion.span>
                 <span className="text-sm font-semibold tabular-nums text-muted-foreground/80">
                   {s.n}
                 </span>
               </div>
               <h3 className="text-lg font-semibold tracking-tight">{s.title}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-            </article>
+            </motion.article>
           </RevealItem>
         ))}
       </Reveal>

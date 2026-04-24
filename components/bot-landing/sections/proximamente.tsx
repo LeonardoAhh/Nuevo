@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import {
   CalendarDays,
   CalendarHeart,
@@ -67,19 +68,33 @@ export default function Proximamente() {
       <Reveal className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {ROADMAP.map((r) => (
           <RevealItem key={r.title}>
-            <article className="relative flex h-full flex-col gap-3 overflow-hidden rounded-2xl border border-dashed border-border/70 bg-card/60 p-6">
+            <motion.article
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="group relative flex h-full flex-col gap-3 overflow-hidden rounded-2xl border border-dashed border-border/70 bg-card/60 p-6 transition-colors hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+            >
               <div className="flex items-center justify-between">
-                <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <motion.span
+                  whileHover={{ rotate: -4, scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 16 }}
+                  className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"
+                >
                   <r.icon className="size-5" strokeWidth={1.75} aria-hidden />
-                </span>
+                </motion.span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  <Sparkles className="size-3" aria-hidden />
+                  <motion.span
+                    animate={{ rotate: [0, 15, -10, 0] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    aria-hidden
+                  >
+                    <Sparkles className="size-3" />
+                  </motion.span>
                   En plan
                 </span>
               </div>
               <h3 className="mt-1 text-base font-semibold tracking-tight">{r.title}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{r.body}</p>
-            </article>
+            </motion.article>
           </RevealItem>
         ))}
       </Reveal>

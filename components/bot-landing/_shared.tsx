@@ -48,13 +48,24 @@ export function Eyebrow({ children }: { children: ReactNode }) {
 }
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 24, filter: "blur(6px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+  },
 }
 
 export const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+}
+
+/** Gentle lift + border glow for card-like surfaces on hover. */
+export const cardHover = {
+  whileHover: { y: -4 },
+  transition: { type: "spring" as const, stiffness: 260, damping: 22 },
 }
 
 /**
@@ -92,11 +103,7 @@ export function RevealItem({
   className?: string
 }) {
   return (
-    <motion.div
-      variants={fadeUp}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
+    <motion.div variants={fadeUp} className={className}>
       {children}
     </motion.div>
   )

@@ -1,5 +1,7 @@
 "use client"
 
+import AmbientOrbs from "./ambient-orbs"
+import ScrollProgress from "./scroll-progress"
 import Hero from "./sections/hero"
 import ComoFunciona from "./sections/como-funciona"
 import ConsultarHoy from "./sections/consultar-hoy"
@@ -14,7 +16,9 @@ import Footer from "./sections/footer"
  */
 export default function BotLanding() {
   return (
-    <main className="relative min-h-[100dvh] bg-background text-foreground antialiased">
+    <main className="relative min-h-[100dvh] overflow-x-hidden bg-background text-foreground antialiased">
+      <ScrollProgress />
+      <AmbientOrbs />
       <Hero />
       <ComoFunciona />
       <ConsultarHoy />
