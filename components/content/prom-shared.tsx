@@ -3,39 +3,24 @@
 import React from "react"
 import { CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import type { BadgeProps } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { AptitudStatus } from "@/lib/promociones/types"
 
 // ─── Insignia de aptitud ───────────────────────────────────────────────────
 
-const aptitudCfg: Record<AptitudStatus, { label: string; icon: React.ElementType; className: string }> = {
-  apto: {
-    label: "Apto",
-    icon: CheckCircle2,
-    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700",
-  },
-  no_apto: {
-    label: "No Apto",
-    icon: XCircle,
-    className: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-700",
-  },
-  pendiente: {
-    label: "Pendiente",
-    icon: Clock,
-    className: "bg-muted text-foreground border-border",
-  },
-  en_revision: {
-    label: "En Revisión",
-    icon: AlertTriangle,
-    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-700",
-  },
+const aptitudCfg: Record<AptitudStatus, { label: string; icon: React.ElementType; variant: NonNullable<BadgeProps['variant']> }> = {
+  apto:        { label: "Apto",        icon: CheckCircle2,  variant: "success" },
+  no_apto:     { label: "No Apto",     icon: XCircle,       variant: "error" },
+  pendiente:   { label: "Pendiente",   icon: Clock,         variant: "secondary" },
+  en_revision: { label: "En Revisión", icon: AlertTriangle, variant: "warning" },
 }
 
 export function AptitudBadge({ status }: { status: AptitudStatus }) {
   const cfg = aptitudCfg[status]
   const Icon = cfg.icon
   return (
-    <Badge variant="outline" className={`gap-1 font-semibold px-2 py-0.5 ${cfg.className}`}>
+    <Badge variant={cfg.variant} className="font-semibold">
       <Icon size={12} />
       {cfg.label}
     </Badge>
@@ -61,14 +46,14 @@ export function CriterioRow({
     <div className="flex items-center justify-between py-1.5">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         {cumple ? (
-          <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+          <CheckCircle2 size={13} className="text-success flex-shrink-0" />
         ) : (
-          <XCircle size={13} className="text-red-400 flex-shrink-0" />
+          <XCircle size={13} className="text-destructive flex-shrink-0" />
         )}
         <span>{label}</span>
       </div>
       <div className="text-sm text-right">
-        <span className={`font-semibold ${cumple ? "text-emerald-600 dark:text-emerald-400" : "text-destructive dark:text-red-400"}`}>
+        <span className={`font-semibold ${cumple ? "text-success" : "text-destructive"}`}>
           {valor}{unidad}
         </span>
         <span className="text-muted-foreground ml-1 text-xs">/ mín {minimo}{unidad}</span>

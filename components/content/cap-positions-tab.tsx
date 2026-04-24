@@ -139,7 +139,7 @@ export function CapPositionsTab({
                       <TableCell className="text-right">
                         <Button
                           variant="ghost" size="sm"
-                          className="gap-1 text-foreground dark:hover:bg-gray-700"
+                          className="gap-1 text-foreground hover:bg-muted"
                           onClick={() => onViewCourses(pos)}
                         >
                           Ver cursos <ChevronRight className="h-4 w-4" />

@@ -25,10 +25,10 @@ import { CreateEmployeeDialog } from "@/components/content/create-employee-dialo
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.ElementType; classes: string }> = {
-  completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-green-600 dark:text-green-400' },
-  proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-yellow-500 dark:text-yellow-400' },
-  hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-orange-500 dark:text-orange-400' },
-  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-destructive dark:text-red-400' },
+  completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-success' },
+  proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-warning' },
+  hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-warning' },
+  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-destructive' },
   pendiente: { label: 'Pendiente', icon: Clock, classes: 'text-muted-foreground' },
 }
 
@@ -42,8 +42,8 @@ function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion
       <Icon className="h-4 w-4" />
       <span className="text-xs font-medium">{formatDate(fecha)}</span>
       {calificacion != null && (
-        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${calificacion >= 70 ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${calificacion >= 70 ? 'bg-success/10 text-success'
+          : 'bg-destructive/10 text-destructive'
           }`}>{calificacion}</span>
       )}
       {calificacion == null && diff !== null && diff >= 0 && (
@@ -58,11 +58,11 @@ function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion
 
 function ContratoTerminoBadge({ fecha, indeterminado }: { fecha: string | null; indeterminado?: boolean }) {
   const diff = daysFromToday(fecha)
-  if (diff === null) return <span className="text-xs text-gray-400">—</span>
+  if (diff === null) return <span className="text-xs text-muted-foreground">—</span>
   const urgent = diff <= 10
   const past = diff < 0
   return (
-    <div className={`text-xs font-medium ${past && !indeterminado ? 'text-destructive' : urgent && !indeterminado ? 'text-orange-500' : 'text-muted-foreground'}`}>
+    <div className={`text-xs font-medium ${past && !indeterminado ? 'text-destructive' : urgent && !indeterminado ? 'text-warning' : 'text-muted-foreground'}`}>
       <div>{formatDate(fecha)}</div>
       {!indeterminado && (
         <div className="opacity-70">
@@ -179,9 +179,9 @@ export default function NuevoIngresoContent() {
 
       {/* Alertas */}
       {createSuccess && (
-        <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="mb-4 border-success/30 bg-success/10 text-success">
+          <CheckCircle2 className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">
             Empleado creado correctamente.
           </AlertDescription>
         </Alert>
@@ -329,10 +329,10 @@ export default function NuevoIngresoContent() {
                           <p className="text-xs text-muted-foreground">{r.departamento}</p>
                         </div>
                         <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                          ? 'bg-success/10 text-success'
                           : rgUrgente
-                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                            ? 'bg-destructive/10 text-destructive'
+                            : 'bg-warning/10 text-warning'
                           }`}>
                           <span className="flex items-center gap-1">
                             {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
@@ -399,7 +399,7 @@ export default function NuevoIngresoContent() {
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               <span className="text-xs text-muted-foreground">{r.puesto}</span>
                               {r.turno && (
-                                <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">
+                                <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground whitespace-nowrap">
                                   T{r.turno}
                                 </span>
                               )}
@@ -425,7 +425,7 @@ export default function NuevoIngresoContent() {
                             <Badge
                               variant={r.tipo_contrato === 'Indeterminado' ? 'default' : 'secondary'}
                               className={`text-xs whitespace-nowrap ${r.tipo_contrato === 'Indeterminado'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                ? 'bg-info/10 text-info border-info/30'
                                 : 'bg-muted'
                                 }`}
                             >
@@ -434,10 +434,10 @@ export default function NuevoIngresoContent() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                              ? 'bg-success/10 text-success'
                               : rgUrgente
-                                ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                                ? 'bg-destructive/10 text-destructive'
+                                : 'bg-warning/10 text-warning'
                               }`}>
                               <span className="flex items-center gap-1">
                                 {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}

@@ -314,8 +314,8 @@ export default function PromocionesContent({
 
       {/* Leyenda */}
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-1">
-        <div className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-emerald-500" /> Criterio cumplido</div>
-        <div className="flex items-center gap-1.5"><XCircle size={12} className="text-red-400" /> Criterio no cumplido</div>
+        <div className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-success" /> Criterio cumplido</div>
+        <div className="flex items-center gap-1.5"><XCircle size={12} className="text-destructive" /> Criterio no cumplido</div>
         <div className="flex items-center gap-1.5"><Info size={12} /> Ver detalle completo</div>
         <div className="flex items-center gap-1.5"><ChevronRight size={12} /> Expandir cursos</div>
       </div>
@@ -400,8 +400,8 @@ function MobileCard({ emp, onClick }: { emp: EmpleadoPromocion; onClick: () => v
         <div className="flex flex-col gap-0.5">
           <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Cursos</span>
           <div className="flex items-center gap-1">
-            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" /> : <XCircle size={11} className="text-red-400 shrink-0" />)}
-            <span className={`font-semibold ${pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400" : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{pctCursos}%</span>
+            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
+            <span className={`font-semibold ${pctCursos >= 80 ? "text-success" : pctCursos >= 50 ? "text-warning" : "text-destructive"}`}>{pctCursos}%</span>
             <span className="text-muted-foreground">({emp.cursosRequeridos.filter(c => c.completado).length}/{emp.cursosRequeridos.length})</span>
           </div>
           <Progress value={pctCursos} className="h-1 mt-0.5" />
@@ -411,8 +411,8 @@ function MobileCard({ emp, onClick }: { emp: EmpleadoPromocion; onClick: () => v
           <div className="flex items-center gap-1">
             {evalActual ? (
               <>
-                {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" /> : <XCircle size={11} className="text-red-400 shrink-0" />)}
-                <span className={`font-bold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{evalActual.calificacion}</span>
+                {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
+                <span className={`font-bold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}>{evalActual.calificacion}</span>
               </>
             ) : (
               <span className="italic text-muted-foreground">Sin evaluar</span>
@@ -430,7 +430,7 @@ function MetricaMobile({ label, cumple, valor, min }: { label: string; cumple: b
     <div className="flex flex-col gap-0.5">
       <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>{label}</span>
       <div className="flex items-center gap-1">
-        {cumple !== null && (cumple ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" /> : <XCircle size={11} className="text-red-400 shrink-0" />)}
+        {cumple !== null && (cumple ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
         <span className="font-medium text-foreground">{valor}</span>
       </div>
       {min && <span className="text-muted-foreground" style={{fontSize:"10px"}}>{min}</span>}
@@ -504,15 +504,15 @@ function DesktopRow({
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1.5">
-            {cumpleTemp !== null && (cumpleTemp ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
+            {cumpleTemp !== null && (cumpleTemp ? <CheckCircle2 size={13} className="text-success flex-shrink-0" /> : <XCircle size={13} className="text-destructive flex-shrink-0" />)}
             <span className="text-sm text-foreground whitespace-nowrap">{formatMeses(meses)}</span>
           </div>
           {regla && <div className="text-xs text-muted-foreground mt-0.5">mín {formatMeses(regla.minTemporalidadMeses)}</div>}
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1.5 mb-1">
-            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-            <span className={`text-sm font-semibold ${pctCursos >= 80 ? "text-emerald-600 dark:text-emerald-400" : pctCursos >= 50 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{pctCursos}%</span>
+            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={13} className="text-success flex-shrink-0" /> : <XCircle size={13} className="text-destructive flex-shrink-0" />)}
+            <span className={`text-sm font-semibold ${pctCursos >= 80 ? "text-success" : pctCursos >= 50 ? "text-warning" : "text-destructive"}`}>{pctCursos}%</span>
             <span className="text-xs text-muted-foreground">({emp.cursosRequeridos.filter((c) => c.completado).length}/{emp.cursosRequeridos.length})</span>
           </div>
           <Progress value={pctCursos} className="h-1.5 w-24" />
@@ -520,8 +520,8 @@ function DesktopRow({
         <TableCell>
           {evalActual ? (
             <div className="flex items-center gap-1.5">
-              {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-red-400 flex-shrink-0" />)}
-              <span className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{evalActual.calificacion}</span>
+              {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={13} className="text-success flex-shrink-0" /> : <XCircle size={13} className="text-destructive flex-shrink-0" />)}
+              <span className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}>{evalActual.calificacion}</span>
               {evalActual.periodo && <span className="text-xs text-muted-foreground">{evalActual.periodo}</span>}
             </div>
           ) : (
@@ -564,7 +564,7 @@ function DesktopRow({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                 {emp.cursosRequeridos.map((curso) => (
-                  <div key={curso.nombre} className={`flex items-center gap-2 text-xs rounded px-2 py-1.5 ${curso.completado ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300" : "bg-destructive/10 text-destructive"}`}>
+                  <div key={curso.nombre} className={`flex items-center gap-2 text-xs rounded px-2 py-1.5 ${curso.completado ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                     {curso.completado ? <CheckCircle2 size={12} className="flex-shrink-0" /> : <XCircle size={12} className="flex-shrink-0" />}
                     <span className="truncate">{curso.nombre}</span>
                     {curso.calificacion !== undefined && <span className="ml-auto font-semibold">{curso.calificacion}</span>}
@@ -594,7 +594,7 @@ function DesktopRowInhabilitado({ emp, onDesempeño }: { emp: EmpleadoPromocion;
       <TableCell />
       <TableCell>
         {evalActual ? (
-          <span className={`text-sm font-semibold ${evalActual.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400" : evalActual.calificacion >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>{evalActual.calificacion}</span>
+          <span className={`text-sm font-semibold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}>{evalActual.calificacion}</span>
         ) : (
           <span className="text-xs italic text-muted-foreground">Sin evaluar</span>
         )}
@@ -608,7 +608,7 @@ function DesktopRowInhabilitado({ emp, onDesempeño }: { emp: EmpleadoPromocion;
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-500 hover:text-amber-600" onClick={onDesempeño}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-warning hover:text-warning/80" onClick={onDesempeño}>
                 <Star size={14} />
               </Button>
             </TooltipTrigger>

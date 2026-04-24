@@ -317,7 +317,7 @@ export default function SettingsContent() {
                       {...registerProfile("firstName")}
                       className={cn(
                         "text-base md:text-sm",
-                        profileErrors.firstName && "border-red-500"
+                        profileErrors.firstName && "border-destructive"
                       )}
                     />
                     {profileErrors.firstName && (
@@ -333,7 +333,7 @@ export default function SettingsContent() {
                       {...registerProfile("lastName")}
                       className={cn(
                         "text-base md:text-sm",
-                        profileErrors.lastName && "border-red-500"
+                        profileErrors.lastName && "border-destructive"
                       )}
                     />
                     {profileErrors.lastName && (
@@ -349,7 +349,7 @@ export default function SettingsContent() {
                       {...registerProfile("displayName")}
                       className={cn(
                         "text-base md:text-sm",
-                        profileErrors.displayName && "border-red-500"
+                        profileErrors.displayName && "border-destructive"
                       )}
                     />
                     {profileErrors.displayName && (
