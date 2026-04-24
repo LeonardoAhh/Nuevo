@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -151,7 +152,7 @@ function EmpleadoCard({ emp }: { emp: EmpleadoCalificaciones }) {
             )}
             <Badge
               variant="outline"
-              className={`mt-1.5 text-[10px] px-1.5 py-0 h-4 border ${scoreBgClass(emp.promedio)}`}
+              className={`mt-1.5 text-[11px] px-1.5 py-0.5 border ${scoreBgClass(emp.promedio)}`}
             >
               {promedioLabel(emp.promedio)}
             </Badge>
@@ -203,16 +204,18 @@ function EmpleadoCard({ emp }: { emp: EmpleadoCalificaciones }) {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full mt-2 h-6 text-xs text-muted-foreground gap-1"
+              className="w-full mt-2 h-9 text-xs text-muted-foreground gap-1.5 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              aria-label={expanded ? `Ocultar ${restCourses.length} cursos adicionales de ${emp.nombre}` : `Mostrar ${restCourses.length} cursos adicionales de ${emp.nombre}`}
             >
               {expanded ? (
                 <>
-                  <ChevronUp className="h-3 w-3" /> Mostrar menos
+                  <ChevronUp className="h-4 w-4" /> Mostrar menos
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-3 w-3" /> +{restCourses.length} más
+                  <ChevronDown className="h-4 w-4" /> +{restCourses.length} más
                 </>
               )}
             </Button>
@@ -226,32 +229,6 @@ function EmpleadoCard({ emp }: { emp: EmpleadoCalificaciones }) {
         </CardContent>
       )}
     </Card>
-  )
-}
-
-// ─── Stats summary ────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  colorClass,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: string | number
-  colorClass: string
-}) {
-  return (
-    <div className="flex items-center gap-3 bg-card rounded-lg border border-border/60 px-4 py-3">
-      <div className={`p-2 rounded-md ${colorClass}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <p className="text-lg font-bold text-foreground leading-none">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-      </div>
-    </div>
   )
 }
 
@@ -325,7 +302,8 @@ export default function CalificacionesMural() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar ..."
+              placeholder="Buscar empleado, puesto o depto."
+              aria-label="Buscar en calificaciones"
               className={`pl-9 bg-muted text-foreground ${search ? "pr-9" : ""}`}
             />
             {search && (
@@ -372,7 +350,8 @@ export default function CalificacionesMural() {
               onClick={fetch}
               disabled={loading}
               title="Actualizar"
-              className="shrink-0"
+              aria-label="Actualizar calificaciones"
+              className="shrink-0 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
@@ -393,12 +372,9 @@ export default function CalificacionesMural() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy="true" aria-label="Cargando calificaciones">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-48 rounded-xl bg-muted animate-pulse"
-            />
+            <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
         </div>
       )}
