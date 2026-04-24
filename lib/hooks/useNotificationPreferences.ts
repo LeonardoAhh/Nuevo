@@ -30,16 +30,15 @@ export function useNotificationPreferences(userId?: string) {
     if (!userId) return
     try {
       setLoading(true)
+      // Use maybeSingle() so an empty row set returns { data: null, error: null }
+      // instead of surfacing a noisy 406 PGRST116 in the browser console.
       const { data, error } = await supabase
         .from('notification_preferences')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (error) {
-        if (error.code === 'PGRST116') return
-        throw error
-      }
+      if (error) throw error
 
       if (data) {
         setPreferences({
