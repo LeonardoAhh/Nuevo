@@ -31,6 +31,7 @@ import { useRole } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
+
 import {
   isHabilitado,
   calcularAptitud,
@@ -50,6 +51,8 @@ import { usePromocionesImport } from "@/lib/hooks/usePromocionesImport"
 export type { AptitudStatus, CursoRequerido, ReglaPromocion, EvaluacionDesempeño, EmpleadoPromocion } from "@/lib/promociones/types"
 
 const PAGE_SIZE = 30
+const LABEL_CLASS = "text-[11px] font-medium text-muted-foreground uppercase tracking-wide"
+const MIN_CLASS = "text-[11px] text-muted-foreground"
 
 export default function PromocionesContent({
   empleados,
@@ -124,6 +127,7 @@ export default function PromocionesContent({
   const paginadosSinCategoria = paginados.filter((e) => !isHabilitado(e.puesto))
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="space-y-6">
       <ReadOnlyBanner />
 
@@ -263,14 +267,12 @@ export default function PromocionesContent({
                   <TableHead>Empleado</TableHead>
                   <TableHead>Departamento</TableHead>
                   <TableHead>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger className="flex items-center gap-1 cursor-help">
-                          <Calendar size={13} /> Temporalidad
-                        </TooltipTrigger>
-                        <TooltipContent>Tiempo en el puesto actual</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                        <Calendar size={13} /> Temporalidad
+                      </TooltipTrigger>
+                      <TooltipContent>Tiempo en el puesto actual</TooltipContent>
+                    </Tooltip>
                   </TableHead>
                   <TableHead><div className="flex items-center gap-1"><BookOpen size={13} /> Cursos</div></TableHead>
                   <TableHead><div className="flex items-center gap-1"><Star size={13} /> Evaluación</div></TableHead>
@@ -362,6 +364,7 @@ export default function PromocionesContent({
         />
       )}
     </div>
+    </TooltipProvider>
   )
 }
 
@@ -398,27 +401,27 @@ function MobileCard({ emp, onClick }: { emp: EmpleadoPromocion; onClick: () => v
       <div className="grid grid-cols-3 gap-2 text-xs">
         <MetricaMobile label="Temporalidad" cumple={cumpleTemp} valor={formatMeses(meses)} min={regla ? `mín ${formatMeses(regla.minTemporalidadMeses)}` : undefined} />
         <div className="flex flex-col gap-0.5">
-          <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Cursos</span>
+          <span className={LABEL_CLASS}>Cursos</span>
           <div className="flex items-center gap-1">
-            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
+            {cumpleCursos !== null && (cumpleCursos ? <CheckCircle2 size={12} className="text-success shrink-0" /> : <XCircle size={12} className="text-destructive shrink-0" />)}
             <span className={`font-semibold ${pctCursos >= 80 ? "text-success" : pctCursos >= 50 ? "text-warning" : "text-destructive"}`}>{pctCursos}%</span>
             <span className="text-muted-foreground">({emp.cursosRequeridos.filter(c => c.completado).length}/{emp.cursosRequeridos.length})</span>
           </div>
           <Progress value={pctCursos} className="h-1 mt-0.5" />
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>Evaluación</span>
+          <span className={LABEL_CLASS}>Evaluación</span>
           <div className="flex items-center gap-1">
             {evalActual ? (
               <>
-                {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
+                {cumpleEval !== null && (cumpleEval ? <CheckCircle2 size={12} className="text-success shrink-0" /> : <XCircle size={12} className="text-destructive shrink-0" />)}
                 <span className={`font-bold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}>{evalActual.calificacion}</span>
               </>
             ) : (
               <span className="italic text-muted-foreground">Sin evaluar</span>
             )}
           </div>
-          {regla && <span className="text-muted-foreground" style={{fontSize:"10px"}}>mín {regla.minCalificacionEvaluacion}</span>}
+          {regla && <span className={MIN_CLASS}>mín {regla.minCalificacionEvaluacion}</span>}
         </div>
       </div>
     </div>
@@ -428,12 +431,12 @@ function MobileCard({ emp, onClick }: { emp: EmpleadoPromocion; onClick: () => v
 function MetricaMobile({ label, cumple, valor, min }: { label: string; cumple: boolean | null; valor: string; min?: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-muted-foreground uppercase tracking-wide" style={{fontSize:"10px"}}>{label}</span>
+      <span className={LABEL_CLASS}>{label}</span>
       <div className="flex items-center gap-1">
-        {cumple !== null && (cumple ? <CheckCircle2 size={11} className="text-success shrink-0" /> : <XCircle size={11} className="text-destructive shrink-0" />)}
+        {cumple !== null && (cumple ? <CheckCircle2 size={12} className="text-success shrink-0" /> : <XCircle size={12} className="text-destructive shrink-0" />)}
         <span className="font-medium text-foreground">{valor}</span>
       </div>
-      {min && <span className="text-muted-foreground" style={{fontSize:"10px"}}>{min}</span>}
+      {min && <span className={MIN_CLASS}>{min}</span>}
     </div>
   )
 }
@@ -456,8 +459,14 @@ function MobileCardInhabilitado({ emp, onDesempeño }: { emp: EmpleadoPromocion;
           <span>{emp.departamento}</span>
           {emp.numero && <><span>·</span><span>#{emp.numero}</span></>}
         </div>
-        <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={onDesempeño}>
-          <Star size={11} />
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={onDesempeño}
+          aria-label="Capturar evaluación de desempeño"
+        >
+          <Star size={13} />
           {evalActual ? String(evalActual.calificacion) : "Eval"}
         </Button>
       </div>
@@ -531,25 +540,35 @@ function DesktopRow({
         </TableCell>
         <TableCell><AptitudBadge status={aptitud} /></TableCell>
         <TableCell onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-0.5">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDetalle}><Info size={14} /></Button>
-                </TooltipTrigger>
-                <TooltipContent>Ver detalle</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className={`h-7 w-7 ${aptitud === "apto" ? "text-primary hover:text-primary" : "text-muted-foreground"}`} onClick={onPromover}>
-                    <TrendingUp size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{aptitud === "apto" ? "Promover empleado" : "Registrar examen / intentar promoción"}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={onDetalle}
+                  aria-label="Ver detalle del empleado"
+                >
+                  <Info size={15} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Ver detalle</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 focus-visible:ring-2 focus-visible:ring-ring ${aptitud === "apto" ? "text-primary hover:text-primary" : "text-muted-foreground"}`}
+                  onClick={onPromover}
+                  aria-label={aptitud === "apto" ? "Promover empleado" : "Registrar examen"}
+                >
+                  <TrendingUp size={15} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{aptitud === "apto" ? "Promover empleado" : "Registrar examen / intentar promoción"}</TooltipContent>
+            </Tooltip>
           </div>
         </TableCell>
       </TableRow>
@@ -605,16 +624,20 @@ function DesktopRowInhabilitado({ emp, onDesempeño }: { emp: EmpleadoPromocion;
         </Badge>
       </TableCell>
       <TableCell>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-warning hover:text-warning/80" onClick={onDesempeño}>
-                <Star size={14} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Capturar evaluación de desempeño</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-warning hover:text-warning/80 focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={onDesempeño}
+              aria-label="Capturar evaluación de desempeño"
+            >
+              <Star size={15} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Capturar evaluación de desempeño</TooltipContent>
+        </Tooltip>
       </TableCell>
     </TableRow>
   )
