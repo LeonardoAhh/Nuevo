@@ -74,11 +74,8 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
+      { label: "Flayers", href: "/flayers", icon: Paintbrush },
     ],
-  },
-  {
-    sectionLabel: "Edición",
-    items: [{ label: "Flayers", href: "/flayers", icon: Paintbrush }],
   },
   {
     sectionLabel: "Público",
