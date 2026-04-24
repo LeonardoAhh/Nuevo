@@ -239,7 +239,7 @@ export default function RecursosHome() {
   const hasQuery = query.trim().length > 0
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-[100dvh] bg-background text-foreground">
       {/* ─── Header ─── */}
       <header className="sticky top-0 z-30 border-b bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-4 sm:h-14 sm:gap-3 sm:px-6">

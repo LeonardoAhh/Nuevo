@@ -52,7 +52,7 @@ export function AuthForm() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-[100dvh] bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
