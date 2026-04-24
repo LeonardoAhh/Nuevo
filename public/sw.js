@@ -155,8 +155,10 @@ function openBadgeDB() {
 }
 
 // ─── Push notifications ───────────────────────────────────────────────────────
+// The server-side sender (lib/push/format.ts) is the single source of truth
+// for title / body / tag. The SW just renders whatever it gets, no parsing.
 self.addEventListener("push", (event) => {
-  const fallback = { title: "Viño Plastic", body: "" }
+  const fallback = { title: "Vertx", body: "" }
   let data = fallback
   try {
     data = event.data ? event.data.json() : fallback
@@ -167,29 +169,17 @@ self.addEventListener("push", (event) => {
   const tag     = data.tag || "general"
   const notifId = data.id  || ""
 
-  // Formatear el body para que sea más limpio:
-  // "NOMBRE APELLIDO – Fecha de baja: 2026-04-20" → "NOMBRE APELLIDO\n📅 20 abr 2026"
-  let body = data.body || ""
-  const fechaMatch = body.match(/Fecha de baja:\s*(\d{4}-\d{2}-\d{2})/)
-  if (fechaMatch) {
-    const [yyyy, mm, dd] = fechaMatch[1].split("-")
-    const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
-    const fechaLegible = `${parseInt(dd)} ${meses[parseInt(mm) - 1]} ${yyyy}`
-    body = body.replace(/\s*–\s*Fecha de baja:\s*\d{4}-\d{2}-\d{2}/, `\n${fechaLegible}`)
-  }
-
   const options = {
-    body,
+    body: data.body || "",
     icon:    "/icons/icon-512.png",
     badge:   "/icons/icon-192.png",
     tag,
-    renotify: true,
+    // Don't re-alert when the same tag is replaced (e.g. "baja en 3d" → "baja hoy").
+    renotify: false,
     silent:   false,
     data: { url: data.url || "/", id: notifId, tag },
-    actions: [
-      { action: "view",      title: "Ver"    },
-      { action: "mark-read", title: "Leída"  },
-    ],
+    // `actions` is intentionally omitted — iOS ignores it, and on desktop
+    // Chrome the "mark as read" action created confusion vs. the in-app bell.
   }
 
   event.waitUntil(
@@ -200,30 +190,12 @@ self.addEventListener("push", (event) => {
 
 // ─── Click en notificación ────────────────────────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
-  const action = event.action
   const notifData = event.notification.data || {}
   const url = notifData.url || "/"
   const notifId = notifData.id || ""
 
   event.notification.close()
 
-  if (action === "mark-read") {
-    // Marcar como leída vía API sin abrir la app
-    event.waitUntil(
-      decrementBadge().then(() => {
-        if (notifId) {
-          return fetch("/api/notifications/mark-read", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: notifId }),
-          }).catch(() => {})
-        }
-      })
-    )
-    return
-  }
-
-  // "view" o click directo: abrir/enfocar la app
   event.waitUntil(
     decrementBadge().then(() =>
       clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
