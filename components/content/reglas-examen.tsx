@@ -86,7 +86,7 @@ export default function ReglasExamenContent() {
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 text-red-700 text-sm">
+        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm">
           {error}
         </div>
       )}
