@@ -199,13 +199,23 @@ export default function ExamenesContent({
             </button>
           )}
         </div>
-        <Button variant="outline" onClick={handleSearch} disabled={loading}>
-          {loading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Search size={16} className="mr-2" />}
-          Buscar
+        <Button
+          variant="outline"
+          onClick={handleSearch}
+          disabled={loading}
+          aria-label="Buscar"
+          className="sm:min-w-[120px]"
+        >
+          {loading ? (
+            <Loader2 size={16} className="sm:mr-2 animate-spin" />
+          ) : (
+            <Search size={16} className="sm:mr-2" />
+          )}
+          <span className="hidden sm:inline">Buscar</span>
         </Button>
-        <Button onClick={openCreate} disabled={isReadOnly}>
-          <Plus size={16} className="mr-2" />
-          Nueva Pregunta
+        <Button onClick={openCreate} disabled={isReadOnly} aria-label="Nueva pregunta">
+          <Plus size={16} className="sm:mr-2" />
+          <span className="hidden sm:inline">Nueva Pregunta</span>
         </Button>
       </div>
 
@@ -262,17 +272,24 @@ export default function ExamenesContent({
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <Badge variant="secondary" className="shrink-0 text-xs">{p.departamento}</Badge>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)} title="Editar" disabled={isReadOnly}>
-                        <Pencil size={13} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => openEdit(p)}
+                        aria-label="Editar pregunta"
+                        disabled={isReadOnly}
+                      >
+                        <Pencil size={15} />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        className="h-9 w-9 text-destructive hover:text-destructive"
                         onClick={() => setDeleteId(p.id)}
-                        title="Eliminar"
+                        aria-label="Eliminar pregunta"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={15} />
                       </Button>
                     </div>
                   </div>
@@ -288,7 +305,7 @@ export default function ExamenesContent({
 
           {/* Vista desktop: tabla */}
           <Card className="hidden md:block">
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -312,14 +329,20 @@ export default function ExamenesContent({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)} title="Editar" disabled={isReadOnly}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(p)}
+                            aria-label="Editar pregunta"
+                            disabled={isReadOnly}
+                          >
                             <Pencil size={15} />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteId(p.id)}
-                            title="Eliminar"
+                            aria-label="Eliminar pregunta"
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 size={15} />
