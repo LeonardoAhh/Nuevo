@@ -101,7 +101,8 @@ export default function HeroDashboard() {
       >
         <Image
           src="/HERO.png"
-          alt="Hero background"
+          alt=""
+          role="presentation"
           fill
           className="object-cover hero-zoom"
           priority
@@ -155,7 +156,7 @@ export default function HeroDashboard() {
         </motion.div>
 
         {/* Name + company */}
-        <motion.h1
+        <motion.h2
           variants={skipMotion ? undefined : fadeUp}
           className={`font-bold text-white leading-[1.15] mb-1 sm:mb-2 ${
             isCompact
@@ -174,7 +175,7 @@ export default function HeroDashboard() {
               {displayName}
             </motion.span>
           </AnimatePresence>
-        </motion.h1>
+        </motion.h2>
 
         <motion.p
           variants={skipMotion ? undefined : fadeUp}
