@@ -14,7 +14,7 @@ export function SonnerProvider() {
       toastOptions={{
         classNames: {
           toast:
-            "group rounded-xl border border-border bg-card text-foreground shadow-lg",
+            "group rounded-lg border border-border bg-card text-foreground shadow-lg",
           title: "text-sm font-medium",
           description: "text-xs text-muted-foreground",
           actionButton:
