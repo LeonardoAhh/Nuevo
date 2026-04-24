@@ -76,7 +76,7 @@ export default function ReglasExamenContent() {
   }
 
   return (
-    <div className="px-6 pt-2 pb-6 space-y-4">
+    <div className="px-4 sm:px-6 pb-6 space-y-4">
       <ReadOnlyBanner />
       <div className="flex items-center gap-2 mb-1">
         <Settings2 size={16} className="text-muted-foreground" />
