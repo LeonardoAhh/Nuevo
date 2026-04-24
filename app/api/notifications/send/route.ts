@@ -34,6 +34,32 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Service-role client: needed to read every subscription row (broadcast).
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Authorization: require an authenticated user with role='dev'.
+  // Without this any logged-in employee could broadcast push to everyone.
+  const authHeader = req.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const token = authHeader.slice(7)
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (profile?.role !== "dev") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   // Asegurar formato mailto: requerido por el estándar Web Push
   const vapidSubject = vapidEmail.startsWith("mailto:") ? vapidEmail : `mailto:${vapidEmail}`
   webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate)
@@ -44,12 +70,6 @@ export async function POST(req: NextRequest) {
   if (!title) {
     return NextResponse.json({ error: "title requerido" }, { status: 400 })
   }
-
-  // Usar service-role key para leer todas las suscripciones
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   const { data: subscriptions, error } = await supabase
     .from("push_subscriptions")

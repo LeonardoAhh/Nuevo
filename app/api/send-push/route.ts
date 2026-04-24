@@ -34,11 +34,22 @@ export async function POST(request: NextRequest) {
     let authorized = false
 
     if (apiKey && authHeader === `Bearer ${apiKey}`) {
+      // Internal/cron call — trusted.
       authorized = true
     } else if (authHeader?.startsWith("Bearer ")) {
+      // User-token path: must be an authenticated user AND have role='dev'.
+      // Otherwise any logged-in employee could broadcast push notifications
+      // to every subscriber.
       const token = authHeader.slice(7)
       const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-      authorized = !!user
+      if (user) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle()
+        authorized = profile?.role === "dev"
+      }
     }
 
     if (!authorized) {

@@ -46,6 +46,17 @@ export async function DELETE(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Role-gate: only 'dev' users can reset a consulta.
+  // Defence-in-depth on top of the delete policy on whatsapp_consultas.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (profile?.role !== "dev") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const { error } = await supabase
     .from("whatsapp_consultas")
     .delete()
@@ -56,6 +67,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Error al eliminar registro" }, { status: 500 })
   }
 
-  console.log(`[WhatsApp reset] Consulta eliminada para numero=${numero} por user=${user.email}`)
+  // Log user id (not email) to avoid PII in Vercel log storage.
+  console.log(`[WhatsApp reset] Consulta eliminada para numero=${numero} por user=${user.id}`)
   return NextResponse.json({ ok: true, numero })
 }
