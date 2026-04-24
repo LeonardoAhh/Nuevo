@@ -1,16 +1,14 @@
 "use client"
 import { Toaster } from "sonner"
-import { useIsMobile } from "@/components/ui/responsive-shell"
 
 export function SonnerProvider() {
-  const isMobile = useIsMobile()
   return (
     <Toaster
       richColors
       closeButton
       expand={false}
       visibleToasts={3}
-      position={isMobile ? "top-center" : "top-right"}
+      position="top-center"
       toastOptions={{
         classNames: {
           toast:
