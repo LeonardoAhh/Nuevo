@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notify'
 
@@ -88,7 +88,9 @@ export function useNuevoIngreso() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAll = async (): Promise<NuevoIngreso[]> => {
+  // Stable reference so components can depend on it in useEffect / useCallback
+  // without triggering re-fetch loops.
+  const fetchAll = useCallback(async (): Promise<NuevoIngreso[]> => {
     setLoading(true)
     setError(null)
     try {
@@ -106,7 +108,7 @@ export function useNuevoIngreso() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const importRecords = async (raw: unknown[]): Promise<{ success: boolean; error?: string }> => {
     setSaving(true)
