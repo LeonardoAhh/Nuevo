@@ -6,6 +6,7 @@ import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
 import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 import { ConnectionStatus } from "@/components/connection-status"
+import { InstallPrompt } from "@/components/install-prompt"
 
 // Values below match --card tokens in app/globals.css so the mobile browser /
 // PWA status bar (Android) and the sticky header blend seamlessly. The theme
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SonnerProvider />
         <ConfirmProvider />
         <ConnectionStatus />
+        <InstallPrompt />
       </body>
     </html>
   )
