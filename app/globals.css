@@ -485,59 +485,13 @@ input[type="color"]::-webkit-color-swatch {
   background-repeat: repeat;
 }
 
-/* Logo: entrada + flotación suave */
-.login-logo-entrance {
-  animation: loginLogoIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-@keyframes loginLogoIn {
-  from { opacity: 0; transform: scale(0.6) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
+/* Logo: flotación suave (entrada gestionada por framer-motion) */
 .login-logo-float {
   animation: loginLogoFloat 6s ease-in-out infinite;
 }
 @keyframes loginLogoFloat {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-8px); }
-}
-
-/* Fade-up genérico para textos */
-.login-fade-up {
-  opacity: 0;
-  animation: loginFadeUp 0.7s ease forwards;
-}
-@keyframes loginFadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Entrada del formulario (slide desde derecha en desktop, desde abajo en móvil) */
-.login-form-entrance {
-  animation: loginFormSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-}
-@keyframes loginFormSlide {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@media (min-width: 1024px) {
-  @keyframes loginFormSlide {
-    from { opacity: 0; transform: translateX(32px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-}
-
-/* Shake para errores */
-.login-shake {
-  animation: loginShake 0.5s ease;
-}
-@keyframes loginShake {
-  0%, 100% { transform: translateX(0); }
-  20%      { transform: translateX(-6px); }
-  40%      { transform: translateX(6px); }
-  60%      { transform: translateX(-4px); }
-  80%      { transform: translateX(4px); }
 }
 
 /* Spinner del botón */
