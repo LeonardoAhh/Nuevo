@@ -6,10 +6,14 @@ import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
 import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 
+// Values below match --card tokens in app/globals.css so the mobile browser /
+// PWA status bar (Android) and the sticky header blend seamlessly. The theme
+// provider also updates the meta tag dynamically when the user cycles themes
+// in-app, so this OS-media fallback only applies on first paint.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#2563eb" },
-    { media: "(prefers-color-scheme: dark)",  color: "#1e40af" },
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f5" },
+    { media: "(prefers-color-scheme: dark)",  color: "#1a1a1f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -24,7 +28,10 @@ export const metadata: Metadata = {
   applicationName: "Vertx System v2.0",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // "black-translucent" lets the app draw under the status bar; our sticky
+    // header already reserves env(safe-area-inset-top) so the header color
+    // shows through the bar in both light and dark themes.
+    statusBarStyle: "black-translucent",
     title: "Vertx System v2.0",
     startupImage: "/icons/apple-touch-icon.png",
   },
