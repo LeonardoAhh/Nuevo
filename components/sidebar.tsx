@@ -20,7 +20,6 @@ import {
   UserPlus,
   X,
   ChevronsUpDown,
-  Menu,
   LayoutGrid,
   BookOpen,
 } from "lucide-react"
@@ -84,9 +83,9 @@ const NAV_SECTIONS: NavSection[] = [
 
 // ─── Theme icon helper ───────────────────────────────────────────────────────
 
-const THEME_ICON: Record<Theme, typeof Sun> = { light: Moon, dark: Sun, system: Monitor }
+const THEME_ICON: Record<Theme, typeof Sun> = { light: Sun, dark: Moon, system: Monitor }
 const THEME_NEXT: Record<Theme, Theme> = { light: "dark", dark: "system", system: "light" }
-const THEME_LABEL: Record<Theme, string> = { light: "Oscuro", dark: "Sistema", system: "Claro" }
+const THEME_LABEL: Record<Theme, string> = { light: "Claro", dark: "Oscuro", system: "Sistema" }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -174,7 +173,7 @@ export default function Sidebar({
   const ThemeIcon = THEME_ICON[theme]
 
   return (
-    <>
+    <TooltipProvider delayDuration={0}>
       {/* Backdrop */}
       {isMobileView && showMobileSidebar && (
         <div
@@ -236,30 +235,32 @@ export default function Sidebar({
                 <div className="space-y-1">
                   {section.items.map((item) => {
                     const active = pathname === item.href
+                    const button = (
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start ${showExpanded ? "" : "px-2"} ${
+                          active ? "border-l-4 border-primary bg-primary/10" : ""
+                        }`}
+                        aria-current={active ? "page" : undefined}
+                        asChild
+                      >
+                        <Link
+                          href={item.href}
+                          onClick={() => isMobileView && setShowMobileSidebar(false)}
+                        >
+                          <item.icon size={18} className={showExpanded ? "mr-2" : "mx-auto"} />
+                          {showExpanded && <span>{item.label}</span>}
+                        </Link>
+                      </Button>
+                    )
+
+                    if (showExpanded) return <div key={item.href}>{button}</div>
+
                     return (
-                      <TooltipProvider key={item.href} delayDuration={0}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className={`w-full justify-start ${showExpanded ? "" : "px-2"} ${
-                                active ? "border-l-4 border-primary bg-primary/10" : ""
-                              }`}
-                              aria-current={active ? "page" : undefined}
-                              asChild
-                            >
-                              <Link
-                                href={item.href}
-                                onClick={() => isMobileView && setShowMobileSidebar(false)}
-                              >
-                                <item.icon size={18} className={showExpanded ? "mr-2" : "mx-auto"} />
-                                {showExpanded && <span>{item.label}</span>}
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          {!showExpanded && <TooltipContent side="right">{item.label}</TooltipContent>}
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip key={item.href}>
+                        <TooltipTrigger asChild>{button}</TooltipTrigger>
+                        <TooltipContent side="right">{item.label}</TooltipContent>
+                      </Tooltip>
                     )
                   })}
                 </div>
@@ -271,36 +272,38 @@ export default function Sidebar({
         {/* User menu */}
         <div className="p-2 border-t flex-shrink-0">
           <DropdownMenu>
-            <TooltipProvider delayDuration={0}>
+            {showExpanded ? (
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={profile?.avatar || undefined} />
+                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 min-w-0 text-left">
+                    <span className="block font-medium text-sm truncate">{displayName}</span>
+                  </span>
+                  <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+            ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`
-                        flex items-center rounded-md text-sm transition-colors
-                        hover:bg-accent hover:text-accent-foreground
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-                        ${showExpanded ? "w-full gap-3 px-2 py-2" : "justify-center w-full py-2"}
-                      `}
+                      className="flex w-full items-center justify-center rounded-md py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Avatar className="h-8 w-8 shrink-0">
                         <AvatarImage src={profile?.avatar || undefined} />
                         <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
                       </Avatar>
-                      {showExpanded && (
-                        <>
-                          <span className="flex-1 min-w-0 text-left">
-                            <span className="block font-medium text-sm truncate">{displayName}</span>
-                          </span>
-                          <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
-                        </>
-                      )}
                     </button>
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
-                {!showExpanded && <TooltipContent side="right">{displayName}</TooltipContent>}
+                <TooltipContent side="right">{displayName}</TooltipContent>
               </Tooltip>
-            </TooltipProvider>
+            )}
 
             <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56">
               <DropdownMenuLabel asChild>
@@ -335,9 +338,10 @@ export default function Sidebar({
               <DropdownMenuItem
                 onSelect={(e) => { e.preventDefault(); cycleTheme() }}
                 className="flex items-center gap-2 cursor-pointer"
+                aria-label={`Tema actual: ${THEME_LABEL[theme]}. Click para cambiar.`}
               >
                 <ThemeIcon size={16} />
-                <span>Apariencia</span>
+                <span>Tema</span>
                 <span className="ml-auto text-xs text-muted-foreground">{THEME_LABEL[theme]}</span>
               </DropdownMenuItem>
 
@@ -354,6 +358,6 @@ export default function Sidebar({
           </DropdownMenu>
         </div>
       </aside>
-    </>
+    </TooltipProvider>
   )
 }
