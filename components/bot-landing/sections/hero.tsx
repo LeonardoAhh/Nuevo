@@ -68,10 +68,17 @@ export default function Hero() {
                 Abrir en WhatsApp
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="gap-2">
+            <Button asChild size="lg" variant="outline" className="group gap-2">
               <Link href="#como-funciona">
                 Cómo funciona
-                <ArrowRight className="size-4" aria-hidden />
+                <motion.span
+                  aria-hidden
+                  className="inline-flex"
+                  animate={{ y: [0, 3, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <ArrowRight className="size-4 rotate-90 transition-transform duration-300 group-hover:translate-y-0.5" />
+                </motion.span>
               </Link>
             </Button>
           </motion.div>
