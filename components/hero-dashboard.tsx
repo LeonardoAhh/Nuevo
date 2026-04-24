@@ -138,7 +138,7 @@ export default function HeroDashboard() {
 
       {/* ── Content ── */}
       <motion.div
-        className="relative z-10 flex flex-col justify-center h-full px-6 sm:px-10 md:px-12"
+        className="relative z-10 flex flex-col justify-center h-full px-4 sm:px-8 md:px-12"
         variants={skipMotion ? undefined : containerV}
         initial={skipMotion ? undefined : "hidden"}
         animate={skipMotion ? undefined : "show"}

@@ -20,7 +20,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
   } = useSidebar()
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-background">
+    <div className="flex flex-col md:flex-row h-[100dvh] bg-background">
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}

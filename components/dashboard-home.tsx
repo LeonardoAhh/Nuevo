@@ -30,7 +30,8 @@ export default function DashboardHome() {
           </TabsTrigger>
           <TabsTrigger value="capacitacion" className="gap-1.5 text-xs sm:text-sm">
             <GraduationCap size={14} className="hidden sm:inline" />
-            Capacitación
+            <span className="sm:hidden">Capacit.</span>
+            <span className="hidden sm:inline">Capacitación</span>
           </TabsTrigger>
         </TabsList>
 

@@ -16,6 +16,7 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
     <header
       role="banner"
       className="bg-card border-b px-3 sm:px-6 h-[50px] sticky top-0 z-20"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="flex items-center gap-2 h-full">
         {isMobileView && !showMobileSidebar && (
