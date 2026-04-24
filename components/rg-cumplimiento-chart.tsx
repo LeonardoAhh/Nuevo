@@ -191,7 +191,11 @@ export default function RgCumplimientoChart() {
             </div>
 
             {/* Gráfica de barras */}
-            <div className="w-full overflow-x-auto">
+            <div
+              className="w-full overflow-x-auto"
+              role="img"
+              aria-label={`Cumplimiento RG-REC-048 por departamento: ${pctGeneral}% general sobre ${chartData.length} departamentos`}
+            >
             <ResponsiveContainer width="100%" height={chartData.length * 48 + 40} minHeight={160}>
               <BarChart
                 data={chartData}

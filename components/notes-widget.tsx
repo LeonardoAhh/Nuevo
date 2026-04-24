@@ -55,6 +55,14 @@ const COLOR_DOT: Record<NoteColor, string> = {
 }
 
 const NOTE_COLORS: NoteColor[] = ["default", "red", "yellow", "green", "blue", "purple"]
+const COLOR_LABEL: Record<NoteColor, string> = {
+  default: "por defecto",
+  red: "rojo",
+  yellow: "amarillo",
+  green: "verde",
+  blue: "azul",
+  purple: "morado",
+}
 
 const TYPE_LABEL: Record<NoteType, string> = {
   text:       "Texto",
@@ -132,7 +140,8 @@ function ColorPicker({
         <button
           key={c}
           type="button"
-          aria-label={c}
+          aria-label={`Color ${COLOR_LABEL[c]}`}
+          aria-pressed={value === c}
           onClick={() => onChange(c)}
           className={[
             "size-5 rounded-full transition-all shrink-0",

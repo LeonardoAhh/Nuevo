@@ -21,6 +21,12 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:ring-2 focus:ring-ring"
+      >
+        Saltar al contenido
+      </a>
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
@@ -37,7 +43,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
           onOpenSidebar={openMobileSidebar}
         />
 
-        <main className="px-3 sm:px-6 py-6 bg-background">
+        <main id="main-content" className="px-3 sm:px-6 py-6 bg-background">
           {content}
         </main>
       </div>

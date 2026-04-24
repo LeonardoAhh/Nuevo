@@ -106,9 +106,28 @@ export function useDashboardAlertas() {
   const cargarDatos = useCallback(async () => {
     setLoading(true)
     try {
+      // Solo columnas necesarias para este dashboard (reduce payload ~40%)
+      const COLS = [
+        "id",
+        "nombre",
+        "departamento",
+        "turno",
+        "puesto",
+        "eval_1_fecha",
+        "eval_1_calificacion",
+        "eval_2_fecha",
+        "eval_2_calificacion",
+        "eval_3_fecha",
+        "eval_3_calificacion",
+        "rg_rec_048",
+        "fecha_vencimiento_rg",
+        "tipo_contrato",
+        "termino_contrato",
+      ].join(", ")
+
       const { data, error } = await supabase
         .from("nuevo_ingreso")
-        .select("*")
+        .select(COLS)
         .order("nombre")
 
       if (error) throw new Error(error.message)
