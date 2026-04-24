@@ -24,6 +24,7 @@ import {
   ChevronsUpDown,
   LayoutGrid,
   BookOpen,
+  Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -80,7 +81,10 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     sectionLabel: "Público",
-    items: [{ label: "Cursos", href: "/cursos", icon: BookOpen }],
+    items: [
+      { label: "Cursos", href: "/cursos", icon: BookOpen },
+      { label: "Bot WhatsApp", href: "/bot", icon: Bot },
+    ],
   },
 ]
 
