@@ -79,6 +79,14 @@ export function useExamenes() {
     setPreguntas((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
+  const contarTotal = useCallback(async () => {
+    const { count, error: err } = await supabase
+      .from("preguntas_examen")
+      .select("*", { count: "exact", head: true })
+    if (err) return 0
+    return count ?? 0
+  }, [])
+
   const normalizarDepartamentos = useCallback(async () => {
     // Trae todas las preguntas y actualiza las que tengan departamento en minúsculas
     const { data, error: err } = await supabase
@@ -98,5 +106,5 @@ export function useExamenes() {
     return aActualizar.length
   }, [])
 
-  return { preguntas, loading, error, buscar, crear, actualizar, eliminar, normalizarDepartamentos }
+  return { preguntas, loading, error, buscar, crear, actualizar, eliminar, contarTotal, normalizarDepartamentos }
 }

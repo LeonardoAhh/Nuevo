@@ -56,6 +56,8 @@ interface ExamenesContentProps {
   preguntas: PreguntaExamen[]
   loading: boolean
   error: string | null
+  /** Conteo total del banco (independiente del filtro), mostrado en el empty state. */
+  totalBanco?: number | null
   onBuscar: (term: string) => void
   onCrear: (pregunta: PreguntaInsert) => Promise<PreguntaExamen>
   onActualizar: (id: string, cambios: Partial<PreguntaInsert>) => Promise<PreguntaExamen>
@@ -78,6 +80,7 @@ export default function ExamenesContent({
   preguntas,
   loading,
   error,
+  totalBanco = null,
   onBuscar,
   onCrear,
   onActualizar,
@@ -174,7 +177,7 @@ export default function ExamenesContent({
   }
 
   return (
-    <div className="pt-2 pb-6 space-y-6">
+    <div className="px-4 sm:px-6 pb-6 space-y-6">
       <ReadOnlyBanner />
       {/* Barra de búsqueda + botón crear */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -217,7 +220,13 @@ export default function ExamenesContent({
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <ClipboardCheck size={48} className="mb-4 opacity-30" />
           <p className="text-lg font-medium">Banco de Preguntas</p>
-          <p className="text-sm mt-1">Usa la barra de búsqueda para encontrar preguntas o crea una nueva.</p>
+          <p className="text-sm mt-1 text-center max-w-sm">
+            {totalBanco === null
+              ? "Usa la barra de búsqueda para encontrar preguntas o crea una nueva."
+              : totalBanco === 0
+                ? "El banco está vacío. Crea la primera pregunta."
+                : `Tienes ${totalBanco.toLocaleString("es-MX")} ${totalBanco === 1 ? "pregunta" : "preguntas"} en el banco. Usa la barra de búsqueda o crea una nueva.`}
+          </p>
         </div>
       ) : loading ? (
         <div className="space-y-3">

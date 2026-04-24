@@ -37,6 +37,7 @@ export default function GeneradorExamenContent() {
   } = useGeneradorExamen()
 
   const [searchTerm, setSearchTerm] = useState("")
+  const [hasSearched, setHasSearched] = useState(false)
   const [empleadoSeleccionado, setEmpleadoSeleccionado] =
     useState<EmpleadoBusqueda | null>(null)
   const [transicionSeleccionada, setTransicionSeleccionada] = useState<
@@ -46,6 +47,8 @@ export default function GeneradorExamenContent() {
   const printRef = useRef<HTMLDivElement>(null)
 
   const handleSearch = useCallback(() => {
+    if (!searchTerm.trim()) return
+    setHasSearched(true)
     buscarEmpleado(searchTerm)
   }, [buscarEmpleado, searchTerm])
 
@@ -90,6 +93,7 @@ export default function GeneradorExamenContent() {
     setEmpleadoSeleccionado(null)
     setTransicionSeleccionada(null)
     setSearchTerm("")
+    setHasSearched(false)
   }
 
   const transiciones = empleadoSeleccionado
@@ -101,7 +105,7 @@ export default function GeneradorExamenContent() {
     return (
       <>
         {/* Controles (se ocultan al imprimir) */}
-        <div className="no-print px-6 pt-2 pb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="no-print px-4 sm:px-6 pb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div>
             <p className="font-semibold">{examen.empleado.nombre}</p>
             <p className="text-sm text-muted-foreground">
@@ -143,7 +147,7 @@ export default function GeneradorExamenContent() {
         </div>
 
         {/* Hoja de examen — visible en pantalla y se imprime */}
-        <div className="px-4 sm:px-6">
+        <div className="px-4 sm:px-6 pb-6">
           <div
             className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm print-area print:bg-white print:border-gray-200"
             ref={printRef}
@@ -157,7 +161,7 @@ export default function GeneradorExamenContent() {
 
   // ── Pantalla de búsqueda / configuración ────────────────────────────────
   return (
-    <div className="px-6 pt-2 pb-6 space-y-6">
+    <div className="px-4 sm:px-6 pb-6 space-y-6">
       {/* Paso 1: buscar empleado */}
       <div className="space-y-2">
         <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -177,9 +181,11 @@ export default function GeneradorExamenContent() {
               <button
                 onClick={() => {
                   setSearchTerm("")
+                  setHasSearched(false)
                   setEmpleadoSeleccionado(null)
                   buscarEmpleado("")
                 }}
+                aria-label="Limpiar búsqueda"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={15} />
@@ -336,14 +342,23 @@ export default function GeneradorExamenContent() {
         </>
       )}
 
-      {/* Estado vacío inicial */}
-      {resultados.length === 0 && !buscando && !empleadoSeleccionado && (
+      {/* Estado vacío: antes de buscar vs sin resultados */}
+      {resultados.length === 0 && !buscando && !empleadoSeleccionado && !hasSearched && (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <FileText size={48} className="mb-4 opacity-30" />
           <p className="text-lg font-medium">Generador de Exámenes</p>
           <p className="text-sm mt-1 text-center max-w-xs">
             Busca un empleado por nombre o número para generar su examen de
             promoción con preguntas aleatorias de su departamento.
+          </p>
+        </div>
+      )}
+      {resultados.length === 0 && !buscando && !empleadoSeleccionado && hasSearched && (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Search size={40} className="mb-3 opacity-30" />
+          <p className="text-base font-medium">Sin resultados</p>
+          <p className="text-sm mt-1 text-center max-w-xs">
+            No encontramos empleados para &quot;{searchTerm}&quot;. Revisa el nombre o número e intenta de nuevo.
           </p>
         </div>
       )}
