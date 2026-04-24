@@ -20,6 +20,15 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/client"
 import { getComplianceByNumero, formatComplianceMessage, hasAlreadyQueried, markAsQueried, checkRateLimit } from "@/lib/whatsapp/compliance"
 import { MSG } from "@/lib/whatsapp/messages"
 
+/**
+ * Redact a phone number for logging. Keeps the first 4 and last 2 digits so
+ * ops can still correlate repeat offenders without storing full PII in logs.
+ * Example: whatsapp:+5214424112233 → whatsapp:+5214****33
+ */
+function redactPhone(raw: string): string {
+  return raw.replace(/(\+?\d{4})(\d+)(\d{2})/, (_, head, mid, tail) => `${head}${"*".repeat(Math.max(mid.length, 0))}${tail}`)
+}
+
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
@@ -68,7 +77,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
 
   // Rate-limit por teléfono (anti-enumeración)
   if (!checkRateLimit(from)) {
-    console.warn(`[WhatsApp webhook] Rate limit excedido para '${from}'`)
+    console.warn(`[WhatsApp webhook] Rate limit excedido para '${redactPhone(from)}'`)
     await sendWhatsAppMessage(from, MSG.rateLimitExcedido)
     return
   }
@@ -82,7 +91,7 @@ async function handleMessage(from: string, text: string): Promise<void> {
 
   // Validar que sea número de empleado (solo dígitos, 1–10 chars)
   if (!/^\d{1,10}$/.test(normalized)) {
-    console.warn(`[WhatsApp webhook] Formato inválido de '${from}': "${text.slice(0, 50)}"`)
+    console.warn(`[WhatsApp webhook] Formato inválido de '${redactPhone(from)}' (len=${text.length})`)
     await sendWhatsAppMessage(from, MSG.formatoInvalido)
     return
   }
