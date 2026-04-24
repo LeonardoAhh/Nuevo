@@ -21,6 +21,26 @@ const DENSITY_SCALE_MAP: Record<Density, string> = {
   compact: "0.875",
 }
 
+// Must match --card in app/globals.css so the Android chrome bar / PWA status
+// bar blend with our sticky header.
+const THEME_COLOR_MAP: Record<"light" | "dark", string> = {
+  light: "#f2f2f5",
+  dark: "#1a1a1f",
+}
+
+function setMetaThemeColor(color: string) {
+  if (typeof document === "undefined") return
+  // Remove any OS-media variants Next injected server-side; keep a single
+  // unconditional tag that always reflects the active in-app theme.
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((el) => el.parentNode?.removeChild(el))
+  const meta = document.createElement("meta")
+  meta.name = "theme-color"
+  meta.content = color
+  document.head.appendChild(meta)
+}
+
 type ThemeContextType = {
   theme: Theme
   resolvedTheme: "light" | "dark"
@@ -195,6 +215,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       } else {
         document.documentElement.classList.remove("dark")
       }
+      setMetaThemeColor(THEME_COLOR_MAP[resolved])
     }
 
     apply(resolveTheme(theme))
