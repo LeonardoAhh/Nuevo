@@ -210,17 +210,17 @@ export default function SettingsContent() {
     <>
       <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex w-full">
-          <TabsTrigger value="profile" className="flex-1 text-xs sm:text-sm">
-            <User className="mr-1 sm:mr-2 h-4 w-4" />
-            <span>Perfil</span>
+          <TabsTrigger value="profile" className="flex-1 text-xs sm:text-sm" aria-label="Perfil">
+            <User className="h-4 w-4 xs:mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Perfil</span>
           </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex-1 text-xs sm:text-sm">
-            <Palette className="mr-1 sm:mr-2 h-4 w-4" />
-            <span>Apariencia</span>
+          <TabsTrigger value="appearance" className="flex-1 text-xs sm:text-sm" aria-label="Apariencia">
+            <Palette className="h-4 w-4 xs:mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Apariencia</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex-1 text-xs sm:text-sm">
-            <Bell className="mr-1 sm:mr-2 h-4 w-4" />
-            <span>Notificaciones</span>
+          <TabsTrigger value="notifications" className="flex-1 text-xs sm:text-sm" aria-label="Notificaciones">
+            <Bell className="h-4 w-4 xs:mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Notificaciones</span>
           </TabsTrigger>
         </TabsList>
 
@@ -414,42 +414,33 @@ export default function SettingsContent() {
               <div className="space-y-2">
                 <Label>Modo de color</Label>
                 <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
-                      theme === "light" ? "border-primary bg-primary/10" : "border-border"
-                    )}
-                    onClick={() => handleThemeChange("light")}
-                  >
-                    <div className="bg-background border shadow-sm p-2 rounded-full">
-                      <Sun className="h-6 w-6 text-foreground" />
-                    </div>
-                    <span className="font-medium text-sm">Claro</span>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
-                      theme === "dark" ? "border-primary bg-primary/10" : "border-border"
-                    )}
-                    onClick={() => handleThemeChange("dark")}
-                  >
-                    <div className="bg-foreground border shadow-sm p-2 rounded-full">
-                      <Moon className="h-6 w-6 text-background" />
-                    </div>
-                    <span className="font-medium text-sm">Oscuro</span>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-colors",
-                      theme === "system" ? "border-primary bg-primary/10" : "border-border"
-                    )}
-                    onClick={() => handleThemeChange("system")}
-                  >
-                    <div className="bg-muted border shadow-sm p-2 rounded-full">
-                      <Monitor className="h-6 w-6 text-foreground" />
-                    </div>
-                    <span className="font-medium text-sm">Sistema</span>
-                  </div>
+                  {(
+                    [
+                      { value: "light" as const, label: "Claro", Icon: Sun, iconWrap: "bg-background border", iconClass: "text-foreground" },
+                      { value: "dark" as const, label: "Oscuro", Icon: Moon, iconWrap: "bg-foreground border", iconClass: "text-background" },
+                      { value: "system" as const, label: "Sistema", Icon: Monitor, iconWrap: "bg-muted border", iconClass: "text-foreground" },
+                    ]
+                  ).map(({ value, label, Icon, iconWrap, iconClass }) => {
+                    const selected = theme === value
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => handleThemeChange(value)}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 border rounded-lg transition-colors text-center",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent/50"
+                        )}
+                      >
+                        <div className={cn("shadow-sm p-2 rounded-full", iconWrap)}>
+                          <Icon className={cn("h-6 w-6", iconClass)} />
+                        </div>
+                        <span className="font-medium text-sm">{label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -464,8 +455,12 @@ export default function SettingsContent() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
+                              type="button"
+                              aria-pressed={accentColor === name}
+                              aria-label={`Color de acento ${name}`}
                               className={cn(
                                 "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                                 accentColor === name
                                   ? "border-foreground scale-105"
                                   : "border-transparent hover:scale-105",
@@ -489,8 +484,12 @@ export default function SettingsContent() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
+                          type="button"
+                          aria-pressed={accentColor === "custom"}
+                          aria-label="Color de acento personalizado"
                           className={cn(
                             "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all relative overflow-hidden",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                             accentColor === "custom"
                               ? "border-foreground scale-105"
                               : "border-transparent hover:scale-105",
