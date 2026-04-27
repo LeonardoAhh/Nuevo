@@ -226,6 +226,7 @@ function isPublicPath(pathname: string) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/offline") ||
     pathname.startsWith("/bot") ||
+    pathname.startsWith("/eventos") ||
     pathname.startsWith("/recursos") ||
     pathname.startsWith("/cursos") ||
     pathname.startsWith("/preview")

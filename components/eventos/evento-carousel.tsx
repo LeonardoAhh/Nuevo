@@ -22,9 +22,13 @@ interface Props {
 export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const [paused, setPaused] = useState(false)
+  const pausedRef = useRef(false)
   const [singleWidth, setSingleWidth] = useState(0)
   const [reduced, setReduced] = useState(false)
+
+  const setPaused = (v: boolean) => {
+    pausedRef.current = v
+  }
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -56,10 +60,12 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
     let last = performance.now()
     let offset = 0
 
+    // Read paused from a ref so hover/unhover doesn't tear down the effect
+    // and reset the scroll offset to 0.
     const step = (now: number) => {
       const dt = (now - last) / 1000
       last = now
-      if (!paused) {
+      if (!pausedRef.current) {
         offset += speed * dt
         if (offset >= singleWidth) offset -= singleWidth
         track.style.transform = `translate3d(${-offset}px, 0, 0)`
@@ -68,7 +74,7 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
     }
     raf = requestAnimationFrame(step)
     return () => cancelAnimationFrame(raf)
-  }, [paused, singleWidth, speed, reduced])
+  }, [singleWidth, speed, reduced])
 
   if (eventos.length === 0) {
     return (
