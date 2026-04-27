@@ -26,6 +26,7 @@ import {
   LayoutGrid,
   BookOpen,
   Bot,
+  ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -82,6 +83,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Cursos", href: "/cursos", icon: BookOpen },
       { label: "Bot WhatsApp", href: "/bot", icon: Bot },
+      { label: "Eventos", href: "/eventos", icon: ImageIcon },
     ],
   },
 ]
