@@ -251,6 +251,17 @@ export function useEventosAdmin(onChange?: () => void) {
       if (files.length === 0) return
       setSaving(true)
       try {
+        // Continue the order_index sequence from whatever already exists so
+        // subsequent upload batches don't clash with earlier ones.
+        const { data: maxRow } = await supabase
+          .from("evento_fotos")
+          .select("order_index")
+          .eq("evento_id", eventoId)
+          .order("order_index", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const startIndex = (maxRow?.order_index ?? -1) + 1
+
         const timestamp = Date.now()
         const uploaded: EventoFoto[] = []
         for (let i = 0; i < files.length; i++) {
@@ -271,7 +282,7 @@ export function useEventosAdmin(onChange?: () => void) {
             .insert({
               evento_id: eventoId,
               storage_path: path,
-              order_index: i,
+              order_index: startIndex + i,
             })
             .select()
             .single()

@@ -63,11 +63,12 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
     // Read paused from a ref so hover/unhover doesn't tear down the effect
     // and reset the scroll offset to 0.
     const step = (now: number) => {
-      const dt = (now - last) / 1000
+      // Cap dt so a backgrounded tab (where rAF pauses) doesn't produce a
+      // huge jump on return. Then use modulo to normalize the offset.
+      const dt = Math.min((now - last) / 1000, 0.1)
       last = now
       if (!pausedRef.current) {
-        offset += speed * dt
-        if (offset >= singleWidth) offset -= singleWidth
+        offset = (offset + speed * dt) % singleWidth
         track.style.transform = `translate3d(${-offset}px, 0, 0)`
       }
       raf = requestAnimationFrame(step)
