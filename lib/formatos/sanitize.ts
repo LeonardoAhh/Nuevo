@@ -46,10 +46,17 @@ const ALLOWED_TAGS = new Set([
 // hide URL-fetching CSS) and rely on tags + class names alone.
 
 function sanitizeNode(node: Element) {
-  // Drop disallowed tags but keep their text children.
+  // Drop disallowed tags but keep their children. We MUST recurse the
+  // children before re-parenting them, otherwise their attributes
+  // (e.g. `onclick`, `onerror`) survive the unwrap and end up in the
+  // sanitized output. mammoth-imported docx can produce nested wrappers
+  // that exercise this path (e.g. <a> wrapping a <div>).
   if (!ALLOWED_TAGS.has(node.tagName)) {
     const parent = node.parentNode
     if (!parent) return
+    for (const child of Array.from(node.children)) {
+      sanitizeNode(child)
+    }
     while (node.firstChild) {
       parent.insertBefore(node.firstChild, node)
     }

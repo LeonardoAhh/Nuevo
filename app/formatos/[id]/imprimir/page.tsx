@@ -7,9 +7,10 @@ export const metadata: Metadata = {
 }
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default function ImprimirFormatoPage({ params }: Props) {
-  return <FormatoPrintClient id={params.id} />
+export default async function ImprimirFormatoPage({ params }: Props) {
+  const { id } = await params
+  return <FormatoPrintClient id={id} />
 }
