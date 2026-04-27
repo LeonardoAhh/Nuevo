@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
 
@@ -73,7 +73,10 @@ export function useEventosPublicos() {
       }
 
       const ids = evs.map((e) => e.id)
-      const [{ data: fotos }, { data: resenas }] = await Promise.all([
+      const [
+        { data: fotos, error: fotosErr },
+        { data: resenas, error: resenasErr },
+      ] = await Promise.all([
         supabase
           .from("evento_fotos")
           .select("*")
@@ -84,6 +87,8 @@ export function useEventosPublicos() {
           .select("evento_id, rating")
           .in("evento_id", ids),
       ])
+      if (fotosErr) throw fotosErr
+      if (resenasErr) throw resenasErr
 
       const fotosByEvento = new Map<string, EventoFoto[]>()
       for (const f of (fotos as EventoFoto[] | null) ?? []) {
@@ -130,9 +135,13 @@ export function useEventoResenas(eventoId: string | null) {
   const [resenas, setResenas] = useState<EventoResena[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Counter incremented on each load; stale responses (from a previous
+  // eventoId) are discarded by comparing against the latest value.
+  const requestIdRef = useRef(0)
 
   const cargar = useCallback(async () => {
     if (!eventoId) return
+    const reqId = ++requestIdRef.current
     setLoading(true)
     setError(null)
     try {
@@ -141,18 +150,29 @@ export function useEventoResenas(eventoId: string | null) {
         .select("*")
         .eq("evento_id", eventoId)
         .order("created_at", { ascending: false })
+      if (reqId !== requestIdRef.current) return // stale response
       if (err) throw err
       setResenas((data as EventoResena[]) ?? [])
     } catch (err: unknown) {
+      if (reqId !== requestIdRef.current) return
       setError(err instanceof Error ? err.message : "Error al cargar reseñas")
     } finally {
-      setLoading(false)
+      if (reqId === requestIdRef.current) setLoading(false)
     }
   }, [eventoId])
 
   useEffect(() => {
+    // Reset state immediately on eventoId change / close so we never show
+    // stale reviews from a previously viewed event.
+    requestIdRef.current += 1
+    setResenas([])
+    setError(null)
+    if (!eventoId) {
+      setLoading(false)
+      return
+    }
     cargar()
-  }, [cargar])
+  }, [eventoId, cargar])
 
   const publicar = useCallback(
     async (input: { nombre: string; rating: number; comentario?: string }) => {
