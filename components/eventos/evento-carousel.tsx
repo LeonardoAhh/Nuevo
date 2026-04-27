@@ -37,9 +37,12 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
   useEffect(() => {
     const el = contentRef.current
     if (!el) return
+    const GAP_PX = 16 // matches `gap-4` on the track container
     const ro = new ResizeObserver(() => {
-      // Half because we render the list twice
-      setSingleWidth(el.scrollWidth / 2)
+      // One full period = width of the first copy + the gap that separates it
+      // from the second copy. We render two sibling flex children inside the
+      // track so offsetWidth of the first one IS N*card + (N-1)*gap.
+      setSingleWidth(el.offsetWidth + GAP_PX)
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -78,9 +81,6 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
     )
   }
 
-  // Duplicate once so loop is seamless
-  const loop = [...eventos, ...eventos]
-
   return (
     <div
       className="relative overflow-hidden"
@@ -94,10 +94,21 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
       <div className="pointer-events-none absolute inset-y-0 right-0 w-16 z-10 bg-gradient-to-l from-background to-transparent" />
 
       <div ref={trackRef} className="flex gap-4 will-change-transform">
-        <div ref={contentRef} className="flex gap-4">
-          {loop.map((ev, i) => (
+        {/* Two sibling copies side-by-side. We only measure the first one so
+            the period = offsetWidth + gap regardless of item count. */}
+        <div ref={contentRef} className="flex gap-4" aria-hidden={false}>
+          {eventos.map((ev) => (
             <EventoCard
-              key={`${ev.id}-${i}`}
+              key={`a-${ev.id}`}
+              evento={ev}
+              onClick={() => onSelect(ev)}
+            />
+          ))}
+        </div>
+        <div className="flex gap-4" aria-hidden>
+          {eventos.map((ev) => (
+            <EventoCard
+              key={`b-${ev.id}`}
               evento={ev}
               onClick={() => onSelect(ev)}
             />

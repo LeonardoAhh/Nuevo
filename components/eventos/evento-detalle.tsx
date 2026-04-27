@@ -64,7 +64,10 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
       })
     : null
 
-  const foto = evento.fotos[index]
+  // Clamp to the currently-known fotos array so we never index past the end
+  // if the parent re-renders with stale data between deletion and refetch.
+  const safeIndex = total === 0 ? 0 : Math.min(Math.max(index, 0), total - 1)
+  const foto = evento.fotos[safeIndex] ?? null
   const fotoUrl = foto ? eventoPublicUrl(foto.storage_path) : null
 
   async function handleEliminarFoto() {
@@ -78,7 +81,9 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
     if (!ok) return
     try {
       await eliminarFoto(foto.id, foto.storage_path)
-      setIndex((i) => Math.max(0, Math.min(i, total - 2)))
+      // Step back one position; the render-time clamp keeps us in bounds
+      // even if parent refetch hasn't resolved yet.
+      setIndex((i) => Math.max(0, i - 1))
     } catch {
       /* toast emitido en el hook */
     }
@@ -149,7 +154,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
 
               {total > 0 && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/80 backdrop-blur border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                  {index + 1} / {total}
+                  {safeIndex + 1} / {total}
                 </div>
               )}
             </div>
@@ -164,7 +169,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
                     type="button"
                     onClick={() => setIndex(i)}
                     className={`relative shrink-0 h-14 w-14 rounded-md overflow-hidden border transition ${
-                      i === index ? "border-primary ring-2 ring-primary/30" : "border-border/60 opacity-70 hover:opacity-100"
+                      i === safeIndex ? "border-primary ring-2 ring-primary/30" : "border-border/60 opacity-70 hover:opacity-100"
                     }`}
                     aria-label={`Foto ${i + 1}`}
                   >
