@@ -17,7 +17,6 @@ import {
   Moon,
   Sun,
   Monitor,
-  FileText,
   Settings,
   TrendingUp,
   UserPlus,
@@ -75,7 +74,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
-      { label: "Formatos", href: "/formatos", icon: FileText },
     ],
   },
   {
