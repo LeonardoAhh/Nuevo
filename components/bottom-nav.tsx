@@ -8,6 +8,7 @@ import {
   BookOpen,
   Bot,
   ClipboardCheck,
+  ImageIcon,
   GraduationCap,
   LayoutDashboard,
   LayoutGrid,
@@ -65,6 +66,7 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { label: "Cursos", href: "/cursos", icon: BookOpen },
       { label: "Bot WhatsApp", href: "/bot", icon: Bot },
+      { label: "Eventos", href: "/eventos", icon: ImageIcon },
     ],
   },
   {
@@ -224,6 +226,7 @@ function isPublicPath(pathname: string) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/offline") ||
     pathname.startsWith("/bot") ||
+    pathname.startsWith("/eventos") ||
     pathname.startsWith("/recursos") ||
     pathname.startsWith("/cursos") ||
     pathname.startsWith("/preview")
