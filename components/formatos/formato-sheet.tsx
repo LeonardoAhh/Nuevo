@@ -101,10 +101,13 @@ export function FormatoSheet({
 // ─── Header ──────────────────────────────────────────────────────────────────
 
 function FormatoHeader({ nombre_examen }: { nombre_examen: string }) {
+  // Header proportions tuned to mirror the standard Word template — the
+  // logo cell stays narrow (~1.05in) so the title row doesn't end up
+  // visually oversized.
   const cellBase: React.CSSProperties = {
     border: "1px solid #000",
-    padding: "6px 8px",
-    fontSize: "10.5pt",
+    padding: "3px 6px",
+    fontSize: "9.5pt",
   }
   return (
     <header>
@@ -112,9 +115,10 @@ function FormatoHeader({ nombre_examen }: { nombre_examen: string }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.4in 1fr",
+          gridTemplateColumns: "1.05in 1fr",
           alignItems: "stretch",
           border: "1px solid #000",
+          minHeight: "0.5in",
         }}
       >
         <div
@@ -122,7 +126,7 @@ function FormatoHeader({ nombre_examen }: { nombre_examen: string }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "8px",
+            padding: "3px 4px",
             borderRight: "1px solid #000",
           }}
         >
@@ -133,7 +137,7 @@ function FormatoHeader({ nombre_examen }: { nombre_examen: string }) {
             height={70}
             priority
             unoptimized
-            style={{ height: "auto", width: "100%", maxWidth: "1.2in" }}
+            style={{ height: "auto", width: "100%", maxWidth: "0.95in" }}
           />
         </div>
         <div
@@ -141,10 +145,10 @@ function FormatoHeader({ nombre_examen }: { nombre_examen: string }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "8px 12px",
+            padding: "4px 10px",
             fontWeight: 700,
             textAlign: "center",
-            fontSize: "13pt",
+            fontSize: "11.5pt",
             textTransform: "uppercase",
             letterSpacing: "0.02em",
           }}
