@@ -168,7 +168,7 @@ export function EventosLanding() {
           <p>© {new Date().getFullYear()} Capacitación Planta Qro.</p>
           <div className="flex items-center gap-4">
             <Link href="/recursos" className="hover:text-foreground transition">
-              Recursos
+              Cursos
             </Link>
             <Link href="/bot" className="hover:text-foreground transition">
               Bot WhatsApp
