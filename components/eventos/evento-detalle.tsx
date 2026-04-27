@@ -93,17 +93,23 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
         raw
-        className="sm:max-w-4xl w-full p-0 overflow-hidden bg-card [&>button.absolute]:hidden"
+        className="sm:max-w-4xl w-full p-0 bg-card [&>button.absolute]:hidden overflow-hidden"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{evento.titulo}</DialogTitle>
           <DialogDescription>{evento.descripcion ?? evento.titulo}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] max-h-[88vh]">
+        {/*
+         * Mobile: a single scroll container that stacks viewer + reviews.
+         * Desktop (lg+): a two-column grid where each column manages its
+         * own scroll. The DialogContent already caps height at 92dvh on
+         * mobile and 85dvh on desktop.
+         */}
+        <div className="flex flex-col lg:grid lg:grid-cols-[1.6fr_1fr] lg:h-[min(88dvh,720px)] overflow-y-auto lg:overflow-hidden overscroll-contain">
           {/* Visor */}
-          <div className="relative flex flex-col bg-background">
-            <div className="relative flex-1 min-h-[240px] lg:min-h-[420px] bg-muted/40 flex items-center justify-center">
+          <div className="relative flex flex-col bg-background lg:min-h-0">
+            <div className="relative min-h-[240px] lg:flex-1 lg:min-h-[420px] bg-muted/40 flex items-center justify-center">
               {fotoUrl ? (
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.img
@@ -114,7 +120,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="max-h-[60vh] w-full object-contain"
+                    className="max-h-[55dvh] w-full object-contain"
                     loading="lazy"
                   />
                 </AnimatePresence>
@@ -194,8 +200,8 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
           </div>
 
           {/* Reseñas */}
-          <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-border/60 min-h-0">
-            <div className="p-4 border-b border-border/60">
+          <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-border/60 lg:min-h-0">
+            <div className="p-4 border-b border-border/60 lg:shrink-0">
               <p className="text-lg font-semibold truncate">{evento.titulo}</p>
               {fecha && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
@@ -215,7 +221,12 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div
+              className="flex-1 lg:overflow-y-auto p-4 space-y-4"
+              style={{
+                paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+              }}
+            >
               <ResenaForm onSubmit={publicar} />
 
               <div className="space-y-2">
