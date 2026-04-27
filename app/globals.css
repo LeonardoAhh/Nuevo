@@ -517,6 +517,77 @@ input[type="color"]::-webkit-color-swatch {
   column-gap: 20px;
 }
 
+/* ─── Formato sheet body (rendered HTML inside .formato-body) ──────────────── */
+[data-formato-sheet] .formato-body p { margin: 0 0 0.45em; }
+[data-formato-sheet] .formato-body h2 {
+  font-size: 12pt;
+  font-weight: 700;
+  margin: 0.6em 0 0.25em;
+}
+[data-formato-sheet] .formato-body h3 {
+  font-size: 11pt;
+  font-weight: 700;
+  margin: 0.5em 0 0.2em;
+}
+[data-formato-sheet] .formato-body ul,
+[data-formato-sheet] .formato-body ol {
+  margin: 0.25em 0 0.45em;
+  padding-left: 1.4em;
+}
+[data-formato-sheet] .formato-body ul { list-style: disc; }
+[data-formato-sheet] .formato-body ol { list-style: decimal; }
+[data-formato-sheet] .formato-body li { margin-bottom: 0.15em; }
+[data-formato-sheet] .formato-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.4em 0;
+}
+[data-formato-sheet] .formato-body th,
+[data-formato-sheet] .formato-body td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  font-size: 10.5pt;
+}
+[data-formato-sheet] .formato-body th { font-weight: 700; }
+
+/* ─── Print: Plantillas de formato (/formatos/[id]/imprimir) ───────────────── */
+@media print {
+  @page {
+    size: Letter portrait;
+    margin: 0;
+  }
+  /* Re-show the formato host. Required because the /examenes print
+     rules below set `body *` to visibility:hidden — without this, the
+     sheet itself would also be hidden when /formatos/.../imprimir prints. */
+  .formato-print-host,
+  .formato-print-host * {
+    visibility: visible !important;
+  }
+  .formato-print-host .formato-print-toolbar,
+  .formato-print-host .formato-print-toolbar * {
+    visibility: hidden !important;
+    display: none !important;
+  }
+  .formato-print-host {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: absolute !important;
+    inset: 0 !important;
+  }
+  /* The sheet itself drops its on-screen shadow and centers naturally. */
+  .formato-print-host [data-formato-sheet] {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+  }
+  /* Force B&W rendering even if the user has color-saving on. */
+  .formato-print-host,
+  .formato-print-host * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 /* ─── Print: Generador de Exámenes ─────────────────────── */
 @media print {
   /* Ocultar todo usando visibility para no romper el árbol del DOM */

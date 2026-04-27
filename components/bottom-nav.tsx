@@ -14,7 +14,7 @@ import {
   LayoutGrid,
   MessageSquare,
   MoreHorizontal,
-  Paintbrush,
+  FileText,
   TrendingUp,
   UserPlus,
   Settings,
@@ -58,7 +58,7 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
-      { label: "Flayers", href: "/flayers", icon: Paintbrush },
+      { label: "Formatos", href: "/formatos", icon: FileText },
     ],
   },
   {
