@@ -102,7 +102,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] max-h-[88vh] overflow-y-auto lg:overflow-hidden">
           {/* Visor */}
-          <div className="relative flex flex-col bg-background">
+          <div className="relative flex flex-col bg-background min-w-0">
             <div className="relative flex-1 min-h-[200px] max-h-[45vh] lg:max-h-none lg:min-h-[420px] bg-muted/40 flex items-center justify-center">
               {fotoUrl ? (
                 <AnimatePresence mode="wait" initial={false}>
