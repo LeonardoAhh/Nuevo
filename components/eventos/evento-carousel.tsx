@@ -127,8 +127,12 @@ export function EventoCarousel({ eventos, onSelect, speed = 28 }: Props) {
       <div
         ref={trackRef}
         className={cn(
-          "flex gap-4 will-change-transform px-5 sm:px-8",
-          !shouldMarquee && "justify-center",
+          "flex gap-4 will-change-transform",
+          // Side padding and centering only apply in static mode. In marquee
+          // mode any left/right padding on the track would offset the first
+          // copy from x=0 but wouldn't be part of the wrap period, producing
+          // a visible stutter every loop.
+          !shouldMarquee && "justify-center px-5 sm:px-8",
         )}
       >
         <div ref={contentRef} className="flex gap-4 shrink-0">
