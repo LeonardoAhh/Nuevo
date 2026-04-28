@@ -183,13 +183,14 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
               {canEdit && foto && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={handleEliminarFoto}
                   disabled={saving}
-                  className="ml-auto shrink-0 gap-1.5 text-destructive hover:text-destructive"
+                  className="ml-auto shrink-0 text-destructive hover:text-destructive"
+                  aria-label="Quitar foto"
+                  title="Quitar foto"
                 >
                   <Trash2 size={14} />
-                  <span className="hidden sm:inline">Quitar foto</span>
                 </Button>
               )}
             </div>

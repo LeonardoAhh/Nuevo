@@ -114,12 +114,12 @@ export default function GeneradorExamenContent() {
             </p>
           </div>
           <div className="flex gap-2 sm:ml-auto">
-            <Button variant="outline" size="sm" onClick={handleNuevoExamen}>
-              <RefreshCw size={14} className="mr-1.5" />
-              Nuevo examen
+            <Button variant="outline" size="icon" onClick={handleNuevoExamen} aria-label="Nuevo examen" title="Nuevo examen">
+              <RefreshCw size={14} />
             </Button>
             <Button
-              size="sm"
+              size="icon"
+              variant="outline"
               onClick={() =>
                 generarExamen(
                   examen.empleado,
@@ -130,18 +130,17 @@ export default function GeneradorExamenContent() {
                 )
               }
               disabled={generando}
-              variant="outline"
+              aria-label="Regenerar"
+              title="Regenerar"
             >
               {generando ? (
-                <Loader2 size={14} className="mr-1.5 animate-spin" />
+                <Loader2 size={14} className="animate-spin" />
               ) : (
-                <RefreshCw size={14} className="mr-1.5" />
+                <RefreshCw size={14} />
               )}
-              Regenerar
             </Button>
-            <Button size="sm" onClick={handleImprimir}>
-              <Printer size={14} className="mr-1.5" />
-              Imprimir
+            <Button size="icon" onClick={handleImprimir} aria-label="Imprimir" title="Imprimir">
+              <Printer size={14} />
             </Button>
           </div>
         </div>
@@ -329,17 +328,17 @@ export default function GeneradorExamenContent() {
           {/* Paso 3: generar */}
           {transicionSeleccionada && (
             <Button
-              size="lg"
-              className="w-full sm:w-auto"
+              size="icon"
               onClick={handleGenerar}
               disabled={generando}
+              aria-label="Generar Examen"
+              title="Generar Examen"
             >
               {generando ? (
-                <Loader2 size={16} className="mr-2 animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
               ) : (
-                <FileText size={16} className="mr-2" />
+                <FileText size={16} />
               )}
-              Generar Examen
             </Button>
           )}
         </>

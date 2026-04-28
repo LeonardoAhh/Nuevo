@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import Link from "next/link"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { ArrowRight, MessageCircle } from "lucide-react"
+import { ArrowRight, ChevronDown, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BOT_WHATSAPP_URL, Eyebrow, fadeUp } from "../_shared"
 import ChatPreview from "../chat-preview"
@@ -62,22 +62,20 @@ export default function Hero() {
             variants={fadeUp}
             className="flex flex-wrap items-center gap-3 pt-2"
           >
-            <Button asChild size="lg" className="gap-2">
+            <Button asChild size="icon" aria-label="Abrir en WhatsApp" title="Abrir en WhatsApp">
               <Link href={BOT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="size-4" aria-hidden />
-                Abrir en WhatsApp
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="group gap-2">
+            <Button asChild size="icon" variant="outline" aria-label="Cómo funciona" title="Cómo funciona">
               <Link href="#como-funciona">
-                Cómo funciona
                 <motion.span
                   aria-hidden
                   className="inline-flex"
                   animate={{ y: [0, 3, 0] }}
                   transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <ArrowRight className="size-4 rotate-90 transition-transform duration-300 group-hover:translate-y-0.5" />
+                  <ChevronDown className="size-4" />
                 </motion.span>
               </Link>
             </Button>

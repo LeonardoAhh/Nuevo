@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { Upload, FileJson, Search, CheckCircle2, AlertCircle, AlertTriangle, Layers, Loader2 } from "lucide-react"
+import { Upload, FileJson, Search, CheckCircle2, AlertCircle, AlertTriangle, Layers, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -115,8 +115,8 @@ export function CapBulkImportDialog({
             />
 
             <div className="flex justify-end">
-              <Button onClick={onParse} disabled={!text.trim()} className="gap-2">
-                <Search className="h-4 w-4" /> Previsualizar
+              <Button size="icon" onClick={onParse} disabled={!text.trim()} aria-label="Previsualizar" title="Previsualizar">
+                <Search className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -225,18 +225,20 @@ export function CapBulkImportDialog({
 
         {(rows.length > 0 || success !== null) && (
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {success !== null ? 'Cerrar' : 'Cancelar'}
+            <Button variant="outline" size="icon" onClick={() => onOpenChange(false)} aria-label={success !== null ? 'Cerrar' : 'Cancelar'} title={success !== null ? 'Cerrar' : 'Cancelar'}>
+              <X className="h-4 w-4" />
             </Button>
             {rows.length > 0 && (
               <Button
+                size="icon"
                 onClick={onImport}
                 disabled={isReadOnly || saving || validCount === 0}
-                className="gap-2"
+                aria-label={`Importar ${validCount} registros`}
+                title={`Importar ${validCount} registros`}
               >
                 {saving
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
-                  : <><Upload className="h-4 w-4" /> Importar {validCount} registros</>
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Upload className="h-4 w-4" />
                 }
               </Button>
             )}

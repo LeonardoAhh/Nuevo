@@ -196,25 +196,27 @@ export default function NotificationBell() {
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
+                  size="icon"
+                  className="h-7 w-7"
                   onClick={() => markAllAsRead()}
+                  aria-label="Marcar leídas"
+                  title="Marcar leídas"
                 >
                   <CheckCheck size={14} />
-                  <span className="hidden sm:inline">Marcar leídas</span>
                 </Button>
               )}
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs gap-1 text-primary"
+                size="icon"
+                className="h-7 w-7 text-primary"
                 onClick={() => {
                   setPopoverOpen(false)
                   setDialogOpen(true)
                 }}
+                aria-label="Crear notificación"
+                title="Crear"
               >
                 <Plus size={14} />
-                Crear
               </Button>
             </div>
           </div>

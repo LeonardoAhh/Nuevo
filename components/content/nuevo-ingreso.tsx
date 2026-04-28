@@ -202,9 +202,8 @@ export default function NuevoIngresoContent() {
               <CardDescription>Seguimiento de evaluaciones y documentación de empleados nuevos.</CardDescription>
             </div>
             {!isReadOnly && (
-              <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setNuevoOpen(true)}>
+              <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
                 <UserPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuevo Empleado</span>
               </Button>
             )}
           </div>

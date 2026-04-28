@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, ArrowRight, Send } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -169,10 +169,10 @@ export function ResenaForm({ onSubmit }: Props) {
                 type="button"
                 onClick={goToStep2}
                 disabled={!step1Valid}
-                className="gap-1.5"
-                size="sm"
+                size="icon"
+                aria-label="Siguiente"
+                title="Siguiente"
               >
-                Siguiente
                 <ArrowRight size={14} />
               </Button>
             </div>
@@ -219,12 +219,12 @@ export function ResenaForm({ onSubmit }: Props) {
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={goToStep1}
-                className="gap-1.5 text-muted-foreground"
+                aria-label="Atrás"
+                title="Atrás"
               >
                 <ArrowLeft size={14} />
-                Atrás
               </Button>
 
               <div className="flex items-center gap-2">
@@ -234,9 +234,8 @@ export function ResenaForm({ onSubmit }: Props) {
                   </span>
                 )}
                 <motion.div whileTap={{ scale: 0.97 }}>
-                  <Button type="submit" disabled={submitDisabled} className="gap-1.5" size="sm">
-                    <Send size={14} />
-                    {submitting ? "Publicando..." : "Publicar"}
+                  <Button type="submit" disabled={submitDisabled} size="icon" aria-label="Publicar" title="Publicar">
+                    {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                   </Button>
                 </motion.div>
               </div>

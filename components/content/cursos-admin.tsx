@@ -499,17 +499,16 @@ export default function CursosAdminContent() {
           <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
+              size="icon"
               onClick={() => setQrPublicOpen(true)}
-              className="gap-2"
               title="Mostrar QR público"
+              aria-label="Mostrar QR público"
             >
               <QrCode size={16} />
-              <span className="hidden sm:inline">Mostrar QR</span>
             </Button>
             {canEdit && (
-              <Button onClick={openCreate} className="gap-2">
+              <Button size="icon" onClick={openCreate} aria-label="Nuevo curso" title="Nuevo curso">
                 <Plus size={16} />
-                <span className="hidden sm:inline">Nuevo curso</span>
               </Button>
             )}
           </div>
@@ -540,9 +539,8 @@ export default function CursosAdminContent() {
               {canEdit ? "Sin cursos. Crea el primero." : "Sin cursos disponibles."}
             </p>
             {canEdit && (
-              <Button variant="outline" onClick={openCreate} className="gap-2">
+              <Button variant="outline" size="icon" onClick={openCreate} aria-label="Nuevo curso" title="Nuevo curso">
                 <Plus size={15} />
-                Nuevo curso
               </Button>
             )}
           </div>
@@ -703,14 +701,12 @@ function PublicQrDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
           {/* Acciones */}
           <div className="w-full flex gap-2 pt-1">
-            <Button variant="outline" className="flex-1 gap-2" onClick={handleDownload}>
+            <Button variant="outline" size="icon" onClick={handleDownload} aria-label="Descargar PNG" title="Descargar PNG">
               <Download size={14} />
-              Descargar PNG
             </Button>
-            <Button asChild className="flex-1 gap-2">
+            <Button size="icon" asChild aria-label="Abrir enlace" title="Abrir">
               <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={14} />
-                Abrir
               </a>
             </Button>
           </div>

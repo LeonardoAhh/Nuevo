@@ -35,9 +35,8 @@ export default function RecursosBanner() {
                 </p>
               </div>
 
-              <Button asChild size="lg" className="gap-2 self-start md:self-auto">
+              <Button asChild size="icon" aria-label="Ir a /recursos" title="Ir a /recursos">
                 <Link href={RECURSOS_URL} target="_blank" rel="noopener noreferrer">
-                  Ir a /recursos
                   <ArrowUpRight className="size-4" aria-hidden />
                 </Link>
               </Button>

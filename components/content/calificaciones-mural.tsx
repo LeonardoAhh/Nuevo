@@ -203,20 +203,17 @@ function EmpleadoCard({ emp }: { emp: EmpleadoCalificaciones }) {
           {restCourses.length > 0 && (
             <Button
               variant="ghost"
-              size="sm"
-              className="w-full mt-2 h-9 text-xs text-muted-foreground gap-1.5 focus-visible:ring-2 focus-visible:ring-ring"
+              size="icon"
+              className="w-9 h-9 mt-2 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
               aria-label={expanded ? `Ocultar ${restCourses.length} cursos adicionales de ${emp.nombre}` : `Mostrar ${restCourses.length} cursos adicionales de ${emp.nombre}`}
+              title={expanded ? "Mostrar menos" : `+${restCourses.length} más`}
             >
               {expanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4" /> Mostrar menos
-                </>
+                <ChevronUp className="h-4 w-4" />
               ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" /> +{restCourses.length} más
-                </>
+                <ChevronDown className="h-4 w-4" />
               )}
             </Button>
           )}

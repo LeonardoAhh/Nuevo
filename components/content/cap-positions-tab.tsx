@@ -56,9 +56,8 @@ export function CapPositionsTab({
             </CardDescription>
           </div>
           {!isReadOnly && (
-            <Button size="sm" className="gap-1.5 shrink-0" onClick={onNewPosition}>
+            <Button size="icon" onClick={onNewPosition} aria-label="Nuevo puesto" title="Nuevo puesto">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nuevo puesto</span>
             </Button>
           )}
         </div>

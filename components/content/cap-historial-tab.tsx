@@ -77,13 +77,11 @@ export function CapHistorialTab({
               <CardDescription>Registro de cursos tomados por empleado.</CardDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={onBulkImport}>
+              <Button size="icon" variant="outline" onClick={onBulkImport} aria-label="Carga masiva" title="Carga masiva">
                 <Layers className="h-4 w-4" />
-                <span className="hidden sm:inline">Carga masiva</span>
               </Button>
-              <Button size="sm" className="gap-1.5" onClick={onNewEmployee}>
+              <Button size="icon" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
                 <UserPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuevo empleado</span>
               </Button>
             </div>
           </div>
@@ -219,14 +217,13 @@ export function CapHistorialTab({
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
                             <Button
-                              variant="outline" size="sm"
-                              className="h-9 w-9 p-0 sm:w-auto sm:px-3 sm:gap-1 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                              variant="outline" size="icon"
+                              className="h-9 w-9 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                               onClick={() => onAddCourses(emp)}
                               title="Agregar cursos"
                               aria-label={`Agregar cursos a ${emp.nombre}`}
                             >
-                              <BookOpen className="h-4 w-4 shrink-0" />
-                              <span className="hidden sm:inline text-xs">+Curso</span>
+                              <BookOpen className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost" size="sm"

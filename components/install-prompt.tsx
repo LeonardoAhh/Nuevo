@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Download, Share, Smartphone, X, Plus } from "lucide-react"
+import { Download, EyeOff, Share, Smartphone, X, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 type BeforeInstallPromptEvent = Event & {
@@ -143,12 +143,12 @@ export function InstallPrompt() {
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Button
-                  size="sm"
+                  size="icon"
                   onClick={() => (isIos ? setIosSheetOpen(true) : install())}
-                  className="gap-1.5"
+                  aria-label="Instalar"
+                  title="Instalar"
                 >
                   <Download className="size-3.5" aria-hidden />
-                  <span>Instalar</span>
                 </Button>
                 <Button
                   size="icon"
@@ -215,8 +215,8 @@ export function InstallPrompt() {
                     </li>
                   </ol>
                   <div className="mt-6 flex justify-end">
-                    <Button variant="outline" size="sm" onClick={dismiss}>
-                      No volver a mostrar
+                    <Button variant="outline" size="icon" onClick={dismiss} aria-label="No volver a mostrar" title="No volver a mostrar">
+                      <EyeOff className="size-3.5" aria-hidden />
                     </Button>
                   </div>
                 </motion.div>

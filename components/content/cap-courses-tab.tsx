@@ -58,18 +58,17 @@ export function CapCoursesTab({
           </div>
           <div className="flex gap-2 items-center">
             <Button
-              size="sm" variant="outline"
-              className="gap-1.5 focus-visible:ring-2 focus-visible:ring-ring"
+              size="icon" variant="outline"
+              className="focus-visible:ring-2 focus-visible:ring-ring"
               onClick={handleExcel}
               aria-label="Descargar reporte Excel"
+              title="Descargar Excel"
             >
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Descargar Excel</span>
             </Button>
             {!isReadOnly && (
-              <Button size="sm" className="gap-1.5 shrink-0" onClick={onNewCourse}>
+              <Button size="icon" onClick={onNewCourse} aria-label="Nuevo curso" title="Nuevo curso">
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nuevo curso</span>
               </Button>
             )}
           </div>

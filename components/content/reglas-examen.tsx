@@ -155,15 +155,17 @@ export default function ReglasExamenContent() {
                       <span className="font-bold text-sm flex-1">{TRANSICION_LABEL[t]}</span>
                       {dirty ? (
                         <Button
-                          size="sm"
-                          className="h-9 text-xs px-3"
+                          size="icon"
+                          className="h-9 w-9"
                           onClick={() => handleSave(dep, t)}
                           disabled={isReadOnly || isSaving}
+                          aria-label="Guardar"
+                          title="Guardar"
                         >
                           {isSaving ? (
                             <Loader2 size={12} className="animate-spin" />
                           ) : (
-                            <><Save size={12} className="mr-1" />Guardar</>
+                            <Save size={12} />
                           )}
                         </Button>
                       ) : (

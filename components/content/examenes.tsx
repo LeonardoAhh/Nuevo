@@ -201,21 +201,20 @@ export default function ExamenesContent({
         </div>
         <Button
           variant="outline"
+          size="icon"
           onClick={handleSearch}
           disabled={loading}
           aria-label="Buscar"
-          className="sm:min-w-[120px]"
+          title="Buscar"
         >
           {loading ? (
-            <Loader2 size={16} className="sm:mr-2 animate-spin" />
+            <Loader2 size={16} className="animate-spin" />
           ) : (
-            <Search size={16} className="sm:mr-2" />
+            <Search size={16} />
           )}
-          <span className="hidden sm:inline">Buscar</span>
         </Button>
-        <Button onClick={openCreate} disabled={isReadOnly} aria-label="Nueva pregunta">
-          <Plus size={16} className="sm:mr-2" />
-          <span className="hidden sm:inline">Nueva Pregunta</span>
+        <Button size="icon" onClick={openCreate} disabled={isReadOnly} aria-label="Nueva pregunta" title="Nueva pregunta">
+          <Plus size={16} />
         </Button>
       </div>
 

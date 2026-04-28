@@ -126,12 +126,13 @@ export default function ReglasPromocionContent({ onChange }: Props) {
             )}
           </div>
           <Button
+            size="icon"
             onClick={openCreate}
             disabled={isReadOnly}
-            className="h-9 gap-1.5 sm:ml-auto"
+            aria-label="Nueva regla"
+            title="Nueva regla"
           >
             <Plus size={14} />
-            Nueva regla
           </Button>
         </div>
 
@@ -276,12 +277,14 @@ export default function ReglasPromocionContent({ onChange }: Props) {
                   <div className="flex items-center gap-2 pt-1">
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="h-9 gap-1.5 flex-1"
+                      size="icon"
+                      className="h-9 w-9"
                       onClick={() => openEdit(r)}
                       disabled={isReadOnly}
+                      aria-label="Editar"
+                      title="Editar"
                     >
-                      <Pencil size={14} /> Editar
+                      <Pencil size={14} />
                     </Button>
                     <Button
                       variant="outline"

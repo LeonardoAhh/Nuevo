@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { Check, RefreshCw } from "lucide-react"
+import { Check, Palette, RefreshCw } from "lucide-react"
 import { useTheme, DEFAULT_CUSTOM_COLOR } from "@/components/theme-context"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -88,14 +88,17 @@ export function ColorPicker({ onColorChange }: ColorPickerProps) {
           </Button>
 
           <Button
+            size="icon"
             onClick={handleApplyColor}
             disabled={!isValidHex}
             className={cn(
-              "relative flex-1 sm:flex-initial",
+              "shrink-0",
               accentColor === "custom" && tempColor === customColor && "bg-primary text-primary-foreground",
             )}
+            aria-label="Aplicar color"
+            title="Aplicar color"
           >
-            {showCheck ? <Check className="h-4 w-4 animate-in fade-in zoom-in" /> : "Aplicar color"}
+            {showCheck ? <Check className="h-4 w-4 animate-in fade-in zoom-in" /> : <Palette className="h-4 w-4" />}
           </Button>
         </div>
       </div>
