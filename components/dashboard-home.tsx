@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import DashboardAlertas from "@/components/dashboard-alertas"
 import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
 import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
@@ -14,6 +15,23 @@ import {
   DashboardAlertasProvider,
   useDashboardAlertasShared,
 } from "@/components/dashboard-alertas-context"
+import { useTheme } from "@/components/theme-context"
+
+// ─── Motion variants ─────────────────────────────────────────────────────────
+
+const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 24 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.42, delay: i * 0.12, ease: EASE_PREMIUM },
+  }),
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
+}
+
+// ─── Tab Alertas trigger ──────────────────────────────────────────────────────
 
 function AlertasTabTrigger() {
   const { totalAlertas, loading } = useDashboardAlertasShared()
@@ -34,14 +52,55 @@ function AlertasTabTrigger() {
   )
 }
 
+// ─── Capacitación cards staggered ────────────────────────────────────────────
+
+const capacitacionCards = [
+  DashboardCumplimiento,
+  RgCumplimientoChart,
+  CapacitacionChart,
+  DashboardYearlyCompliance,
+]
+
+function CapacitacionTab({ skip }: { skip: boolean }) {
+  return (
+    <motion.div
+      className="space-y-6"
+      initial="hidden"
+      animate="show"
+      exit="exit"
+    >
+      {capacitacionCards.map((Card, i) => (
+        <motion.div
+          key={i}
+          custom={i}
+          variants={skip ? undefined : cardVariants}
+          initial={skip ? false : "hidden"}
+          animate={skip ? false : "show"}
+        >
+          <Card />
+        </motion.div>
+      ))}
+    </motion.div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function DashboardHome() {
   const [tab, setTab] = useState("alertas")
   // Keep-alive: mount each tab's heavy content only after first visit,
   // then keep it mounted (preserves scroll/state without refetching).
   const [visited, setVisited] = useState<Set<string>>(new Set(["alertas"]))
+  // Track previous tab for AnimatePresence key
+  const prevTab = useRef(tab)
+
+  const prefersReduced = useReducedMotion()
+  const { reducedMotion } = useTheme()
+  const skipMotion = prefersReduced || reducedMotion
 
   useEffect(() => {
     setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)))
+    prevTab.current = tab
   }, [tab])
 
   return (
@@ -63,22 +122,17 @@ export default function DashboardHome() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="alertas" className="space-y-6 mt-4">
+          <TabsContent value="alertas" className="mt-4">
             {visited.has("alertas") && <DashboardAlertas />}
           </TabsContent>
 
-          <TabsContent value="notas" className="space-y-6 mt-4">
+          <TabsContent value="notas" className="mt-4">
             {visited.has("notas") && <NotesWidget />}
           </TabsContent>
 
-          <TabsContent value="capacitacion" className="space-y-6 mt-4">
+          <TabsContent value="capacitacion" className="mt-4">
             {visited.has("capacitacion") && (
-              <>
-                <DashboardCumplimiento />
-                <RgCumplimientoChart />
-                <CapacitacionChart />
-                <DashboardYearlyCompliance />
-              </>
+              <CapacitacionTab skip={!!skipMotion} />
             )}
           </TabsContent>
         </Tabs>
