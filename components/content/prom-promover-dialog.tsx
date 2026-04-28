@@ -119,10 +119,11 @@ export function PromPromoverDialog({
         confirmIcon={<TrendingUp size={16} />}
         confirmDisabled={isReadOnly || !puedePromover}
         secondaryAction={
-          !puedePromover && calExamen !== ""
+          calExamen !== ""
             ? {
-                icon: <Save size={14} />,
-                label: "Guardar examen",
+                icon: <Save size={16} />,
+                label: "Guardar",
+                iconOnly: true,
                 onClick: handleSoloExamen,
                 disabled: isReadOnly,
               }

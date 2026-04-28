@@ -13,10 +13,9 @@ export function isHabilitado(puesto: string): boolean {
 export function mesesEnPuesto(fechaIngreso: string): number {
   const inicio = new Date(fechaIngreso)
   const hoy = new Date()
-  return (
-    (hoy.getFullYear() - inicio.getFullYear()) * 12 +
+  const meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 +
     (hoy.getMonth() - inicio.getMonth())
-  )
+  return Math.max(0, meses)
 }
 
 export function formatMeses(meses: number): string {

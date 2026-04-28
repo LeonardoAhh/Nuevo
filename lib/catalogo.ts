@@ -59,6 +59,7 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
     ],
     puestos: ["GERENTE DE CALIDAD",
       "JEFE DE CALIDAD",
+      "AUXILIAR DE CALIDAD",
       "INGENIERO DE CALIDAD A",
       "INGENIERO DE CALIDAD B",
       "INGENIERO DE CALIDAD C",
@@ -122,7 +123,7 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
   "TALLER DE MOLDES": {
     areas: ["MOLDES"],
     puestos: ["AUXILIAR ADMINISTRATIVO DE TALLER DE MOLDES",
-      "TÉC. ESPECIALISTA DE MOLDES (JEFE)",
+      "JEFE DE TALLER DE MOLDES",
       "TÉCNICO DE MOLDES A",
       "TÉCNICO DE MOLDES B",
       "TÉCNICO DE MOLDES C",
@@ -131,7 +132,7 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
   },//ACTUALIZADO
   "SGI": {
     areas: ["SGI"],
-    puestos: ["COORDINADOR DE SGI",
+    puestos: ["COORDINADOR DEL SGI",
       "AUXILIAR DEL SGI A",
       "AUXILIAR DEL SGI B",
       "AUXILIAR DEL SGI C"]
@@ -162,10 +163,10 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
     puestos: ["COORDINADOR DE RPS",
       "AUXILIAR PROGRAMADOR"]
   },//ACTUALIZADO
-  "LOGÍSTICA": {
-    areas: ["LOGÍSTICA"],
-    puestos: ["JEFE DE LOGÍSTICA",
-      "SUPERVISOR DE LOGÍSTICA"]
+  "LOGISTICA": {
+    areas: ["LOGISTICA"],
+    puestos: ["JEFE DE LOGISTICA",
+      "SUPERVISOR DE LOGISTICA"]
   },//ACTUALIZADO
   "GERENCIA DE PLANTA": {
     areas: ["GERENCIA DE PLANTA"],
@@ -214,31 +215,31 @@ export const JEFES_DE_AREA_POR_DEPARTAMENTO: { [departamento: string]: string[] 
   "PRODUCCIÓN": [
     "GOMEZ SANCHEZ CARLOS ARIEL ",
   ],
-  "CALIDAD":[
+  "CALIDAD": [
     "CENOBIO HERNANDEZ JORGE ALBERTO",
   ],
-  "MANTENIMIENTO":[
-  "BRAVO GARCIA JESUS FERNANDO",
+  "MANTENIMIENTO": [
+    "BRAVO GARCIA JESUS FERNANDO",
   ],
-  "ALMACÉN":[
+  "ALMACÉN": [
     "GARCIA JUAREZ XICOTENCATL",
   ],
-  "RECURSOS HUMANOS":[
+  "RECURSOS HUMANOS": [
     "HERNANDEZ GUDIÑO NOEMI",
-  ], 
-  "TALLER DE MOLDES":[
+  ],
+  "TALLER DE MOLDES": [
     "GOMEZ SANCHEZ CESAR",
-  ], 
-  "SGI":[
+  ],
+  "SGI": [
     "AGUILLON RANGEL LIZBETH",
-  ], 
-  "METROLOGÍA":[
+  ],
+  "METROLOGÍA": [
     "ESQUIVEL MATA ARIADNA NAYELY",
-  ], 
-  "PROYECTOS":[
+  ],
+  "PROYECTOS": [
     "SALINAS ORTIZ ANA ERIKA",
-  ], 
-  "SISTEMAS":[
+  ],
+  "SISTEMAS": [
     "CABRERO BOO MANUEL ALBERTO",
   ],
 }

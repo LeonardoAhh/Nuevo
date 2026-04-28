@@ -316,10 +316,10 @@ export function usePromociones() {
         { onConflict: "numero" }
       )
     if (dpErr) {
-      notify.error("Error al guardar examen")
+      notify.error("Error al actualizar empleado")
       throw new Error(dpErr.message)
     }
-    notify.success("Examen guardado")
+    notify.success("Empleado Actualizado")
     await cargarDatos()
   }, [cargarDatos])
 

@@ -33,6 +33,7 @@ export interface ModalToolbarSecondaryAction {
   onClick: () => void
   disabled?: boolean
   variant?: 'secondary' | 'outline'
+  iconOnly?: boolean
 }
 
 export interface ModalToolbarProps {
@@ -83,15 +84,22 @@ export function ModalToolbar({
         {secondaryAction && (
           <motion.button
             type="button"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.95 }}
+            title={secondaryAction.iconOnly ? secondaryAction.label : undefined}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: secondaryAction.iconOnly ? 0.88 : 0.95 }}
             onClick={secondaryAction.onClick}
             disabled={saving || secondaryAction.disabled}
-            className={cn("h-10 sm:h-9 rounded-full px-3 flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity", secondaryClasses)}
+            className={cn(
+              "rounded-full flex items-center transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shrink-0",
+              secondaryAction.iconOnly 
+                ? "h-10 w-10 sm:h-9 sm:w-9 justify-center" 
+                : "h-10 sm:h-9 px-3 gap-1.5 text-xs font-medium",
+              secondaryClasses
+            )}
             aria-label={secondaryAction.label}
           >
             {secondaryAction.icon}
-            <span className="hidden sm:inline">{secondaryAction.label}</span>
+            {!secondaryAction.iconOnly && <span className="hidden sm:inline">{secondaryAction.label}</span>}
           </motion.button>
         )}
 
