@@ -10,7 +10,6 @@ import {
   Sun,
   User,
   Check,
-  Paintbrush,
   AlertCircle,
   Upload,
   RotateCcw,
@@ -32,7 +31,6 @@ import { Badge } from "@/components/ui/badge"
 import { useTheme, ACCENT_COLOR_MAP, type AccentColor, type Theme } from "@/components/theme-context"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ColorPicker } from "@/components/color-picker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useProfile, useUser, useNotificationPreferences } from "@/lib/hooks"
 import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
@@ -40,11 +38,11 @@ import { AuthForm } from "@/components/auth-form"
 import NotificationHistory from "@/components/notification-history"
 import { requestPushPermission, unsubscribeFromPush, isPushSubscribed } from "@/lib/supabase/push"
 
-type PresetAccent = Exclude<AccentColor, "custom">
-
-const PRESET_ACCENTS: ReadonlyArray<PresetAccent> = ["blue", "purple", "green", "orange", "pink", "yellow"]
-
-const YELLOW_USES_DARK_TEXT = new Set<PresetAccent>(["yellow"])
+const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
+  "blue", "indigo", "purple", "violet",
+  "rose", "pink", "orange", "amber",
+  "green", "teal", "cyan", "slate",
+]
 
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -54,7 +52,7 @@ export default function SettingsContent() {
     }
     return "profile"
   })
-  const { theme, accentColor, customColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setCustomColor, setFontSize, setDensity, setReducedMotion, isColorLight, resetTheme } = useTheme()
+  const { theme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
   const [showSavedMessage, setShowSavedMessage] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -177,27 +175,21 @@ export default function SettingsContent() {
     setAccentColor(color)
   }
 
-  const handleCustomColorChange = (color: string) => {
-    setCustomColor(color)
-    setAccentColor("custom")
-  }
-
   // Debounced sync of theme preferences to Supabase
   React.useEffect(() => {
     if (!user?.id) return
     const timer = setTimeout(() => {
-      updateThemePreferences({ theme, accentColor, customColor, fontSize, density, reducedMotion })
+      updateThemePreferences({ theme, accentColor, fontSize, density, reducedMotion })
     }, 500)
     return () => clearTimeout(timer)
-  }, [theme, accentColor, customColor, fontSize, density, reducedMotion, user?.id])
+  }, [theme, accentColor, fontSize, density, reducedMotion, user?.id])
 
   // Load theme preferences from Supabase on mount
   React.useEffect(() => {
     if (!profile?.themePreferences || Object.keys(profile.themePreferences).length === 0) return
     const p = profile.themePreferences
     if (p.theme) setTheme(p.theme as Theme)
-    if (p.accentColor) setAccentColor(p.accentColor as AccentColor)
-    if (p.customColor) setCustomColor(p.customColor)
+    if (p.accentColor && p.accentColor in ACCENT_COLOR_MAP) setAccentColor(p.accentColor as AccentColor)
     if (p.fontSize) setFontSize(p.fontSize as "small" | "medium" | "large")
     if (p.density) setDensity(p.density as "comfortable" | "compact")
     if (p.reducedMotion !== undefined) setReducedMotion(p.reducedMotion)
@@ -450,10 +442,9 @@ export default function SettingsContent() {
 
               <div className="space-y-3">
                 <Label>Color de acento</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                  {PRESET_ACCENTS.map((name) => {
-                    const { primary } = ACCENT_COLOR_MAP[name]
-                    const checkTextClass = YELLOW_USES_DARK_TEXT.has(name) ? "text-black" : "text-white"
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
+                  {ALL_ACCENTS.map((name) => {
+                    const { primary, label } = ACCENT_COLOR_MAP[name]
                     return (
                       <TooltipProvider key={name}>
                         <Tooltip>
@@ -461,70 +452,32 @@ export default function SettingsContent() {
                             <button
                               type="button"
                               aria-pressed={accentColor === name}
-                              aria-label={`Color de acento ${name}`}
+                              aria-label={`Color de acento ${label}`}
                               className={cn(
-                                "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all",
+                                "h-10 w-full rounded-lg border-2 flex items-center justify-center transition-all",
                                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                                 accentColor === name
-                                  ? "border-foreground scale-105"
-                                  : "border-transparent hover:scale-105",
+                                  ? "border-foreground scale-105 shadow-sm"
+                                  : "border-transparent hover:scale-105 hover:shadow-sm",
                               )}
                               style={{ backgroundColor: `hsl(${primary})` }}
                               onClick={() => handleAccentColorChange(name)}
                             >
-                              {accentColor === name && <Check className={cn("h-6 w-6", checkTextClass)} />}
+                              {accentColor === name && <Check className="h-4 w-4 text-white" />}
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="capitalize">{name}</p>
+                            <p>{label}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )
                   })}
-
-                  {/* Custom color option */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          aria-pressed={accentColor === "custom"}
-                          aria-label="Color de acento personalizado"
-                          className={cn(
-                            "h-12 w-full rounded-md border-2 flex items-center justify-center transition-all relative overflow-hidden",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                            accentColor === "custom"
-                              ? "border-foreground scale-105"
-                              : "border-transparent hover:scale-105",
-                          )}
-                          onClick={() => handleAccentColorChange("custom")}
-                          style={{ backgroundColor: customColor }}
-                        >
-                          {accentColor === "custom" && (
-                            <Check className={cn("h-6 w-6", isColorLight(customColor) ? "text-black" : "text-white")} />
-                          )}
-                          <Paintbrush className="h-5 w-5 absolute top-1 right-1 text-white drop-shadow-md" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Custom</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Selecciona un color de acento para personalizar tu tablero.
                 </p>
               </div>
-
-              {/* Custom Color Picker Section */}
-              {accentColor === "custom" && (
-                <div className="space-y-3 p-4 border rounded-lg">
-                  <Label className="text-base">Color personalizado</Label>
-                  <ColorPicker onColorChange={handleCustomColorChange} />
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label>Tamaño de fuente</Label>

@@ -4,47 +4,47 @@
 
 @layer base {
   :root {
-    /* Softened off-white / charcoal — reduces visual fatigue vs pure #fff / #000 */
-    --background: 0 0% 98%;
-    --foreground: 240 10% 15%;
+    /* Premium warm-neutral palette — 220° tint reduces coldness, lower saturation reduces fatigue */
+    --background: 220 14% 96%;
+    --foreground: 222 14% 16%;
 
-    --card: 240 4.8% 95.9%;
-    --card-foreground: 240 10% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 14% 16%;
 
-    --popover: 240 4.8% 95.9%;
-    --popover-foreground: 240 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 14% 16%;
 
-    --primary: 210 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 62% 55%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 10% 15%;
+    --secondary: 220 12% 93%;
+    --secondary-foreground: 222 14% 16%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 220 12% 93%;
+    --muted-foreground: 220 8% 46%;
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 10% 15%;
+    --accent: 220 12% 93%;
+    --accent-foreground: 222 14% 16%;
 
-    --destructive: 0 84% 48%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 65% 48%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 210 100% 50%;
+    --border: 220 10% 89%;
+    --input: 220 10% 89%;
+    --ring: 221 62% 55%;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 142 76% 36%;
-    --chart-3: 24 95% 53%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 339 91% 52%;
+    --chart-1: 221 55% 55%;
+    --chart-2: 152 45% 40%;
+    --chart-3: 25 60% 50%;
+    --chart-4: 262 48% 56%;
+    --chart-5: 340 50% 52%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 356 100% 97%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 10%;
-    --info: 199 89% 48%;
-    --info-foreground: 210 40% 98%;
+    --success: 152 48% 38%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 70% 48%;
+    --warning-foreground: 40 80% 10%;
+    --info: 200 60% 46%;
+    --info-foreground: 0 0% 98%;
 
     --radius: 0.5rem;
     --font-base-size: 16px;
@@ -52,47 +52,47 @@
   }
 
   .dark {
-    /* Near-black / soft-white — avoids OLED halation + white "glow" from pure values */
-    --background: 240 10% 6%;
-    --foreground: 0 0% 94%;
+    /* Premium dark — warm near-black, elevated cards, subtle borders */
+    --background: 225 12% 7%;
+    --foreground: 220 10% 94%;
 
-    --card: 240 7% 11%;
-    --card-foreground: 0 0% 94%;
+    --card: 225 10% 12%;
+    --card-foreground: 220 10% 94%;
 
-    --popover: 240 7% 11%;
-    --popover-foreground: 0 0% 94%;
+    --popover: 225 10% 12%;
+    --popover-foreground: 220 10% 94%;
 
-    --primary: 210 100% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 65% 60%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 240 5% 16%;
-    --secondary-foreground: 0 0% 94%;
+    --secondary: 225 8% 17%;
+    --secondary-foreground: 220 10% 94%;
 
-    --muted: 240 5% 16%;
-    --muted-foreground: 240 5% 68%;
+    --muted: 225 8% 17%;
+    --muted-foreground: 220 6% 64%;
 
-    --accent: 240 5% 16%;
-    --accent-foreground: 0 0% 94%;
+    --accent: 225 8% 17%;
+    --accent-foreground: 220 10% 94%;
 
-    --destructive: 359 80% 58%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 4% 20%;
-    --input: 240 4% 20%;
-    --ring: 210 100% 58%;
+    --border: 225 7% 20%;
+    --input: 225 7% 20%;
+    --ring: 221 65% 60%;
 
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 221 58% 60%;
+    --chart-2: 160 45% 46%;
+    --chart-3: 30 58% 52%;
+    --chart-4: 270 48% 58%;
+    --chart-5: 340 48% 55%;
 
-    --success: 160 60% 45%;
-    --success-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 10%;
-    --info: 199 89% 48%;
-    --info-foreground: 210 40% 98%;
+    --success: 160 48% 44%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 65% 48%;
+    --warning-foreground: 40 80% 10%;
+    --info: 200 55% 50%;
+    --info-foreground: 0 0% 98%;
   }
 }
 
