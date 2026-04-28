@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Calendar, ChevronLeft, ChevronRight, MessageCircle, Star, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import {
   useEventoResenas,
   useEventosAdmin,
   type EventoWithAggregates,
+  type EventoFoto,
 } from "@/lib/hooks/useEventos"
 
 interface Props {
@@ -30,12 +31,27 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
   const { eliminarFoto, saving } = useEventosAdmin(onChange)
 
   const [index, setIndex] = useState(0)
+  const [activeTab, setActiveTab] = useState<"fotos" | "videos">("fotos")
+
+  const { fotosList, videosList } = useMemo(() => {
+    const f: EventoFoto[] = []
+    const v: EventoFoto[] = []
+    for (const item of evento?.fotos ?? []) {
+      if (isVideoPath(item.storage_path)) v.push(item)
+      else f.push(item)
+    }
+    return { fotosList: f, videosList: v }
+  }, [evento?.fotos])
 
   useEffect(() => {
+    if (!evento) return
+    const hasFotos = evento.fotos.some(f => !isVideoPath(f.storage_path))
+    setActiveTab(hasFotos || evento.fotos.length === 0 ? "fotos" : "videos")
     setIndex(0)
   }, [evento?.id])
 
-  const total = evento?.fotos.length ?? 0
+  const currentList = activeTab === "fotos" ? fotosList : videosList
+  const total = currentList.length
 
   const next = useCallback(() => {
     if (total > 0) setIndex((i) => (i + 1) % total)
@@ -68,7 +84,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
   // Clamp to the currently-known fotos array so we never index past the end
   // if the parent re-renders with stale data between deletion and refetch.
   const safeIndex = total === 0 ? 0 : Math.min(Math.max(index, 0), total - 1)
-  const foto = evento.fotos[safeIndex] ?? null
+  const foto = currentList[safeIndex] ?? null
   const fotoUrl = foto ? eventoPublicUrl(foto.storage_path) : null
 
   async function handleEliminarFoto() {
@@ -177,43 +193,65 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
               )}
             </div>
 
-            <div className="border-t border-border/60 p-3 flex items-center gap-2 overflow-x-auto">
-              {evento.fotos.map((f, i) => {
-                const url = eventoPublicUrl(f.storage_path)
-                if (!url) return null
-                const isVideo = isVideoPath(url)
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setIndex(i)}
-                    className={`relative shrink-0 h-14 w-14 rounded-md overflow-hidden border transition ${
-                      i === safeIndex ? "border-primary ring-2 ring-primary/30" : "border-border/60 opacity-70 hover:opacity-100"
-                    }`}
-                    aria-label={`Foto ${i + 1}`}
+            <div className="border-t border-border/60 p-3 flex flex-col gap-2 bg-muted/10">
+              {fotosList.length > 0 && videosList.length > 0 && (
+                <div className="flex items-center gap-2 px-1">
+                  <Button
+                    variant={activeTab === "fotos" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { setActiveTab("fotos"); setIndex(0) }}
+                    className="h-7 text-[11px] rounded-full px-3"
                   >
-                    {isVideo ? (
-                      <video src={url} className="h-full w-full object-cover pointer-events-none" muted playsInline />
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" width={56} height={56} />
-                    )}
-                  </button>
-                )
-              })}
-              {canEdit && foto && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleEliminarFoto}
-                  disabled={saving}
-                  className="ml-auto shrink-0 text-destructive hover:text-destructive"
-                  aria-label="Quitar foto"
-                  title="Quitar foto"
-                >
-                  <Trash2 size={14} />
-                </Button>
+                    Fotos ({fotosList.length})
+                  </Button>
+                  <Button
+                    variant={activeTab === "videos" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => { setActiveTab("videos"); setIndex(0) }}
+                    className="h-7 text-[11px] rounded-full px-3"
+                  >
+                    Videos ({videosList.length})
+                  </Button>
+                </div>
               )}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 px-1">
+                {currentList.map((f, i) => {
+                  const url = eventoPublicUrl(f.storage_path)
+                  if (!url) return null
+                  const isVideo = isVideoPath(url)
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setIndex(i)}
+                      className={`relative shrink-0 h-14 w-14 rounded-md overflow-hidden border transition ${
+                        i === safeIndex ? "border-primary ring-2 ring-primary/30" : "border-border/60 opacity-70 hover:opacity-100"
+                      }`}
+                      aria-label={`Foto ${i + 1}`}
+                    >
+                      {isVideo ? (
+                        <video src={url} className="h-full w-full object-cover pointer-events-none" muted playsInline />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" width={56} height={56} />
+                      )}
+                    </button>
+                  )
+                })}
+                {canEdit && foto && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleEliminarFoto}
+                    disabled={saving}
+                    className="ml-auto shrink-0 text-destructive hover:text-destructive h-14 w-14"
+                    aria-label="Quitar archivo"
+                    title="Quitar archivo"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
