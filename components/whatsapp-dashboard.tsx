@@ -164,14 +164,14 @@ export default function WhatsAppDashboard() {
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="h-9 gap-1.5 text-xs text-muted-foreground hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+                      size="icon"
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
                       disabled={isPending}
                       onClick={() => handleReset(c.numero)}
                       aria-label={`Resetear consulta del empleado #${c.numero}`}
+                      title="Resetear"
                     >
                       <RotateCcw size={14} />
-                      Resetear
                     </Button>
                   </TableCell>
                 </TableRow>

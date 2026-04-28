@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { MessageCircle } from "lucide-react"
+import { BookOpen, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BOT_WHATSAPP_URL, RECURSOS_URL, Reveal, RevealItem } from "../_shared"
 
@@ -24,17 +24,16 @@ export default function Footer() {
 
         <Reveal className="flex flex-wrap items-center gap-3">
           <RevealItem>
-            <Button asChild size="lg" className="gap-2">
+            <Button asChild size="icon" aria-label="Abrir en WhatsApp" title="Abrir en WhatsApp">
               <Link href={BOT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="size-4" aria-hidden />
-                Abrir en WhatsApp
               </Link>
             </Button>
           </RevealItem>
           <RevealItem>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="icon" variant="outline" aria-label="Ver cursos" title="Ver cursos">
               <Link href={RECURSOS_URL} target="_blank" rel="noopener noreferrer">
-                Ver cursos
+                <BookOpen className="size-4" aria-hidden />
               </Link>
             </Button>
           </RevealItem>

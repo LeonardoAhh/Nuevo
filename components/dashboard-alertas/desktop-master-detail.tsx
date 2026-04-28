@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Loader2,
   Pencil,
+  Save,
   User,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -203,11 +205,14 @@ function DetalleEval({ item, badgeLabel, badgeClass, toneText, onCalificar, onAf
             aria-label="Calificación"
           />
           <Button
+            size="icon"
             onClick={handleGuardar}
             disabled={saving || calStr === ""}
-            className="h-10"
+            className="h-10 w-10"
+            aria-label="Guardar"
+            title="Guardar"
           >
-            {saving ? "Guardando…" : "Guardar"}
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           </Button>
           <p className="ml-auto text-xs text-muted-foreground">
             Pulsa <kbd className="rounded border bg-background px-1 text-[10px]">Enter</kbd> para guardar.
@@ -383,15 +388,13 @@ function DetalleFecha({
           <h4 className="mb-3 text-sm font-semibold text-foreground">Acción rápida</h4>
           <div className="flex flex-wrap items-center gap-2">
             {onEntregado && (
-              <Button onClick={() => handle(onEntregado)} disabled={saving} className="h-10 gap-1.5">
-                <CheckCircle2 size={14} aria-hidden />
-                {saving ? "Guardando…" : "Marcar entregado"}
+              <Button size="icon" onClick={() => handle(onEntregado)} disabled={saving} className="h-10 w-10" aria-label="Marcar entregado" title="Marcar entregado">
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               </Button>
             )}
             {onIndeterminado && (
-              <Button onClick={() => handle(onIndeterminado)} disabled={saving} className="h-10 gap-1.5">
-                <CheckCircle2 size={14} aria-hidden />
-                {saving ? "Guardando…" : "Marcar como Indeterminado"}
+              <Button size="icon" onClick={() => handle(onIndeterminado)} disabled={saving} className="h-10 w-10" aria-label="Marcar como Indeterminado" title="Marcar como Indeterminado">
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               </Button>
             )}
           </div>

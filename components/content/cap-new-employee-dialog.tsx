@@ -228,8 +228,8 @@ export function CapNewEmployeeDialog({ open, saving, isReadOnly, courses, loadin
                       ))}
                     </div>
                   )}
-                  <Button variant="outline" size="sm" onClick={addRow} className="w-full gap-2">
-                    <Plus className="h-4 w-4" /> Agregar curso
+                  <Button variant="outline" size="icon" onClick={addRow} aria-label="Agregar curso" title="Agregar curso">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </>
               )}

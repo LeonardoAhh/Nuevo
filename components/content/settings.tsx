@@ -17,6 +17,8 @@ import {
   Bell,
   Loader2,
   BellOff,
+  Save,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -277,20 +279,16 @@ export default function SettingsContent() {
                 <div className="space-y-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingAvatar}
+                    aria-label="Cambiar avatar"
+                    title="Cambiar avatar"
                   >
                     {isUploadingAvatar ? (
-                      <>
-                        <Upload className="mr-2 h-4 w-4 animate-spin" />
-                        Subiendo...
-                      </>
+                      <Upload className="h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Cambiar avatar
-                      </>
+                      <Upload className="h-4 w-4" />
                     )}
                   </Button>
                   <input
@@ -379,18 +377,24 @@ export default function SettingsContent() {
               <Button
                 type="button"
                 variant="outline"
+                size="icon"
                 onClick={() => resetProfile()}
                 disabled={isSubmittingProfile}
+                aria-label="Cancelar"
+                title="Cancelar"
               >
-                Cancelar
+                <X className="h-4 w-4" />
               </Button>
               <Button
                 type="submit"
+                size="icon"
                 form="profile-form"
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={isSubmittingProfile || profileLoading}
+                aria-label="Guardar cambios"
+                title="Guardar cambios"
               >
-                {isSubmittingProfile ? "Guardando..." : "Guardar cambios"}
+                {isSubmittingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               </Button>
             </CardFooter>
           </Card>
@@ -568,11 +572,12 @@ export default function SettingsContent() {
             <CardFooter>
               <Button
                 variant="outline"
-                className="gap-2"
+                size="icon"
                 onClick={resetTheme}
+                aria-label="Restablecer valores por defecto"
+                title="Restablecer valores por defecto"
               >
                 <RotateCcw className="h-4 w-4" />
-                Restablecer valores por defecto
               </Button>
             </CardFooter>
           </Card>
@@ -657,14 +662,16 @@ export default function SettingsContent() {
                   </div>
                   <Button
                     variant={pushSubscribed ? "outline" : "default"}
-                    size="sm"
+                    size="icon"
                     disabled={pushLoading}
                     onClick={handleTogglePush}
                     className="ml-4 shrink-0"
+                    aria-label={pushSubscribed ? "Desactivar push" : "Activar push"}
+                    title={pushSubscribed ? "Desactivar push" : "Activar push"}
                   >
                     {pushLoading
                       ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : pushSubscribed ? "Desactivar" : "Activar push"}
+                      : pushSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
                   </Button>
                 </div>
               </CardContent>
@@ -720,6 +727,7 @@ export default function SettingsContent() {
               </CardContent>
               <CardFooter className="flex justify-end">
                 <Button
+                  size="icon"
                   disabled={notifSaving || notifLoading}
                   onClick={async () => {
                     const result = await saveNotifPrefs()
@@ -728,8 +736,10 @@ export default function SettingsContent() {
                       setTimeout(() => setNotifSaved(false), 3000)
                     }
                   }}
+                  aria-label="Guardar preferencias"
+                  title="Guardar preferencias"
                 >
-                  {notifSaving ? "Guardando…" : notifSaved ? "Guardado" : "Guardar preferencias"}
+                  {notifSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : notifSaved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                 </Button>
               </CardFooter>
             </Card>

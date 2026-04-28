@@ -7,7 +7,7 @@ import { es } from "date-fns/locale"
 import {
   Pin, PinOff, Pencil, Trash2, Paperclip,
   Plus, Search, X, Upload, FileText, ListChecks,
-  Download, Eye, ImageIcon, FileIcon,
+  Download, Eye, ImageIcon, FileIcon, ChevronDown, Loader2,
 } from "lucide-react"
 import { notify } from "@/lib/notify"
 
@@ -259,9 +259,8 @@ function AttachmentPreviewDialog({
             <p className="font-medium text-lg">{label}</p>
             <p className="text-sm text-white/70">Sin vista previa disponible</p>
             <a href={target.url} download={label} target="_blank" rel="noopener noreferrer">
-              <Button className="gap-2">
+              <Button size="icon" aria-label="Descargar" title="Descargar">
                 <Download className="size-4" />
-                Descargar
               </Button>
             </a>
           </div>
@@ -540,16 +539,13 @@ function NoteFormDialog({
               <Button
                 type="button"
                 variant="outline"
-                className="w-full gap-2"
+                size="icon"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
+                aria-label="Seleccionar archivo"
+                title={uploading ? "Subiendo..." : form.attachmentName || "Seleccionar archivo"}
               >
-                <Upload className="size-4" />
-                {uploading
-                  ? "Subiendo..."
-                  : form.attachmentName
-                  ? form.attachmentName
-                  : "Seleccionar archivo"}
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
               </Button>
               {form.attachmentName && !uploading && (
                 <p className="text-xs text-center text-muted-foreground truncate px-2">
@@ -719,12 +715,12 @@ export default function NotesWidget() {
               Notas
             </CardTitle>
             <Button
-              size="sm"
-              className="gap-1.5 shrink-0"
+              size="icon"
               onClick={() => { setAddForm(EMPTY_FORM); setAddOpen(true) }}
+              aria-label="Nueva nota"
+              title="Nueva nota"
             >
               <Plus className="size-4" />
-              Nueva nota
             </Button>
           </div>
 
@@ -805,11 +801,13 @@ export default function NotesWidget() {
           {hasMore && !loading && (
             <Button
               variant="ghost"
-              size="sm"
-              className="w-full mt-3 text-muted-foreground"
+              size="icon"
+              className="mt-3 text-muted-foreground"
               onClick={loadMore}
+              aria-label="Cargar más"
+              title="Cargar más"
             >
-              Cargar más
+              <ChevronDown className="size-4" />
             </Button>
           )}
         </CardContent>

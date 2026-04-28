@@ -117,8 +117,8 @@ export function CapAddCoursesDialog({ employee, open, saving, isReadOnly, course
                   </div>
                 ))}
               </div>
-              <Button variant="outline" size="sm" onClick={addRow} className="w-full gap-2">
-                <Plus className="h-4 w-4" /> Agregar otro curso
+              <Button variant="outline" size="icon" onClick={addRow} aria-label="Agregar otro curso" title="Agregar otro curso">
+                <Plus className="h-4 w-4" />
               </Button>
             </>
           )}

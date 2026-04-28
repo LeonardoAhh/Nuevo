@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ImagePlus, Plus, Trash2, Upload } from "lucide-react"
+import { ImagePlus, Plus, Trash2, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -60,8 +60,8 @@ export function EventosAdminPanel({ eventos, onChange }: Props) {
             Crea eventos y sube fotos. Solo visible para rol <code>dev</code>.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5">
-          <Plus size={14} /> Nuevo evento
+        <Button onClick={() => setCreateOpen(true)} size="icon" aria-label="Nuevo evento" title="Nuevo evento">
+          <Plus size={14} />
         </Button>
       </div>
 
@@ -133,11 +133,11 @@ export function EventosAdminPanel({ eventos, onChange }: Props) {
               </p>
             )}
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>
-                Cancelar
+              <Button variant="outline" size="icon" onClick={() => setCreateOpen(false)} disabled={saving} aria-label="Cancelar" title="Cancelar">
+                <X size={14} />
               </Button>
-              <Button onClick={handleCrear} disabled={saving} className="gap-1.5">
-                <Plus size={14} /> Crear
+              <Button size="icon" onClick={handleCrear} disabled={saving} aria-label="Crear evento" title="Crear">
+                <Plus size={14} />
               </Button>
             </div>
           </div>
@@ -220,13 +220,13 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
       />
       <Button
         variant="outline"
-        size="sm"
-        className="gap-1.5"
+        size="icon"
         onClick={() => fileRef.current?.click()}
         disabled={saving}
+        aria-label="Subir fotos"
+        title="Subir fotos"
       >
         <Upload size={14} />
-        <span className="hidden sm:inline">Subir</span>
       </Button>
       <Button
         variant="ghost"

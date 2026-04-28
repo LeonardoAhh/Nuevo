@@ -9,6 +9,7 @@ import {
   BookOpen,
   Star,
   Calendar,
+  FilterX,
   Search,
   Info,
   TrendingUp,
@@ -214,11 +215,12 @@ export default function PromocionesContent({
           {(busqueda || filtroDept !== "todos" || filtroStatus !== "todos" || filtroPuesto !== "todos") && (
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => { setBusqueda(""); setFiltroDept("todos"); setFiltroStatus("todos"); setFiltroPuesto("todos") }}
-              className="col-span-3 sm:col-span-1 h-9 text-xs sm:text-sm"
+              aria-label="Limpiar filtros"
+              title="Limpiar filtros"
             >
-              Limpiar filtros
+              <FilterX size={14} />
             </Button>
           )}
         </div>
@@ -461,13 +463,13 @@ function MobileCardInhabilitado({ emp, onDesempeño }: { emp: EmpleadoPromocion;
         </div>
         <Button
           variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
+          size="icon"
+          className="focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onDesempeño}
           aria-label="Capturar evaluación de desempeño"
+          title={evalActual ? `Eval: ${evalActual.calificacion}` : "Eval"}
         >
           <Star size={13} />
-          {evalActual ? String(evalActual.calificacion) : "Eval"}
         </Button>
       </div>
     </div>

@@ -93,12 +93,12 @@ export function CapImportTab({
 
           <div className="flex gap-2 justify-end">
             {(jsonText || preview || importSuccess) && (
-              <Button variant="outline" onClick={handleReset} className="gap-2 text-foreground">
-                <RotateCcw className="h-4 w-4" /> Limpiar
+              <Button variant="outline" size="icon" onClick={handleReset} aria-label="Limpiar" title="Limpiar">
+                <RotateCcw className="h-4 w-4" />
               </Button>
             )}
-            <Button onClick={handleParse} disabled={!jsonText.trim()} className="gap-2">
-              <Search className="h-4 w-4" /> Analizar JSON
+            <Button size="icon" onClick={handleParse} disabled={!jsonText.trim()} aria-label="Analizar JSON" title="Analizar JSON">
+              <Search className="h-4 w-4" />
             </Button>
           </div>
         </CardContent>
@@ -169,11 +169,11 @@ export function CapImportTab({
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleImport} disabled={isReadOnly || importing} className="gap-2">
+              <Button size="icon" onClick={handleImport} disabled={isReadOnly || importing} aria-label="Confirmar e importar" title="Confirmar e importar">
                 {importing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Importando...</>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <><Upload className="h-4 w-4" /> Confirmar e importar</>
+                  <Upload className="h-4 w-4" />
                 )}
               </Button>
             </div>

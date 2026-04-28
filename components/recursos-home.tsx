@@ -102,15 +102,13 @@ function CursoCardList({
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button variant="default" className="h-10 w-full" asChild>
+          <Button variant="default" size="icon" className="h-10 w-10" asChild aria-label="Ir al curso" title="Ir al curso">
             <a href={curso.url} target="_blank" rel="noopener noreferrer">
               <ExternalLink size={16} />
-              <span className="ml-2">Ir al curso</span>
             </a>
           </Button>
-          <Button variant="outline" className="h-10 w-full" onClick={onShowQr}>
+          <Button variant="outline" size="icon" className="h-10 w-10" onClick={onShowQr} aria-label="QR" title="QR">
             <QrCode size={16} />
-            <span className="ml-2">QR</span>
           </Button>
         </div>
       </div>
@@ -183,17 +181,17 @@ function QrDialog({
           />
           <p className="break-all text-sm text-muted-foreground">{curso.url}</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button className="w-full sm:w-auto" onClick={() => copyToClipboard(curso.url)}>
+            <Button size="icon" onClick={() => copyToClipboard(curso.url)} aria-label="Copiar enlace" title="Copiar enlace">
               <Share2 size={16} />
-              <span className="ml-2">Copiar enlace</span>
             </Button>
             <Button
               variant="secondary"
-              className="w-full sm:w-auto"
+              size="icon"
               onClick={() => onOpenChange(false)}
+              aria-label="Cerrar"
+              title="Cerrar"
             >
               <X size={16} />
-              <span className="ml-2">Cerrar</span>
             </Button>
           </div>
         </div>

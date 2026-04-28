@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   ChevronLeft,
   Clock,
+  Loader2,
   Pencil,
+  Save,
   Search,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -220,11 +222,14 @@ export function MobileStackEvals({
           style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
           <Button
+            size="icon"
             onClick={guardar}
             disabled={saving || calStr === ""}
-            className="h-12 w-full text-base"
+            className="h-12 w-12"
+            aria-label="Guardar calificación"
+            title="Guardar calificación"
           >
-            {saving ? "Guardando…" : "Guardar calificación"}
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           </Button>
         </div>
       </div>
@@ -362,22 +367,26 @@ export function MobileStackFechas({
           >
             {onEntregado && (
               <Button
+                size="icon"
                 onClick={() => ejecutar(onEntregado)}
                 disabled={saving}
-                className="h-12 w-full gap-1.5 text-base"
+                className="h-12 w-12"
+                aria-label="Marcar entregado"
+                title="Marcar entregado"
               >
-                <CheckCircle2 size={16} aria-hidden />
-                {saving ? "Guardando…" : "Marcar entregado"}
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
               </Button>
             )}
             {onIndeterminado && (
               <Button
+                size="icon"
                 onClick={() => ejecutar(onIndeterminado)}
                 disabled={saving}
-                className="h-12 w-full gap-1.5 text-base"
+                className="h-12 w-12"
+                aria-label="Marcar como Indeterminado"
+                title="Marcar como Indeterminado"
               >
-                <CheckCircle2 size={16} aria-hidden />
-                {saving ? "Guardando…" : "Marcar como Indeterminado"}
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
               </Button>
             )}
           </div>
