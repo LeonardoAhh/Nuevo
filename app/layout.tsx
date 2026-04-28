@@ -63,8 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `(function(){try{
   var d=document.documentElement;
-  var c={"blue":"221.2 83.2% 53.3%","purple":"262.1 83.3% 57.8%","green":"142.1 76.2% 36.3%","orange":"24.6 95% 53.1%","pink":"339 90.6% 51.8%","yellow":"47.9 95.8% 53.1%"};
-  var cf={"blue":"210 40% 98%","purple":"210 40% 98%","green":"355.7 100% 97.3%","orange":"355.7 100% 97.3%","pink":"355.7 100% 97.3%","yellow":"26 83.3% 14.1%"};
+  var c={"slate":"220 14% 46%","blue":"221 62% 55%","indigo":"234 56% 58%","purple":"262 52% 56%","violet":"271 58% 55%","rose":"350 55% 52%","pink":"330 50% 55%","orange":"25 68% 50%","amber":"40 62% 44%","green":"152 48% 38%","teal":"172 50% 36%","cyan":"192 55% 42%"};
   var fs={"small":"14px","medium":"16px","large":"18px"};
   var t=localStorage.getItem("theme");
   if(t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches))d.classList.add("dark");
@@ -73,19 +72,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   var dn=localStorage.getItem("density");
   if(dn==="compact"){d.classList.add("density-compact");d.style.setProperty("--density-scale","0.875");}
   var a=localStorage.getItem("accentColor");
-  if(a==="custom"){
-    var hex=(localStorage.getItem("customColor")||"").replace("#","");
-    if(/^[0-9a-f]{6}$/i.test(hex)){
-      var r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255;
-      var mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2;
-      if(mx!==mn){var dd=mx-mn;s=l>0.5?dd/(2-mx-mn):dd/(mx+mn);if(mx===r)h=(g-b)/dd+(g<b?6:0);else if(mx===g)h=(b-r)/dd+2;else h=(r-g)/dd+4;h/=6;}
-      d.style.setProperty("--primary",Math.round(h*360)+" "+Math.round(s*100)+"% "+Math.round(l*100)+"%");
-      var br=(0.299*r+0.587*g+0.114*b);
-      d.style.setProperty("--primary-foreground",br>0.5?"222.2 84% 4.9%":"210 40% 98%");
-    }
-  }else if(a&&c[a]){
+  if(a&&c[a]){
     d.style.setProperty("--primary",c[a]);
-    d.style.setProperty("--primary-foreground",cf[a]);
+    d.style.setProperty("--primary-foreground","0 0% 98%");
   }
   if(localStorage.getItem("reducedMotion")==="true")d.classList.add("reduce-motion");
 }catch(e){}})();`,
