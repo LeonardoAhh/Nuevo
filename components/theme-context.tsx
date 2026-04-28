@@ -208,7 +208,10 @@ function isColorLight(hex?: string): boolean {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
-  const [accentColor, setAccentColor] = useState<AccentColor>("blue")
+  const [accentColor, setAccentColorRaw] = useState<AccentColor>("blue")
+  const setAccentColor = useCallback((c: AccentColor) => {
+    setAccentColorRaw(c in ACCENT_COLOR_MAP ? c : "blue")
+  }, [])
   const [fontSize, setFontSize] = useState<FontSize>("medium")
   const [density, setDensity] = useState<Density>("comfortable")
   const [reducedMotion, setReducedMotion] = useState<boolean>(false)
@@ -296,7 +299,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Update CSS variables when accent color changes
   useEffect(() => {
-    const colors = ACCENT_COLOR_MAP[accentColor]
+    const colors = ACCENT_COLOR_MAP[accentColor] ?? ACCENT_COLOR_MAP.blue
     document.documentElement.style.setProperty("--primary", colors.primary)
     document.documentElement.style.setProperty("--primary-foreground", colors.primaryForeground)
     localStorage.setItem("accentColor", accentColor)

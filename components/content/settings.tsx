@@ -189,7 +189,7 @@ export default function SettingsContent() {
     if (!profile?.themePreferences || Object.keys(profile.themePreferences).length === 0) return
     const p = profile.themePreferences
     if (p.theme) setTheme(p.theme as Theme)
-    if (p.accentColor) setAccentColor(p.accentColor as AccentColor)
+    if (p.accentColor && p.accentColor in ACCENT_COLOR_MAP) setAccentColor(p.accentColor as AccentColor)
     if (p.fontSize) setFontSize(p.fontSize as "small" | "medium" | "large")
     if (p.density) setDensity(p.density as "comfortable" | "compact")
     if (p.reducedMotion !== undefined) setReducedMotion(p.reducedMotion)
