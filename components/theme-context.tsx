@@ -4,11 +4,10 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 
 export type Theme = "light" | "dark" | "system"
-export type AccentColor = "blue" | "purple" | "green" | "orange" | "pink" | "yellow" | "custom"
+export type AccentColor = "slate" | "blue" | "indigo" | "purple" | "violet" | "rose" | "pink" | "orange" | "amber" | "green" | "teal" | "cyan"
 export type FontSize = "small" | "medium" | "large"
 export type Density = "comfortable" | "compact"
 
-export const DEFAULT_CUSTOM_COLOR = "#3b82f6"
 
 const FONT_SIZE_MAP: Record<FontSize, string> = {
   small: "14px",
@@ -24,8 +23,8 @@ const DENSITY_SCALE_MAP: Record<Density, string> = {
 // Must match --card in app/globals.css so the Android chrome bar / PWA status
 // bar blend with our sticky header.
 const THEME_COLOR_MAP: Record<"light" | "dark", string> = {
-  light: "#f2f2f5",
-  dark: "#1a1a1f",
+  light: "#ffffff",
+  dark: "#161619",
 }
 
 const THEME_COLOR_META_ID = "dynamic-theme-color"
@@ -53,14 +52,12 @@ type ThemeContextType = {
   theme: Theme
   resolvedTheme: "light" | "dark"
   accentColor: AccentColor
-  customColor: string
   fontSize: FontSize
   density: Density
   reducedMotion: boolean
   isColorLight: (hex?: string) => boolean
   setTheme: (theme: Theme) => void
   setAccentColor: (color: AccentColor) => void
-  setCustomColor: (color: string) => void
   setFontSize: (size: FontSize) => void
   setDensity: (d: Density) => void
   setReducedMotion: (v: boolean) => void
@@ -70,30 +67,66 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export const ACCENT_COLOR_MAP: Record<Exclude<AccentColor, "custom">, { primary: string; primaryForeground: string }> = {
+export const ACCENT_COLOR_MAP: Record<AccentColor, { primary: string; primaryForeground: string; label: string }> = {
+  slate: {
+    primary: "220 14% 46%",
+    primaryForeground: "0 0% 98%",
+    label: "Slate",
+  },
   blue: {
-    primary: "221.2 83.2% 53.3%",
-    primaryForeground: "210 40% 98%",
+    primary: "221 62% 55%",
+    primaryForeground: "0 0% 98%",
+    label: "Blue",
+  },
+  indigo: {
+    primary: "234 56% 58%",
+    primaryForeground: "0 0% 98%",
+    label: "Indigo",
   },
   purple: {
-    primary: "262.1 83.3% 57.8%",
-    primaryForeground: "210 40% 98%",
+    primary: "262 52% 56%",
+    primaryForeground: "0 0% 98%",
+    label: "Purple",
   },
-  green: {
-    primary: "142.1 76.2% 36.3%",
-    primaryForeground: "355.7 100% 97.3%",
+  violet: {
+    primary: "271 58% 55%",
+    primaryForeground: "0 0% 98%",
+    label: "Violet",
   },
-  orange: {
-    primary: "24.6 95% 53.1%",
-    primaryForeground: "355.7 100% 97.3%",
+  rose: {
+    primary: "350 55% 52%",
+    primaryForeground: "0 0% 98%",
+    label: "Rose",
   },
   pink: {
-    primary: "339 90.6% 51.8%",
-    primaryForeground: "355.7 100% 97.3%",
+    primary: "330 50% 55%",
+    primaryForeground: "0 0% 98%",
+    label: "Pink",
   },
-  yellow: {
-    primary: "47.9 95.8% 53.1%",
-    primaryForeground: "26 83.3% 14.1%",
+  orange: {
+    primary: "25 68% 50%",
+    primaryForeground: "0 0% 98%",
+    label: "Copper",
+  },
+  amber: {
+    primary: "40 62% 44%",
+    primaryForeground: "0 0% 98%",
+    label: "Amber",
+  },
+  green: {
+    primary: "152 48% 38%",
+    primaryForeground: "0 0% 98%",
+    label: "Sage",
+  },
+  teal: {
+    primary: "172 50% 36%",
+    primaryForeground: "0 0% 98%",
+    label: "Teal",
+  },
+  cyan: {
+    primary: "192 55% 42%",
+    primaryForeground: "0 0% 98%",
+    label: "Cyan",
   },
 }
 
@@ -176,7 +209,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
   const [accentColor, setAccentColor] = useState<AccentColor>("blue")
-  const [customColor, setCustomColor] = useState<string>(DEFAULT_CUSTOM_COLOR)
   const [fontSize, setFontSize] = useState<FontSize>("medium")
   const [density, setDensity] = useState<Density>("comfortable")
   const [reducedMotion, setReducedMotion] = useState<boolean>(false)
@@ -193,7 +225,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") as Theme | null
     const storedAccentColor = localStorage.getItem("accentColor") as AccentColor | null
-    const storedCustomColor = localStorage.getItem("customColor") as string | null
     const storedFontSize = localStorage.getItem("fontSize") as FontSize | null
     const storedDensity = localStorage.getItem("density") as Density | null
     const storedReducedMotion = localStorage.getItem("reducedMotion")
@@ -205,8 +236,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme("dark")
     }
 
-    if (storedAccentColor) setAccentColor(storedAccentColor)
-    if (storedCustomColor && /^#[0-9A-Fa-f]{6}$/.test(storedCustomColor)) setCustomColor(storedCustomColor)
+    if (storedAccentColor && storedAccentColor in ACCENT_COLOR_MAP) setAccentColor(storedAccentColor)
     if (storedFontSize && storedFontSize in FONT_SIZE_MAP) setFontSize(storedFontSize)
     if (storedDensity && (storedDensity === "comfortable" || storedDensity === "compact")) setDensity(storedDensity)
 
@@ -264,27 +294,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("reducedMotion", String(reducedMotion))
   }, [reducedMotion])
 
-  // Update CSS variables when accent color or custom color changes
+  // Update CSS variables when accent color changes
   useEffect(() => {
-    let primaryValue: string
-    let primaryForeground: string
-
-    if (accentColor === "custom") {
-      const hsl = hexToHSL(customColor)
-      const light = isColorLight(customColor)
-      primaryValue = `${hsl.h} ${hsl.s}% ${hsl.l}%`
-      primaryForeground = light ? "222.2 84% 4.9%" : "210 40% 98%"
-      localStorage.setItem("customColor", customColor)
-    } else {
-      const colors = ACCENT_COLOR_MAP[accentColor]
-      primaryValue = colors.primary
-      primaryForeground = colors.primaryForeground
-    }
-
-    document.documentElement.style.setProperty("--primary", primaryValue)
-    document.documentElement.style.setProperty("--primary-foreground", primaryForeground)
+    const colors = ACCENT_COLOR_MAP[accentColor]
+    document.documentElement.style.setProperty("--primary", colors.primary)
+    document.documentElement.style.setProperty("--primary-foreground", colors.primaryForeground)
     localStorage.setItem("accentColor", accentColor)
-  }, [accentColor, customColor])
+  }, [accentColor])
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light")
@@ -293,11 +309,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const resetTheme = () => {
     setTheme("light")
     setAccentColor("blue")
-    setCustomColor(DEFAULT_CUSTOM_COLOR)
     setFontSize("medium")
     setDensity("comfortable")
     setReducedMotion(false)
-    const keys = ["theme", "accentColor", "customColor", "fontSize", "density", "reducedMotion"]
+    const keys = ["theme", "accentColor", "fontSize", "density", "reducedMotion"]
     keys.forEach(k => localStorage.removeItem(k))
   }
 
@@ -307,14 +322,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         theme,
         resolvedTheme,
         accentColor,
-        customColor,
         fontSize,
         density,
         reducedMotion,
         isColorLight,
         setTheme,
         setAccentColor,
-        setCustomColor,
         setFontSize,
         setDensity,
         setReducedMotion,
