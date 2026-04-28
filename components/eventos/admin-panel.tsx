@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { confirm } from "@/components/ui/confirm-dialog"
 import {
   eventoPublicUrl,
+  isVideoPath,
   useEventosAdmin,
   type EventoWithAggregates,
 } from "@/lib/hooks/useEventos"
@@ -19,7 +20,8 @@ interface Props {
   onChange: () => void
 }
 
-const MAX_BYTES = 8 * 1024 * 1024 // 8 MB por archivo
+const MAX_BYTES_IMG = 8 * 1024 * 1024 // 8 MB por imagen
+const MAX_BYTES_VIDEO = 100 * 1024 * 1024 // 100 MB por video
 
 export function EventosAdminPanel({ eventos, onChange }: Props) {
   const { saving, crearEvento, subirFotos, eliminarEvento } = useEventosAdmin(onChange)
@@ -166,13 +168,21 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
     if (files.length === 0) return
 
     for (const f of files) {
-      if (!f.type.startsWith("image/")) {
-        setUploadError(`"${f.name}" no es una imagen válida`)
+      const isVideo = f.type.startsWith("video/")
+      const isImage = f.type.startsWith("image/")
+      
+      if (!isImage && !isVideo) {
+        setUploadError(`"${f.name}" no es válido`)
         input.value = ""
         return
       }
-      if (f.size > MAX_BYTES) {
-        setUploadError(`"${f.name}" supera los 8 MB`)
+      if (isImage && f.size > MAX_BYTES_IMG) {
+        setUploadError(`"${f.name}" supera 8 MB`)
+        input.value = ""
+        return
+      }
+      if (isVideo && f.size > MAX_BYTES_VIDEO) {
+        setUploadError(`"${f.name}" supera 100 MB`)
         input.value = ""
         return
       }
@@ -191,8 +201,12 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
     <li className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-2">
       <div className="relative h-14 w-14 shrink-0 rounded-md overflow-hidden bg-muted/40 border border-border/60">
         {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+          isVideoPath(coverUrl) ? (
+            <video src={coverUrl} className="h-full w-full object-cover" muted playsInline />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+          )
         ) : (
           <div className="h-full w-full flex items-center justify-center">
             <ImagePlus size={16} className="text-muted-foreground/60" />
@@ -213,7 +227,7 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
       <input
         ref={fileRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         multiple
         className="hidden"
         onChange={handleFiles}

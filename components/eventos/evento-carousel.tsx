@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Calendar, Image as ImageIcon, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StarRating } from "./star-rating"
-import { eventoPublicUrl, type EventoWithAggregates } from "@/lib/hooks/useEventos"
+import { eventoPublicUrl, isVideoPath, type EventoWithAggregates } from "@/lib/hooks/useEventos"
 
 interface Props {
   eventos: EventoWithAggregates[]
@@ -192,16 +192,27 @@ function EventoCard({ evento, onClick }: CardProps) {
     >
       <div className="relative aspect-[4/3] bg-muted/40 overflow-hidden">
         {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={evento.titulo}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            decoding="async"
-            width={320}
-            height={240}
-          />
+          isVideoPath(coverUrl) ? (
+            <video
+              src={coverUrl}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 pointer-events-none"
+              muted
+              playsInline
+              loop
+              autoPlay
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt={evento.titulo}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              width={320}
+              height={240}
+            />
+          )
         ) : (
           <div className="h-full w-full flex items-center justify-center">
             <ImageIcon size={28} className="text-muted-foreground/40" />

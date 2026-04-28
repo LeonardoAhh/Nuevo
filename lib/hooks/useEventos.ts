@@ -48,6 +48,12 @@ export function eventoPublicUrl(path: string | null | undefined): string | null 
   return data?.publicUrl ?? null
 }
 
+export function isVideoPath(path: string | null | undefined): boolean {
+  if (!path) return false
+  const ext = path.split(".").pop()?.toLowerCase()
+  return ["mp4", "webm", "mov", "ogg", "quicktime"].includes(ext || "")
+}
+
 /** Hook para la vista pública del mural: carga eventos publicados con fotos + agregados de reseñas. */
 export function useEventosPublicos() {
   const [eventos, setEventos] = useState<EventoWithAggregates[]>([])

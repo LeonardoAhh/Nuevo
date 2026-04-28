@@ -11,6 +11,7 @@ import { StarRating } from "./star-rating"
 import { ResenaForm } from "./resena-form"
 import {
   eventoPublicUrl,
+  isVideoPath,
   useEventoResenas,
   useEventosAdmin,
   type EventoWithAggregates,
@@ -106,19 +107,34 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
             <div className="relative flex-1 min-h-[200px] max-h-[45vh] lg:max-h-none lg:min-h-[420px] bg-muted/40 flex items-center justify-center">
               {fotoUrl ? (
                 <AnimatePresence mode="wait" initial={false}>
-                  <motion.img
-                    key={foto!.id}
-                    src={fotoUrl}
-                    alt={foto?.caption ?? evento.titulo}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="max-h-[40vh] lg:max-h-[60vh] w-full object-contain"
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                  />
+                  {isVideoPath(fotoUrl) ? (
+                    <motion.video
+                      key={foto!.id}
+                      src={fotoUrl}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="max-h-[40vh] lg:max-h-[60vh] w-full object-contain"
+                      controls
+                      playsInline
+                      autoPlay
+                    />
+                  ) : (
+                    <motion.img
+                      key={foto!.id}
+                      src={fotoUrl}
+                      alt={foto?.caption ?? evento.titulo}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="max-h-[40vh] lg:max-h-[60vh] w-full object-contain"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                    />
+                  )}
                 </AnimatePresence>
               ) : (
                 <p className="text-sm text-muted-foreground">Este evento aún no tiene fotos.</p>
@@ -165,6 +181,7 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
               {evento.fotos.map((f, i) => {
                 const url = eventoPublicUrl(f.storage_path)
                 if (!url) return null
+                const isVideo = isVideoPath(url)
                 return (
                   <button
                     key={f.id}
@@ -175,8 +192,12 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
                     }`}
                     aria-label={`Foto ${i + 1}`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" width={56} height={56} />
+                    {isVideo ? (
+                      <video src={url} className="h-full w-full object-cover pointer-events-none" muted playsInline />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" width={56} height={56} />
+                    )}
                   </button>
                 )
               })}
