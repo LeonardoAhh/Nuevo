@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { ArrowLeft, Plus, RotateCcw, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoTipo, type Objetivo } from "@/lib/types/desempeno"
 
 const TIPOS: DesempenoTipo[] = ["operativo", "administrativo", "jefe"]
@@ -55,20 +57,50 @@ export default function DesempenoObjetivos() {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6 max-w-6xl mx-auto py-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Objetivos por puesto</h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Define aquí las plantillas de objetivos SMART que deben usarse para cada tipo de puesto.
-            Cambia el tipo y ajusta la descripción, resultado, porcentaje y comentarios.
+            Define plantillas de objetivos SMART por tipo de puesto.
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Link href="/desempeno">
-            <Button variant="outline">Volver a evaluación</Button>
-          </Link>
-          <Button variant="secondary" onClick={restorePlantilla}>Restaurar plantilla</Button>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/desempeno">
+                <Button variant="outline" size="icon" aria-label="Volver a evaluación">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Volver a evaluación</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={addObjetivo} aria-label="Agregar objetivo">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Agregar objetivo</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="secondary" size="icon" onClick={restorePlantilla} aria-label="Restaurar plantilla">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Restaurar plantilla</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" disabled aria-label="Guardar plantilla">
+                <Save className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Guardar plantilla (pendiente backend)</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -99,13 +131,7 @@ export default function DesempenoObjetivos() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Objetivos SMART</CardTitle>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" onClick={addObjetivo}>Agregar objetivo</Button>
-              <Button variant="secondary" onClick={restorePlantilla}>Restaurar plantilla</Button>
-            </div>
-          </div>
+          <CardTitle>Objetivos SMART</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {objetivos.map((objetivo, index) => (
@@ -114,14 +140,20 @@ export default function DesempenoObjetivos() {
                 <div className="flex items-center justify-between gap-3">
                   <Label>Objetivo {objetivo.numero}</Label>
                   {objetivos.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => removeObjetivo(index)}
-                    >
-                      Eliminar
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => removeObjetivo(index)}
+                          aria-label="Eliminar objetivo"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Eliminar</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
                 <Input
@@ -160,10 +192,7 @@ export default function DesempenoObjetivos() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button onClick={restorePlantilla} variant="secondary">Restaurar objetivos</Button>
-        <Button disabled>Guardar plantilla (pendiente backend)</Button>
-      </div>
     </div>
+    </TooltipProvider>
   )
 }

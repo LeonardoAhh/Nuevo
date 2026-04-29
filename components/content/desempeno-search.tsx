@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Search, Printer, Download, AlertCircle } from "lucide-react"
+import { Search, Printer, Download, AlertCircle, ClipboardList } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
 import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData, type DesempenoTipo } from "@/lib/types/desempeno"
@@ -60,7 +61,42 @@ export default function DesempenoSearch() {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Toolbar */}
+      <div className="flex items-center justify-end gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/desempeno/objetivos">
+              <Button variant="outline" size="icon" aria-label="Objetivos por puesto">
+                <ClipboardList className="h-4 w-4" />
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Objetivos por puesto</TooltipContent>
+        </Tooltip>
+        {data && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Descargar PDF">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Descargar PDF</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" onClick={() => window.print()} aria-label="Imprimir">
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir</TooltipContent>
+            </Tooltip>
+          </>
+        )}
+      </div>
+
       {/* Buscador */}
       <Card>
         <CardContent className="pt-6 pb-4">
@@ -120,15 +156,15 @@ export default function DesempenoSearch() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-end">
-              <Link href="/desempeno/objetivos">
-                <Button variant="outline" className="w-full md:w-auto">
-                  Objetivos por puesto
-                </Button>
-              </Link>
-              <Button onClick={handleSearch} className="h-fit w-full md:w-auto">
-                Buscar Empleado
-              </Button>
+            <div className="flex items-end justify-end">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSearch} size="icon" aria-label="Buscar Empleado">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Buscar Empleado</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardContent>
@@ -144,23 +180,11 @@ export default function DesempenoSearch() {
       <DesempenoForm data={previewData} />
 
       {data && (
-        <>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              PDF
-            </Button>
-            <Button onClick={() => window.print()}>
-              <Printer className="mr-2 h-4 w-4" />
-              Imprimir
-            </Button>
-          </div>
-
-          <div className="print-area hidden print:block">
-            <DesempenoPrint data={data} />
-          </div>
-        </>
+        <div className="print-area hidden print:block">
+          <DesempenoPrint data={data} />
+        </div>
       )}
     </div>
+    </TooltipProvider>
   )
 }
