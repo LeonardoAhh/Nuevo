@@ -24,13 +24,29 @@ export function useDesempeno() {
     setError(null)
 
     try {
+      // Search in both employees and nuevo_ingreso tables
       const { data: emp } = await supabase
         .from("employees")
         .select("id, numero, nombre, puesto")
         .eq("numero", numero)
-        .single()
+        .maybeSingle()
 
-      if (!emp) throw new Error("Empleado no encontrado")
+      let empleadoData: { numero: string; nombre: string; puesto: string } | null = null
+
+      if (emp) {
+        empleadoData = { numero: emp.numero!, nombre: emp.nombre, puesto: emp.puesto || "" }
+      } else {
+        const { data: ni } = await supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto")
+          .eq("numero", numero)
+          .maybeSingle()
+        if (ni) {
+          empleadoData = { numero: ni.numero!, nombre: ni.nombre, puesto: ni.puesto || "" }
+        }
+      }
+
+      if (!empleadoData) throw new Error("Empleado no encontrado")
 
       const { data: evalData } = await supabase
         .from("evaluaciones_desempeno")
@@ -48,15 +64,40 @@ export function useDesempeno() {
 
       if (incidenciaError) throw incidenciaError
 
-      const puesto = emp.puesto || ""
+      const puesto = empleadoData.puesto
       const tipoPuesto = getTipoDesempenoByPuesto(puesto)
       const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
         ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
+
+      // Auto-calculate cumplimiento from incidencias
+      const incidencias = incidenciaData ?? []
+      const tieneFaltaInjustificada = incidencias.some(
+        (i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA' && (i.valor as number) > 0
+      )
+      // Group PERMISO + TXT + PERMISO HORAS by month, check if any month > 2
+      const permisoCats = ['PERMISO', 'TXT', 'PERMISO HORAS']
+      const permisosPorMes: Record<string, number> = {}
+      for (const i of incidencias) {
+        const cat = i.categoria as string
+        if (permisoCats.includes(cat)) {
+          const mes = (i.mes as string) ?? ''
+          permisosPorMes[mes] = (permisosPorMes[mes] ?? 0) + ((i.valor as number) ?? 0)
+        }
+      }
+      const tieneExcesoPermisos = Object.values(permisosPorMes).some((total) => total > 2)
 
       // Map cumplimiento from saved data or use defaults
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
         ? (evalData.cumplimiento_responsabilidades as CumplimientoItem[])
         : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c }))
+
+      // Override auto-calculated fields (index 2 = asistencia, index 4 = permisos)
+      if (cumplimiento[2]) {
+        cumplimiento[2].porcentaje = tieneFaltaInjustificada ? "NO CUMPLE" : "CUMPLE"
+      }
+      if (cumplimiento[4]) {
+        cumplimiento[4].porcentaje = tieneExcesoPermisos ? "NO CUMPLE" : "CUMPLE"
+      }
 
       // Map competencias from saved data or use defaults
       const competencias: Competencia[] = evalData?.competencias?.length
@@ -64,8 +105,8 @@ export function useDesempeno() {
         : DEFAULT_COMPETENCIAS.map((c) => ({ ...c }))
 
       const result: DesempenoData = {
-        numero_empleado: emp.numero!,
-        nombre: emp.nombre,
+        numero_empleado: empleadoData.numero,
+        nombre: empleadoData.nombre,
         puesto,
         evaluador_nombre: evalData?.evaluador_nombre || "",
         evaluador_puesto: evalData?.evaluador_puesto || "",
