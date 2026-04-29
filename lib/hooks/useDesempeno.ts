@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
-import type { DesempenoData } from "@/lib/types/desempeno"
+import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData } from "@/lib/types/desempeno"
 import { getTipoDesempenoByPuesto } from "@/lib/catalogo"
 
 export function useDesempeno() {
@@ -44,16 +44,19 @@ export function useDesempeno() {
 
       if (incidenciaError) throw incidenciaError
 
-      const tipoPuesto = getTipoDesempenoByPuesto(emp.puesto || "")
+      const puesto = emp.puesto || ""
+      const tipoPuesto = getTipoDesempenoByPuesto(puesto)
+      const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
+        ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
       const result: DesempenoData = {
         numero_empleado: emp.numero!,
         nombre: emp.nombre,
-        puesto: emp.puesto || "",
+        puesto,
         evaluador_nombre: evalData?.evaluador_nombre || "",
         evaluador_puesto: evalData?.evaluador_puesto || "",
         tipo: (evalData?.tipo as any) || tipoPuesto,
         periodo: evalData?.periodo || "",
-        objetivos: evalData?.objetivos || [],
+        objetivos: evalData?.objetivos?.length ? evalData.objetivos : objetivosFallback.map((obj) => ({ ...obj })),
         cumplimiento_responsabilidades: evalData?.cumplimiento_responsabilidades || [],
         competencias: evalData?.competencias || [],
         compromisos: evalData?.compromisos || "",
