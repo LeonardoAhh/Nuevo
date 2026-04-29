@@ -55,17 +55,18 @@ export function useProfile(userId?: string) {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          const defaultProfile = await createDefaultProfile(userId)
-          if (defaultProfile) {
-            setProfile(defaultProfile)
-            return
-          }
+      if (error) throw error
+
+      if (!data) {
+        const defaultProfile = await createDefaultProfile(userId)
+        if (defaultProfile) {
+          setProfile(defaultProfile)
+          return
         }
-        throw error
       }
 
       if (data) {
