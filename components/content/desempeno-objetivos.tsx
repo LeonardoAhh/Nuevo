@@ -30,30 +30,28 @@ export default function DesempenoObjetivos() {
   return (
     <TooltipProvider>
     <div className="space-y-4 max-w-7xl mx-auto py-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Catálogo de objetivos SMART por puesto.
-        </p>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link href="/desempeno">
-              <Button variant="outline" size="icon" aria-label="Volver a evaluación">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent>Volver a evaluación</TooltipContent>
-        </Tooltip>
-      </div>
-
       {/* Two-column layout */}
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         {/* Left — selector */}
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Seleccionar puesto</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Seleccionar puesto</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">Catálogo de objetivos SMART por puesto.</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/desempeno">
+                      <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Volver a evaluación">
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Volver a evaluación</TooltipContent>
+                </Tooltip>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <Select value={puesto} onValueChange={setPuesto}>
