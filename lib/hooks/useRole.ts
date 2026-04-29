@@ -25,7 +25,9 @@ export function useRole() {
           .from('profiles')
           .select('role')
           .eq('user_id', user.id)
-          .single()
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
 
         if (!error && data?.role) {
           setRole(data.role as AppRole)
