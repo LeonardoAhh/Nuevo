@@ -194,8 +194,12 @@ export function useDesempeno() {
 
       setData({ ...evalData, calificacion_final: ponderacion.calificacionFinal })
       notify.success("Evaluación guardada")
-    } catch (e) {
-      notify.error(e instanceof Error ? e.message : "Error al guardar")
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message
+        : typeof e === "object" && e !== null && "message" in e ? String((e as Record<string, unknown>).message)
+        : "Error al guardar"
+      console.error("[guardar]", e)
+      notify.error(msg)
     } finally {
       setSaving(false)
     }
