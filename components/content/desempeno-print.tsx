@@ -19,14 +19,10 @@ export default function DesempenoPrint({ data }: Props) {
   return (
     <div className={`print-area ${styles.printRoot}`}>
       {/* Header */}
-      <div className={styles.headerRow}>
-        <div className={styles.logoPlaceholder} />
         <div className={styles.titleBlock}>
           <h1>EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
           <p>Periodo de evaluación: {data.periodo || '—'}</p>
         </div>
-        <div className={styles.logoPlaceholder} />
-      </div>
 
       {/* Info */}
       <div className={styles.infoGrid}>
@@ -48,7 +44,7 @@ export default function DesempenoPrint({ data }: Props) {
           <tr>
             <th className={styles.thCenter}>CRITERIO</th>
             <th>OBJETIVOS SMART</th>
-            <th className={styles.thCenter}>RESULTADO DEL PERIODO<br/>Ene - Jun / Jul - Dic</th>
+            <th className={styles.thCenter}>RESULTADO DEL PERIODO</th>
             <th className={styles.thCenter}>% OBTENIDO<br/>(escala 01 al 100%)</th>
             <th>COMENTARIOS</th>
           </tr>
@@ -130,45 +126,51 @@ export default function DesempenoPrint({ data }: Props) {
         <strong>{pond.calificacionFinal}%</strong>
       </div>
 
-      {/* Compromisos */}
-      {pond.calificacionFinal < 80 && (
-        <div className={styles.warningBox}>
-          En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
-        </div>
-      )}
+      {/* Última página: compromisos + firmas */}
+      <div className={styles.lastPageSection}>
+        {/* Compromisos */}
+        {pond.calificacionFinal < 80 && (
+          <div className={styles.warningBox}>
+            En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
+          </div>
+        )}
 
-      <div className={styles.notesSection}>
-        <div>
-          <strong>Compromisos / Acuerdos:</strong>
-          <p>{data.compromisos || '—'}</p>
+        <div className={styles.notesSection}>
+          <div>
+            <strong>Compromisos / Acuerdos:</strong>
+            <p>{data.compromisos || '—'}</p>
+          </div>
+          <div>
+            <strong>Fecha de revisión de Compromisos/Acuerdos:</strong>
+            <p>{data.fecha_revision || '—'}</p>
+          </div>
+          <div>
+            <strong>Observaciones:</strong>
+            <p>{data.observaciones || '—'}</p>
+          </div>
         </div>
-        <div>
-          <strong>Fecha de revisión de Compromisos/Acuerdos:</strong>
-          <p>{data.fecha_revision || '—'}</p>
-        </div>
-        <div>
-          <strong>Observaciones:</strong>
-          <p>{data.observaciones || '—'}</p>
+
+        {/* Firmas */}
+        <div className={styles.signatureGrid}>
+          <div>
+            <p className={styles.signatureName}>{data.evaluador_nombre || '—'}</p>
+            <p>Firma Evaluador</p>
+          </div>
+          <div>
+            <p className={styles.signatureName}>{data.nombre}</p>
+            <p>Firma Evaluado</p>
+          </div>
+          <div>
+            <p className={styles.signatureName}>RH</p>
+            <p>Firma Recursos Humanos</p>
+          </div>
         </div>
       </div>
 
-      {/* Firmas */}
-      <div className={styles.signatureGrid}>
-        <div>
-          <p className={styles.signatureName}>{data.evaluador_nombre || '—'}</p>
-          <p>Firma Evaluador</p>
-        </div>
-        <div>
-          <p className={styles.signatureName}>{data.nombre}</p>
-          <p>Firma Evaluado</p>
-        </div>
-        <div>
-          <p className={styles.signatureName}>RH</p>
-          <p>Firma Recursos Humanos</p>
-        </div>
+      <div className={styles.footerText}>
+          <span>RG-ADM-063</span>
+          <span>Rev. 3</span>
       </div>
-
-      <div className={styles.footerText}>RG-ADM-03 Rev 2</div>
     </div>
   )
 }

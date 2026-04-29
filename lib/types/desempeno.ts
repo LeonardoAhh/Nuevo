@@ -97,11 +97,11 @@ export const DEFAULT_COMPETENCIAS: Competencia[] = [
 // ═══════════════════════════════════════════════════════════════
 
 const _OBJETIVOS_OPERADOR_MAQUINA: Objetivo[] = [
-  { numero: 1, descripcion: "Operar la máquina asignada cumpliendo los estándares de producción", resultado: "NA", porcentaje: "NA", comentarios: "" },
-  { numero: 2, descripcion: "Reportar fallas y anomalías de la máquina al supervisor de turno", resultado: "NA", porcentaje: "NA", comentarios: "" },
-  { numero: 3, descripcion: "Cumplir con los tiempos de ciclo y metas de producción por turno", resultado: "NA", porcentaje: "NA", comentarios: "" },
-  { numero: 4, descripcion: "Mantener limpieza y orden en el área de trabajo y máquina asignada", resultado: "NA", porcentaje: "NA", comentarios: "" },
-  { numero: 5, descripcion: "Seguir las instrucciones de trabajo y procedimientos de seguridad", resultado: "NA", porcentaje: "NA", comentarios: "" },
+  { numero: 1, descripcion: "Operar la máquina asignada cumpliendo los estándares de producción", resultado: "80%", porcentaje: "NA", comentarios: "" },
+  { numero: 2, descripcion: "Reportar fallas y anomalías de la máquina al supervisor de turno", resultado: "80%", porcentaje: "NA", comentarios: "" },
+  { numero: 3, descripcion: "Cumplir con los tiempos de ciclo y metas de producción por turno", resultado: "80%", porcentaje: "NA", comentarios: "" },
+  { numero: 4, descripcion: "Mantener limpieza y orden en el área de trabajo y máquina asignada", resultado: "100%", porcentaje: "NA", comentarios: "" },
+  { numero: 5, descripcion: "Seguir las instrucciones de trabajo y procedimientos de seguridad", resultado: "90%", porcentaje: "NA", comentarios: "" },
 ]
 
 export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {

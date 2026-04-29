@@ -398,12 +398,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <Label className="text-xs text-muted-foreground">Resultado del periodo</Label>
                   <Input
                     value={editObjetivos[step].resultado}
-                    onChange={(e) => {
-                      const next = [...editObjetivos]
-                      next[step] = { ...next[step], resultado: e.target.value }
-                      setEditObjetivos(next)
-                    }}
-                    placeholder="Ej: 80%"
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">

@@ -2,10 +2,11 @@
   width: 100%;
   max-width: 210mm;
   margin: 0 auto;
-  padding: 10mm;
+  padding: 8mm;
   background: #fff;
   color: #111;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.7rem;
 }
 
 .headerRow {
@@ -25,27 +26,28 @@
 
 .titleBlock {
   text-align: center;
+  margin-bottom: 0.75rem;
 }
 
 .titleBlock h1 {
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .titleBlock p {
-  font-size: 0.85rem;
+  font-size: 0.68rem;
   margin: 0;
 }
 
 .infoGrid {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.3rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-bottom: 0.75rem;
-  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
 }
 
 .infoGrid div {
@@ -55,9 +57,9 @@
 }
 
 .instructions {
-  font-size: 0.78rem;
-  line-height: 1.4;
-  margin-bottom: 0.75rem;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
   font-style: italic;
 }
 
@@ -66,9 +68,9 @@
   background: #1e3a5f;
   color: #fff;
   font-weight: 700;
-  font-size: 0.85rem;
-  padding: 0.4rem 0.7rem;
-  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.5rem;
+  margin-top: 0.5rem;
   text-transform: uppercase;
 }
 
@@ -76,13 +78,13 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
 }
 
 .table th,
 .table td {
   border: 1px solid #333;
-  padding: 0.4rem 0.5rem;
+  padding: 0.25rem 0.4rem;
   vertical-align: top;
 }
 
@@ -90,7 +92,7 @@
   background: #d4e3f5;
   font-weight: 700;
   text-align: left;
-  font-size: 0.78rem;
+  font-size: 0.63rem;
 }
 
 .thCenter {
@@ -106,19 +108,19 @@
 }
 
 .tdSmall {
-  font-size: 0.72rem;
-  line-height: 1.3;
+  font-size: 0.58rem;
+  line-height: 1.2;
 }
 
 /* Result row after each section */
 .resultRow {
   display: flex;
   justify-content: space-between;
-  padding: 0.4rem 0.7rem;
+  padding: 0.25rem 0.5rem;
   background: #eef4ff;
   border: 1px solid #333;
   border-top: none;
-  font-size: 0.82rem;
+  font-size: 0.68rem;
 }
 
 /* Calificación final */
@@ -126,35 +128,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 1rem;
-  margin-top: 0.75rem;
+  padding: 0.4rem 0.7rem;
+  margin-top: 0.5rem;
   background: #1e3a5f;
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .warningBox {
   background: #fef3cd;
   border: 1px solid #f0d86e;
-  padding: 0.5rem 0.7rem;
-  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
 }
 
 /* Notes */
 .notesSection {
   display: grid;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .notesSection div {
-  padding: 0.5rem 0.7rem;
+  padding: 0.3rem 0.5rem;
   border: 1px solid #c7d9f0;
-  font-size: 0.82rem;
+  font-size: 0.68rem;
 }
 
 .notesSection p {
@@ -164,29 +166,35 @@
 /* Signatures */
 .signatureGrid {
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
   text-align: center;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
 }
 
 .signatureGrid > div {
   border-top: 1px solid #333;
-  padding-top: 0.5rem;
+  padding-top: 0.3rem;
 }
 
 .signatureName {
   font-weight: 700;
-  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  margin-bottom: 0.1rem;
 }
 
 .footerText {
-  font-size: 0.7rem;
-  text-align: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 6mm 3mm 6mm;
+  font-size: 0.65rem;
   color: #6b7280;
-  margin-top: 0.5rem;
 }
 
 /* Print overrides */
@@ -248,8 +256,15 @@
     print-color-adjust: exact;
   }
 
+  .lastPageSection {
+    page-break-before: always;
+    break-before: page;
+}
+
+  
+
   @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
+  size: letter portrait;
+  margin: 6mm;
+}
 }
