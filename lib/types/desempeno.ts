@@ -136,9 +136,18 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
   const ponderadoParte1 = Math.round(promedioParte1 * 0.4)
 
   // Parte 2: promedio de % cumplimiento
+  // Supports both numeric ("80") and text ("CUMPLE"/"NO CUMPLE") values
+  const parseCumplimiento = (val: string): number | null => {
+    const upper = val.toUpperCase().trim()
+    if (upper === "CUMPLE") return 100
+    if (upper === "NO CUMPLE") return 0
+    if (upper === "NA" || upper === "") return null
+    const num = parseFloat(val)
+    return isNaN(num) ? null : num
+  }
   const cumpVals = data.cumplimiento_responsabilidades
-    .map((c) => parseFloat(c.porcentaje))
-    .filter((v) => !isNaN(v))
+    .map((c) => parseCumplimiento(c.porcentaje))
+    .filter((v): v is number => v !== null)
   const promedioParte2 = cumpVals.length > 0
     ? cumpVals.reduce((s, v) => s + v, 0) / cumpVals.length
     : 0
