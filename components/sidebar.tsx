@@ -255,11 +255,11 @@ export default function Sidebar({
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-1 p-2">
             {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => {
-              const sectionItems = isEvaluador
-                ? section.items.filter((i) => EVALUADOR_ALLOWED_ROUTES.some((r) => i.href === r || i.href.startsWith(r + '/')))
-                : section.items
-              if (sectionItems.length === 0) return null
+              const sectionItems = section.items
               const hasActiveItem = sectionItems.some((i) => i.href === pathname)
+
+              const isItemAllowed = (href: string) =>
+                !isEvaluador || EVALUADOR_ALLOWED_ROUTES.some((r) => href === r || href.startsWith(r + '/'))
 
               // Icon-only mode (desktop collapsed): keep the existing flat
               // rendering — separator + icons with tooltips. No collapsing.
@@ -270,23 +270,36 @@ export default function Sidebar({
                     <div className="space-y-1">
                       {sectionItems.map((item) => {
                         const active = pathname === item.href
+                        const allowed = isItemAllowed(item.href)
                         return (
                           <Tooltip key={item.href}>
                             <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className={`w-full justify-start px-2 ${
-                                  active ? "border-l-4 border-primary bg-primary/10" : ""
-                                }`}
-                                aria-current={active ? "page" : undefined}
-                                asChild
-                              >
-                                <Link href={item.href}>
+                              {allowed ? (
+                                <Button
+                                  variant="ghost"
+                                  className={`w-full justify-start px-2 ${
+                                    active ? "border-l-4 border-primary bg-primary/10" : ""
+                                  }`}
+                                  aria-current={active ? "page" : undefined}
+                                  asChild
+                                >
+                                  <Link href={item.href}>
+                                    <item.icon size={18} className="mx-auto" />
+                                  </Link>
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start px-2 opacity-40 cursor-not-allowed"
+                                  disabled
+                                >
                                   <item.icon size={18} className="mx-auto" />
-                                </Link>
-                              </Button>
+                                </Button>
+                              )}
                             </TooltipTrigger>
-                            <TooltipContent side="right">{item.label}</TooltipContent>
+                            <TooltipContent side="right">
+                              {allowed ? item.label : `${item.label} (sin acceso)`}
+                            </TooltipContent>
                           </Tooltip>
                         )
                       })}
@@ -300,7 +313,8 @@ export default function Sidebar({
               if (sectionItems.length === 1) {
                 const item = sectionItems[0]
                 const active = pathname === item.href
-                return (
+                const allowed = isItemAllowed(item.href)
+                return allowed ? (
                   <Button
                     key={section.sectionLabel}
                     variant="ghost"
@@ -318,6 +332,16 @@ export default function Sidebar({
                       <span>{item.label}</span>
                     </Link>
                   </Button>
+                ) : (
+                  <Button
+                    key={section.sectionLabel}
+                    variant="ghost"
+                    className="w-full justify-start opacity-40 cursor-not-allowed"
+                    disabled
+                  >
+                    <item.icon size={18} className="mr-2" />
+                    <span>{item.label}</span>
+                  </Button>
                 )
               }
 
@@ -329,7 +353,8 @@ export default function Sidebar({
                 >
                   {sectionItems.map((item) => {
                     const active = pathname === item.href
-                    return (
+                    const allowed = isItemAllowed(item.href)
+                    return allowed ? (
                       <Button
                         key={item.href}
                         variant="ghost"
@@ -346,6 +371,16 @@ export default function Sidebar({
                           <item.icon size={16} className="mr-2" />
                           <span>{item.label}</span>
                         </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        key={item.href}
+                        variant="ghost"
+                        className="w-full justify-start pl-8 text-sm opacity-40 cursor-not-allowed"
+                        disabled
+                      >
+                        <item.icon size={16} className="mr-2" />
+                        <span>{item.label}</span>
                       </Button>
                     )
                   })}

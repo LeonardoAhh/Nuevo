@@ -5,7 +5,7 @@ import { useUser } from './useUser'
 export type AppRole = 'dev' | 'admin' | 'evaluador'
 
 /** Rutas permitidas para el rol evaluador */
-export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings']
+export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings', '/cursos', '/bot', '/eventos']
 
 export function useRole() {
   const { user, loading: userLoading } = useUser()
