@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Search, Printer, Download, AlertCircle, ClipboardList } from "lucide-react"
+import { Search, Printer, Download, AlertCircle, ClipboardList, Save, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +20,7 @@ export default function DesempenoSearch() {
 
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales")
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0])
-  const { data, setData, loading, error, buscarEmpleado } = useDesempeno()
+  const { data, setData, loading, saving, error, buscarEmpleado, guardar } = useDesempeno()
 
   useEffect(() => {
     setPeriodoSeleccionado(PERIODOS_DESEMPENO[periodoModo][0])
@@ -77,6 +77,21 @@ export default function DesempenoSearch() {
               </Tooltip>
               {data && (
                 <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
+                        disabled={saving}
+                        aria-label="Guardar evaluación"
+                      >
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Guardar evaluación</TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Descargar PDF">
