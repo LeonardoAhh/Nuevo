@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import {
   Calendar, Save, ChevronLeft, ChevronRight,
-  AlertCircle, RotateCcw, Plus, Loader2,
+  AlertCircle, Plus, Loader2,
 } from "lucide-react"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -164,10 +164,26 @@ export function IncidenciasModal({
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Calendar className="h-5 w-5 text-primary" />
-            Incidencias
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-5 w-5 text-primary" />
+              Incidencias
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleSave}
+              disabled={!dirty || saving}
+              aria-label="Guardar"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
           <DialogDescription className="flex items-center gap-2">
             <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
               #{numeroEmpleado}
@@ -195,24 +211,6 @@ export function IncidenciasModal({
             </Button>
           </div>
 
-          {/* Quick month chips */}
-          {availableMonths.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {availableMonths.slice(0, 6).map(m => (
-                <button
-                  key={m}
-                  onClick={() => setSelectedMes(m)}
-                  className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                    m === selectedMes
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  {formatMes(m)}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Loading state */}
           {loading && (
@@ -294,30 +292,7 @@ export function IncidenciasModal({
             </Alert>
           )}
 
-          {/* Save button */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => loadMonthData()}
-              disabled={loading || saving}
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Recargar
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!dirty || saving}
-            >
-              {saving ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5 mr-1.5" />
-              )}
-              Guardar
-            </Button>
-          </div>
+
         </div>
 
         {/* Month history summary at bottom */}
