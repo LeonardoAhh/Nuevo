@@ -26,6 +26,9 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
+import { useRole } from "@/lib/hooks"
+import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
+import { Award } from "lucide-react"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -87,14 +90,28 @@ const MORE_HREFS = new Set(
  * Active state is computed against the current `pathname`; the "Más" tab
  * lights up when the user is on any route that lives inside the sheet.
  */
+const EVALUADOR_PRIMARY: NavItem[] = [
+  { label: "Desempeño", href: "/desempeno", icon: Award },
+]
+
 export default function BottomNav() {
   const pathname = usePathname() ?? "/"
   const [open, setOpen] = useState(false)
+  const { isEvaluador } = useRole()
 
   // Don't render on the public landing pages — they have their own layouts.
   if (isPublicPath(pathname)) return null
 
-  const moreActive = MORE_HREFS.has(pathname)
+  const activePrimary = isEvaluador ? EVALUADOR_PRIMARY : PRIMARY
+  const activeMoreGroups = isEvaluador
+    ? MORE_GROUPS.map((g) => ({
+        ...g,
+        items: g.items.filter((i) => EVALUADOR_ALLOWED_ROUTES.some((r) => i.href === r || i.href.startsWith(r + '/'))),
+      })).filter((g) => g.items.length > 0)
+    : MORE_GROUPS
+
+  const activeMoreHrefs = new Set(activeMoreGroups.flatMap((g) => g.items.map((i) => i.href)))
+  const moreActive = activeMoreHrefs.has(pathname)
 
   return (
     <>
@@ -102,14 +119,12 @@ export default function BottomNav() {
         aria-label="Navegación principal móvil"
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 md:hidden",
-          // Blur + token-based bg so it sits coherently with the app in both
-          // themes. The safe-area inset keeps it above the iOS home indicator.
           "border-t border-border/60 bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/75",
           "pb-[env(safe-area-inset-bottom)]",
         )}
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around">
-          {PRIMARY.map((item) => (
+          {activePrimary.map((item) => (
             <TabLink key={item.href} item={item} active={isActive(pathname, item.href)} />
           ))}
           <li className="flex-1">
@@ -146,7 +161,7 @@ export default function BottomNav() {
             <DrawerDescription>Todas las secciones disponibles.</DrawerDescription>
           </DrawerHeader>
           <div className="space-y-6 px-4 pb-6">
-            {MORE_GROUPS.map((group) => (
+            {activeMoreGroups.map((group) => (
               <div key={group.label} className="space-y-2">
                 <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {group.label}

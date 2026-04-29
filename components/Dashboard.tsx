@@ -1,9 +1,13 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
 import BottomNav from "@/components/bottom-nav"
+import { useRole } from "@/lib/hooks"
+import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
 
 interface DashboardProps {
   content?: ReactNode
@@ -19,6 +23,20 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
     setShowMobileSidebar,
     openMobileSidebar,
   } = useSidebar()
+
+  const pathname = usePathname()
+  const router = useRouter()
+  const { isEvaluador, loading: roleLoading } = useRole()
+
+  useEffect(() => {
+    if (roleLoading || !isEvaluador) return
+    const allowed = EVALUADOR_ALLOWED_ROUTES.some(
+      (r) => pathname === r || pathname.startsWith(r + '/')
+    )
+    if (!allowed) {
+      router.replace('/desempeno')
+    }
+  }, [pathname, isEvaluador, roleLoading, router])
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-background">

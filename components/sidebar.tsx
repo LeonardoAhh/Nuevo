@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme, type Theme } from "@/components/theme-context"
 import { useUser, useProfile, useRole } from "@/lib/hooks"
+import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
 import { notify } from "@/lib/notify"
 import SignOutOverlay from "@/components/signout-overlay"
 
@@ -157,7 +158,7 @@ export default function Sidebar({
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
-  const { canEdit } = useRole()
+  const { canEdit, isEvaluador } = useRole()
   const [signingOut, setSigningOut] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -254,7 +255,10 @@ export default function Sidebar({
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-1 p-2">
             {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => {
-              const sectionItems = section.items
+              const sectionItems = isEvaluador
+                ? section.items.filter((i) => EVALUADOR_ALLOWED_ROUTES.some((r) => i.href === r || i.href.startsWith(r + '/')))
+                : section.items
+              if (sectionItems.length === 0) return null
               const hasActiveItem = sectionItems.some((i) => i.href === pathname)
 
               // Icon-only mode (desktop collapsed): keep the existing flat
