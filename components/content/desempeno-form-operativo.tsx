@@ -19,7 +19,7 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { EVALUADORES_DESEMPENO } from "@/lib/catalogo"
+import { EVALUADORES_DESEMPENO, EVALUADORES_PUESTO } from "@/lib/catalogo"
 
 interface Props {
   data: DesempenoData
@@ -153,7 +153,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               {canEdit ? (
                 <Select
                   value={data.evaluador_nombre || ""}
-                  onValueChange={(value) => onUpdate?.({ ...data, evaluador_nombre: value })}
+                  onValueChange={(value) => onUpdate?.({ ...data, evaluador_nombre: value, evaluador_puesto: EVALUADORES_PUESTO[value] || "" })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona evaluador" />
