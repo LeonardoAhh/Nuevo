@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { Search, Printer, Download, AlertCircle, ClipboardList } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -59,43 +59,46 @@ export default function DesempenoSearch() {
   return (
     <TooltipProvider>
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link href="/desempeno/objetivos">
-              <Button variant="outline" size="icon" aria-label="Objetivos por puesto">
-                <ClipboardList className="h-4 w-4" />
-              </Button>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent>Objetivos por puesto</TooltipContent>
-        </Tooltip>
-        {data && (
-          <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Descargar PDF">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Descargar PDF</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" onClick={() => window.print()} aria-label="Imprimir">
-                  <Printer className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Imprimir</TooltipContent>
-            </Tooltip>
-          </>
-        )}
-      </div>
-
       {/* Buscador */}
       <Card>
-        <CardContent className="pt-6 pb-4">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Buscar empleado</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/desempeno/objetivos">
+                    <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Objetivos por puesto">
+                      <ClipboardList className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Objetivos por puesto</TooltipContent>
+              </Tooltip>
+              {data && (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Descargar PDF">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Descargar PDF</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" className="h-8 w-8" onClick={() => window.print()} aria-label="Imprimir">
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Imprimir</TooltipContent>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-2 pb-4">
           <div className="grid gap-4 md:grid-cols-[1fr_auto]">
             <div>
               <div className="relative mb-4">
