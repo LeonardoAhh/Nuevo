@@ -11,22 +11,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
-import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData, type DesempenoTipo } from "@/lib/types/desempeno"
+import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData } from "@/lib/types/desempeno"
 import DesempenoPrint from "./desempeno-print"
 import { DesempenoForm } from "./desempeno-form-operativo"
 
 export default function DesempenoSearch() {
   const [numeroBuscado, setNumeroBuscado] = useState("")
-  const [tipoSeleccionado, setTipoSeleccionado] = useState<DesempenoTipo>("operativo")
+
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales")
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0])
   const { data, loading, error, buscarEmpleado } = useDesempeno()
-
-  useEffect(() => {
-    if (data?.tipo && data.tipo !== tipoSeleccionado) {
-      setTipoSeleccionado(data.tipo)
-    }
-  }, [data, tipoSeleccionado])
 
   useEffect(() => {
     setPeriodoSeleccionado(PERIODOS_DESEMPENO[periodoModo][0])
@@ -48,9 +42,9 @@ export default function DesempenoSearch() {
     puesto: "",
     evaluador_nombre: "",
     evaluador_puesto: "",
-    tipo: tipoSeleccionado,
+    tipo: "operativo",
     periodo: "PERIODO",
-    objetivos: DEFAULT_OBJETIVOS_POR_TIPO[tipoSeleccionado],
+    objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
     cumplimiento_responsabilidades: [],
     competencias: [],
     compromisos: "",
@@ -62,7 +56,7 @@ export default function DesempenoSearch() {
 
   return (
     <TooltipProvider>
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toolbar */}
       <div className="flex items-center justify-end gap-2">
         <Tooltip>
@@ -111,17 +105,6 @@ export default function DesempenoSearch() {
                   className="pl-10"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(["operativo", "administrativo", "jefe"] as DesempenoTipo[]).map((tipo) => (
-                  <Button
-                    key={tipo}
-                    variant={tipoSeleccionado === tipo ? "secondary" : "outline"}
-                    onClick={() => setTipoSeleccionado(tipo)}
-                  >
-                    {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                  </Button>
-                ))}
               </div>
               <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto] items-end">
                 <div className="space-y-2">
