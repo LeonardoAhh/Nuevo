@@ -4,10 +4,10 @@ import React, { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import {
   Calendar, Save, ChevronLeft, ChevronRight,
-  AlertCircle, Plus, Loader2,
+  AlertCircle, Plus, Loader2, X,
 } from "lucide-react"
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -162,9 +162,19 @@ export function IncidenciasModal({
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" hideClose>
         <DialogHeader>
           <div className="flex items-center justify-between">
+            <DialogClose asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                aria-label="Cerrar"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogClose>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-5 w-5 text-primary" />
               Incidencias
