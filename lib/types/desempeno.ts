@@ -45,6 +45,30 @@ export const DEFAULT_OBJETIVOS_POR_TIPO: Record<DesempenoTipo, Objetivo[]> = {
   ]
 }
 
+/**
+ * Objetivos por puesto concreto.
+ * Clave = nombre exacto del puesto en CATALOGO_ORGANIZACIONAL.
+ * Puestos que comparten objetivos (ej: OPERADOR DE MÁQUINA A/B/C/D) apuntan al mismo array.
+ * TODO: llenar manualmente con objetivos específicos por puesto.
+ * Fallback: si un puesto no está aquí, se usan DEFAULT_OBJETIVOS_POR_TIPO según su tipo.
+ */
+const _OBJETIVOS_OPERADOR_MAQUINA: Objetivo[] = [
+  { numero: 1, descripcion: "Operar la máquina asignada cumpliendo los estándares de producción", resultado: "NA", porcentaje: "NA", comentarios: "" },
+  { numero: 2, descripcion: "Reportar fallas y anomalías de la máquina al supervisor de turno", resultado: "NA", porcentaje: "NA", comentarios: "" },
+  { numero: 3, descripcion: "Cumplir con los tiempos de ciclo y metas de producción por turno", resultado: "NA", porcentaje: "NA", comentarios: "" },
+  { numero: 4, descripcion: "Mantener limpieza y orden en el área de trabajo y máquina asignada", resultado: "NA", porcentaje: "NA", comentarios: "" },
+  { numero: 5, descripcion: "Seguir las instrucciones de trabajo y procedimientos de seguridad", resultado: "NA", porcentaje: "NA", comentarios: "" },
+]
+
+export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
+  // ── PRODUCCIÓN ──
+  "OPERADOR DE MÁQUINA A": _OBJETIVOS_OPERADOR_MAQUINA,
+  "OPERADOR DE MÁQUINA B": _OBJETIVOS_OPERADOR_MAQUINA,
+  "OPERADOR DE MÁQUINA C": _OBJETIVOS_OPERADOR_MAQUINA,
+  "OPERADOR DE MÁQUINA D": _OBJETIVOS_OPERADOR_MAQUINA,
+  // TODO: agregar más puestos aquí
+}
+
 export interface DesempenoData {
   numero_empleado: string
   nombre: string
