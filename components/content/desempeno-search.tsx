@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Search, Printer, Download } from "lucide-react"
+import { Search, Printer, Download, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
 import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData, type DesempenoTipo } from "@/lib/types/desempeno"
@@ -33,7 +35,11 @@ export default function DesempenoSearch() {
     if (numeroBuscado) buscarEmpleado(numeroBuscado)
   }
 
-  if (loading) return <div>Cargando...</div>
+  if (loading) return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-sm text-muted-foreground">Cargando...</div>
+    </div>
+  )
 
   const previewData: DesempenoData = data ?? {
     numero_empleado: "",
@@ -96,17 +102,21 @@ export default function DesempenoSearch() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700">Seleccionar periodo</label>
-                  <select
-                    className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none"
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">Seleccionar periodo</label>
+                  <Select
                     value={periodoSeleccionado}
-                    onChange={(e) => setPeriodoSeleccionado(e.target.value as DesempenoPeriodo)}
+                    onValueChange={(value) => setPeriodoSeleccionado(value as DesempenoPeriodo)}
                   >
-                    {PERIODOS_DESEMPENO[periodoModo].map((periodo) => (
-                      <option key={periodo} value={periodo}>{periodo}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar periodo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERIODOS_DESEMPENO[periodoModo].map((periodo) => (
+                        <SelectItem key={periodo} value={periodo}>{periodo}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -124,7 +134,12 @@ export default function DesempenoSearch() {
         </CardContent>
       </Card>
 
-      {error && <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">Error: {error}</div>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <DesempenoForm data={previewData} />
 
