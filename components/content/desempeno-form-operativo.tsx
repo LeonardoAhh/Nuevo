@@ -478,15 +478,23 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">% Cumplimiento</Label>
-                  <Input
-                    value={editCumplimiento[step].porcentaje}
-                    onChange={(e) => {
-                      const next = [...editCumplimiento]
-                      next[step] = { ...next[step], porcentaje: e.target.value }
-                      setEditCumplimiento(next)
-                    }}
-                    placeholder="Ej: 80"
-                  />
+                  {step === 2 || step === 4 ? (
+                    <Input
+                      value={editCumplimiento[step].porcentaje}
+                      readOnly
+                      className="bg-muted cursor-not-allowed"
+                    />
+                  ) : (
+                    <Input
+                      value={editCumplimiento[step].porcentaje}
+                      onChange={(e) => {
+                        const next = [...editCumplimiento]
+                        next[step] = { ...next[step], porcentaje: e.target.value }
+                        setEditCumplimiento(next)
+                      }}
+                      placeholder="Ej: 80"
+                    />
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Comentarios</Label>
