@@ -217,6 +217,42 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             </CardContent>
           </Card>
 
+          {/* PARTE 3: Competencias (30%) */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Tercera parte — Competencias (30%)</CardTitle>
+                <EditButton section="competencias" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Competencia</th>
+                      <th className="text-left p-2">Cal.</th>
+                      <th className="text-left p-2">%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.competencias.map((comp, idx) => (
+                      <tr key={idx} className="border-b last:border-0">
+                        <td className="px-2 py-2">{comp.nombre}</td>
+                        <td className="px-2 py-2">{comp.calificacion}/4</td>
+                        <td className="px-2 py-2">{Math.round((comp.calificacion / 4) * 100)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
+                <span>Resultado promedio: {ponderacion.promedioParte3}%</span>
+                <span>Ponderado: {ponderacion.ponderadoParte3}%</span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Incidencias */}
           {data.incidencias && data.incidencias.length > 0 && (
             <Card>
@@ -273,42 +309,6 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
                 <span>Resultado promedio: {ponderacion.promedioParte2}%</span>
                 <span>Ponderado: {ponderacion.ponderadoParte2}%</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* PARTE 3: Competencias (30%) */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Tercera parte — Competencias (30%)</CardTitle>
-                <EditButton section="competencias" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Competencia</th>
-                      <th className="text-left p-2">Cal.</th>
-                      <th className="text-left p-2">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.competencias.map((comp, idx) => (
-                      <tr key={idx} className="border-b last:border-0">
-                        <td className="px-2 py-2">{comp.nombre}</td>
-                        <td className="px-2 py-2">{comp.calificacion}/4</td>
-                        <td className="px-2 py-2">{Math.round((comp.calificacion / 4) * 100)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
-                <span>Resultado promedio: {ponderacion.promedioParte3}%</span>
-                <span>Ponderado: {ponderacion.ponderadoParte3}%</span>
               </div>
             </CardContent>
           </Card>
