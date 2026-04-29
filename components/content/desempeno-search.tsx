@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
-import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoData } from "@/lib/types/desempeno"
+import { DEFAULT_OBJETIVOS_POR_TIPO, DEFAULT_CUMPLIMIENTO, DEFAULT_COMPETENCIAS, type DesempenoData } from "@/lib/types/desempeno"
 import DesempenoPrint from "./desempeno-print"
 import { DesempenoForm } from "./desempeno-form-operativo"
 
@@ -20,7 +20,7 @@ export default function DesempenoSearch() {
 
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales")
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0])
-  const { data, loading, error, buscarEmpleado } = useDesempeno()
+  const { data, setData, loading, error, buscarEmpleado } = useDesempeno()
 
   useEffect(() => {
     setPeriodoSeleccionado(PERIODOS_DESEMPENO[periodoModo][0])
@@ -45,8 +45,8 @@ export default function DesempenoSearch() {
     tipo: "operativo",
     periodo: "PERIODO",
     objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
-    cumplimiento_responsabilidades: [],
-    competencias: [],
+    cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+    competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
     compromisos: "",
     fecha_revision: "",
     observaciones: "",
@@ -160,7 +160,7 @@ export default function DesempenoSearch() {
         </Alert>
       )}
 
-      <DesempenoForm data={previewData} />
+      <DesempenoForm data={previewData} onUpdate={data ? setData : undefined} />
 
       {data && (
         <div className="print-area hidden print:block">

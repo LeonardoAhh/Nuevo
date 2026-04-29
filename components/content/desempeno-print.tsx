@@ -1,6 +1,6 @@
 "use client"
 
-import type { DesempenoData } from "@/lib/types/desempeno"
+import { calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
 import styles from "./desempeno-print.module.css"
 
 interface Props {
@@ -9,12 +9,15 @@ interface Props {
 
 export default function DesempenoPrint({ data }: Props) {
   const objetivos = [...data.objetivos]
-  while (objetivos.length < 10) {
-    objetivos.push({ numero: objetivos.length + 1, descripcion: "NA", resultado: "NA", porcentaje: "NA", comentarios: "" })
+  while (objetivos.length < 5) {
+    objetivos.push({ numero: objetivos.length + 1, descripcion: "", resultado: "NA", porcentaje: "NA", comentarios: "" })
   }
+
+  const pond = calcularPonderacion(data)
 
   return (
     <div className={`print-area ${styles.printRoot}`}>
+      {/* Header */}
       <div className={styles.headerRow}>
         <div className={styles.logoPlaceholder} />
         <div className={styles.titleBlock}>
@@ -24,6 +27,7 @@ export default function DesempenoPrint({ data }: Props) {
         <div className={styles.logoPlaceholder} />
       </div>
 
+      {/* Info */}
       <div className={styles.infoGrid}>
         <div><strong>Nombre del evaluado:</strong> {data.nombre}</div>
         <div><strong>No. empleado:</strong> {data.numero_empleado}</div>
@@ -36,81 +40,101 @@ export default function DesempenoPrint({ data }: Props) {
         Instrucciones para el evaluador: la evaluación está integrada por 3 partes. En la primera deberá anotar los objetivos SMART del puesto evaluado, así como el % del objetivo logrado en cada uno. En la segunda parte se completará con información de RH y SGI, la tercera parte será evaluada por el jefe inmediato.
       </p>
 
+      {/* PARTE 1: Objetivos (40%) */}
+      <div className={styles.sectionHeader}>Primera parte de la evaluación — ponderación total del 40%</div>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>CRITERIO</th>
+            <th className={styles.thCenter}>CRITERIO</th>
             <th>OBJETIVOS SMART</th>
-            <th>RESULTADO DEL PERIODO</th>
-            <th>% OBTENIDO</th>
+            <th className={styles.thCenter}>RESULTADO DEL PERIODO<br/>Ene - Jun / Jul - Dic</th>
+            <th className={styles.thCenter}>% OBTENIDO<br/>(escala 01 al 100%)</th>
             <th>COMENTARIOS</th>
           </tr>
         </thead>
         <tbody>
           {objetivos.map((obj, i) => (
             <tr key={i}>
-              <td>{i + 1}</td>
-              <td>{obj.descripcion}</td>
-              <td>{obj.resultado || 'NA'}</td>
-              <td>{obj.porcentaje || 'NA'}</td>
-              <td>{obj.comentarios || 'NA'}</td>
+              <td className={styles.tdCenter}>{i + 1}</td>
+              <td>{obj.descripcion || '—'}</td>
+              <td className={styles.tdCenter}>{obj.resultado || 'NA'}</td>
+              <td className={styles.tdCenter}>{obj.porcentaje || 'NA'}</td>
+              <td>{obj.comentarios || ''}</td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      <div className={styles.summaryGrid}>
-        <div className={styles.summaryBox}>RESULTADO PROMEDIO: {data.calificacion_final}%</div>
+      <div className={styles.resultRow}>
+        <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte1}%</strong></span>
+        <span>RESULTADO PONDERADO (×40%): <strong>{pond.ponderadoParte1}%</strong></span>
       </div>
 
-      <div className={styles.secondaryTableWrapper}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Cumplimiento de responsabilidades</th>
-              <th>% CUMP</th>
-              <th>EVALÚA</th>
-              <th>COMENTARIOS</th>
+      {/* PARTE 2: Cumplimiento (30%) */}
+      <div className={styles.sectionHeader}>Segunda parte de la evaluación — ponderación total del 30%</div>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Cumplimiento de responsabilidades</th>
+            <th className={styles.thCenter}>% CUMP</th>
+            <th className={styles.thCenter}>EVALÚA</th>
+            <th>COMENTARIOS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.cumplimiento_responsabilidades.map((item, idx) => (
+            <tr key={idx}>
+              <td>{item.descripcion}</td>
+              <td className={styles.tdCenter}>{item.porcentaje}</td>
+              <td className={styles.tdCenter}>{item.evalua}</td>
+              <td>{item.comentarios || ''}</td>
             </tr>
-          </thead>
-          <tbody>
-            {data.cumplimiento_responsabilidades.map((item, idx) => {
-              const [label, value] = Object.entries(item)[0] ?? ["", ""]
-              const [, extra] = Object.entries(item)[1] ?? ["", ""]
-              return (
-                <tr key={idx}>
-                  <td>{label}</td>
-                  <td>{value}</td>
-                  <td>{extra || '—'}</td>
-                  <td>{Object.entries(item).slice(2).map(([k, v]) => v).join(' | ')}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
+      <div className={styles.resultRow}>
+        <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte2}%</strong></span>
+        <span>RESULTADO PONDERADO (×30%): <strong>{pond.ponderadoParte2}%</strong></span>
       </div>
 
-      <div className={styles.competenciasSection}>
-        <h2>Competencias blandas</h2>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Competencia</th>
-              <th>Descripción</th>
-              <th>Calificación</th>
+      {/* PARTE 3: Competencias (30%) */}
+      <div className={styles.sectionHeader}>Tercera parte de la evaluación — ponderación total del 30%</div>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Competencia</th>
+            <th>Descripción</th>
+            <th className={styles.thCenter}>Calificación (0-4)</th>
+            <th className={styles.thCenter}>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.competencias.map((comp, idx) => (
+            <tr key={idx}>
+              <td className={styles.tdBold}>{comp.nombre}</td>
+              <td className={styles.tdSmall}>{comp.descripcion}</td>
+              <td className={styles.tdCenter}>{comp.calificacion}</td>
+              <td className={styles.tdCenter}>{Math.round((comp.calificacion / 4) * 100)}%</td>
             </tr>
-          </thead>
-          <tbody>
-            {data.competencias.map((competencia, idx) => (
-              <tr key={idx}>
-                <td>{competencia.nombre}</td>
-                <td>{competencia.descripcion}</td>
-                <td>{competencia.calificacion}/4</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
+      <div className={styles.resultRow}>
+        <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte3}%</strong></span>
+        <span>RESULTADO PONDERADO (×30%): <strong>{pond.ponderadoParte3}%</strong></span>
       </div>
+
+      {/* Calificación final */}
+      <div className={styles.calificacionBox}>
+        <span>CALIFICACIÓN DEL PERIODO:</span>
+        <strong>{pond.calificacionFinal}%</strong>
+      </div>
+
+      {/* Compromisos */}
+      {pond.calificacionFinal < 80 && (
+        <div className={styles.warningBox}>
+          En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
+        </div>
+      )}
 
       <div className={styles.notesSection}>
         <div>
@@ -118,7 +142,7 @@ export default function DesempenoPrint({ data }: Props) {
           <p>{data.compromisos || '—'}</p>
         </div>
         <div>
-          <strong>Fecha de revisión:</strong>
+          <strong>Fecha de revisión de Compromisos/Acuerdos:</strong>
           <p>{data.fecha_revision || '—'}</p>
         </div>
         <div>
@@ -127,6 +151,7 @@ export default function DesempenoPrint({ data }: Props) {
         </div>
       </div>
 
+      {/* Firmas */}
       <div className={styles.signatureGrid}>
         <div>
           <p className={styles.signatureName}>{data.evaluador_nombre || '—'}</p>
