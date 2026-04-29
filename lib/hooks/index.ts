@@ -35,6 +35,8 @@ export type {
   CourseProgress,
   EmployeeProgress,
 } from './useCapacitacion'
+export { useIncidencias, INCIDENCIA_CATEGORIES, parseIncidenciasJSON, formatMes } from './useIncidencias'
+export type { IncidenciaRecord, IncidenciaInsert, IncidenciaCategory, IncidenciaMensual } from './useIncidencias'
 export { usePromociones } from './usePromociones'
 export { usePromocionesImport } from './usePromocionesImport'
 export { useNotificationHistory, formatDateMX, formatDateTimeMX } from './useNotificationHistory'

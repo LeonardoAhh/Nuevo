@@ -1,9 +1,9 @@
-﻿"use client"
+"use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, CalendarCheck, Info, UserPlus, X,
+  XCircle, CalendarCheck, Info, UserPlus, X, CalendarDays, FileUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -19,6 +19,8 @@ import type { NuevoIngreso, NuevoIngresoUpdate, EvalStatus } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
+import { IncidenciasModal } from "@/components/content/incidencias-modal"
+import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -92,6 +94,24 @@ export default function NuevoIngresoContent() {
   // Nuevo empleado dialog
   const [nuevoOpen, setNuevoOpen] = useState(false)
   const [createSuccess, setCreateSuccess] = useState(false)
+
+  // Incidencias modal
+  const [incidenciasOpen, setIncidenciasOpen] = useState(false)
+  const [incidenciasEmpleado, setIncidenciasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
+
+  const handleOpenIncidencias = (r: NuevoIngreso) => {
+    if (!r.numero) return
+    setIncidenciasEmpleado({ numero: r.numero, nombre: r.nombre })
+    setIncidenciasOpen(true)
+  }
+
+  // Map numero → nombre for bulk import preview
+  const employeeNames = useMemo(() => {
+    const map: Record<string, string> = {}
+    records.forEach(r => { if (r.numero) map[r.numero] = r.nombre })
+    return map
+  }, [records])
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
@@ -202,9 +222,14 @@ export default function NuevoIngresoContent() {
               <CardDescription>Seguimiento de evaluaciones y documentación de empleados nuevos.</CardDescription>
             </div>
             {!isReadOnly && (
-              <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
-                <UserPlus className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="icon" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
+                  <FileUp className="h-4 w-4" />
+                </Button>
+                <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -319,7 +344,7 @@ export default function NuevoIngresoContent() {
                       aria-label={`Editar empleado ${r.nombre}`}
                       className="p-4 cursor-pointer active:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                       onClick={() => handleEdit(r)}
-                      onKeyDown={(e) => {
+                      onKeyDown={(e: React.KeyboardEvent) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
                           handleEdit(r)
@@ -352,8 +377,18 @@ export default function NuevoIngresoContent() {
                             <span className="text-[11px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
                           )}
                         </div>
+                        {/* Incidencias button */}
+                        {r.numero && (
+                          <button
+                            type="button"
+                            aria-label={`Incidencias de ${r.nombre}`}
+                            onClick={(e) => { e.stopPropagation(); handleOpenIncidencias(r) }}
+                            className="shrink-0 p-1.5 rounded-md bg-info/10 text-info hover:bg-info/20 transition-colors"
+                          >
+                            <CalendarDays className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                      {/* Fila inferior: 3 evaluaciones en línea */}
                       <div className="flex gap-2">
                         <div className="flex-1 flex flex-col items-center gap-0.5">
                           <span className="text-[11px] text-muted-foreground">1er mes</span>
@@ -387,6 +422,7 @@ export default function NuevoIngresoContent() {
                       <TableHead className="hidden md:table-cell">Término</TableHead>
                       <TableHead className="hidden md:table-cell">Contrato</TableHead>
                       <TableHead className="text-center">RG-REC-048</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -455,6 +491,19 @@ export default function NuevoIngresoContent() {
                               )}
                             </div>
                           </TableCell>
+                          <TableCell>
+                            {r.numero && (
+                              <button
+                                type="button"
+                                aria-label={`Incidencias de ${r.nombre}`}
+                                onClick={(e) => { e.stopPropagation(); handleOpenIncidencias(r) }}
+                                className="p-1.5 rounded-md bg-info/10 text-info hover:bg-info/20 transition-colors"
+                                title="Incidencias"
+                              >
+                                <CalendarDays className="h-4 w-4" />
+                              </button>
+                            )}
+                          </TableCell>
                         </TableRow>
                       )
                     })}
@@ -493,6 +542,16 @@ export default function NuevoIngresoContent() {
       />
 
       {/* Dialog de edición */}
+      {/* Incidencias modal */}
+      {incidenciasEmpleado && (
+        <IncidenciasModal
+          open={incidenciasOpen}
+          onClose={() => { setIncidenciasOpen(false); setIncidenciasEmpleado(null) }}
+          numeroEmpleado={incidenciasEmpleado.numero}
+          nombreEmpleado={incidenciasEmpleado.nombre}
+        />
+      )}
+
       <EditEmployeeDialog
         record={editRecord}
         open={editOpen}
@@ -500,6 +559,13 @@ export default function NuevoIngresoContent() {
         onClose={() => { setEditOpen(false); setEditRecord(null) }}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      {/* Bulk import incidencias */}
+      <IncidenciasBulkImport
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        employeeNames={employeeNames}
       />
     </>
   )
