@@ -320,14 +320,17 @@ export type DesempenoPeriodo = (typeof PERIODOS_DESEMPENO)[keyof typeof PERIODOS
 export const SECCIONES_PONDERACION_DESEMPENO = {
   operativo: [
     { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de objetivos productivos y operativos." },
-    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de cumplimiento, competencias y compromisos." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de cumplimiento de responsabilidades y reglamentos." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias y compromisos." },
   ] as const,
   administrativo: [
     { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de metas administrativas y de gestión." },
-    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de procesos, comunicación y resultados internos." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de cumplimiento de procesos y comunicación." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias y resultados internos." },
   ] as const,
   jefe: [
     { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de liderazgo, seguimiento y resultados del equipo." },
-    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de gestión de recursos, comunicación y cumplimiento de metas." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de gestión de recursos y cumplimiento de metas." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias directivas y comunicación." },
   ] as const,
 } as const
