@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
   XCircle, CalendarCheck, Info, UserPlus, X, CalendarDays, FileUp,
@@ -21,6 +21,7 @@ import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
 import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
+import { supabase } from "@/lib/supabase/client"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers de UI
@@ -106,12 +107,25 @@ export default function NuevoIngresoContent() {
     setIncidenciasOpen(true)
   }
 
-  // Map numero → nombre for bulk import preview
+  // Map numero → nombre for bulk import preview (from both nuevo_ingreso + employees)
+  const [capEmployeeNames, setCapEmployeeNames] = useState<Record<string, string>>({})
+  const capFetched = useRef(false)
+  useEffect(() => {
+    if (capFetched.current) return
+    capFetched.current = true
+    supabase.from("employees").select("numero, nombre").not("numero", "is", null).then(({ data }) => {
+      if (!data) return
+      const map: Record<string, string> = {}
+      data.forEach((e: { numero: string | null; nombre: string }) => { if (e.numero) map[e.numero] = e.nombre })
+      setCapEmployeeNames(map)
+    })
+  }, [])
+
   const employeeNames = useMemo(() => {
-    const map: Record<string, string> = {}
+    const map: Record<string, string> = { ...capEmployeeNames }
     records.forEach(r => { if (r.numero) map[r.numero] = r.nombre })
     return map
-  }, [records])
+  }, [records, capEmployeeNames])
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
