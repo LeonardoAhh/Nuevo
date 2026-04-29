@@ -5,7 +5,6 @@ import ScrollProgress from "./scroll-progress"
 import Hero from "./sections/hero"
 import ComoFunciona from "./sections/como-funciona"
 import ConsultarHoy from "./sections/consultar-hoy"
-import Proximamente from "./sections/proximamente"
 import RecursosBanner from "./sections/recursos-banner"
 import Faq from "./sections/faq"
 import Footer from "./sections/footer"
@@ -23,7 +22,6 @@ export default function BotLanding() {
       <ComoFunciona />
       <ConsultarHoy />
       <RecursosBanner />
-      <Proximamente />
       <Faq />
       <Footer />
     </main>
