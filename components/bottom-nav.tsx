@@ -28,7 +28,6 @@ import {
 import { cn } from "@/lib/utils"
 import { useRole } from "@/lib/hooks"
 import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
-import { Award } from "lucide-react"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -90,10 +89,6 @@ const MORE_HREFS = new Set(
  * Active state is computed against the current `pathname`; the "Más" tab
  * lights up when the user is on any route that lives inside the sheet.
  */
-const EVALUADOR_PRIMARY: NavItem[] = [
-  { label: "Desempeño", href: "/desempeno", icon: Award },
-]
-
 export default function BottomNav() {
   const pathname = usePathname() ?? "/"
   const [open, setOpen] = useState(false)
@@ -102,16 +97,10 @@ export default function BottomNav() {
   // Don't render on the public landing pages — they have their own layouts.
   if (isPublicPath(pathname)) return null
 
-  const activePrimary = isEvaluador ? EVALUADOR_PRIMARY : PRIMARY
-  const activeMoreGroups = isEvaluador
-    ? MORE_GROUPS.map((g) => ({
-        ...g,
-        items: g.items.filter((i) => EVALUADOR_ALLOWED_ROUTES.some((r) => i.href === r || i.href.startsWith(r + '/'))),
-      })).filter((g) => g.items.length > 0)
-    : MORE_GROUPS
+  const isItemAllowed = (href: string) =>
+    !isEvaluador || EVALUADOR_ALLOWED_ROUTES.some((r) => href === r || href.startsWith(r + '/'))
 
-  const activeMoreHrefs = new Set(activeMoreGroups.flatMap((g) => g.items.map((i) => i.href)))
-  const moreActive = activeMoreHrefs.has(pathname)
+  const moreActive = MORE_HREFS.has(pathname)
 
   return (
     <>
@@ -124,8 +113,8 @@ export default function BottomNav() {
         )}
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around">
-          {activePrimary.map((item) => (
-            <TabLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+          {PRIMARY.map((item) => (
+            <TabLink key={item.href} item={item} active={isActive(pathname, item.href)} allowed={isItemAllowed(item.href)} />
           ))}
           <li className="flex-1">
             <button
@@ -161,7 +150,7 @@ export default function BottomNav() {
             <DrawerDescription>Todas las secciones disponibles.</DrawerDescription>
           </DrawerHeader>
           <div className="space-y-6 px-4 pb-6">
-            {activeMoreGroups.map((group) => (
+            {MORE_GROUPS.map((group) => (
               <div key={group.label} className="space-y-2">
                 <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {group.label}
@@ -169,28 +158,41 @@ export default function BottomNav() {
                 <ul className="grid grid-cols-2 gap-2">
                   {group.items.map((item) => {
                     const active = isActive(pathname, item.href)
+                    const allowed = isItemAllowed(item.href)
                     return (
                       <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-colors",
-                            active
-                              ? "border-primary/40 bg-primary/10 text-primary"
-                              : "border-border/60 bg-card text-foreground hover:border-primary/30 hover:bg-muted/40",
-                          )}
-                        >
-                          <span
+                        {allowed ? (
+                          <Link
+                            href={item.href}
+                            onClick={() => setOpen(false)}
                             className={cn(
-                              "grid size-9 shrink-0 place-items-center rounded-lg",
-                              active ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground",
+                              "flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-colors",
+                              active
+                                ? "border-primary/40 bg-primary/10 text-primary"
+                                : "border-border/60 bg-card text-foreground hover:border-primary/30 hover:bg-muted/40",
                             )}
                           >
-                            <item.icon size={18} aria-hidden />
-                          </span>
-                          <span className="truncate">{item.label}</span>
-                        </Link>
+                            <span
+                              className={cn(
+                                "grid size-9 shrink-0 place-items-center rounded-lg",
+                                active ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground",
+                              )}
+                            >
+                              <item.icon size={18} aria-hidden />
+                            </span>
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        ) : (
+                          <div
+                            className="flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium border-border/60 bg-card text-muted-foreground opacity-40 cursor-not-allowed"
+                            aria-disabled="true"
+                          >
+                            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted/60 text-muted-foreground">
+                              <item.icon size={18} aria-hidden />
+                            </span>
+                            <span className="truncate">{item.label}</span>
+                          </div>
+                        )}
                       </li>
                     )
                   })}
@@ -204,7 +206,20 @@ export default function BottomNav() {
   )
 }
 
-function TabLink({ item, active }: { item: NavItem; active: boolean }) {
+function TabLink({ item, active, allowed = true }: { item: NavItem; active: boolean; allowed?: boolean }) {
+  if (!allowed) {
+    return (
+      <li className="flex-1">
+        <div
+          className="relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground opacity-40 cursor-not-allowed"
+          aria-disabled="true"
+        >
+          <item.icon size={20} aria-hidden />
+          <span className="text-[11px]">{item.label}</span>
+        </div>
+      </li>
+    )
+  }
   return (
     <li className="flex-1">
       <Link
