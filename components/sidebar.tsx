@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   BookOpen,
   Bot,
+  Award,
   ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -72,6 +73,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
       { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
+      { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
     ],

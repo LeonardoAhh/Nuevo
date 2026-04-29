@@ -24,6 +24,16 @@ const nextConfig = {
       },
     ]
   },
+
+  async redirects() {
+    return [
+      {
+        source: "/desempeño",
+        destination: "/desempeno",
+        permanent: false,
+      },
+    ]
+  },
 }
 
 export default nextConfig

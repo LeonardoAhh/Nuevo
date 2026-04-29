@@ -243,3 +243,91 @@ export const JEFES_DE_AREA_POR_DEPARTAMENTO: { [departamento: string]: string[] 
     "CABRERO BOO MANUEL ALBERTO",
   ],
 }
+
+export const TIPO_DESEMPENO_POR_PUESTO = {
+  jefe: [
+    "GERENTE",
+    "JEFE",
+    "SUPERVISOR",
+    "COORDINADOR",
+    "LIDER",
+    "DIRECTOR",
+    "GERENTE DE",
+    "JEFE DE",
+    "SUPERVISOR DE",
+    "COORDINADOR DE",
+    "LÍDER DE",
+  ],
+  administrativo: [
+    "ADMINISTRATIVO",
+    "AUXILIAR ADMINISTRATIVO",
+    "CAPTURISTA",
+    "ANALISTA",
+    "ASISTENTE",
+    "SECRETARIA",
+    "PROGRAMADOR",
+    "AUXILIAR DE RECURSOS HUMANOS",
+    "AUXILIAR DE CONTABILIDAD",
+  ],
+  operativo: [
+    "OPERADOR",
+    "AUXILIAR",
+    "MATERIALISTA",
+    "PREPARADOR",
+    "MONTADOR",
+    "TÉCNICO",
+    "INSPECTOR",
+    "METRÓLOGO",
+    "CHOFER",
+    "RESIDENTE",
+    "AUXILIAR DE MANTENIMIENTO",
+  ],
+} as const
+
+export type TipoDesempeno = keyof typeof TIPO_DESEMPENO_POR_PUESTO
+
+export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
+  const normalized = puesto.toUpperCase().trim()
+
+  const matchList = (tipo: TipoDesempeno) =>
+    TIPO_DESEMPENO_POR_PUESTO[tipo].some((keyword) => normalized.includes(keyword))
+
+  if (matchList("jefe") && !normalized.includes("AUXILIAR ADMINISTRATIVO")) {
+    return "jefe"
+  }
+
+  if (matchList("administrativo")) {
+    return "administrativo"
+  }
+
+  return "operativo"
+}
+
+export const PERIODOS_DESEMPENO = {
+  semestrales: ["ENERO-JUNIO", "JULIO-DICIEMBRE"] as const,
+  mensuales: [
+    "ENERO-FEBRERO",
+    "MARZO-ABRIL",
+    "MAYO-JUNIO",
+    "JULIO-AGOSTO",
+    "SEPTIEMBRE-OCTUBRE",
+    "NOVIEMBRE-DICIEMBRE",
+  ] as const,
+} as const
+
+export type DesempenoPeriodo = (typeof PERIODOS_DESEMPENO)[keyof typeof PERIODOS_DESEMPENO][number]
+
+export const SECCIONES_PONDERACION_DESEMPENO = {
+  operativo: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de objetivos productivos y operativos." },
+    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de cumplimiento, competencias y compromisos." },
+  ] as const,
+  administrativo: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de metas administrativas y de gestión." },
+    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de procesos, comunicación y resultados internos." },
+  ] as const,
+  jefe: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de liderazgo, seguimiento y resultados del equipo." },
+    { nombre: "Segunda parte", peso: 60, descripcion: "Evaluación de gestión de recursos, comunicación y cumplimiento de metas." },
+  ] as const,
+} as const
