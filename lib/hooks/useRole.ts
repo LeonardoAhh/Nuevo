@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useUser } from './useUser'
 
-export type AppRole = 'dev' | 'admin'
+export type AppRole = 'dev' | 'admin' | 'evaluador'
+
+/** Rutas permitidas para el rol evaluador */
+export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings']
 
 export function useRole() {
   const { user, loading: userLoading } = useUser()
@@ -43,5 +46,11 @@ export function useRole() {
   /** true si el usuario solo puede ver */
   const isReadOnly = role === 'admin'
 
-  return { role, canEdit, isReadOnly, loading }
+  /** true si el usuario es evaluador (acceso limitado a desempeño) */
+  const isEvaluador = role === 'evaluador'
+
+  /** true si el usuario puede gestionar evaluaciones (dev o evaluador) */
+  const canEvaluate = role === 'dev' || role === 'evaluador'
+
+  return { role, canEdit, isReadOnly, isEvaluador, canEvaluate, loading }
 }
