@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DEFAULT_OBJETIVOS_POR_TIPO, type DesempenoTipo, type Objetivo } from "@/lib/types/desempeno"
 
 const TIPOS: DesempenoTipo[] = ["operativo", "administrativo", "jefe"]
@@ -78,15 +79,16 @@ export default function DesempenoObjetivos() {
         <CardContent className="grid gap-4 sm:grid-cols-[1fr_auto] items-end">
           <div className="space-y-2">
             <Label>Tipo de puesto</Label>
-            <select
-              className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value as DesempenoTipo)}
-            >
-              {TIPOS.map((item) => (
-                <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>
-              ))}
-            </select>
+            <Select value={tipo} onValueChange={(value) => setTipo(value as DesempenoTipo)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS.map((item) => (
+                  <SelectItem key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="rounded-lg border border-border bg-muted p-4">
             <p className="text-sm text-muted-foreground">Plantilla vigente</p>

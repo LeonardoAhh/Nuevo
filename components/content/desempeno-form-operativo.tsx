@@ -17,7 +17,7 @@ export function DesempenoForm({ data }: Props) {
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <h1 className="text-2xl font-bold">EVALUACIÓN DE DESEMPPEÑO</h1>
+              <h1 className="text-2xl font-bold">EVALUACIÓN DE DESEMPEÑO</h1>
               <p className="text-muted-foreground">Personal {data.tipo === 'jefe' ? 'Jefes' : data.tipo === 'administrativo' ? 'Administrativo' : 'Operativo'}</p>
             </div>
             <Badge variant="secondary">{data.periodo}</Badge>
