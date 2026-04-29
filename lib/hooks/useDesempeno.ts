@@ -24,13 +24,29 @@ export function useDesempeno() {
     setError(null)
 
     try {
+      // Search in both employees and nuevo_ingreso tables
       const { data: emp } = await supabase
         .from("employees")
         .select("id, numero, nombre, puesto")
         .eq("numero", numero)
-        .single()
+        .maybeSingle()
 
-      if (!emp) throw new Error("Empleado no encontrado")
+      let empleadoData: { numero: string; nombre: string; puesto: string } | null = null
+
+      if (emp) {
+        empleadoData = { numero: emp.numero!, nombre: emp.nombre, puesto: emp.puesto || "" }
+      } else {
+        const { data: ni } = await supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto")
+          .eq("numero", numero)
+          .maybeSingle()
+        if (ni) {
+          empleadoData = { numero: ni.numero!, nombre: ni.nombre, puesto: ni.puesto || "" }
+        }
+      }
+
+      if (!empleadoData) throw new Error("Empleado no encontrado")
 
       const { data: evalData } = await supabase
         .from("evaluaciones_desempeno")
@@ -48,7 +64,7 @@ export function useDesempeno() {
 
       if (incidenciaError) throw incidenciaError
 
-      const puesto = emp.puesto || ""
+      const puesto = empleadoData.puesto
       const tipoPuesto = getTipoDesempenoByPuesto(puesto)
       const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
         ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
@@ -89,8 +105,8 @@ export function useDesempeno() {
         : DEFAULT_COMPETENCIAS.map((c) => ({ ...c }))
 
       const result: DesempenoData = {
-        numero_empleado: emp.numero!,
-        nombre: emp.nombre,
+        numero_empleado: empleadoData.numero,
+        nombre: empleadoData.nombre,
         puesto,
         evaluador_nombre: evalData?.evaluador_nombre || "",
         evaluador_puesto: evalData?.evaluador_puesto || "",

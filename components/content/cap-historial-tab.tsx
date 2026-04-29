@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, CheckCircle2, X } from "lucide-react"
+import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, CheckCircle2, X, CalendarDays } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,13 +28,14 @@ interface CapHistorialTabProps {
   onEditEmployee: (emp: Employee) => void
   onAddCourses: (emp: Employee) => void
   onDeleteEmployee: (emp: Employee) => void
+  onIncidencias: (emp: Employee) => void
 }
 
 export function CapHistorialTab({
   employees, loadingEmployees, progressMap, isReadOnly,
   newEmpSuccess, addCoursesSuccess,
   onNewEmployee, onBulkImport,
-  onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee,
+  onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee, onIncidencias,
 }: CapHistorialTabProps) {
   const [empSearch, setEmpSearch]         = useState("")
   const [empFilterDept, setEmpFilterDept] = useState("all")
@@ -216,6 +217,17 @@ export function CapHistorialTab({
                         </TableCell>
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
+                            {emp.numero && (
+                              <Button
+                                variant="outline" size="icon"
+                                className="h-9 w-9 text-info focus-visible:ring-2 focus-visible:ring-ring"
+                                onClick={() => onIncidencias(emp)}
+                                title="Incidencias"
+                                aria-label={`Incidencias de ${emp.nombre}`}
+                              >
+                                <CalendarDays className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="outline" size="icon"
                               className="h-9 w-9 text-foreground focus-visible:ring-2 focus-visible:ring-ring"

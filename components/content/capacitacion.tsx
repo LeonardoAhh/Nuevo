@@ -23,6 +23,7 @@ import { CapCoursesTab }     from "@/components/content/cap-courses-tab"
 import { CapHistorialTab }   from "@/components/content/cap-historial-tab"
 import { CapImportTab }      from "@/components/content/cap-import-tab"
 import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
+import { IncidenciasModal } from "@/components/content/incidencias-modal"
 
 // Hooks
 import { useBulkImport }  from "@/lib/hooks/useBulkImport"
@@ -304,6 +305,16 @@ export default function CapacitacionContent() {
     else notify.error(result.error ?? 'Error al eliminar historial')
   }, [clearHistorial, employees.length])
 
+  // ── Incidencias modal state ─────────────────────────────────────────────
+  const [incidenciasOpen, setIncidenciasOpen] = useState(false)
+  const [incidenciasEmpleado, setIncidenciasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
+
+  const handleOpenIncidencias = useCallback((emp: Employee) => {
+    if (!emp.numero) return
+    setIncidenciasEmpleado({ numero: emp.numero, nombre: emp.nombre })
+    setIncidenciasOpen(true)
+  }, [])
+
   const handleDeleteEmployee = useCallback(async (emp: Employee) => {
     const ok = await notify.confirm({
       title: "Eliminar empleado",
@@ -379,6 +390,7 @@ export default function CapacitacionContent() {
             onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
             onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
             onDeleteEmployee={handleDeleteEmployee}
+            onIncidencias={handleOpenIncidencias}
           />
         </TabsContent>
 
@@ -495,6 +507,15 @@ export default function CapacitacionContent() {
         onClose={() => setNewCourseOpen(false)}
         onSave={handleSaveNewCourse}
       />
+
+      {incidenciasEmpleado && (
+        <IncidenciasModal
+          open={incidenciasOpen}
+          onClose={() => setIncidenciasOpen(false)}
+          numeroEmpleado={incidenciasEmpleado.numero}
+          nombreEmpleado={incidenciasEmpleado.nombre}
+        />
+      )}
     </>
   )
 }
