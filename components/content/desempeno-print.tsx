@@ -1,6 +1,7 @@
 "use client"
 
 import { calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
+import { EVALUADORES_PUESTO } from "@/lib/catalogo"
 import styles from "./desempeno-print.module.css"
 
 interface Props {

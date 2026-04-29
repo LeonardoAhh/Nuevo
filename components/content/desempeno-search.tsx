@@ -36,22 +36,24 @@ export default function DesempenoSearch() {
     </div>
   )
 
-  const previewData: DesempenoData = data ?? {
-    numero_empleado: "",
-    nombre: "",
-    puesto: "",
-    evaluador_nombre: "",
-    evaluador_puesto: "",
-    tipo: "operativo",
-    periodo: "PERIODO",
-    objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
-    cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
-    competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
-    compromisos: "",
-    fecha_revision: "",
-    observaciones: "",
-    calificacion_final: 0,
-    incidencias: [],
+  const previewData: DesempenoData = {
+    ...(data ?? {
+      numero_empleado: "",
+      nombre: "",
+      puesto: "",
+      evaluador_nombre: "",
+      evaluador_puesto: "",
+      tipo: "operativo",
+      objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
+      cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+      competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
+      compromisos: "",
+      fecha_revision: "",
+      observaciones: "",
+      calificacion_final: 0,
+      incidencias: [],
+    }),
+    periodo: data?.periodo || periodoSeleccionado,
   }
 
   return (

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import {
@@ -18,6 +19,7 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
+import { EVALUADORES_DESEMPENO } from "@/lib/catalogo"
 
 interface Props {
   data: DesempenoData
@@ -148,7 +150,26 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             </div>
             <div>
               <Label>Evaluador</Label>
-              <div>{data.evaluador_nombre || "—"} {data.evaluador_puesto ? `- ${data.evaluador_puesto}` : ""}</div>
+              {canEdit ? (
+                <Select
+                  value={data.evaluador_nombre || ""}
+                  onValueChange={(value) => onUpdate?.({ ...data, evaluador_nombre: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona evaluador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EVALUADORES_DESEMPENO.map((evaluador) => (
+                      <SelectItem key={evaluador} value={evaluador}>
+                        {evaluador}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div>{data.evaluador_nombre || "—"}</div>
+              )}
+              <div className="text-sm text-muted-foreground">{data.evaluador_puesto ? `- ${data.evaluador_puesto}` : ""}</div>
             </div>
           </div>
         </CardContent>
