@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil } from "lucide-react"
+import { Pencil, ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,14 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import {
   calcularPonderacion,
   type DesempenoData,
@@ -32,8 +26,31 @@ interface Props {
 
 type ModalType = "objetivos" | "cumplimiento" | "competencias" | "compromisos" | null
 
+const slideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+}
+
+function StepDots({ total, current }: { total: number; current: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-2">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-1.5 rounded-full transition-all duration-200 ${
+            i === current ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30"
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function DesempenoForm({ data, onUpdate }: Props) {
   const [modal, setModal] = useState<ModalType>(null)
+  const [step, setStep] = useState(0)
+  const [direction, setDirection] = useState(1)
   const [editObjetivos, setEditObjetivos] = useState<Objetivo[]>([])
   const [editCumplimiento, setEditCumplimiento] = useState<CumplimientoItem[]>([])
   const [editCompetencias, setEditCompetencias] = useState<Competencia[]>([])
@@ -54,8 +71,12 @@ export function DesempenoForm({ data, onUpdate }: Props) {
       setEditFechaRevision(data.fecha_revision)
       setEditObservaciones(data.observaciones)
     }
+    setStep(0)
+    setDirection(1)
     setModal(type)
   }
+
+  const closeModal = () => setModal(null)
 
   const saveModal = () => {
     if (!onUpdate) return
@@ -64,6 +85,23 @@ export function DesempenoForm({ data, onUpdate }: Props) {
     if (modal === "competencias") onUpdate({ ...data, competencias: editCompetencias })
     if (modal === "compromisos") onUpdate({ ...data, compromisos: editCompromisos, fecha_revision: editFechaRevision, observaciones: editObservaciones })
     setModal(null)
+  }
+
+  const totalSteps = modal === "objetivos" ? editObjetivos.length
+    : modal === "cumplimiento" ? editCumplimiento.length
+    : modal === "competencias" ? editCompetencias.length
+    : 1
+  const isLastStep = step >= totalSteps - 1
+
+  const goNext = () => {
+    if (isLastStep) { saveModal(); return }
+    setDirection(1)
+    setStep((s) => s + 1)
+  }
+
+  const goPrev = () => {
+    setDirection(-1)
+    setStep((s) => Math.max(0, s - 1))
   }
 
   const EditButton = ({ section }: { section: ModalType }) => {
@@ -293,210 +331,283 @@ export function DesempenoForm({ data, onUpdate }: Props) {
         </div>
       </div>
 
-      {/* ═══ MODALES ═══ */}
+      {/* ═══ MODALES EN STEPS ═══ */}
 
       {/* Modal Objetivos */}
-      <Dialog open={modal === "objetivos"} onOpenChange={(open) => !open && setModal(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Objetivos SMART</DialogTitle>
-            <DialogDescription>Captura resultado y porcentaje obtenido para cada objetivo.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {editObjetivos.map((obj, i) => (
-              <div key={i} className="rounded-lg border border-border p-3 space-y-2">
-                <p className="text-sm font-medium">Objetivo {obj.numero}: {obj.descripcion}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Resultado del periodo</Label>
-                    <Input
-                      value={obj.resultado}
-                      onChange={(e) => {
-                        const next = [...editObjetivos]
-                        next[i] = { ...next[i], resultado: e.target.value }
-                        setEditObjetivos(next)
-                      }}
-                      placeholder="Ej: 80%"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">% Obtenido (1-100)</Label>
-                    <Input
-                      value={obj.porcentaje}
-                      onChange={(e) => {
-                        const next = [...editObjetivos]
-                        next[i] = { ...next[i], porcentaje: e.target.value }
-                        setEditObjetivos(next)
-                      }}
-                      placeholder="Ej: 80"
-                    />
-                  </div>
+      <ResponsiveShell
+        open={modal === "objetivos"}
+        onClose={closeModal}
+        maxWidth="sm:max-w-md"
+        title="Objetivos SMART"
+        description="Captura resultado y porcentaje por objetivo"
+      >
+        <ModalToolbar
+          title="Objetivos SMART"
+          subtitle={`Paso ${step + 1} de ${editObjetivos.length}`}
+          saving={false}
+          onClose={closeModal}
+          onConfirm={goNext}
+          confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          secondaryAction={step > 0 ? {
+            icon: <ChevronLeft className="h-4 w-4" />,
+            label: "Anterior",
+            onClick: goPrev,
+            iconOnly: true,
+          } : undefined}
+        />
+        <StepDots total={editObjetivos.length} current={step} />
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            {editObjetivos[step] && (
+              <motion.div
+                key={`obj-${step}`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-3"
+              >
+                <div className="rounded-lg bg-muted px-3 py-2">
+                  <p className="text-sm font-medium">Objetivo {editObjetivos[step].numero}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{editObjetivos[step].descripcion}</p>
                 </div>
-                <div>
-                  <Label className="text-xs">Comentarios</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Resultado del periodo</Label>
                   <Input
-                    value={obj.comentarios}
+                    value={editObjetivos[step].resultado}
                     onChange={(e) => {
                       const next = [...editObjetivos]
-                      next[i] = { ...next[i], comentarios: e.target.value }
+                      next[step] = { ...next[step], resultado: e.target.value }
+                      setEditObjetivos(next)
+                    }}
+                    placeholder="Ej: 80%"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">% Obtenido (1-100)</Label>
+                  <Input
+                    value={editObjetivos[step].porcentaje}
+                    onChange={(e) => {
+                      const next = [...editObjetivos]
+                      next[step] = { ...next[step], porcentaje: e.target.value }
+                      setEditObjetivos(next)
+                    }}
+                    placeholder="Ej: 80"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Comentarios</Label>
+                  <Input
+                    value={editObjetivos[step].comentarios}
+                    onChange={(e) => {
+                      const next = [...editObjetivos]
+                      next[step] = { ...next[step], comentarios: e.target.value }
                       setEditObjetivos(next)
                     }}
                     placeholder="Comentarios"
                   />
                 </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button onClick={saveModal}>Guardar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </ResponsiveShell>
 
       {/* Modal Cumplimiento */}
-      <Dialog open={modal === "cumplimiento"} onOpenChange={(open) => !open && setModal(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Cumplimiento de responsabilidades</DialogTitle>
-            <DialogDescription>Captura el porcentaje de cumplimiento y comentarios.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {editCumplimiento.map((item, i) => (
-              <div key={i} className="rounded-lg border border-border p-3 space-y-2">
-                <p className="text-sm font-medium">{item.descripcion}</p>
-                <div className="text-xs text-muted-foreground">Evalúa: {item.evalua}</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">% Cumplimiento</Label>
-                    <Input
-                      value={item.porcentaje}
-                      onChange={(e) => {
-                        const next = [...editCumplimiento]
-                        next[i] = { ...next[i], porcentaje: e.target.value }
-                        setEditCumplimiento(next)
-                      }}
-                      placeholder="Ej: 80"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Comentarios</Label>
-                    <Input
-                      value={item.comentarios}
-                      onChange={(e) => {
-                        const next = [...editCumplimiento]
-                        next[i] = { ...next[i], comentarios: e.target.value }
-                        setEditCumplimiento(next)
-                      }}
-                      placeholder="Comentarios"
-                    />
-                  </div>
+      <ResponsiveShell
+        open={modal === "cumplimiento"}
+        onClose={closeModal}
+        maxWidth="sm:max-w-md"
+        title="Responsabilidades"
+        description="Porcentaje de cumplimiento y comentarios"
+      >
+        <ModalToolbar
+          title="Responsabilidades"
+          subtitle={`Paso ${step + 1} de ${editCumplimiento.length}`}
+          saving={false}
+          onClose={closeModal}
+          onConfirm={goNext}
+          confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          secondaryAction={step > 0 ? {
+            icon: <ChevronLeft className="h-4 w-4" />,
+            label: "Anterior",
+            onClick: goPrev,
+            iconOnly: true,
+          } : undefined}
+        />
+        <StepDots total={editCumplimiento.length} current={step} />
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            {editCumplimiento[step] && (
+              <motion.div
+                key={`cump-${step}`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-3"
+              >
+                <div className="rounded-lg bg-muted px-3 py-2">
+                  <p className="text-sm font-medium">{editCumplimiento[step].descripcion}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Evalúa: {editCumplimiento[step].evalua}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button onClick={saveModal}>Guardar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">% Cumplimiento</Label>
+                  <Input
+                    value={editCumplimiento[step].porcentaje}
+                    onChange={(e) => {
+                      const next = [...editCumplimiento]
+                      next[step] = { ...next[step], porcentaje: e.target.value }
+                      setEditCumplimiento(next)
+                    }}
+                    placeholder="Ej: 80"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Comentarios</Label>
+                  <Input
+                    value={editCumplimiento[step].comentarios}
+                    onChange={(e) => {
+                      const next = [...editCumplimiento]
+                      next[step] = { ...next[step], comentarios: e.target.value }
+                      setEditCumplimiento(next)
+                    }}
+                    placeholder="Comentarios"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </ResponsiveShell>
 
       {/* Modal Competencias */}
-      <Dialog open={modal === "competencias"} onOpenChange={(open) => !open && setModal(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Competencias blandas</DialogTitle>
-            <DialogDescription>Calificación del 0 al 4. (0=No demostrada, 1=Pocas veces, 2=Mitad, 3=Mayoría, 4=Integrado)</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {editCompetencias.map((comp, i) => (
-              <div key={i} className="rounded-lg border border-border p-3 space-y-2">
-                <p className="text-sm font-medium">{comp.nombre}</p>
-                <p className="text-xs text-muted-foreground">{comp.descripcion}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Calificación (0-4)</Label>
+      <ResponsiveShell
+        open={modal === "competencias"}
+        onClose={closeModal}
+        maxWidth="sm:max-w-md"
+        title="Competencias"
+        description="Calificación del 0 al 4"
+      >
+        <ModalToolbar
+          title="Competencias"
+          subtitle={`Paso ${step + 1} de ${editCompetencias.length}`}
+          saving={false}
+          onClose={closeModal}
+          onConfirm={goNext}
+          confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          secondaryAction={step > 0 ? {
+            icon: <ChevronLeft className="h-4 w-4" />,
+            label: "Anterior",
+            onClick: goPrev,
+            iconOnly: true,
+          } : undefined}
+        />
+        <StepDots total={editCompetencias.length} current={step} />
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            {editCompetencias[step] && (
+              <motion.div
+                key={`comp-${step}`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-3"
+              >
+                <div className="rounded-lg bg-muted px-3 py-2">
+                  <p className="text-sm font-medium">{editCompetencias[step].nombre}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{editCompetencias[step].descripcion}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Calificación (0-4)</Label>
                     <Input
                       type="number"
                       min={0}
                       max={4}
-                      value={comp.calificacion}
+                      value={editCompetencias[step].calificacion}
                       onChange={(e) => {
                         const val = Math.min(4, Math.max(0, parseInt(e.target.value) || 0))
                         const next = [...editCompetencias]
-                        next[i] = { ...next[i], calificacion: val }
+                        next[step] = { ...next[step], calificacion: val }
                         setEditCompetencias(next)
                       }}
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs">% Equivalente</Label>
-                    <div className="text-sm font-semibold mt-2">{Math.round((comp.calificacion / 4) * 100)}%</div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">% Equivalente</Label>
+                    <div className="text-sm font-semibold mt-2">{Math.round((editCompetencias[step].calificacion / 4) * 100)}%</div>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Comentarios</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Comentarios</Label>
                   <Input
-                    value={comp.comentarios}
+                    value={editCompetencias[step].comentarios}
                     onChange={(e) => {
                       const next = [...editCompetencias]
-                      next[i] = { ...next[i], comentarios: e.target.value }
+                      next[step] = { ...next[step], comentarios: e.target.value }
                       setEditCompetencias(next)
                     }}
                     placeholder="Comentarios"
                   />
                 </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button onClick={saveModal}>Guardar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </ResponsiveShell>
 
       {/* Modal Compromisos */}
-      <Dialog open={modal === "compromisos"} onOpenChange={(open) => !open && setModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Compromisos y observaciones</DialogTitle>
-            <DialogDescription>Registra compromisos, acuerdos y fechas de revisión.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Compromisos / Acuerdos</Label>
-              <Textarea
-                value={editCompromisos}
-                onChange={(e) => setEditCompromisos(e.target.value)}
-                placeholder="Compromisos del evaluado..."
-                className="min-h-[100px]"
-              />
-            </div>
-            <div>
-              <Label>Fecha de revisión</Label>
-              <Input
-                value={editFechaRevision}
-                onChange={(e) => setEditFechaRevision(e.target.value)}
-                placeholder="DD/MM/AAAA"
-              />
-            </div>
-            <div>
-              <Label>Observaciones</Label>
-              <Textarea
-                value={editObservaciones}
-                onChange={(e) => setEditObservaciones(e.target.value)}
-                placeholder="Observaciones adicionales..."
-              />
-            </div>
+      <ResponsiveShell
+        open={modal === "compromisos"}
+        onClose={closeModal}
+        maxWidth="sm:max-w-md"
+        title="Compromisos"
+        description="Registra compromisos, acuerdos y fechas"
+      >
+        <ModalToolbar
+          title="Compromisos"
+          subtitle="Acuerdos y observaciones"
+          saving={false}
+          onClose={closeModal}
+          onConfirm={saveModal}
+          confirmIcon={<Check className="h-4 w-4" />}
+        />
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Compromisos / Acuerdos</Label>
+            <Textarea
+              value={editCompromisos}
+              onChange={(e) => setEditCompromisos(e.target.value)}
+              placeholder="Compromisos del evaluado..."
+              className="min-h-[80px]"
+            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button onClick={saveModal}>Guardar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Fecha de revisión</Label>
+            <Input
+              value={editFechaRevision}
+              onChange={(e) => setEditFechaRevision(e.target.value)}
+              placeholder="DD/MM/AAAA"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Observaciones</Label>
+            <Textarea
+              value={editObservaciones}
+              onChange={(e) => setEditObservaciones(e.target.value)}
+              placeholder="Observaciones adicionales..."
+            />
+          </div>
+        </div>
+      </ResponsiveShell>
     </div>
     </TooltipProvider>
   )
