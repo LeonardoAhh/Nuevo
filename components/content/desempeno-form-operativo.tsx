@@ -254,25 +254,40 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           </Card>
 
           {/* Incidencias */}
-          {data.incidencias && data.incidencias.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Incidencias recientes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3">
-                  {data.incidencias.map((inc, idx) => (
-                    <div key={idx} className="rounded-lg border border-border p-3">
-                      <div className="text-sm font-semibold">{inc.categoria}</div>
-                      <div className="text-sm">Mes: {inc.mes || "—"}</div>
-                      <div className="text-sm">Valor: {inc.valor ?? "NA"}</div>
-                      <div className="text-sm text-muted-foreground">{inc.notas || "Sin notas"}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {data.incidencias && data.incidencias.length > 0 && (() => {
+            const porMes = data.incidencias.reduce<Record<string, typeof data.incidencias>>((acc, inc) => {
+              const key = inc.mes || "Sin mes"
+              ;(acc[key] ??= []).push(inc)
+              return acc
+            }, {})
+            const meses = Object.keys(porMes).sort().reverse()
+            return (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Incidencias recientes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-72 overflow-y-auto space-y-3">
+                    {meses.map((mes) => (
+                      <div key={mes}>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">{mes}</h4>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {porMes[mes].map((inc, idx) => (
+                            <div key={idx} className="rounded-md border border-border px-2.5 py-1.5 flex items-center justify-between gap-2">
+                              <span className="text-xs font-medium truncate">{inc.categoria}</span>
+                              <span className={`text-xs font-mono tabular-nums shrink-0 ${(inc.valor ?? 0) > 0 ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                                {inc.valor ?? 0}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
         </div>
 
         {/* Right column */}
