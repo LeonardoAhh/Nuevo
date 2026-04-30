@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Printer, Search, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Printer, Search, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -39,6 +39,8 @@ export default function DesempenoObjetivos() {
   const departamentos = useMemo(() => Object.entries(CATALOGO_ORGANIZACIONAL), [])
   const [puesto, setPuesto] = useState("")
   const [histSearch, setHistSearch] = useState("")
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 20
 
   const { historial, historialLoading, fetchHistorial, cargarEvaluacion, eliminarEvaluacion, data, loading } = useDesempeno()
 
@@ -64,6 +66,11 @@ export default function DesempenoObjetivos() {
       (e.periodo ?? "").toLowerCase().includes(q)
     )
   })
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistorial.length / PAGE_SIZE))
+  const paginatedHistorial = filteredHistorial.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  useEffect(() => { setPage(0) }, [histSearch])
 
   const handleVerEvaluacion = (evalItem: EvaluacionHistorial) => {
     cargarEvaluacion(evalItem.id)
@@ -213,7 +220,7 @@ export default function DesempenoObjetivos() {
                   {histSearch ? "Sin resultados." : "No hay evaluaciones guardadas."}
                 </div>
               ) : (
-                <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -227,7 +234,7 @@ export default function DesempenoObjetivos() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredHistorial.map((ev) => (
+                      {paginatedHistorial.map((ev) => (
                         <TableRow
                           key={ev.id}
                           className="cursor-pointer hover:bg-muted/50"
@@ -264,6 +271,36 @@ export default function DesempenoObjetivos() {
                     </TableBody>
                   </Table>
                 </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredHistorial.length)} de {filteredHistorial.length}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={page === 0}
+                        onClick={() => setPage((p) => p - 1)}
+                        aria-label="Anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground px-2">{page + 1}/{totalPages}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={page >= totalPages - 1}
+                        onClick={() => setPage((p) => p + 1)}
+                        aria-label="Siguiente"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               )}
 
               {loading && (
