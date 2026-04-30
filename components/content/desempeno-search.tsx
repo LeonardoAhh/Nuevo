@@ -122,7 +122,6 @@ export default function DesempenoSearch() {
                                   image: { type: 'jpeg', quality: 0.98 },
                                   html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
                                   jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-                                  pagebreak: { mode: ['css', 'legacy'] },
                                 })
                                 .from(el)
                                 .save()
