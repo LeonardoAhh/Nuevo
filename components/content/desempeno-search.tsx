@@ -99,7 +99,38 @@ export default function DesempenoSearch() {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-8 w-8" disabled={bloqueado} aria-label="Descargar PDF">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={bloqueado}
+                          aria-label="Descargar PDF"
+                          onClick={() => {
+                            const el = document.querySelector('.print-area') as HTMLElement
+                            if (!el) return
+                            el.style.display = 'block'
+                            el.style.position = 'absolute'
+                            el.style.left = '-9999px'
+                            import('html2pdf.js').then((mod) => {
+                              const html2pdf = mod.default
+                              html2pdf()
+                                .set({
+                                  margin: [6, 6, 6, 6],
+                                  filename: `evaluacion-${data.numero_empleado}-${data.periodo || 'sin-periodo'}.pdf`,
+                                  image: { type: 'jpeg', quality: 0.98 },
+                                  html2canvas: { scale: 2, useCORS: true },
+                                  jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+                                })
+                                .from(el)
+                                .save()
+                                .then(() => {
+                                  el.style.display = ''
+                                  el.style.position = ''
+                                  el.style.left = ''
+                                })
+                            })
+                          }}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
