@@ -100,13 +100,16 @@
   * {
     @apply border-border;
   }
+
   html {
     font-size: var(--font-base-size);
     color-scheme: light;
   }
+
   html.dark {
     color-scheme: dark;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -117,17 +120,21 @@
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
 }
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: hsl(var(--muted-foreground) / 0.35);
   border-radius: 9999px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.55);
 }
@@ -162,9 +169,15 @@ input[type="color"]::-webkit-color-swatch {
 
 /* Ken Burns: zoom lento en la imagen */
 @keyframes heroZoom {
-  from { transform: scale(1); }
-  to   { transform: scale(1.08); }
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
 }
+
 .hero-zoom {
   animation: heroZoom 12s ease-in-out infinite alternate;
 }
@@ -173,17 +186,43 @@ input[type="color"]::-webkit-color-swatch {
 
 /* Orbs flotantes */
 @keyframes heroFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%       { transform: translate(20px, -30px) scale(1.05); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
 }
+
 @keyframes heroFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%       { transform: translate(-15px, 20px) scale(0.95); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-15px, 20px) scale(0.95);
+  }
 }
+
 @keyframes heroFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(10px, 15px) scale(1.08); }
-  66%       { transform: translate(-10px, -10px) scale(0.97); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(10px, 15px) scale(1.08);
+  }
+
+  66% {
+    transform: translate(-10px, -10px) scale(0.97);
+  }
 }
 
 .hero-orb {
@@ -193,6 +232,7 @@ input[type="color"]::-webkit-color-swatch {
   opacity: 0.35;
   pointer-events: none;
 }
+
 .hero-orb-1 {
   width: 320px;
   height: 320px;
@@ -201,6 +241,7 @@ input[type="color"]::-webkit-color-swatch {
   right: 5%;
   animation: heroFloat1 9s ease-in-out infinite;
 }
+
 .hero-orb-2 {
   width: 240px;
   height: 240px;
@@ -209,6 +250,7 @@ input[type="color"]::-webkit-color-swatch {
   right: 25%;
   animation: heroFloat2 11s ease-in-out infinite;
 }
+
 .hero-orb-3 {
   width: 180px;
   height: 180px;
@@ -260,6 +302,7 @@ input[type="color"]::-webkit-color-swatch {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
+
 @media (min-width: 640px) {
   .density-compact main {
     padding-left: 1rem;
@@ -268,27 +311,40 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* space-y gaps (the most common layout utility in this project) */
-.density-compact .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+.density-compact .space-y-6> :not([hidden])~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(1rem * (1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
 }
-.density-compact .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+
+.density-compact .space-y-4> :not([hidden])~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.625rem * (1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.625rem * var(--tw-space-y-reverse));
 }
-.density-compact .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+
+.density-compact .space-y-3> :not([hidden])~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.5rem * (1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
 }
 
 /* gap utilities */
-.density-compact .gap-6 { gap: 1rem; }
-.density-compact .gap-5 { gap: 0.875rem; }
-.density-compact .gap-4 { gap: 0.625rem; }
-.density-compact .gap-3 { gap: 0.5rem; }
+.density-compact .gap-6 {
+  gap: 1rem;
+}
+
+.density-compact .gap-5 {
+  gap: 0.875rem;
+}
+
+.density-compact .gap-4 {
+  gap: 0.625rem;
+}
+
+.density-compact .gap-3 {
+  gap: 0.5rem;
+}
 
 /* Table cells */
 .density-compact th,
@@ -298,22 +354,31 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Sidebar */
-.density-compact .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+.density-compact .space-y-1> :not([hidden])~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.125rem * (1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.125rem * var(--tw-space-y-reverse));
 }
 
 /* Buttons with explicit padding classes — slightly tighter */
-.density-compact .h-10:not(.w-10) { height: 2.25rem; }
-.density-compact .h-9:not(.w-9)  { height: 2rem; }
-.density-compact .h-11:not(.w-11) { height: 2.5rem; }
+.density-compact .h-10:not(.w-10) {
+  height: 2.25rem;
+}
+
+.density-compact .h-9:not(.w-9) {
+  height: 2rem;
+}
+
+.density-compact .h-11:not(.w-11) {
+  height: 2.5rem;
+}
 
 /* Tabs */
 .density-compact [role="tablist"] {
   height: auto;
   min-height: 1.75rem;
 }
+
 .density-compact [role="tab"] {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -321,7 +386,7 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Dialog content */
-.density-compact [role="dialog"] > div {
+.density-compact [role="dialog"]>div {
   padding: 1rem;
 }
 
@@ -334,20 +399,50 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* p padding overrides (p-6 → p-3.5, p-4 → p-2.5) */
-.density-compact .p-6  { padding: 0.875rem; }
-.density-compact .p-5  { padding: 0.75rem; }
-.density-compact .p-4  { padding: 0.625rem; }
+.density-compact .p-6 {
+  padding: 0.875rem;
+}
+
+.density-compact .p-5 {
+  padding: 0.75rem;
+}
+
+.density-compact .p-4 {
+  padding: 0.625rem;
+}
 
 /* px / py overrides */
-.density-compact .py-6  { padding-top: 1rem; padding-bottom: 1rem; }
-.density-compact .py-16 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-.density-compact .px-8  { padding-left: 1.25rem; padding-right: 1.25rem; }
+.density-compact .py-6 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.density-compact .py-16 {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.density-compact .px-8 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
 
 /* mb / mt overrides for larger margins */
-.density-compact .mb-5 { margin-bottom: 0.75rem; }
-.density-compact .mb-4 { margin-bottom: 0.5rem; }
-.density-compact .mt-3 { margin-top: 0.375rem; }
-.density-compact .mt-4 { margin-top: 0.5rem; }
+.density-compact .mb-5 {
+  margin-bottom: 0.75rem;
+}
+
+.density-compact .mb-4 {
+  margin-bottom: 0.5rem;
+}
+
+.density-compact .mt-3 {
+  margin-top: 0.375rem;
+}
+
+.density-compact .mt-4 {
+  margin-top: 0.5rem;
+}
 
 /* Header */
 .density-compact header {
@@ -357,7 +452,9 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Sidebar header */
-.density-compact .h-\[50px\] { height: 40px; }
+.density-compact .h-\[50px\] {
+  height: 40px;
+}
 
 /* Hero dashboard density handled by component Tailwind classes */
 
@@ -365,6 +462,7 @@ input[type="color"]::-webkit-color-swatch {
 
 /* Reduced Motion — OS setting (native) */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -417,17 +515,29 @@ input[type="color"]::-webkit-color-swatch {
       hsl(var(--primary) / 0.7) 25%,
       hsl(var(--primary) / 0.4) 50%,
       hsl(var(--primary) / 0.8) 75%,
-      hsl(var(--primary) / 0.6) 100%
-    );
+      hsl(var(--primary) / 0.6) 100%);
   background-size: 400% 400%;
   animation: loginAuroraShift 16s ease-in-out infinite;
 }
 
 @keyframes loginAuroraShift {
-  0%, 100% { background-position: 0% 50%; }
-  25%      { background-position: 100% 0%; }
-  50%      { background-position: 100% 100%; }
-  75%      { background-position: 0% 100%; }
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 100% 0%;
+  }
+
+  50% {
+    background-position: 100% 100%;
+  }
+
+  75% {
+    background-position: 0% 100%;
+  }
 }
 
 /* Orbs flotantes – derivan de --primary */
@@ -438,6 +548,7 @@ input[type="color"]::-webkit-color-swatch {
   pointer-events: none;
   opacity: 0.35;
 }
+
 .login-orb-1 {
   width: min(360px, 50vw);
   height: min(360px, 50vw);
@@ -446,6 +557,7 @@ input[type="color"]::-webkit-color-swatch {
   left: 10%;
   animation: loginOrb1 10s ease-in-out infinite;
 }
+
 .login-orb-2 {
   width: min(280px, 40vw);
   height: min(280px, 40vw);
@@ -454,6 +566,7 @@ input[type="color"]::-webkit-color-swatch {
   right: 15%;
   animation: loginOrb2 13s ease-in-out infinite;
 }
+
 .login-orb-3 {
   width: min(200px, 30vw);
   height: min(200px, 30vw);
@@ -464,17 +577,43 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 @keyframes loginOrb1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(30px, -40px) scale(1.08); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(30px, -40px) scale(1.08);
+  }
 }
+
 @keyframes loginOrb2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%      { transform: translate(-20px, 25px) scale(0.94); }
-  66%      { transform: translate(15px, -15px) scale(1.04); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-20px, 25px) scale(0.94);
+  }
+
+  66% {
+    transform: translate(15px, -15px) scale(1.04);
+  }
 }
+
 @keyframes loginOrb3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(-25px, 20px) scale(1.06); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-25px, 20px) scale(1.06);
+  }
 }
 
 /* Grid decorativo */
@@ -495,9 +634,17 @@ input[type="color"]::-webkit-color-swatch {
 .login-logo-float {
   animation: loginLogoFloat 6s ease-in-out infinite;
 }
+
 @keyframes loginLogoFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* Spinner del botón */
@@ -505,8 +652,11 @@ input[type="color"]::-webkit-color-swatch {
   display: inline-block;
   animation: loginSpin 0.7s linear infinite;
 }
+
 @keyframes loginSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Fin Login Hero ──────────────────────────────────── */
@@ -519,6 +669,7 @@ input[type="color"]::-webkit-color-swatch {
 
 /* ─── Print: Generador de Exámenes ─────────────────────── */
 @media print {
+
   /* Ocultar todo usando visibility para no romper el árbol del DOM */
   body * {
     visibility: hidden !important;
@@ -585,6 +736,7 @@ input[type="color"]::-webkit-color-swatch {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
   .examen-print-root .text-white {
     color: white !important;
   }

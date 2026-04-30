@@ -379,14 +379,20 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
 }
 
 export const PERIODOS_DESEMPENO = {
-  semestrales: ["ENERO-JUNIO", "JULIO-DICIEMBRE"] as const,
+  semestrales: ["ENE-JUN 2026", "JUL-DIC 2026"] as const,
   mensuales: [
-    "ENERO-FEBRERO",
-    "MARZO-ABRIL",
-    "MAYO-JUNIO",
-    "JULIO-AGOSTO",
-    "SEPTIEMBRE-OCTUBRE",
-    "NOVIEMBRE-DICIEMBRE",
+    "ENE-FEB 2027",
+    "FEB-MAR 2027",
+    "MAR-ABR 2027",
+    "ABR-MAY 2026",
+    "MAY-JUN 2026",
+    "JUN-JUL 2026",
+    "JUL-AGO 2026",
+    "AGO-SEP 2026",
+    "SEP-OCT 2026",
+    "OCT-NOV 2026",
+    "NOV-DIC 2026",
+    "DIC-ENE 2026-2027"
   ] as const,
 } as const
 
