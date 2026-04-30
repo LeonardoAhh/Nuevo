@@ -132,7 +132,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-lg font-bold uppercase tracking-wide">EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
-                <p className="text-sm text-muted-foreground">Periodo de evaluación: <Badge variant="secondary">{data.periodo || '—'}</Badge></p>
+                <div className="text-sm text-muted-foreground">Periodo de evaluación: <Badge variant="secondary">{data.periodo || '—'}</Badge></div>
               </div>
               <img src="/logo-vino-plastic.png" alt="Logo" className="h-10 w-auto" />
             </div>
