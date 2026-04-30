@@ -1,11 +1,25 @@
+/* Print theme tokens */
 .printRoot {
+  --print-text: #1a1a1a;
+  --print-text-secondary: #555;
+  --print-text-th: #374151;
+  --print-text-footer: #9ca3af;
+  --print-border: #d1d5db;
+  --print-border-accent: #1a1a1a;
+  --print-bg: #fff;
+  --print-bg-subtle: #f9fafb;
+  --print-bg-badge: #f3f4f6;
+  --print-bg-accent: #1a1a1a;
+  --print-bg-warning: #fef9e7;
+  --print-border-warning: #e5d38e;
+
   width: 100%;
   max-width: 210mm;
   margin: 0 auto;
   padding: 8mm;
-  background: #fff;
-  color: #1a1a1a;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--print-bg);
+  color: var(--print-text);
+  font-family: inherit;
   font-size: 0.7rem;
 }
 
@@ -29,21 +43,21 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
-  color: #1a1a1a;
+  color: var(--print-text);
 }
 
 .headerLeft p {
   font-size: 0.68rem;
   margin: 0;
-  color: #555;
+  color: var(--print-text-secondary);
 }
 
 .periodBadge {
-  background: #f3f4f6;
+  background: var(--print-bg-badge);
   padding: 0.1rem 0.4rem;
   border-radius: 0.2rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--print-text);
 }
 
 .headerRight {
@@ -76,7 +90,7 @@
 .infoGridBottom div {
   background: transparent;
   padding: 0.35rem 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--print-border);
 }
 
 /* Section headers */
@@ -86,9 +100,9 @@
   padding: 0.3rem 0.5rem;
   margin-top: 0.6rem;
   text-transform: uppercase;
-  color: #1a1a1a;
-  border: 1px solid #d1d5db;
-  border-bottom: 2px solid #1a1a1a;
+  color: var(--print-text);
+  border: 1px solid var(--print-border);
+  border-bottom: 2px solid var(--print-border-accent);
   background: transparent;
 }
 
@@ -101,17 +115,17 @@
 
 .table th,
 .table td {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--print-border);
   padding: 0.2rem 0.35rem;
   vertical-align: top;
 }
 
 .table th {
-  background: #f9fafb;
+  background: var(--print-bg-subtle);
   font-weight: 600;
   text-align: left;
   font-size: 0.6rem;
-  color: #374151;
+  color: var(--print-text-th);
 }
 
 .thCenter {
@@ -136,8 +150,8 @@
   display: flex;
   justify-content: space-between;
   padding: 0.2rem 0.5rem;
-  background: #f9fafb;
-  border: 1px solid #d1d5db;
+  background: var(--print-bg-subtle);
+  border: 1px solid var(--print-border);
   border-top: none;
   font-size: 0.65rem;
 }
@@ -149,15 +163,15 @@
   align-items: center;
   padding: 0.4rem 0.7rem;
   margin-top: 0.5rem;
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--print-bg-accent);
+  color: var(--print-bg);
   font-size: 0.82rem;
   font-weight: 700;
 }
 
 .warningBox {
-  background: #fef9e7;
-  border: 1px solid #e5d38e;
+  background: var(--print-bg-warning);
+  border: 1px solid var(--print-border-warning);
   padding: 0.3rem 0.5rem;
   font-size: 0.65rem;
   font-weight: 600;
@@ -174,7 +188,7 @@
 
 .notesSection div {
   padding: 0.3rem 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--print-border);
   font-size: 0.65rem;
 }
 
@@ -193,8 +207,8 @@
   font-size: 0.68rem;
 }
 
-.signatureGrid>div {
-  border-top: 1px solid #555;
+.signatureGrid > div {
+  border-top: 1px solid var(--print-text-secondary);
   padding-top: 0.3rem;
 }
 
@@ -213,7 +227,7 @@
   justify-content: space-between;
   padding: 0 6mm 3mm 6mm;
   font-size: 0.6rem;
-  color: #9ca3af;
+  color: var(--print-text-footer);
 }
 
 /* Print overrides */
@@ -234,39 +248,33 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 5mm !important;
-    background: #fff !important;
+    background: var(--print-bg) !important;
   }
 
   .table th {
-    background: #f9fafb !important;
+    background: var(--print-bg-subtle) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .resultRow {
-    background: #f9fafb !important;
+    background: var(--print-bg-subtle) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .calificacionBox {
-    background: #1a1a1a !important;
-    color: #fff !important;
+    background: var(--print-bg-accent) !important;
+    color: var(--print-bg) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .warningBox {
-    background: #fef9e7 !important;
+    background: var(--print-bg-warning) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-
-  /* Elimina o comenta esto: */
-  /* .lastPageSection {
-  page-break-before: always;
-  break-before: page;
-} */
 
   .pageBreakSection {
     page-break-before: always !important;
