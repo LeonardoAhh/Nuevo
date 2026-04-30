@@ -105,30 +105,33 @@ export default function DesempenoSearch() {
                           className="h-8 w-8"
                           disabled={bloqueado}
                           aria-label="Descargar PDF"
-                          onClick={() => {
+                          onClick={async () => {
                             const el = document.querySelector('.print-area') as HTMLElement
                             if (!el) return
-                            el.style.display = 'block'
+                            el.classList.remove('hidden')
                             el.style.position = 'absolute'
                             el.style.left = '-9999px'
-                            import('html2pdf.js').then((mod) => {
+                            el.style.width = '210mm'
+                            try {
+                              const mod = await import('html2pdf.js')
                               const html2pdf = mod.default
-                              html2pdf()
+                              await html2pdf()
                                 .set({
                                   margin: [6, 6, 6, 6],
                                   filename: `evaluacion-${data.numero_empleado}-${data.periodo || 'sin-periodo'}.pdf`,
                                   image: { type: 'jpeg', quality: 0.98 },
-                                  html2canvas: { scale: 2, useCORS: true },
+                                  html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
                                   jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+                                  pagebreak: { mode: ['css', 'legacy'] },
                                 })
                                 .from(el)
                                 .save()
-                                .then(() => {
-                                  el.style.display = ''
-                                  el.style.position = ''
-                                  el.style.left = ''
-                                })
-                            })
+                            } finally {
+                              el.classList.add('hidden')
+                              el.style.position = ''
+                              el.style.left = ''
+                              el.style.width = ''
+                            }
                           }}
                         >
                           <Download className="h-4 w-4" />
