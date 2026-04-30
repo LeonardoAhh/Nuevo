@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
+import { PaginationBar } from "@/components/ui/pagination-bar"
 import DesempenoPrint from "./desempeno-print"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
@@ -39,6 +40,8 @@ export default function DesempenoObjetivos() {
   const departamentos = useMemo(() => Object.entries(CATALOGO_ORGANIZACIONAL), [])
   const [puesto, setPuesto] = useState("")
   const [histSearch, setHistSearch] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 20
 
   const { historial, historialLoading, fetchHistorial, cargarEvaluacion, eliminarEvaluacion, data, loading } = useDesempeno()
 
@@ -64,6 +67,12 @@ export default function DesempenoObjetivos() {
       (e.periodo ?? "").toLowerCase().includes(q)
     )
   })
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistorial.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedHistorial = filteredHistorial.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  useEffect(() => { setCurrentPage(1) }, [histSearch])
 
   const handleVerEvaluacion = (evalItem: EvaluacionHistorial) => {
     cargarEvaluacion(evalItem.id)
@@ -213,7 +222,8 @@ export default function DesempenoObjetivos() {
                   {histSearch ? "Sin resultados." : "No hay evaluaciones guardadas."}
                 </div>
               ) : (
-                <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+                <>
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -227,7 +237,7 @@ export default function DesempenoObjetivos() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredHistorial.map((ev) => (
+                      {paginatedHistorial.map((ev) => (
                         <TableRow
                           key={ev.id}
                           className="cursor-pointer hover:bg-muted/50"
@@ -264,6 +274,10 @@ export default function DesempenoObjetivos() {
                     </TableBody>
                   </Table>
                 </div>
+                {filteredHistorial.length > PAGE_SIZE && (
+                  <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                )}
+                </>
               )}
 
               {loading && (
