@@ -25,7 +25,6 @@ interface Props {
   data: DesempenoData
   onUpdate?: (data: DesempenoData) => void
 }
-import styles from "./desempeno-print.module.css"
 
 type ModalType = "objetivos" | "cumplimiento" | "competencias" | "compromisos" | null
 
@@ -127,17 +126,15 @@ export function DesempenoForm({ data, onUpdate }: Props) {
         <Card>
           <CardHeader>
             {/* Instrucciones */}
-            <p className="text-sm text-muted-foreground italic leading-relaxed">
+            <p className="text-xs text-muted-foreground italic leading-relaxed">
               <strong>Instrucciones para el evaluador:</strong> La siguiente evaluación está integrada por 3 partes. En la primera deberá anotar los objetivos SMART del puesto evaluado, así como el % del objetivo logrado en cada uno, o su promedio durante el periodo de la presente evaluación. La segunda parte será prellenada con la información de RH y SGI, la tercera parte deberá ser evaluada por el jefe inmediato.
             </p>
-            <div className={styles.headerRow}>
-              <div className={styles.headerLeft}>
-                <h1>EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
-                <p>Periodo de evaluación: <span className={styles.periodBadge}>{data.periodo || '—'}</span></p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-bold uppercase tracking-wide">EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
+                <p className="text-sm text-muted-foreground">Periodo de evaluación: <Badge variant="secondary">{data.periodo || '—'}</Badge></p>
               </div>
-              <div className={styles.headerRight}>
-                <img src="/logo-vino-plastic.png" alt="Logo" className={styles.logo} />
-              </div>
+              <img src="/logo-vino-plastic.png" alt="Logo" className="h-10 w-auto" />
             </div>
           </CardHeader>
           <CardContent className="pt-0 space-y-4">
@@ -315,6 +312,9 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <CardTitle className="text-base">Cumplimiento de Responsabilidades (30%)</CardTitle>
                   <EditButton section="cumplimiento" />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  La segunda parte será prellenada con la información de RH y SGI.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
