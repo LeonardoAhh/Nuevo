@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Search, Printer, Download, AlertCircle, ClipboardList, Save, Loader2 } from "lucide-react"
+import { Search, Printer, AlertCircle, ClipboardList, Save, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -97,45 +97,7 @@ export default function DesempenoSearch() {
                       </TooltipTrigger>
                       <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Guardar evaluación"}</TooltipContent>
                     </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          disabled={bloqueado}
-                          aria-label="Descargar PDF"
-                          onClick={() => {
-                            const el = document.querySelector('.print-area') as HTMLElement
-                            if (!el) return
-                            el.style.display = 'block'
-                            el.style.position = 'absolute'
-                            el.style.left = '-9999px'
-                            import('html2pdf.js').then((mod) => {
-                              const html2pdf = mod.default
-                              html2pdf()
-                                .set({
-                                  margin: [6, 6, 6, 6],
-                                  filename: `evaluacion-${data.numero_empleado}-${data.periodo || 'sin-periodo'}.pdf`,
-                                  image: { type: 'jpeg', quality: 0.98 },
-                                  html2canvas: { scale: 2, useCORS: true },
-                                  jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-                                })
-                                .from(el)
-                                .save()
-                                .then(() => {
-                                  el.style.display = ''
-                                  el.style.position = ''
-                                  el.style.left = ''
-                                })
-                            })
-                          }}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Descargar PDF"}</TooltipContent>
-                    </Tooltip>
+
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button size="icon" className="h-8 w-8" onClick={() => window.print()} disabled={bloqueado} aria-label="Imprimir">

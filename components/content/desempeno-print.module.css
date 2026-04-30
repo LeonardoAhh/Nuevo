@@ -111,6 +111,8 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.62rem;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .table th,
@@ -141,8 +143,12 @@
 }
 
 .tdSmall {
-  font-size: 0.55rem;
-  line-height: 1.2;
+  font-size: 0.5rem;
+  line-height: 1.15;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 280px;
 }
 
 /* Result row */
