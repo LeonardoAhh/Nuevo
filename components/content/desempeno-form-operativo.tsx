@@ -425,25 +425,27 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     <p className="text-sm font-medium">Objetivo {editObjetivos[step].numero}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{editObjetivos[step].descripcion}</p>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Resultado del periodo</Label>
-                    <Input
-                      value={editObjetivos[step].resultado}
-                      readOnly
-                      className="bg-muted cursor-not-allowed"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">% Obtenido (1-100)</Label>
-                    <Input
-                      value={editObjetivos[step].porcentaje}
-                      onChange={(e) => {
-                        const next = [...editObjetivos]
-                        next[step] = { ...next[step], porcentaje: e.target.value }
-                        setEditObjetivos(next)
-                      }}
-                      placeholder="Ej: 80"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Resultado del periodo</Label>
+                      <Input
+                        value={editObjetivos[step].resultado}
+                        readOnly
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">% Obtenido (1-100)</Label>
+                      <Input
+                        value={editObjetivos[step].porcentaje}
+                        onChange={(e) => {
+                          const next = [...editObjetivos]
+                          next[step] = { ...next[step], porcentaje: e.target.value }
+                          setEditObjetivos(next)
+                        }}
+                        placeholder="Ej: 80"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Comentarios</Label>
@@ -650,8 +652,22 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               <Label className="text-xs text-muted-foreground">Fecha de revisión</Label>
               <Input
                 value={editFechaRevision}
-                onChange={(e) => setEditFechaRevision(e.target.value)}
+                onChange={(e) => {
+                  let v = e.target.value.replace(/[^0-9/]/g, '')
+                  const prev = editFechaRevision
+                  if (v.length > prev.length) {
+                    const digits = v.replace(/\//g, '')
+                    if (digits.length >= 2 && !v.includes('/')) {
+                      v = digits.slice(0, 2) + '/' + digits.slice(2)
+                    }
+                    if (digits.length >= 4) {
+                      v = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4)
+                    }
+                  }
+                  if (v.length <= 10) setEditFechaRevision(v)
+                }}
                 placeholder="DD/MM/AAAA"
+                maxLength={10}
               />
             </div>
             <div className="space-y-1.5">
