@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
-import { DEFAULT_OBJETIVOS_POR_TIPO, DEFAULT_CUMPLIMIENTO, DEFAULT_COMPETENCIAS, type DesempenoData } from "@/lib/types/desempeno"
+import { DEFAULT_OBJETIVOS_POR_TIPO, DEFAULT_CUMPLIMIENTO, DEFAULT_COMPETENCIAS, calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
 import DesempenoPrint from "./desempeno-print"
 import { DesempenoForm } from "./desempeno-form-operativo"
 
@@ -35,6 +35,11 @@ export default function DesempenoSearch() {
       <div className="text-sm text-muted-foreground">Cargando...</div>
     </div>
   )
+
+  const ponderacion = data ? calcularPonderacion(data) : null
+  const requiereCompromisos = ponderacion !== null && ponderacion.calificacionFinal < 80
+  const tieneCompromisos = !!(data?.compromisos?.trim())
+  const bloqueado = requiereCompromisos && !tieneCompromisos
 
   const previewData: DesempenoData = {
     ...(data ?? {
@@ -84,29 +89,29 @@ export default function DesempenoSearch() {
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
-                        disabled={saving}
+                        disabled={saving || bloqueado}
                         aria-label="Guardar evaluación"
                       >
                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Guardar evaluación</TooltipContent>
+                    <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Guardar evaluación"}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Descargar PDF">
+                      <Button variant="outline" size="icon" className="h-8 w-8" disabled={bloqueado} aria-label="Descargar PDF">
                         <Download className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Descargar PDF</TooltipContent>
+                    <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Descargar PDF"}</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="icon" className="h-8 w-8" onClick={() => window.print()} aria-label="Imprimir">
+                      <Button size="icon" className="h-8 w-8" onClick={() => window.print()} disabled={bloqueado} aria-label="Imprimir">
                         <Printer className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Imprimir</TooltipContent>
+                    <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Imprimir"}</TooltipContent>
                   </Tooltip>
                 </>
               )}
@@ -177,6 +182,15 @@ export default function DesempenoSearch() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {bloqueado && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            La calificación es menor a 80%. Es obligatorio capturar compromisos y acuerdos antes de guardar o imprimir.
+          </AlertDescription>
         </Alert>
       )}
 

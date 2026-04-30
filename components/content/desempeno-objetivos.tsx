@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, type Objetivo } from "@/lib/types/desempeno"
+import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
 import DesempenoPrint from "./desempeno-print"
@@ -49,6 +49,10 @@ export default function DesempenoObjetivos() {
   const objetivos = puesto ? getObjetivosForPuesto(puesto) : []
   const hasPuestoObjetivos = puesto ? !!OBJETIVOS_POR_PUESTO[puesto] : false
   const tipoLabel = puesto ? getTipoDesempenoByPuesto(puesto) : null
+
+  const requiereCompromisos = data ? calcularPonderacion(data).calificacionFinal < 80 : false
+  const tieneCompromisos = !!(data?.compromisos?.trim())
+  const bloqueado = requiereCompromisos && !tieneCompromisos
 
   const filteredHistorial = historial.filter((e) => {
     if (!histSearch) return true
@@ -178,11 +182,11 @@ export default function DesempenoObjetivos() {
                 {data && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => window.print()} aria-label="Imprimir">
+                      <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => window.print()} disabled={bloqueado} aria-label="Imprimir">
                         <Printer className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Imprimir evaluación cargada</TooltipContent>
+                    <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Imprimir evaluación cargada"}</TooltipContent>
                   </Tooltip>
                 )}
               </div>
@@ -279,9 +283,9 @@ export default function DesempenoObjetivos() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Evaluación cargada</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={bloqueado}>
                 <Printer className="h-4 w-4 mr-1.5" />
-                Imprimir
+                {bloqueado ? "Captura compromisos" : "Imprimir"}
               </Button>
             </div>
           </CardHeader>
