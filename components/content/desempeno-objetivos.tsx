@@ -222,6 +222,7 @@ export default function DesempenoObjetivos() {
                   {histSearch ? "Sin resultados." : "No hay evaluaciones guardadas."}
                 </div>
               ) : (
+                <>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -276,6 +277,7 @@ export default function DesempenoObjetivos() {
                 {filteredHistorial.length > PAGE_SIZE && (
                   <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 )}
+                </>
               )}
 
               {loading && (
