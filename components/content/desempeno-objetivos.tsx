@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronLeft, ChevronRight, Printer, Search, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, Printer, Search, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
+import { PaginationBar } from "@/components/ui/pagination-bar"
 import DesempenoPrint from "./desempeno-print"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
@@ -39,7 +40,7 @@ export default function DesempenoObjetivos() {
   const departamentos = useMemo(() => Object.entries(CATALOGO_ORGANIZACIONAL), [])
   const [puesto, setPuesto] = useState("")
   const [histSearch, setHistSearch] = useState("")
-  const [page, setPage] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 20
 
   const { historial, historialLoading, fetchHistorial, cargarEvaluacion, eliminarEvaluacion, data, loading } = useDesempeno()
@@ -68,9 +69,10 @@ export default function DesempenoObjetivos() {
   })
 
   const totalPages = Math.max(1, Math.ceil(filteredHistorial.length / PAGE_SIZE))
-  const paginatedHistorial = filteredHistorial.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const safePage = Math.min(currentPage, totalPages)
+  const paginatedHistorial = filteredHistorial.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
-  useEffect(() => { setPage(0) }, [histSearch])
+  useEffect(() => { setCurrentPage(1) }, [histSearch])
 
   const handleVerEvaluacion = (evalItem: EvaluacionHistorial) => {
     cargarEvaluacion(evalItem.id)
@@ -271,35 +273,8 @@ export default function DesempenoObjetivos() {
                     </TableBody>
                   </Table>
                 </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredHistorial.length)} de {filteredHistorial.length}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={page === 0}
-                        onClick={() => setPage((p) => p - 1)}
-                        aria-label="Anterior"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground px-2">{page + 1}/{totalPages}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={page >= totalPages - 1}
-                        onClick={() => setPage((p) => p + 1)}
-                        aria-label="Siguiente"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                {filteredHistorial.length > PAGE_SIZE && (
+                  <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 )}
               )}
 
