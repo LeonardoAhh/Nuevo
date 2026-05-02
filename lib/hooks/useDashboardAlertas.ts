@@ -11,8 +11,10 @@ import type { NuevoIngreso } from "@/lib/hooks/useNuevoIngreso"
 export interface EvalItem {
   id: string
   dbId: string
+  numero: string | null
   nombre: string
   departamento: string | null
+  area: string | null
   turno: string | null
   fecha: string
   diasDiff: number
@@ -71,8 +73,10 @@ function clasificarEval(
     const item: EvalItem = {
       id: `${r.id}-${sufijo}`,
       dbId: r.id,
+      numero: r.numero,
       nombre: r.nombre,
       departamento: r.departamento,
+      area: r.area,
       turno: r.turno,
       fecha,
       diasDiff: diff,

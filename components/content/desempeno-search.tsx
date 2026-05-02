@@ -14,6 +14,7 @@ import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
 import { DEFAULT_OBJETIVOS_POR_TIPO, DEFAULT_CUMPLIMIENTO, DEFAULT_COMPETENCIAS, calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
 import DesempenoPrint from "./desempeno-print"
 import { DesempenoForm } from "./desempeno-form-operativo"
+import DesempenoPendientes from "./desempeno-pendientes"
 
 export default function DesempenoSearch() {
   const [numeroBuscado, setNumeroBuscado] = useState("")
@@ -64,6 +65,13 @@ export default function DesempenoSearch() {
   return (
     <TooltipProvider>
       <div className="space-y-6 max-w-7xl mx-auto">
+        {/* Pendientes Hero */}
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <DesempenoPendientes />
+          </CardContent>
+        </Card>
+
         {/* Buscador */}
         <Card>
           <CardHeader className="pb-2">
