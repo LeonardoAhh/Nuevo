@@ -54,7 +54,10 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         setShowMobileSidebar={setShowMobileSidebar}
       />
 
-      <div className="flex-1 overflow-auto scrollbar-thin">
+      <div
+        className="flex-1 overflow-auto scrollbar-thin"
+        style={{ paddingRight: "env(safe-area-inset-right)" }}
+      >
         <Header
           title={pageTitle}
           isMobileView={isMobileView}

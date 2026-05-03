@@ -15,10 +15,10 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
   return (
     <header
       role="banner"
-      className="sticky top-0 z-20 h-[50px] border-b bg-card/95 supports-[backdrop-filter]:bg-card/80 backdrop-blur px-3 sm:px-6"
+      className="sticky top-0 z-20 border-b bg-card/95 supports-[backdrop-filter]:bg-card/80 backdrop-blur px-3 sm:px-6"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="flex items-center gap-2 h-full">
+      <div className="flex items-center gap-2 h-[50px]">
         {isMobileView && !showMobileSidebar && (
           <Button
             variant="ghost"
