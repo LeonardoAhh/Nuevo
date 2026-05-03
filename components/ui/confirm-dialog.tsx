@@ -200,7 +200,7 @@ export function ConfirmProvider() {
             TitleEl={DrawerTitle as React.ComponentType<React.HTMLAttributes<HTMLHeadingElement>>}
             DescriptionEl={DrawerDescription as React.ComponentType<React.HTMLAttributes<HTMLParagraphElement>>}
           />
-          <div className="h-[env(safe-area-inset-bottom)]" aria-hidden />
+          <div className="safe-bottom" aria-hidden />
         </DrawerContent>
       </Drawer>
     )

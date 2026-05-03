@@ -77,11 +77,8 @@ const DialogContent = React.forwardRef<
 
           {/* Área scrollable */}
           <div
-            className="flex-1 overflow-y-auto overscroll-contain px-6 pt-1 sm:pt-6"
-            style={{
-              paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
-              scrollbarGutter: "stable",
-            }}
+            className="flex-1 overflow-y-auto overscroll-contain px-6 pt-1 sm:pt-6 safe-bottom-content"
+            style={{ scrollbarGutter: "stable" }}
           >
             {children}
           </div>
@@ -123,7 +120,7 @@ const DialogFooter = ({
       "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2",
       className,
     )}
-    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
     {...props}
   />
 )

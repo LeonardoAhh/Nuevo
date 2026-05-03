@@ -109,7 +109,7 @@ export default function BottomNav() {
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 md:hidden",
           "border-t border-border/60 bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/75",
-          "pb-[env(safe-area-inset-bottom)]",
+          "safe-bottom",
         )}
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around">
@@ -144,7 +144,7 @@ export default function BottomNav() {
       </nav>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="pb-[env(safe-area-inset-bottom)]">
+        <DrawerContent className="safe-bottom">
           <DrawerHeader className="text-left">
             <DrawerTitle>Menú</DrawerTitle>
             <DrawerDescription>Todas las secciones disponibles.</DrawerDescription>

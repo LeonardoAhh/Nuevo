@@ -53,10 +53,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         setShowMobileSidebar={setShowMobileSidebar}
       />
 
-      <div
-        className="flex-1 overflow-auto scrollbar-thin"
-        style={{ paddingRight: "env(safe-area-inset-right)" }}
-      >
+      <div className="flex-1 overflow-auto scrollbar-thin safe-right">
         <Header
           title={pageTitle}
           isMobileView={isMobileView}
@@ -66,8 +63,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
 
         <main
           id="main-content"
-          className="bg-background px-3 py-6 sm:px-6"
-          style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+          className="bg-background px-3 py-6 sm:px-6 safe-bottom-content"
         >
           {content}
         </main>
