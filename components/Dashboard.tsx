@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
-import BottomNav from "@/components/bottom-nav"
 import { useRole } from "@/lib/hooks"
 import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
 
@@ -67,12 +66,11 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
 
         <main
           id="main-content"
-          className="bg-background px-3 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-6"
+          className="bg-background px-3 py-6 sm:px-6"
         >
           {content}
         </main>
       </div>
-      <BottomNav />
     </div>
   )
 }
