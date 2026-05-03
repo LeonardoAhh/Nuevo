@@ -112,6 +112,7 @@
   html {
     font-size: var(--font-base-size);
     color-scheme: light;
+    @apply bg-background;
   }
 
   html.dark {
@@ -120,6 +121,8 @@
 
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 }
 
