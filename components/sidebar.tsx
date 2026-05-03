@@ -210,7 +210,7 @@ export default function Sidebar({
         aria-label="Menú principal"
         className={`
           bg-card border-r transition-all duration-300 flex flex-col
-          max-md:fixed max-md:z-50 max-md:h-[100dvh] max-md:shadow-lg max-md:w-64
+          max-md:fixed max-md:z-50 max-md:top-0 max-md:bottom-0 max-md:left-0 max-md:shadow-lg max-md:w-64
           max-md:-translate-x-full max-md:overflow-hidden
           ${showMobileSidebar ? "max-md:translate-x-0" : ""}
           ${collapsed ? "md:w-20" : "md:w-64"}
