@@ -215,6 +215,10 @@ export default function Sidebar({
           ${showMobileSidebar ? "max-md:translate-x-0" : ""}
           ${collapsed ? "md:w-20" : "md:w-64"}
         `}
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          paddingLeft: "env(safe-area-inset-left)",
+        }}
       >
         {/* Logo / collapse toggle */}
         <div className="p-2 h-[50px] border-b flex items-center justify-between">
@@ -391,7 +395,10 @@ export default function Sidebar({
         </nav>
 
         {/* User menu */}
-        <div className="p-2 border-t flex-shrink-0">
+        <div
+          className="p-2 border-t flex-shrink-0"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        >
           <DropdownMenu>
             {showExpanded ? (
               <DropdownMenuTrigger asChild>
