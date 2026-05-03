@@ -255,6 +255,106 @@ export default function Sidebar({
           </Button>
         </div>
 
+        {/* User profile */}
+        <div className="p-2 border-b flex-shrink-0">
+          <DropdownMenu>
+            {showExpanded ? (
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={profile?.avatar || undefined} />
+                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 min-w-0 text-left">
+                    <span className="block font-medium text-sm truncate">{displayName}</span>
+                  </span>
+                  <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex w-full items-center justify-center rounded-md py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={profile?.avatar || undefined} />
+                        <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">{displayName}</TooltipContent>
+              </Tooltip>
+            )}
+
+            <DropdownMenuContent side="bottom" align="start" sideOffset={8} className="w-56">
+              <DropdownMenuLabel asChild>
+                <div className="flex items-center gap-3 px-2 py-2 cursor-default select-none">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={profile?.avatar || undefined} />
+                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold truncate">{displayName}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                asChild
+                className={
+                  pathname === "/settings"
+                    ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
+                    : ""
+                }
+              >
+                <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Settings size={16} />
+                  <span>Configuración</span>
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onSelect={(e) => { e.preventDefault(); cycleTheme() }}
+                className="flex items-center gap-2 cursor-pointer"
+                aria-label={`Tema actual: ${THEME_LABEL[theme]}. Click para cambiar.`}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={theme}
+                    initial={{ opacity: 0, rotate: -45, scale: 0.7 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 45, scale: 0.7 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="inline-flex"
+                  >
+                    <ThemeIcon size={16} />
+                  </motion.span>
+                </AnimatePresence>
+                <span>Tema</span>
+                <span className="ml-auto text-xs text-muted-foreground">{THEME_LABEL[theme]}</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onSelect={handleLogout}
+                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <LogOut size={16} />
+                <span>Cerrar sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {/* Nav links */}
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-1 p-2">
@@ -394,108 +494,7 @@ export default function Sidebar({
           </div>
         </nav>
 
-        {/* User menu */}
-        <div
-          className="p-2 border-t flex-shrink-0"
-          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
-        >
-          <DropdownMenu>
-            {showExpanded ? (
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarImage src={profile?.avatar || undefined} />
-                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 min-w-0 text-left">
-                    <span className="block font-medium text-sm truncate">{displayName}</span>
-                  </span>
-                  <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="flex w-full items-center justify-center rounded-md py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarImage src={profile?.avatar || undefined} />
-                        <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right">{displayName}</TooltipContent>
-              </Tooltip>
-            )}
 
-            <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56">
-              <DropdownMenuLabel asChild>
-                <div className="flex items-center gap-3 px-2 py-2 cursor-default select-none">
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarImage src={profile?.avatar || undefined} />
-                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-semibold truncate">{displayName}</span>
-                    <span className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</span>
-                  </div>
-                </div>
-              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                asChild
-                className={
-                  pathname === "/settings"
-                    ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
-                    : ""
-                }
-              >
-                <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
-                  <Settings size={16} />
-                  <span>Configuración</span>
-                </Link>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onSelect={(e) => { e.preventDefault(); cycleTheme() }}
-                className="flex items-center gap-2 cursor-pointer"
-                aria-label={`Tema actual: ${THEME_LABEL[theme]}. Click para cambiar.`}
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={theme}
-                    initial={{ opacity: 0, rotate: -45, scale: 0.7 }}
-                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                    exit={{ opacity: 0, rotate: 45, scale: 0.7 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="inline-flex"
-                  >
-                    <ThemeIcon size={16} />
-                  </motion.span>
-                </AnimatePresence>
-                <span>Tema</span>
-                <span className="ml-auto text-xs text-muted-foreground">{THEME_LABEL[theme]}</span>
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onSelect={handleLogout}
-                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-              >
-                <LogOut size={16} />
-                <span>Cerrar sesión</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </aside>
     </TooltipProvider>
   )
