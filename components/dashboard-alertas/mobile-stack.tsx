@@ -218,8 +218,7 @@ export function MobileStackEvals({
         </div>
 
         <div
-          className="sticky bottom-0 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
-          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          className="sticky bottom-0 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 safe-bottom-content"
         >
           <Button
             size="icon"
@@ -362,8 +361,7 @@ export function MobileStackFechas({
 
         {(onEntregado || onIndeterminado) && (
           <div
-            className="sticky bottom-0 flex flex-col gap-2 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
-            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+            className="sticky bottom-0 flex flex-col gap-2 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 safe-bottom-content"
           >
             {onEntregado && (
               <Button
