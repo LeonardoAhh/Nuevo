@@ -67,6 +67,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         <main
           id="main-content"
           className="bg-background px-3 py-6 sm:px-6"
+          style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
         >
           {content}
         </main>
