@@ -9,6 +9,7 @@ export function SonnerProvider() {
       expand={false}
       visibleToasts={3}
       position="top-center"
+      style={{ top: "env(safe-area-inset-top, 0px)" }}
       toastOptions={{
         classNames: {
           toast:
