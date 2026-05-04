@@ -787,7 +787,7 @@ export function useCapacitacion() {
     try {
       const { data: empData, error: empError } = await supabase
         .from('employees')
-        .insert([employee])
+        .upsert([employee], { onConflict: 'nombre' })
         .select('id')
       if (empError) throw new Error(empError.message)
       const employeeId = empData?.[0]?.id
