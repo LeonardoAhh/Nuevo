@@ -366,7 +366,7 @@ const _OBJETIVOS_INSPEC: Objetivo[] = [
 
 ];
 
-/*
+
 const _OBJETIVOS_TECNICO_MOLDES: Objetivo[] = [
     {
         numero: 1,
@@ -468,7 +468,7 @@ const _OBJETIVOS_SUPERVISOR_PRODUCCION: Objetivo[] = [
         porcentaje: "N/A",
         comentarios: "",
     },
-];*/
+];
 
 
 export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
