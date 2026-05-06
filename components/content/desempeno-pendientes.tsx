@@ -124,7 +124,7 @@ function DetailCard({ item, onClose }: DetailCardProps) {
         </div>
 
         {/* Info grid */}
-        <dl className="grid grid-cols-2 gap-1.5 mb-3">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
           {stats.map(({ icon, label, value }) => (
             <div key={label} className="rounded-lg border border-border/50 bg-muted/40 px-2.5 py-2">
               <dt className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
@@ -140,18 +140,18 @@ function DetailCard({ item, onClose }: DetailCardProps) {
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
             Evaluaciones pendientes
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(["1er Mes", "2° Mes", "3er Mes"] as const).map((p) => {
               const entry = item.evals.find((e) => e.periodo === p)
               const isVencida = entry && entry.diasDiff < 0
               return (
-                <div key={p} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 p-3">
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shrink-0 ${PERIODO_COLORS[p]}`}>
+                <div key={p} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 px-3 py-2 sm:p-3 min-w-0">
+                  <span className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-semibold shrink-0 ${PERIODO_COLORS[p]}`}>
                     <GraduationCap size={12} /> {p}
                   </span>
                   {entry ? (
-                    <div className="flex flex-col items-end gap-1 text-right">
-                      <span className="text-xs font-medium text-foreground">{formatDate(entry.fecha)}</span>
+                    <div className="flex flex-col items-end gap-0.5 sm:gap-1 text-right min-w-0">
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground truncate">{formatDate(entry.fecha)}</span>
                       <span className={`flex items-center gap-1 text-[11px] font-semibold ${isVencida ? "text-destructive" : "text-[hsl(var(--success))]"}`}>
                         <Clock3 size={11} /> {dias(entry.diasDiff)}
                       </span>
@@ -369,7 +369,7 @@ export default function DesempenoPendientes() {
 
         {/* Legend */}
         {!loading && totalEmployees > 0 && (
-          <div className="flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground pt-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-[13px] text-muted-foreground pt-1">
             <span className="flex items-center gap-1">
               <span className="h-3 w-3 rounded-full bg-destructive inline-block" />
               Vencida
@@ -378,7 +378,7 @@ export default function DesempenoPendientes() {
               <span className="h-3 w-3 rounded-full bg-[hsl(var(--success))] inline-block" />
               Pendiente
             </span>
-            <span className="ml-auto font-bold text-foreground">Clic en No. Empleado para ver el detalle</span>
+            <span className="sm:ml-auto font-bold text-foreground">Clic en No. Empleado para ver el detalle</span>
           </div>
         )}
       </CardContent>
