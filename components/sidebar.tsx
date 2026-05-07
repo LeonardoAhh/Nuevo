@@ -141,15 +141,30 @@ export default function Sidebar({
         role="navigation"
         aria-label="Menú principal"
         className={`
-          bg-card border-r transition-all duration-300 flex flex-col safe-top safe-left safe-bottom
-          max-md:fixed max-md:z-50 max-md:top-0 max-md:bottom-0 max-md:left-0 max-md:shadow-lg max-md:w-64
+          bg-card border-r transition-all duration-300 flex flex-col
+          max-md:fixed max-md:z-50 max-md:top-0 max-md:left-0 max-md:shadow-lg max-md:w-64
           max-md:-translate-x-full max-md:overflow-hidden
           ${showMobileSidebar ? "max-md:translate-x-0" : ""}
           md:w-[68px]
         `}
+        style={{
+          // En mobile: altura real del dispositivo respetando safe areas
+          // Evita el espacio blanco inferior en PWA iOS
+          height: isMobileView
+            ? "100dvh"
+            : undefined,
+          paddingTop: isMobileView
+            ? "env(safe-area-inset-top, 0px)"
+            : undefined,
+          paddingLeft: isMobileView
+            ? "env(safe-area-inset-left, 0px)"
+            : undefined,
+          // ← CLAVE: el padding inferior va en el último hijo, no en el aside
+          // Si va aquí genera espacio vacío cuando el contenido no llena la altura
+        }}
       >
         {/* Logo */}
-        <div className="h-[50px] border-b flex items-center justify-center px-2">
+        <div className="h-[50px] shrink-0 border-b flex items-center justify-center px-2">
           {isExpanded ? (
             <div className="flex items-center justify-between w-full">
               <span className="text-lg font-bold tracking-tight select-none">
@@ -176,7 +191,7 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Nav links */}
+        {/* Nav links — flex-1 para ocupar el espacio disponible */}
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           <div className="space-y-1 p-2">
             {NAV_SECTIONS.filter((s) => !s.devOnly || canEdit).map((section, idx) => {
@@ -197,11 +212,10 @@ export default function Sidebar({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className={`w-full h-10 ${
-                                    active
+                                  className={`w-full h-10 ${active
                                       ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
                                       : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }`}
+                                    }`}
                                   aria-current={active ? "page" : undefined}
                                   asChild
                                 >
@@ -246,11 +260,10 @@ export default function Sidebar({
                         <Button
                           key={item.href}
                           variant="ghost"
-                          className={`w-full justify-start gap-3 ${
-                            active
+                          className={`w-full justify-start gap-3 ${active
                               ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
                               : "text-muted-foreground hover:text-foreground"
-                          }`}
+                            }`}
                           aria-current={active ? "page" : undefined}
                           asChild
                         >
@@ -281,19 +294,18 @@ export default function Sidebar({
           </div>
         </nav>
 
-        {/* Bottom: Settings icon (desktop only) */}
-        {!isExpanded && (
-          <div className="border-t p-2">
+        {/* Bottom: Settings (desktop) o safe-area spacer (mobile) */}
+        {!isExpanded ? (
+          <div className="shrink-0 border-t p-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`w-full h-10 ${
-                    pathname === "/settings"
+                  className={`w-full h-10 ${pathname === "/settings"
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                  }`}
+                    }`}
                   asChild
                 >
                   <Link href="/settings">
@@ -306,6 +318,13 @@ export default function Sidebar({
               </TooltipContent>
             </Tooltip>
           </div>
+        ) : (
+          // En mobile: spacer que absorbe SOLO el home indicator, sin generar espacio extra
+          <div
+            className="shrink-0"
+            style={{ height: "env(safe-area-inset-bottom, 0px)" }}
+            aria-hidden="true"
+          />
         )}
       </aside>
     </TooltipProvider>
