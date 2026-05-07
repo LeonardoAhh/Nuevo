@@ -81,7 +81,7 @@ export function SummaryCard({
     <Card className="border">
       <CardContent className="p-4 flex items-center gap-4">
         <div className={`p-3 rounded-xl ${color}`}>
-          <Icon size={22} className="text-white" />
+          <Icon size={22} />
         </div>
         <div>
           <div className="text-2xl font-bold">{value}</div>

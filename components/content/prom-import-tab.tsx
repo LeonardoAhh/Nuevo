@@ -136,7 +136,7 @@ export function PromDatosPreview({
                   <TableCell>{r["Fecha Inicio Puesto"] || <span className="text-muted-foreground italic">—</span>}</TableCell>
                   <TableCell className="text-center">
                     <span className={r["Desempeño Actual (%)"] && parseFloat(r["Desempeño Actual (%)"]) > 0
-                      ? "font-semibold text-emerald-600 dark:text-emerald-400"
+                      ? "font-semibold text-success"
                       : "text-muted-foreground"}>
                       {r["Desempeño Actual (%)"] || "—"}
                     </span>
