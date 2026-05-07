@@ -150,6 +150,13 @@ body {
 .safe-left   { padding-left:   env(safe-area-inset-left, 0px); }
 .safe-right  { padding-right:  env(safe-area-inset-right, 0px); }
 
+/* Android PWA / iOS non-notch fallback: env() might return 0 but status bar overlays content */
+@media (max-width: 768px) and (display-mode: standalone) {
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 36px);
+  }
+}
+
 /* Content variants — guarantee min padding even without safe area */
 .safe-bottom-content {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
