@@ -54,6 +54,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { ViewportFix } from "@/components/viewport-fix"
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
@@ -82,6 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
+        <ViewportFix />
         <ThemeProvider>{children}</ThemeProvider>
         <PWARegister />
         <SonnerProvider />
