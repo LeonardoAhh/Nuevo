@@ -213,7 +213,12 @@ body {
 /* 3. Limita altura para que no suba hasta la status bar, y usa altura JS fija */
 [data-vaul-drawer-direction="bottom"][data-state="open"] {
   height: var(--initial-viewport-height, 100dvh);
-  max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
+  max-height: calc(
+    100dvh 
+    - env(safe-area-inset-top, 0px) 
+    - env(safe-area-inset-bottom, 0px)
+  ) !important;
+  top: env(safe-area-inset-top, 0px) !important;
 }
 
 /* Evita auto-zoom en iOS al hacer focus en inputs */
