@@ -17,6 +17,7 @@ import {
   Bot,
   Award,
   ImageIcon,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -52,6 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
       { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
+      { label: "Reportes", href: "/reportes", icon: FileText },
       { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
