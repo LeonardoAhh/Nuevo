@@ -13,9 +13,10 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock, BookOpen, TrendingUp, Users } from "lucide-react"
 import {
-  useCumplimiento, colorPct, META,
+  colorPct, META,
   COLORS_CUMPLIMIENTO as COLORS, type DeptCumplimiento,
 } from "@/lib/hooks/useCumplimiento"
+import { useCumplimientoShared } from "@/components/dashboard-cumplimiento-context"
 import { useTheme } from "@/components/theme-context"
 
 // ── Tooltip ──────────────────────────────────────────────────────────────────
@@ -83,7 +84,7 @@ export default function DashboardCumplimiento() {
     loading, departments, deptData, cargar,
     totalAsignados, totalAprobados, totalReprobados, totalPendientes,
     totalEmpleados, totalEmpleadosConPuesto,
-  } = useCumplimiento()
+  } = useCumplimientoShared()
 
   const prefersReduced = useReducedMotion()
   const { reducedMotion } = useTheme()
