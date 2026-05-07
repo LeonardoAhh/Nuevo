@@ -3,6 +3,7 @@
 import React from "react"
 import { BookOpen, X, Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import type { Position, PositionCourse, Course } from "@/lib/hooks"
@@ -56,6 +57,11 @@ export function CapPositionCoursesDialog({
                     <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
                     <BookOpen className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm flex-1 min-w-0 truncate">{pc.course.name}</span>
+                    {(pc.course as any).tipo && (
+                      <Badge variant="outline" className="text-xs shrink-0 hidden sm:inline-flex">
+                        {(pc.course as any).tipo}
+                      </Badge>
+                    )}
                     {!isReadOnly && (
                       <Button
                         variant="ghost" size="icon"

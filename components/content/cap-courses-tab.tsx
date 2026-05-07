@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import { downloadExcelReport } from "@/lib/capacitacion/excel"
+import { getTipoCursoByName } from "@/lib/catalogo"
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
 
 const PAGE_SIZE = 15
@@ -28,20 +29,20 @@ interface CapCoursesTabProps {
 function courseStatus(calificacion: number | null): { estado: string; clase: string } {
   if (calificacion == null) return { estado: 'pendiente', clase: 'bg-muted text-muted-foreground border' }
   return calificacion >= 70
-    ? { estado: 'aprobado',   clase: 'bg-success/15 text-success border border-success/30' }
-    : { estado: 'reprobado',  clase: 'bg-destructive/15 text-destructive border border-destructive/30' }
+    ? { estado: 'aprobado', clase: 'bg-success/15 text-success border border-success/30' }
+    : { estado: 'reprobado', clase: 'bg-destructive/15 text-destructive border border-destructive/30' }
 }
 
 export function CapCoursesTab({
   courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse,
 }: CapCoursesTabProps) {
   const [courseSearch, setCourseSearch] = useState("")
-  const [coursePage, setCoursePage]     = useState(1)
+  const [coursePage, setCoursePage] = useState(1)
 
-  const filtered     = courses.filter(c => c.name.toLowerCase().includes(courseSearch.toLowerCase()))
-  const totalPages   = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const safePage     = Math.min(coursePage, totalPages)
-  const paginated    = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const filtered = courses.filter(c => c.name.toLowerCase().includes(courseSearch.toLowerCase()))
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(coursePage, totalPages)
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   useEffect(() => { setCoursePage(1) }, [courseSearch])
 
@@ -126,7 +127,7 @@ export function CapCoursesTab({
                   .map(emp => {
                     const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id)
                     const calificacion = match?.calificacion ?? null
-                    const fecha        = match?.fecha_aplicacion ?? null
+                    const fecha = match?.fecha_aplicacion ?? null
                     const { estado, clase } = courseStatus(calificacion)
                     return { ...emp, calificacion, fecha, estado, clase }
                   })
@@ -140,6 +141,9 @@ export function CapCoursesTab({
                         </span>
                         <BookOpen className="h-4 w-4 text-primary shrink-0" />
                         <span className="text-sm text-foreground leading-tight flex-1 text-left">{course.name}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {course.tipo || getTipoCursoByName(course.name)}
+                        </Badge>
                         <Badge variant="secondary" className="bg-muted text-foreground ml-2">
                           {empleadosConEstado.length}
                         </Badge>

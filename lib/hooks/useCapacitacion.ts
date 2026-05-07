@@ -22,6 +22,7 @@ export interface Position {
 export interface Course {
   id: string
   name: string
+  tipo: string | null
   created_at: string
 }
 
@@ -30,7 +31,7 @@ export interface PositionCourse {
   position_id: string
   course_id: string
   order_index: number
-  course: { name: string }
+  course: { name: string; tipo: string | null }
 }
 
 export interface RawJsonRecord {
@@ -71,7 +72,7 @@ export interface EmployeeCourse {
   raw_course_name: string
   fecha_aplicacion: string | null
   calificacion: number | null
-  course?: { name: string } | null
+  course?: { name: string; tipo: string | null } | null
 }
 
 export interface CourseProgress {
@@ -81,6 +82,7 @@ export interface CourseProgress {
   status: 'aprobado' | 'reprobado' | 'pendiente'
   calificacion: number | null
   fechaAplicacion: string | null
+  course?: { name: string; tipo: string | null } | null
 }
 
 export interface EmployeeProgress {
@@ -97,7 +99,7 @@ export interface CourseAlias {
   id: string
   alias: string
   course_id: string
-  course?: { name: string }
+  course?: { name: string; tipo: string | null }
 }
 
 export interface HistorialRawRecord {
@@ -384,19 +386,19 @@ export function useCapacitacion() {
   const fetchPositionCourses = async (positionId: string): Promise<PositionCourse[]> => {
     const { data, error } = await supabase
       .from('position_courses')
-      .select('*, course:courses(name)')
+      .select('*, course:courses(name, tipo)')
       .eq('position_id', positionId)
       .order('order_index')
     if (error) throw error
-    return (data ?? []) as PositionCourse[]
+    return (data ?? []) as unknown as PositionCourse[]
   }
 
   const fetchCourseAliases = async (): Promise<CourseAlias[]> => {
     const { data, error } = await supabase
       .from('course_aliases')
-      .select('*, course:courses(name)')
+      .select('*, course:courses(name, tipo)')
     if (error) throw error
-    return (data ?? []) as CourseAlias[]
+    return (data ?? []) as unknown as CourseAlias[]
   }
 
   const fetchEmployees = async (): Promise<Employee[]> => {
@@ -408,11 +410,11 @@ export function useCapacitacion() {
   const fetchEmployeeCourses = async (employeeId: string): Promise<EmployeeCourse[]> => {
     const { data, error } = await supabase
       .from('employee_courses')
-      .select('*, course:courses(name)')
+      .select('*, course:courses(name, tipo)')
       .eq('employee_id', employeeId)
       .order('fecha_aplicacion', { ascending: false })
     if (error) throw error
-    return (data ?? []) as EmployeeCourse[]
+    return (data ?? []) as unknown as EmployeeCourse[]
   }
 
   // ── Historial: análisis con fuzzy matching ────────────────────────────────
@@ -490,14 +492,14 @@ export function useCapacitacion() {
         .from('employees')
         .upsert(
           Array.from(uniqueEmpMap.values()).map(r => ({
-            numero:        r['N.N']?.trim() || null,
-            nombre:        r['NOMBRE'].trim(),
-            puesto:        r['PUESTO']?.trim() || null,
-            departamento:  r['DEPARTAMENTO']?.trim() || null,
-            area:          r['ÁREA']?.trim() || null,
-            turno:         r['TURNO']?.trim() || null,
+            numero: r['N.N']?.trim() || null,
+            nombre: r['NOMBRE'].trim(),
+            puesto: r['PUESTO']?.trim() || null,
+            departamento: r['DEPARTAMENTO']?.trim() || null,
+            area: r['ÁREA']?.trim() || null,
+            turno: r['TURNO']?.trim() || null,
             fecha_ingreso: parseDate(r['FECHA DE INGRESO']),
-            jefe_directo:  r['JEFE DIRECTO']?.trim() || null,
+            jefe_directo: r['JEFE DIRECTO']?.trim() || null,
           })),
           { onConflict: 'nombre' },
         )
@@ -510,17 +512,17 @@ export function useCapacitacion() {
       const ecRecords = preview.rawRecords
         .filter(r => r['NOMBRE']?.trim() && r['CURSO TOMADO']?.trim())
         .map(r => {
-          const nombre    = r['NOMBRE'].trim()
+          const nombre = r['NOMBRE'].trim()
           const rawCourse = r['CURSO TOMADO'].trim()
           const employeeId = empIdMap.get(nombre)
           const m = matchMap.get(rawCourse)
           if (!employeeId) return null
           return {
-            employee_id:      employeeId,
-            course_id:        m?.resolvedCourseId ?? null,
-            raw_course_name:  rawCourse,
+            employee_id: employeeId,
+            course_id: m?.resolvedCourseId ?? null,
+            raw_course_name: rawCourse,
             fecha_aplicacion: parseDate(r['FECHA DE APLICACIÓN']),
-            calificacion:     r['CALIFICACIÓN'] ? (parseInt(r['CALIFICACIÓN']) || null) : null,
+            calificacion: r['CALIFICACIÓN'] ? (parseInt(r['CALIFICACIÓN']) || null) : null,
           }
         })
         .filter((r): r is NonNullable<typeof r> => r !== null)
@@ -585,7 +587,7 @@ export function useCapacitacion() {
     // Cursos requeridos del puesto
     const { data: reqData, error: reqError } = await supabase
       .from('position_courses')
-      .select('course_id, order_index, course:courses(id, name)')
+      .select('course_id, order_index, course:courses(id, name, tipo)')
       .eq('position_id', posData.id)
       .order('order_index')
     if (reqError) throw new Error(reqError.message)
@@ -615,22 +617,23 @@ export function useCapacitacion() {
       else status = 'reprobado'
 
       return {
-        courseId:        rc.course_id,
-        courseName:      (rc.course as { name?: string } | null)?.name ?? '—',
-        orderIndex:      rc.order_index,
+        courseId: rc.course_id,
+        courseName: (rc.course as { name?: string; tipo?: string | null } | null)?.name ?? '—',
+        course: rc.course as { name: string; tipo: string | null } | null,
+        orderIndex: rc.order_index,
         status,
-        calificacion:    cal,
+        calificacion: cal,
         fechaAplicacion: taken?.fecha_aplicacion ?? null,
       }
     })
 
-    const aprobados  = courses.filter(c => c.status === 'aprobado').length
+    const aprobados = courses.filter(c => c.status === 'aprobado').length
     const reprobados = courses.filter(c => c.status === 'reprobado').length
     const pendientes = courses.filter(c => c.status === 'pendiente').length
 
     return {
       positionFound: true,
-      positionName:  posData.name,
+      positionName: posData.name,
       totalRequired: courses.length,
       aprobados, reprobados, pendientes,
       courses,
@@ -903,12 +906,13 @@ export function useCapacitacion() {
   // ── Crear curso manualmente ───────────────────────────────────────────────
 
   const createCourse = async (
-    name: string
+    name: string,
+    tipo: string = 'INDUCCIÓN'
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase
         .from('courses')
-        .insert([{ name: name.trim() }])
+        .insert([{ name: name.trim(), tipo }])
       if (error) throw new Error(error.message)
       return { success: true }
     } catch (err) {

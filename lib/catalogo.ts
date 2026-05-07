@@ -415,3 +415,55 @@ export const SECCIONES_PONDERACION_DESEMPENO = {
     { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias directivas y comunicación." },
   ] as const,
 } as const
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de Tipos de Cursos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const TIPOS_CURSOS = [
+  "INDUCCIÓN",
+  "EHS",
+  "TÉCNICOS",
+  "CALIDAD",
+  "SGI",
+  "EXTERNO",
+  "SIN TIPO",
+] as const
+
+export type TipoCurso = typeof TIPOS_CURSOS[number]
+
+// Mapeo explícito de nombre de curso -> tipo de curso
+// EDITAR AQUÍ: agregar cada curso con su tipo对应的课程类型
+export const CURSOS_POR_TIPO: Record<string, TipoCurso> = {
+  // INDUCCIÓN
+  "INDUCCIÓN A LA EMPRESA": "INDUCCIÓN",
+  "SEGURIDAD Y PREVENCIÓN DE ACCIDENTES": "INDUCCIÓN",
+  "ASPECTOS E IMPACTOS AMBIENTALES": "INDUCCIÓN",
+  "FAMILIAS DEL PRODUCTO": "INDUCCIÓN",
+  "SISTEMA DE GESTIÓN INTEGRAL": "INDUCCIÓN",
+  "ALERTAS DE CALIDAD Y CATÁLOGO DE FALLAS": "INDUCCIÓN",
+  "METODOLOGÍA 5S": "INDUCCIÓN",
+  "REPORTE DE PRODUCCIÓN": "INDUCCIÓN",
+  "INSTRUCCIONES DE TRABAJO": "INDUCCIÓN",
+
+}
+
+/**Obtiene el tipo de curso a partir del nombre del curso usando mapeo explícito.*/
+export function getTipoCursoByName(nombreCurso: string): TipoCurso {
+  const normalized = nombreCurso.toUpperCase().trim()
+
+  // Primero buscar coincidencia exacta
+  if (normalized in CURSOS_POR_TIPO) {
+    return CURSOS_POR_TIPO[normalized]
+  }
+
+  // Buscar coincidencia parcial
+  for (const [key, tipo] of Object.entries(CURSOS_POR_TIPO)) {
+    if (normalized.includes(key.toUpperCase())) {
+      return tipo
+    }
+  }
+
+  // Default
+  return "SIN TIPO"
+}

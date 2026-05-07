@@ -9,25 +9,25 @@ import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { notify } from "@/lib/notify"
 
 // Existing dialogs
-import { CapEditEmployeeDialog }      from "@/components/content/cap-edit-employee-dialog"
-import { CapNewEmployeeDialog }       from "@/components/content/cap-new-employee-dialog"
-import { CapAddCoursesDialog }        from "@/components/content/cap-add-courses-dialog"
-import { CapPositionCoursesDialog }   from "@/components/content/cap-position-courses-dialog"
-import { CapEmployeeProgressDialog }  from "@/components/content/cap-employee-progress-dialog"
-import { CapNewPositionDialog }       from "@/components/content/cap-new-position-dialog"
-import { CapNewCourseDialog }         from "@/components/content/cap-new-course-dialog"
+import { CapEditEmployeeDialog } from "@/components/content/cap-edit-employee-dialog"
+import { CapNewEmployeeDialog } from "@/components/content/cap-new-employee-dialog"
+import { CapAddCoursesDialog } from "@/components/content/cap-add-courses-dialog"
+import { CapPositionCoursesDialog } from "@/components/content/cap-position-courses-dialog"
+import { CapEmployeeProgressDialog } from "@/components/content/cap-employee-progress-dialog"
+import { CapNewPositionDialog } from "@/components/content/cap-new-position-dialog"
+import { CapNewCourseDialog } from "@/components/content/cap-new-course-dialog"
 
 // Tab components
-import { CapPositionsTab }   from "@/components/content/cap-positions-tab"
-import { CapCoursesTab }     from "@/components/content/cap-courses-tab"
-import { CapHistorialTab }   from "@/components/content/cap-historial-tab"
-import { CapImportTab }      from "@/components/content/cap-import-tab"
+import { CapPositionsTab } from "@/components/content/cap-positions-tab"
+import { CapCoursesTab } from "@/components/content/cap-courses-tab"
+import { CapHistorialTab } from "@/components/content/cap-historial-tab"
+import { CapImportTab } from "@/components/content/cap-import-tab"
 import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
 
 // Hooks
-import { useBulkImport }  from "@/lib/hooks/useBulkImport"
-import { useJsonImport }  from "@/lib/hooks/useJsonImport"
+import { useBulkImport } from "@/lib/hooks/useBulkImport"
+import { useJsonImport } from "@/lib/hooks/useJsonImport"
 
 export default function CapacitacionContent() {
   const { isReadOnly } = useRole()
@@ -43,55 +43,55 @@ export default function CapacitacionContent() {
   } = useCapacitacion()
 
   // ── Shared data ───────────────────────────────────────────────────────────
-  const [departments, setDepartments]   = useState<Department[]>([])
-  const [positions, setPositions]       = useState<Position[]>([])
-  const [courses, setCourses]           = useState<Course[]>([])
-  const [employees, setEmployees]       = useState<Employee[]>([])
-  const [empCourses, setEmpCourses]     = useState<EmployeeCourse[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [empCourses, setEmpCourses] = useState<EmployeeCourse[]>([])
   const [positionCourses, setPositionCourses] = useState<PositionCourse[]>([])
-  const [progressMap, setProgressMap]   = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
+  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
 
   const [loadingPositions, setLoadingPositions] = useState(false)
-  const [loadingCourses, setLoadingCourses]     = useState(false)
+  const [loadingCourses, setLoadingCourses] = useState(false)
   const [loadingEmployees, setLoadingEmployees] = useState(false)
 
   // ── Position-courses dialog ───────────────────────────────────────────────
-  const [dialogOpen, setDialogOpen]           = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
-  const [posCoursesDlg, setPosCoursesDlg]     = useState<PositionCourse[]>([])
-  const [loadingPosDlg, setLoadingPosDlg]     = useState(false)
-  const [assignCourseId, setAssignCourseId]   = useState("")
-  const [assignSaving, setAssignSaving]       = useState(false)
-  const [assignError, setAssignError]         = useState<string | null>(null)
+  const [posCoursesDlg, setPosCoursesDlg] = useState<PositionCourse[]>([])
+  const [loadingPosDlg, setLoadingPosDlg] = useState(false)
+  const [assignCourseId, setAssignCourseId] = useState("")
+  const [assignSaving, setAssignSaving] = useState(false)
+  const [assignError, setAssignError] = useState<string | null>(null)
 
   // ── New position / new course dialogs ────────────────────────────────────
-  const [newPosOpen, setNewPosOpen]     = useState(false)
+  const [newPosOpen, setNewPosOpen] = useState(false)
   const [newPosSaving, setNewPosSaving] = useState(false)
-  const [newCourseOpen, setNewCourseOpen]   = useState(false)
+  const [newCourseOpen, setNewCourseOpen] = useState(false)
   const [newCourseSaving, setNewCourseSaving] = useState(false)
 
   // ── Employee-progress dialog ──────────────────────────────────────────────
-  const [empDlgOpen, setEmpDlgOpen]               = useState(false)
-  const [selectedEmp, setSelectedEmp]             = useState<Employee | null>(null)
+  const [empDlgOpen, setEmpDlgOpen] = useState(false)
+  const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null)
   const [selectedEmpCourses, setSelectedEmpCourses] = useState<EmployeeCourse[]>([])
-  const [empProgress, setEmpProgress]             = useState<EmployeeProgress | null>(null)
-  const [loadingEmpDlg, setLoadingEmpDlg]         = useState(false)
-  const [empDlgTab, setEmpDlgTab]                 = useState<'requeridos' | 'historial'>('requeridos')
+  const [empProgress, setEmpProgress] = useState<EmployeeProgress | null>(null)
+  const [loadingEmpDlg, setLoadingEmpDlg] = useState(false)
+  const [empDlgTab, setEmpDlgTab] = useState<'requeridos' | 'historial'>('requeridos')
 
   // ── Employee CRUD dialogs ─────────────────────────────────────────────────
   const [confirmClearOpen, setConfirmClearOpen] = useState(false)
 
-  const [editEmpOpen, setEditEmpOpen]   = useState(false)
+  const [editEmpOpen, setEditEmpOpen] = useState(false)
   const [editEmpTarget, setEditEmpTarget] = useState<Employee | null>(null)
   const [editEmpSaving, setEditEmpSaving] = useState(false)
 
-  const [newEmpOpen, setNewEmpOpen]     = useState(false)
+  const [newEmpOpen, setNewEmpOpen] = useState(false)
   const [newEmpSaving, setNewEmpSaving] = useState(false)
   const [newEmpSuccess, setNewEmpSuccess] = useState(false)
 
   const [addCoursesDlgOpen, setAddCoursesDlgOpen] = useState(false)
-  const [addCoursesDlgEmp, setAddCoursesDlgEmp]   = useState<Employee | null>(null)
-  const [addCoursesSaving, setAddCoursesSaving]   = useState(false)
+  const [addCoursesDlgEmp, setAddCoursesDlgEmp] = useState<Employee | null>(null)
+  const [addCoursesSaving, setAddCoursesSaving] = useState(false)
   const [addCoursesSuccess, setAddCoursesSuccess] = useState(false)
 
   // ── Feature hooks ─────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ export default function CapacitacionContent() {
   const loadProgressInBackground = useCallback(async (emps: Employee[]) => {
     const BATCH = 8
     for (let i = 0; i < emps.length; i += BATCH) {
-      const batch   = emps.slice(i, i + BATCH)
+      const batch = emps.slice(i, i + BATCH)
       const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
       const chunk: Record<string, { aprobados: number; reprobados: number; total: number }> = {}
       results.forEach((r, idx) => {
@@ -218,9 +218,9 @@ export default function CapacitacionContent() {
     else notify.error(result.error ?? 'Error al crear puesto')
   }, [createPosition, loadPositionData])
 
-  const handleSaveNewCourse = useCallback(async (name: string) => {
+  const handleSaveNewCourse = useCallback(async (name: string, tipo: string) => {
     setNewCourseSaving(true)
-    const result = await createCourse(name)
+    const result = await createCourse(name, tipo)
     setNewCourseSaving(false)
     if (result.success) { setNewCourseOpen(false); loadCoursesData(); notify.success('Curso creado correctamente') }
     else notify.error(result.error ?? 'Error al crear curso')
@@ -338,16 +338,16 @@ export default function CapacitacionContent() {
       <ReadOnlyBanner />
       <Tabs defaultValue="puestos" onValueChange={handleTabChange}>
         <TabsList className="flex w-full mb-4">
-          <TabsTrigger value="puestos"   className="flex-1 text-xs sm:text-sm">
-            <Briefcase    className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
+          <TabsTrigger value="puestos" className="flex-1 text-xs sm:text-sm">
+            <Briefcase className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
           </TabsTrigger>
-          <TabsTrigger value="cursos"    className="flex-1 text-xs sm:text-sm">
-            <BookOpen     className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
+          <TabsTrigger value="cursos" className="flex-1 text-xs sm:text-sm">
+            <BookOpen className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
           </TabsTrigger>
           <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
             <ClipboardList className="mr-1 sm:mr-2 h-4 w-4" /><span>Historial</span>
           </TabsTrigger>
-          <TabsTrigger value="importar"  className="hidden">
+          <TabsTrigger value="importar" className="hidden">
             <Upload className="mr-1 sm:mr-2 h-4 w-4" /><span>Importar</span>
           </TabsTrigger>
         </TabsList>

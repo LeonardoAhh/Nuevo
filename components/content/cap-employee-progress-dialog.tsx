@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { getTipoCursoByName } from "@/lib/catalogo"
 import type { Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 
 export interface CapEmployeeProgressDialogProps {
@@ -112,7 +113,12 @@ export function CapEmployeeProgressDialog({
                           {c.status === 'reprobado' && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
                           {c.status === 'pendiente' && <Clock className="h-4 w-4 text-muted-foreground shrink-0" />}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm leading-tight truncate">{c.courseName}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm leading-tight truncate">{c.courseName}</p>
+                              <Badge variant="outline" className="text-[10px] shrink-0">
+                                {c.course?.tipo || getTipoCursoByName(c.courseName)}
+                              </Badge>
+                            </div>
                             {c.fechaAplicacion && (
                               <p className="text-xs text-muted-foreground">{c.fechaAplicacion.split('-').reverse().join('/')}</p>
                             )}
@@ -143,7 +149,12 @@ export function CapEmployeeProgressDialog({
                         <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
                           <BookOpen className="h-4 w-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate leading-tight">{ec.course?.name ?? ec.raw_course_name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm truncate leading-tight">{ec.course?.name ?? ec.raw_course_name}</p>
+                              <Badge variant="outline" className="text-[10px] shrink-0">
+                                {ec.course?.tipo || getTipoCursoByName(ec.course?.name ?? ec.raw_course_name ?? '')}
+                              </Badge>
+                            </div>
                             {ec.fecha_aplicacion && (
                               <p className="text-xs text-muted-foreground">{ec.fecha_aplicacion.split('-').reverse().join('/')}</p>
                             )}
