@@ -1,15 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Settings2, Users } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Settings2,
+  Users,
+  XCircle,
+} from "lucide-react"
 import { notify } from "@/lib/notify"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePromociones } from "@/lib/hooks/usePromociones"
 import PromocionesContent from "@/components/content/promociones"
 import ReglasPromocionContent from "@/components/content/reglas-promocion"
 import { Skeleton } from "@/components/ui/skeleton"
-
-type TabKey = "empleados" | "reglas"
+import { calcularAptitud, isHabilitado } from "@/lib/promociones/utils"
+import { SummaryCard } from "@/components/content/prom-shared"
 
 export default function PromocionesClient() {
   const {
@@ -22,75 +28,94 @@ export default function PromocionesClient() {
     guardarExamen,
   } = usePromociones()
 
-  const [tab, setTab] = useState<TabKey>("empleados")
-  const [mounted, setMounted] = useState<Record<TabKey, boolean>>({
-    empleados: true,
-    reglas: false,
-  })
+  const [reglasOpen, setReglasOpen] = useState(false)
 
   useEffect(() => {
     if (error) notify.error(`Error al cargar datos: ${error}`)
   }, [error])
 
-  return (
-    <Tabs
-      value={tab}
-      onValueChange={(v) => {
-        const key = v as TabKey
-        setTab(key)
-        setMounted((prev) => (prev[key] ? prev : { ...prev, [key]: true }))
-      }}
-      className="w-full space-y-4"
-    >
-      <TabsList className="w-full sm:w-auto">
-        <TabsTrigger value="empleados" className="gap-1.5 flex-1 sm:flex-none">
-          <Users size={14} />
-          Empleados
-        </TabsTrigger>
-        <TabsTrigger value="reglas" className="gap-1.5 flex-1 sm:flex-none">
-          <Settings2 size={14} />
-          Reglas
-        </TabsTrigger>
-      </TabsList>
+  const kpis = useMemo(() => {
+    const habilitados = empleados.filter((e) => isHabilitado(e.puesto))
+    let aptos = 0
+    let noAptos = 0
+    let pendientes = 0
+    for (const emp of habilitados) {
+      const st = calcularAptitud(emp)
+      if (st === "apto") aptos++
+      else if (st === "no_apto") noAptos++
+      else pendientes++
+    }
+    return { aptos, noAptos, pendientes, total: empleados.length }
+  }, [empleados])
 
-      <TabsContent value="empleados" className="mt-0 space-y-4">
-        {loading && empleados.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl border p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="space-y-1.5 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
-                </div>
-                <Skeleton className="h-2 w-full rounded-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                </div>
-              </div>
+  return (
+    <div className="w-full space-y-4">
+      {/* KPI strip */}
+      {!loading && empleados.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <SummaryCard title="Aptos" value={kpis.aptos} icon={CheckCircle2} color="bg-success/15 text-success" />
+          <SummaryCard title="No Aptos" value={kpis.noAptos} icon={XCircle} color="bg-destructive/15 text-destructive" />
+          <SummaryCard title="Pendientes" value={kpis.pendientes} icon={Clock} color="bg-warning/15 text-warning" />
+          <SummaryCard title="Total" value={kpis.total} icon={Users} color="bg-primary/15 text-primary" />
+        </div>
+      )}
+
+      {/* Empleados */}
+      {loading && empleados.length === 0 ? (
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[72px] rounded-lg" />
             ))}
           </div>
-        ) : error ? (
-          <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm">
-            Error al cargar datos: {error}
+          <Skeleton className="h-9 w-full rounded-md" />
+          <div className="hidden md:block rounded-lg border overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
-        ) : (
-          <PromocionesContent
-            empleados={empleados}
-            onDatosActualizados={recargar}
-            guardarDesempeño={guardarDesempeño}
-            promoverEmpleado={promoverEmpleado}
-            guardarExamen={guardarExamen}
-          />
-        )}
-      </TabsContent>
+          <div className="flex flex-col gap-2 md:hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[100px] rounded-xl" />
+            ))}
+          </div>
+        </div>
+      ) : error ? (
+        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm">
+          Error al cargar datos: {error}
+        </div>
+      ) : (
+        <PromocionesContent
+          empleados={empleados}
+          onDatosActualizados={recargar}
+          guardarDesempeño={guardarDesempeño}
+          promoverEmpleado={promoverEmpleado}
+          guardarExamen={guardarExamen}
+        />
+      )}
 
-      <TabsContent value="reglas" className="mt-0">
-        {mounted.reglas && <ReglasPromocionContent onChange={recargar} />}
-      </TabsContent>
-    </Tabs>
+      {/* Reglas — sección colapsable */}
+      <div className="rounded-lg border bg-background">
+        <button
+          type="button"
+          onClick={() => setReglasOpen((v) => !v)}
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors rounded-lg"
+        >
+          <span className="flex items-center gap-2">
+            <Settings2 size={15} className="text-muted-foreground" />
+            Reglas de Promoción
+          </span>
+          <ChevronDown
+            size={16}
+            className={`text-muted-foreground transition-transform ${reglasOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {reglasOpen && (
+          <div className="border-t px-4 py-4">
+            <ReglasPromocionContent onChange={recargar} />
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
