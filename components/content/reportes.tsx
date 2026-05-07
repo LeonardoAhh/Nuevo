@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable"
 
 import { useCapacitacion } from "@/lib/hooks"
 import type { Employee } from "@/lib/hooks"
+import { getTipoCursoByName } from "@/lib/catalogo"
 import { notify } from "@/lib/notify"
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -119,7 +120,7 @@ export default function ReportesContent() {
         // Group courses by type
         const byType: Record<string, typeof progress.courses> = {}
         progress.courses.forEach(c => {
-          const t = c.course?.tipo || "Sin Categoría"
+          const t = c.course?.tipo || getTipoCursoByName(c.courseName)
           if (!byType[t]) byType[t] = []
           byType[t].push(c)
         })
