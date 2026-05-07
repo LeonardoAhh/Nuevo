@@ -1,142 +1,217 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
-import DashboardAlertas from "@/components/dashboard-alertas"
-import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
-import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
-import HeroDashboard from "@/components/hero-dashboard"
-import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
-import CapacitacionChart from "@/components/capacitacion-chart"
-import NotesWidget from "@/components/notes-widget"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StickyNote, Bell, GraduationCap } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  AlertTriangle, BookOpen, CalendarDays,
+  Clock, GraduationCap, Sparkles, Users,
+} from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useUser, useProfile } from "@/lib/hooks"
+import { COMPANY_NAME } from "@/lib/constants/company"
 import {
   DashboardAlertasProvider,
   useDashboardAlertasShared,
 } from "@/components/dashboard-alertas-context"
-import { useTheme } from "@/components/theme-context"
+import {
+  CumplimientoProvider,
+  useCumplimientoShared,
+} from "@/components/dashboard-cumplimiento-context"
+import { META } from "@/lib/hooks/useCumplimiento"
+import DashboardAlertas from "@/components/dashboard-alertas"
+import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
+import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
+import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
+import CapacitacionChart from "@/components/capacitacion-chart"
+import NotesWidget from "@/components/notes-widget"
 
-// ─── Motion variants ─────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.42, delay: i * 0.12, ease: EASE_PREMIUM },
-  }),
-  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
+function getGreeting(hour: number): string {
+  if (hour < 6) return "Buenas noches"
+  if (hour < 12) return "Buenos días"
+  if (hour < 19) return "Buenas tardes"
+  return "Buenas noches"
 }
 
-// ─── Tab Alertas trigger ──────────────────────────────────────────────────────
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
+}
 
-function AlertasTabTrigger() {
-  const { totalAlertas, loading } = useDashboardAlertasShared()
-  const showBadge = !loading && totalAlertas > 0
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("es-MX", {
+    weekday: "long", day: "numeric", month: "long",
+  })
+}
+
+// ─── KPI Card ────────────────────────────────────────────────────────────────
+
+interface KpiCardProps {
+  icon: React.ReactNode
+  label: string
+  value: string | number
+  accent: string
+  loading?: boolean
+  subtitle?: string
+}
+
+function KpiCard({ icon, label, value, accent, loading, subtitle }: KpiCardProps) {
   return (
-    <TabsTrigger value="alertas" className="gap-1.5 text-xs sm:text-sm">
-      <Bell size={14} className="hidden sm:inline" />
-      Alertas
-      {showBadge && (
-        <span
-          aria-label={`${totalAlertas} alertas pendientes`}
-          className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground"
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div
+          className="flex items-center justify-center rounded-lg p-2.5 shrink-0 bg-muted/50"
+          style={{ color: accent }}
         >
-          {totalAlertas > 99 ? "99+" : totalAlertas}
-        </span>
-      )}
-    </TabsTrigger>
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground truncate">{label}</p>
+          {loading ? (
+            <Skeleton className="h-6 w-16 mt-0.5" />
+          ) : (
+            <p className="text-xl font-bold tabular-nums leading-tight">{value}</p>
+          )}
+          {subtitle && !loading && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
-// ─── Capacitación cards staggered ────────────────────────────────────────────
+// ─── Greeting Bar ────────────────────────────────────────────────────────────
 
-const capacitacionCards = [
-  DashboardCumplimiento,
-  RgCumplimientoChart,
-  CapacitacionChart,
-  DashboardYearlyCompliance,
-]
-
-function CapacitacionTab({ skip }: { skip: boolean }) {
-  return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="show"
-      exit="exit"
-    >
-      {capacitacionCards.map((Card, i) => (
-        <motion.div
-          key={i}
-          custom={i}
-          variants={skip ? undefined : cardVariants}
-          initial={skip ? false : "hidden"}
-          animate={skip ? false : "show"}
-        >
-          <Card />
-        </motion.div>
-      ))}
-    </motion.div>
-  )
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
-export default function DashboardHome() {
-  const [tab, setTab] = useState("alertas")
-  // Keep-alive: mount each tab's heavy content only after first visit,
-  // then keep it mounted (preserves scroll/state without refetching).
-  const [visited, setVisited] = useState<Set<string>>(new Set(["alertas"]))
-  // Track previous tab for AnimatePresence key
-  const prevTab = useRef(tab)
-
-  const prefersReduced = useReducedMotion()
-  const { reducedMotion } = useTheme()
-  const skipMotion = prefersReduced || reducedMotion
+function GreetingBar() {
+  const { user } = useUser()
+  const { profile } = useProfile(user?.id)
+  const [now, setNow] = useState<Date | null>(null)
 
   useEffect(() => {
-    setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)))
-    prevTab.current = tab
-  }, [tab])
+    setNow(new Date())
+    const id = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const greeting = useMemo(() => (now ? getGreeting(now.getHours()) : ""), [now])
+  const timeStr = useMemo(() => (now ? formatTime(now) : ""), [now])
+  const dateStr = useMemo(() => (now ? formatDate(now) : ""), [now])
+  const displayName = profile?.displayName || profile?.firstName || "Bienvenido"
 
   return (
-    <DashboardAlertasProvider>
-      <div className="space-y-4">
-        <HeroDashboard />
-
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-3 h-10">
-            <AlertasTabTrigger />
-            <TabsTrigger value="notas" className="gap-1.5 text-xs sm:text-sm">
-              <StickyNote size={14} className="hidden sm:inline" />
-              Notas
-            </TabsTrigger>
-            <TabsTrigger value="capacitacion" className="gap-1.5 text-xs sm:text-sm">
-              <GraduationCap size={14} className="hidden sm:inline" />
-              <span className="sm:hidden">Capacit.</span>
-              <span className="hidden sm:inline">Capacitación</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="alertas" className="mt-4">
-            {visited.has("alertas") && <DashboardAlertas />}
-          </TabsContent>
-
-          <TabsContent value="notas" className="mt-4">
-            {visited.has("notas") && <NotesWidget />}
-          </TabsContent>
-
-          <TabsContent value="capacitacion" className="mt-4">
-            {visited.has("capacitacion") && (
-              <CapacitacionTab skip={!!skipMotion} />
-            )}
-          </TabsContent>
-        </Tabs>
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2 min-w-0">
+        <Badge variant="outline" className="shrink-0 gap-1 text-xs px-2 py-0.5">
+          <Sparkles size={12} className="text-primary" />
+          {greeting}
+        </Badge>
+        <h2 className="text-lg font-semibold truncate">{displayName}</h2>
+        <span className="hidden sm:inline text-sm text-muted-foreground">·</span>
+        <span className="hidden sm:inline text-sm text-muted-foreground truncate">
+          {COMPANY_NAME}
+        </span>
       </div>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <CalendarDays size={13} className="text-primary/70" />
+          <span className="capitalize">{dateStr}</span>
+        </span>
+        <span className="flex items-center gap-1.5 tabular-nums">
+          <Clock size={13} className="text-primary/70" />
+          {timeStr}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── KPI Strip ───────────────────────────────────────────────────────────────
+
+function KpiStrip() {
+  const { totalAlertas, loading: alertasLoading } = useDashboardAlertasShared()
+  const {
+    loading: cumplLoading,
+    totalAsignados,
+    totalAprobados,
+    totalEmpleadosConPuesto,
+  } = useCumplimientoShared()
+
+  const pctGeneral = totalAsignados > 0
+    ? Math.round((totalAprobados / totalAsignados) * 100)
+    : 0
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <KpiCard
+        icon={<AlertTriangle size={18} />}
+        label="Alertas pendientes"
+        value={totalAlertas}
+        accent="hsl(var(--destructive))"
+        loading={alertasLoading}
+      />
+      <KpiCard
+        icon={<GraduationCap size={18} />}
+        label="Cumplimiento"
+        value={`${pctGeneral}%`}
+        accent="hsl(var(--chart-2))"
+        loading={cumplLoading}
+        subtitle={pctGeneral >= META ? "Cumple meta" : "Bajo meta"}
+      />
+      <KpiCard
+        icon={<BookOpen size={18} />}
+        label="Cursos aprobados"
+        value={`${totalAprobados}/${totalAsignados}`}
+        accent="hsl(var(--primary))"
+        loading={cumplLoading}
+      />
+      <KpiCard
+        icon={<Users size={18} />}
+        label="Empleados configurados"
+        value={totalEmpleadosConPuesto}
+        accent="hsl(var(--chart-4))"
+        loading={cumplLoading}
+      />
+    </div>
+  )
+}
+
+// ─── Dashboard Content ───────────────────────────────────────────────────────
+
+function DashboardContent() {
+  return (
+    <div className="space-y-4">
+      <GreetingBar />
+      <KpiStrip />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Left column: alertas + notas */}
+        <div className="space-y-4">
+          <DashboardAlertas />
+          <NotesWidget />
+        </div>
+
+        {/* Right column: charts */}
+        <div className="space-y-4">
+          <DashboardCumplimiento />
+          <RgCumplimientoChart />
+          <CapacitacionChart />
+          <DashboardYearlyCompliance />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
+
+export default function DashboardHome() {
+  return (
+    <DashboardAlertasProvider>
+      <CumplimientoProvider>
+        <DashboardContent />
+      </CumplimientoProvider>
     </DashboardAlertasProvider>
   )
 }
