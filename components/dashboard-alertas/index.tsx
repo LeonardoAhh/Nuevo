@@ -1,15 +1,7 @@
 "use client"
 
 import {
-    AlertTriangle,
-    Calendar,
-    CheckCircle2,
-    Clock,
-    FileText,
-    GraduationCap,
     RefreshCw,
-    ShieldAlert,
-    XCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,57 +39,48 @@ export default function DashboardAlertas() {
         `${n(arr)} ${word}${n(arr) !== 1 ? "s" : ""}`
 
     const dialogConfig: Record<NonNullable<DialogTipo>, {
-        titulo: string; descripcion: string; icono: React.ReactNode
+        titulo: string
+        descripcion: string
     }> = {
         eval1_vencidas: {
             titulo: "Evaluación 1er Mes — Vencidas",
             descripcion: `${s(eval1Venc, "evaluación")} con fecha pasada sin calificación`,
-            icono: <XCircle className="h-5 w-5 text-red-500" />
         },
         eval1_por_vencer: {
             titulo: `Evaluación 1er Mes — Por vencer (${EVAL_UMBRAL_DIAS}d)`,
             descripcion: `${s(eval1Prox, "evaluación")} próximas a vencer`,
-            icono: <Clock className="h-5 w-5 text-amber-500" />
         },
         eval2_vencidas: {
             titulo: "Evaluación 2° Mes — Vencidas",
             descripcion: `${s(eval2Venc, "evaluación")} con fecha pasada sin calificación`,
-            icono: <XCircle className="h-5 w-5 text-red-500" />
         },
         eval2_por_vencer: {
             titulo: `Evaluación 2° Mes — Por vencer (${EVAL_UMBRAL_DIAS}d)`,
             descripcion: `${s(eval2Prox, "evaluación")} próximas a vencer`,
-            icono: <Clock className="h-5 w-5 text-amber-500" />
         },
         eval3_vencidas: {
             titulo: "Evaluación 3er Mes — Vencidas",
             descripcion: `${s(eval3Venc, "evaluación")} con fecha pasada sin calificación`,
-            icono: <XCircle className="h-5 w-5 text-red-500" />
         },
         eval3_por_vencer: {
             titulo: `Evaluación 3er Mes — Por vencer (${EVAL_UMBRAL_DIAS}d)`,
             descripcion: `${s(eval3Prox, "evaluación")} próximas a vencer`,
-            icono: <Clock className="h-5 w-5 text-amber-500" />
         },
         rg_vencidas: {
             titulo: "RG-REC-048 — Pendientes vencidos",
             descripcion: `${s(rgVenc, "registro")} con RG pendiente y fecha vencida`,
-            icono: <ShieldAlert className="h-5 w-5 text-purple-500" />
         },
         rg_por_vencer: {
             titulo: `RG-REC-048 — Por vencer (${RG_UMBRAL_DIAS}d)`,
             descripcion: `${s(rgProx, "registro")} con RG próximo a vencer`,
-            icono: <Clock className="h-5 w-5 text-violet-500" />
         },
         termino_vencidos: {
             titulo: "Término de Contrato — Vencidos",
             descripcion: `${s(termVenc, "contrato")} con fecha de término pasada`,
-            icono: <AlertTriangle className="h-5 w-5 text-orange-500" />
         },
         termino_por_vencer: {
             titulo: `Término de Contrato — Por vencer (${TERMINO_UMBRAL_DIAS}d)`,
             descripcion: `${s(termProx, "contrato")} próximos a vencer`,
-            icono: <Calendar className="h-5 w-5 text-blue-500" />
         },
     }
 
@@ -109,7 +92,6 @@ export default function DashboardAlertas() {
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <div>
                         <CardTitle className="text-base font-semibold flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-primary" />
                             Control de Contratos, Evaluaciones, Plan de Formación.
                         </CardTitle>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -127,7 +109,6 @@ export default function DashboardAlertas() {
 
                 <CardContent className="grid grid-cols-1 gap-3 pt-0 md:grid-cols-2 xl:grid-cols-3">
                     <Seccion
-                        icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
                         label="Evaluación 1er Mes"
                         vencidas={n(eval1Venc)} colorV="text-red-600 dark:text-red-400"
                         bordeV="border-red-100 dark:border-red-800/30"
@@ -139,7 +120,6 @@ export default function DashboardAlertas() {
                         loading={loading}
                     />
                     <Seccion
-                        icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
                         label="Evaluación 2° Mes"
                         vencidas={n(eval2Venc)} colorV="text-red-600 dark:text-red-400"
                         bordeV="border-red-100 dark:border-red-800/30"
@@ -151,7 +131,6 @@ export default function DashboardAlertas() {
                         loading={loading}
                     />
                     <Seccion
-                        icono={<GraduationCap className="h-3.5 w-3.5 text-primary" />}
                         label="Evaluación 3er Mes"
                         vencidas={n(eval3Venc)} colorV="text-red-600 dark:text-red-400"
                         bordeV="border-red-100 dark:border-red-800/30"
@@ -163,7 +142,6 @@ export default function DashboardAlertas() {
                         loading={loading}
                     />
                     <Seccion
-                        icono={<ShieldAlert className="h-3.5 w-3.5 text-primary" />}
                         label="RG-REC-048"
                         vencidas={n(rgVenc)} colorV="text-purple-600 dark:text-purple-400"
                         bordeV="border-purple-100 dark:border-purple-800/30"
@@ -175,7 +153,6 @@ export default function DashboardAlertas() {
                         loading={loading}
                     />
                     <Seccion
-                        icono={<FileText className="h-3.5 w-3.5 text-primary" />}
                         label="Término de Contrato"
                         vencidas={n(termVenc)} colorV="text-orange-600 dark:text-orange-400"
                         bordeV="border-orange-100 dark:border-orange-800/30"
@@ -188,8 +165,7 @@ export default function DashboardAlertas() {
                     />
 
                     {!loading && totalAlertas === 0 && (
-                        <div className="flex items-center justify-center gap-2 py-3 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-800/30">
-                            <CheckCircle2 size={16} />
+                        <div className="flex items-center justify-center py-3 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-800/30">
                             <span>Sin alertas pendientes. ¡Todo al día!</span>
                         </div>
                     )}

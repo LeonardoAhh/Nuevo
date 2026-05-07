@@ -29,7 +29,6 @@ import { iniciales } from "./utils"
 // ─── Métrica clickeable ──────────────────────────────────────────────────────
 
 interface MetricaProps {
-    icono: React.ReactNode
     label: string
     valor: number
     colorValor: string
@@ -38,7 +37,7 @@ interface MetricaProps {
     loading: boolean
 }
 
-export function Metrica({ icono, label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
+export function Metrica({ label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
     return (
         <button
             onClick={onClick}
@@ -52,9 +51,6 @@ export function Metrica({ icono, label, valor, colorValor, colorBorder, onClick,
                 }
       `}
         >
-            <span className="flex-shrink-0 p-1.5 rounded-lg text-primary bg-primary/5 dark:bg-primary/10">
-                {icono}
-            </span>
             <div className="flex flex-col flex-1 min-w-0">
                 {loading ? (
                     <div className="h-6 w-8 bg-current/10 rounded animate-pulse" />
@@ -72,10 +68,9 @@ export function Metrica({ icono, label, valor, colorValor, colorBorder, onClick,
 
 // ─── Encabezado de sección ───────────────────────────────────────────────────
 
-function SeccionHeader({ icono, label }: { icono: React.ReactNode; label: string }) {
+function SeccionHeader({ label }: { label: string }) {
     return (
         <div className="flex items-center gap-1.5 mb-2">
-            {icono}
             <span className="text-xs font-semibold text-primary uppercase tracking-wide">
                 {label}
             </span>
@@ -86,7 +81,6 @@ function SeccionHeader({ icono, label }: { icono: React.ReactNode; label: string
 // ─── Sección con dos métricas (vencidas + por vencer) ────────────────────────
 
 interface SeccionProps {
-    icono: React.ReactNode
     label: string
     vencidas: number; colorV: string; bordeV: string
     porVencer: number; colorP: string; bordeP: string
@@ -97,18 +91,17 @@ interface SeccionProps {
 }
 
 export function Seccion({
-    icono, label,
+    label,
     vencidas, colorV, bordeV,
     porVencer, colorP, bordeP,
     umbrales, onVencidas, onPorVencer, loading,
 }: SeccionProps) {
     return (
         <div className="rounded-2xl border border-primary/10 bg-primary/5 dark:border-primary/20 dark:bg-primary/10 p-4">
-            <SeccionHeader icono={icono} label={label} />
+            <SeccionHeader label={label} />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                 <Metrica
-                    icono={<XCircle size={16} />}
-                    label="Vencidas"
+                    label="Expired"
                     valor={vencidas}
                     colorValor={colorV}
                     colorBorder={bordeV}
@@ -116,8 +109,7 @@ export function Seccion({
                     loading={loading}
                 />
                 <Metrica
-                    icono={<Clock size={16} />}
-                    label={`Por vencer (${umbrales}d)`}
+                    label={`Expiring soon (${umbrales}d)`}
                     valor={porVencer}
                     colorValor={colorP}
                     colorBorder={bordeP}
