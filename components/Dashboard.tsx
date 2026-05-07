@@ -15,8 +15,6 @@ interface DashboardProps {
 
 export default function Dashboard({ content, pageTitle }: DashboardProps) {
   const {
-    collapsed,
-    setCollapsed,
     isMobileView,
     showMobileSidebar,
     setShowMobileSidebar,
@@ -46,8 +44,6 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         Saltar al contenido
       </a>
       <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
         isMobileView={isMobileView}
         showMobileSidebar={showMobileSidebar}
         setShowMobileSidebar={setShowMobileSidebar}
