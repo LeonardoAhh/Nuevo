@@ -619,7 +619,7 @@ export function useCapacitacion() {
       return {
         courseId: rc.course_id,
         courseName: (rc.course as { name?: string; tipo?: string | null } | null)?.name ?? '—',
-        course: rc.course as { name: string; tipo: string | null } | null,
+        course: rc.course?.[0] as { name: string; tipo: string | null } | null,
         orderIndex: rc.order_index,
         status,
         calificacion: cal,
