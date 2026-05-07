@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react"
-import { createPortal } from "react-dom"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -23,7 +22,6 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRole } from "@/lib/hooks"
 import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
-import SignOutOverlay from "@/components/signout-overlay"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
@@ -120,12 +118,6 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname()
   const { canEdit, isEvaluador } = useRole()
-  const [signingOut] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const isItemAllowed = (href: string) =>
     !isEvaluador || EVALUADOR_ALLOWED_ROUTES.some((r) => href === r || href.startsWith(r + '/'))
@@ -134,8 +126,6 @@ export default function Sidebar({
 
   return (
     <TooltipProvider delayDuration={0}>
-      {mounted && createPortal(<SignOutOverlay show={signingOut} />, document.body)}
-
       {/* Mobile backdrop */}
       {isMobileView && showMobileSidebar && (
         <div
