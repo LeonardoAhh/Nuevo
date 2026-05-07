@@ -88,34 +88,37 @@ export function useDesempeno() {
       const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
         ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
 
-      // Auto-calculate cumplimiento from incidencias
+      // Auto-calculate cumplimiento from incidencias using graduated scale
       const incidencias = incidenciaData ?? []
-      const tieneFaltaInjustificada = incidencias.some(
-        (i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA' && (i.valor as number) > 0
-      )
-      // Group PERMISO + TXT + PERMISO HORAS by month, check if any month > 2
+
+      // Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
+      const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
+      const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
+
+      // Count total faltas injustificadas
+      const totalFaltas = incidencias
+        .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
+        .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+
+      // Count total permisos (PERMISO + TXT + PERMISO HORAS)
       const permisoCats = ['PERMISO', 'TXT', 'PERMISO HORAS']
-      const permisosPorMes: Record<string, number> = {}
-      for (const i of incidencias) {
-        const cat = i.categoria as string
-        if (permisoCats.includes(cat)) {
-          const mes = (i.mes as string) ?? ''
-          permisosPorMes[mes] = (permisosPorMes[mes] ?? 0) + ((i.valor as number) ?? 0)
-        }
-      }
-      const tieneExcesoPermisos = Object.values(permisosPorMes).some((total) => total > 2)
+      const totalPermisos = incidencias
+        .filter((i: Record<string, unknown>) => permisoCats.includes(i.categoria as string))
+        .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
 
       // Map cumplimiento from saved data or use defaults
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
         ? (evalData.cumplimiento_responsabilidades as CumplimientoItem[])
         : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c }))
 
-      // Override auto-calculated fields (index 2 = asistencia, index 4 = permisos)
+      // Override auto-calculated fields with graduated scale values
+      // index 2 = "Cumplir con asistencia" → based on faltas
       if (cumplimiento[2]) {
-        cumplimiento[2].porcentaje = tieneFaltaInjustificada ? "NO CUMPLE" : "CUMPLE"
+        cumplimiento[2].porcentaje = String(aplicarEscala(totalFaltas))
       }
+      // index 4 = "No presentar más de dos permisos por mes" → based on permisos
       if (cumplimiento[4]) {
-        cumplimiento[4].porcentaje = tieneExcesoPermisos ? "NO CUMPLE" : "CUMPLE"
+        cumplimiento[4].porcentaje = String(aplicarEscala(totalPermisos))
       }
 
       // Map competencias from saved data or use defaults
