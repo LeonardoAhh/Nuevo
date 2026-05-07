@@ -145,10 +145,21 @@ body {
  * Use these instead of inline env() styles for consistency.
  * On devices without safe areas, env() resolves to 0px → no effect.
  */
-.safe-top    { padding-top:    env(safe-area-inset-top, 0px); }
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
-.safe-left   { padding-left:   env(safe-area-inset-left, 0px); }
-.safe-right  { padding-right:  env(safe-area-inset-right, 0px); }
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
 
 /* Android PWA / iOS non-notch fallback: env() might return 0 but status bar overlays content */
 @media (max-width: 768px) and (display-mode: standalone) {
@@ -161,6 +172,7 @@ body {
 .safe-bottom-content {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
+
 .safe-top-content {
   padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }
@@ -392,7 +404,7 @@ input[type="color"]::-webkit-color-swatch {
 /* Header */
 .density-compact header {
   min-height: 40px;
-  padding-top: 0.25rem;
+  padding-top: max(env(safe-area-inset-top, 0px), 0.25rem);
   padding-bottom: 0.25rem;
 }
 
@@ -402,6 +414,12 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Hero dashboard density handled by component Tailwind classes */
+
+@media (max-width: 1024px) and (display-mode: standalone) {
+  .density-compact header {
+    padding-top: max(env(safe-area-inset-top, 0px), 36px);
+  }
+}
 
 /* ─── Fin Density: Compact ───────────────────────────── */
 
