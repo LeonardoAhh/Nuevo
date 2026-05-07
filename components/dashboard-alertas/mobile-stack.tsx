@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useRef, useEffect } from "react"
 import {
     Calendar,
     CheckCircle2,
@@ -128,6 +128,7 @@ export function MobileStackEvals({
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [calStr, setCalStr] = useState("")
     const [saving, setSaving] = useState(false)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     const deptos = useMemo(
         () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
@@ -148,6 +149,16 @@ export function MobileStackEvals({
         () => items.find(i => i.id === selectedId) ?? null,
         [items, selectedId],
     )
+
+    // Focus con delay para esperar animación del drawer antes de abrir teclado
+    // Evita que iOS empuje el drawer encima de la status bar
+    useEffect(() => {
+        if (!seleccionado) return
+        const timer = setTimeout(() => {
+            inputRef.current?.focus()
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [seleccionado])
 
     function back() { setSelectedId(null); setCalStr("") }
 
@@ -188,19 +199,13 @@ export function MobileStackEvals({
                         </Button>
                     }
                 />
-                <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4">
-                    <dl className="grid grid-cols-2 gap-2">
-                        <DetalleStat label="No. Empleado" value={seleccionado.numero ?? "Sin número"} icon={<User size={12} aria-hidden />} />
-                        <DetalleStat label="Fecha de Ingreso" value={seleccionado.fechaIngreso ? formatDate(seleccionado.fechaIngreso) : "Sin registro"} icon={<Calendar size={12} aria-hidden />} />
-                        <DetalleStat label="Periodo" value={periodoEval(seleccionado.fechaIngreso, evalNum)} icon={<Calendar size={12} aria-hidden />} nota={`Vence: ${formatDate(seleccionado.fecha)}`} />
-                        <DetalleStat label="Tiempo" value={dias(seleccionado.diasDiff)} icon={<Clock size={12} aria-hidden />} valueClass={toneText} />
-                    </dl>
-
-                    <div className="rounded-2xl border bg-muted/30 p-3">
+                <div className="scrollbar-thin flex-1 overflow-y-auto p-4">
+                    <div className="mb-4 rounded-2xl border bg-muted/30 p-3">
                         <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
                             <Pencil size={14} aria-hidden /> Capturar calificación
                         </h4>
                         <Input
+                            ref={inputRef}
                             type="number"
                             inputMode="numeric"
                             pattern="[0-9]*"
@@ -209,14 +214,19 @@ export function MobileStackEvals({
                             value={calStr}
                             onChange={(e) => setCalStr(e.target.value)}
                             placeholder="0 – 100"
+                            // font-size mínimo 16px — evita zoom automático en iOS
                             className="h-11 text-base"
                             aria-label="Calificación"
-                            autoFocus
                         />
                     </div>
+
+                    <dl className="grid grid-cols-2 gap-2">
+                        <DetalleStat label="No. Empleado" value={seleccionado.numero ?? "Sin número"} icon={<User size={12} aria-hidden />} />
+                        <DetalleStat label="Fecha de Ingreso" value={seleccionado.fechaIngreso ? formatDate(seleccionado.fechaIngreso) : "Sin registro"} icon={<Calendar size={12} aria-hidden />} />
+                        <DetalleStat label="Periodo" value={periodoEval(seleccionado.fechaIngreso, evalNum)} icon={<Calendar size={12} aria-hidden />} nota={`Vence: ${formatDate(seleccionado.fecha)}`} />
+                        <DetalleStat label="Tiempo" value={dias(seleccionado.diasDiff)} icon={<Clock size={12} aria-hidden />} valueClass={toneText} />
+                    </dl>
                 </div>
-
-
             </div>
         )
     }
@@ -311,7 +321,7 @@ export function MobileStackFechas({
                     badgeClass={colorBadge}
                     onBack={back}
                 />
-                <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4">
+                <div className="scrollbar-thin flex-1 overflow-y-auto p-4">
                     <dl className="grid grid-cols-2 gap-2">
                         <DetalleStat label="No. Empleado" value={seleccionado.numero ?? "Sin número"} icon={<User size={12} aria-hidden />} />
                         <DetalleStat label="Fecha de Ingreso" value={seleccionado.fechaIngreso ? formatDate(seleccionado.fechaIngreso) : "Sin registro"} icon={<Calendar size={12} aria-hidden />} />
@@ -321,9 +331,7 @@ export function MobileStackFechas({
                 </div>
 
                 {(onEntregado || onIndeterminado) && (
-                    <div
-                        className="sticky bottom-0 flex flex-col gap-2 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 safe-bottom-content"
-                    >
+                    <div className="sticky bottom-0 flex flex-col gap-2 border-t bg-card/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 safe-bottom-content">
                         {onEntregado && (
                             <Button
                                 size="icon"
