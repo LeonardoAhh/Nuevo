@@ -177,6 +177,13 @@ body {
   padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }
 
+/* Sheets y drawers — reset para evitar doble safe-area */
+[role="dialog"],
+[data-radix-popper-content-wrapper],
+[vaul-drawer] {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
 /* Scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
