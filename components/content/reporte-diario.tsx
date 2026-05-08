@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "../ui/alert"
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 
@@ -29,6 +30,50 @@ const INCIDENT_TABS = [
 ] as const
 
 type IncidentTab = (typeof INCIDENT_TABS)[number]
+
+type MexicoHolidayRule =
+    | { label: string; month: number; day: number; fixed: true }
+    | { label: string; month: number; weekday: number; occurrence: number }
+
+const MEXICO_HOLIDAY_RULES: readonly MexicoHolidayRule[] = [
+    { label: "Año Nuevo", month: 0, day: 1, fixed: true },
+    { label: "Día de la Constitución", month: 1, weekday: 1, occurrence: 1 },
+    { label: "Benito Juárez", month: 2, weekday: 1, occurrence: 3 },
+    { label: "Día del Trabajo", month: 4, day: 1, fixed: true },
+    { label: "Independencia", month: 8, day: 16, fixed: true },
+    { label: "Revolución", month: 10, weekday: 1, occurrence: 3 },
+    { label: "Navidad", month: 11, day: 25, fixed: true },
+]
+
+function getNthWeekdayOfMonth(year: number, month: number, weekday: number, occurrence: number) {
+    const date = new Date(year, month, 1)
+    let count = 0
+    while (date.getMonth() === month) {
+        if (date.getDay() === weekday) {
+            count += 1
+            if (count === occurrence) return new Date(date)
+        }
+        date.setDate(date.getDate() + 1)
+    }
+    return null
+}
+
+function getMexicoHolidayLabels(year: number) {
+    return MEXICO_HOLIDAY_RULES.reduce<Record<string, string>>((acc, rule) => {
+        if ("fixed" in rule) {
+            const key = `${String(rule.month + 1).padStart(2, "0")}-${String(rule.day).padStart(2, "0")}`
+            acc[key] = rule.label
+            return acc
+        }
+
+        const holiday = getNthWeekdayOfMonth(year, rule.month, rule.weekday, rule.occurrence)
+        if (holiday) {
+            const key = `${String(holiday.getMonth() + 1).padStart(2, "0")}-${String(holiday.getDate()).padStart(2, "0")}`
+            acc[key] = rule.label
+        }
+        return acc
+    }, {})
+}
 
 const AREA_STAFF = [
     { area: "A. CALIDAD 1ER TURNO", personal_autorizado: 22 },
@@ -222,7 +267,7 @@ export default function ReporteDiarioContent() {
         return dayHeaders.reduce<Record<string, number>>((acc, day) => {
             acc[day] = selectedRows.reduce((n, r) => {
                 const v = r.days[day]
-                return n + (v && v !== "-" && v !== "X" && v !== "A" && v !== "D" ? 1 : 0)
+                return n + (v && v !== "-" && v !== "X" && v !== "A" && v !== "D" && v !== "DF" ? 1 : 0)
             }, 0)
             return acc
         }, {})
@@ -317,7 +362,17 @@ export default function ReporteDiarioContent() {
     }, [selectedRows, selectedDay])
 
     const weekDayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-    const monthFirstDay = currentMonth ? new Date(`${currentMonth}-01`).getDay() : 0
+    const monthFirstDay = currentMonth ? (() => {
+        const [year, month] = currentMonth.split("-").map(Number)
+        return new Date(year, month - 1, 1).getDay()
+    })() : 0
+
+    const selectedMonthHolidayLabels = useMemo(() => {
+        if (!currentMonth) return {} as Record<string, string>
+        const [year] = currentMonth.split("-").map(Number)
+        return getMexicoHolidayLabels(year)
+    }, [currentMonth])
+
     const calendarCells = Array.from({ length: dayCount + monthFirstDay }, (_, i) =>
         i < monthFirstDay ? null : String(i - monthFirstDay + 1).padStart(2, "0"),
     )
@@ -408,13 +463,15 @@ export default function ReporteDiarioContent() {
                 </div>
             </div>
 
-            {/* ── File badge ───────────────────────────────────────────── */}
-            {fileName && (
-                <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">
-                    <IconCheck />
-                    <span>Archivo cargado: <strong className="font-semibold">{fileName}</strong></span>
-                </div>
-            )}
+            <div className="flex justify-center">
+                <Alert className="inline-flex items-center gap-2 w-auto [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
+                    <AlertDescription>
+                        Los datos no se almacenan en la nube, resguarda los archivos originales.
+                    </AlertDescription>
+                </Alert>
+            </div>
+
+
 
             {/* ── Calendar ─────────────────────────────────────────────── */}
             {currentMonth && rows.length > 0 && (
@@ -449,6 +506,7 @@ export default function ReporteDiarioContent() {
                                 if (!day) return <div key={idx} />
                                 const count = daySummaries[day] ?? 0
                                 const active = day === selectedDay
+                                const holidayLabel = selectedMonthHolidayLabels[`${currentMonth.split("-")[1]}-${day}`]
                                 return (
                                     <button
                                         key={`${idx}-${day}`}
@@ -466,6 +524,11 @@ export default function ReporteDiarioContent() {
                                         <span className={["font-bold text-sm leading-none", active ? "text-background" : "text-foreground"].join(" ")}>
                                             {parseInt(day, 10)}
                                         </span>
+                                        {holidayLabel ? (
+                                            <span className="mt-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                                {holidayLabel}
+                                            </span>
+                                        ) : null}
                                         {count > 0 ? (
                                             <span className={[
                                                 "mt-auto inline-flex items-center justify-center rounded-full",
