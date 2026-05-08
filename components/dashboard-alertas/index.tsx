@@ -177,7 +177,7 @@ export default function DashboardAlertas() {
                 onClose={() => setDialogTipo(null)}
                 title={dialogActivo?.titulo ?? ""}
                 description={dialogActivo?.descripcion}
-                maxWidth="sm:max-w-lg lg:max-w-6xl xl:max-w-7xl"
+                maxWidth="sm:max-w-lg lg:max-w-2xl xl:max-w-3xl"
             >
                 {dialogActivo && (
                     <>

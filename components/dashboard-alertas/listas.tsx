@@ -41,6 +41,7 @@ export function ListaEvals({ items, vencida, vacio, evalNum, onCalificar }: List
                                 <FilaEval
                                     key={item.id}
                                     item={item}
+                                    evalNum={evalNum}
                                     colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
                                     colorBadge={vencida
                                         ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -85,23 +86,25 @@ export function ListaFechasPorDepto({
                 />
             </div>
 
-            <div className="hidden space-y-3 sm:block lg:hidden">
-                {grupos.map(([depto, miembros]) => (
-                    <div key={depto}>
-                        <DeptoHeader nombre={depto} count={miembros.length} />
-                        <div className="space-y-2 mt-1.5">
-                            {miembros.map((item) => (
-                                <FilaFecha key={item.id} item={item}
-                                    colorBadge={colorBadge}
-                                    colorDias={colorDias}
-                                    colorBorde={colorBorde}
-                                    onEntregado={onEntregado}
-                                    onIndeterminado={onIndeterminado}
-                                />
-                            ))}
+            <div className="hidden flex-1 overflow-y-auto scrollbar-thin sm:block">
+                <div className="space-y-3 p-4">
+                    {grupos.map(([depto, miembros]) => (
+                        <div key={depto}>
+                            <DeptoHeader nombre={depto} count={miembros.length} />
+                            <div className="space-y-2 mt-1.5">
+                                {miembros.map((item) => (
+                                    <FilaFecha key={item.id} item={item}
+                                        colorBadge={colorBadge}
+                                        colorDias={colorDias}
+                                        colorBorde={colorBorde}
+                                        onEntregado={onEntregado}
+                                        onIndeterminado={onIndeterminado}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
         </>

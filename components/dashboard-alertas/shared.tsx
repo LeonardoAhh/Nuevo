@@ -1,16 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import {
     CheckCircle2,
     ChevronRight,
     Clock,
+    Loader2,
+    Minus,
     Pencil,
+    Plus,
+    Save,
     Search,
     UserRound,
+    X,
     XCircle,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
     Select,
     SelectContent,
@@ -24,7 +31,7 @@ import {
     type EvalItem,
     type FechaItem,
 } from "@/lib/hooks/useDashboardAlertas"
-import { iniciales } from "./utils"
+import { iniciales, periodoEval } from "./utils"
 
 // ─── Métrica clickeable ──────────────────────────────────────────────────────
 
@@ -40,7 +47,10 @@ interface MetricaProps {
 export function Metrica({ label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
     return (
         <button
-            onClick={onClick}
+            onClick={e => {
+                if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur()
+                onClick()
+            }}
             disabled={loading || valor === 0}
             aria-label={`${label}: ${valor}`}
             className={`
@@ -141,6 +151,7 @@ export function DeptoHeader({ nombre, count }: { nombre: string; count: number }
 
 interface FilaEvalProps {
     item: EvalItem
+    evalNum: 1 | 2 | 3
     colorDias: string
     colorBadge: string
     colorBorde: string
@@ -148,16 +159,175 @@ interface FilaEvalProps {
     onCalificar: (dbId: string, calificacion: number) => Promise<void>
 }
 
-export function FilaEval({ item, colorDias, colorBadge, colorBorde, badgeLabel, onCalificar }: FilaEvalProps) {
-    const [editando, setEditando] = useState(false)
-    const [calStr, setCalStr] = useState("")
+export function CalificacionModal({
+    open,
+    item,
+    evalNum,
+    toneText,
+    onCalificar,
+    onClose,
+    onAfterSave,
+}: {
+    open: boolean
+    item: EvalItem | null
+    evalNum: 1 | 2 | 3
+    toneText: string
+    onCalificar: (dbId: string, calificacion: number) => Promise<void>
+    onClose: () => void
+    onAfterSave?: () => void
+}) {
+    const [cal, setCal] = useState(100)
     const [saving, setSaving] = useState(false)
 
+    useEffect(() => {
+        if (open) setCal(100)
+    }, [open, item?.id])
+
+    function adjust(delta: number) {
+        setCal(v => Math.min(100, Math.max(0, v + delta)))
+    }
+
+    function deferredClose() {
+        window.requestAnimationFrame(() => onClose())
+    }
+
     async function handleGuardar() {
-        const cal = parseInt(calStr, 10)
-        if (isNaN(cal) || cal < 0 || cal > 100) return
+        if (!item) return
         setSaving(true)
-        try { await onCalificar(item.dbId, cal) } finally { setSaving(false) }
+        try {
+            await onCalificar(item.dbId, cal)
+            window.requestAnimationFrame(() => onAfterSave?.())
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose()
+        }
+        document.addEventListener("keydown", handler)
+        const prevOverflow = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+        return () => {
+            document.removeEventListener("keydown", handler)
+            document.body.style.overflow = prevOverflow
+        }
+    }, [open, onClose])
+
+    if (!open || typeof document === "undefined") return null
+
+    return createPortal(
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={item?.nombre ?? "Capturar calificación"}
+            data-vaul-no-drag
+            className="flex items-center justify-center p-4 calificacion-captura-modal-portal"
+        >
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
+                onClick={deferredClose}
+                aria-hidden
+            />
+            <div
+                className="relative z-10 w-full max-w-sm sm:max-w-md rounded-xl border bg-card shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {item && (
+                    <div className="flex flex-col bg-card">
+                        <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={deferredClose}
+                                disabled={saving}
+                                className="h-8 px-2 text-muted-foreground"
+                            >
+                                <X size={14} />
+                                Cerrar
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleGuardar}
+                                disabled={saving}
+                                className="h-8 gap-1.5 px-3"
+                            >
+                                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                Guardar
+                            </Button>
+                        </div>
+
+                        <div className="space-y-2 px-3 py-3">
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{item.nombre}</p>
+                                <p className="truncate text-[11px] text-muted-foreground">
+                                    {[item.departamento, item.turno ? `Turno ${item.turno}` : null]
+                                        .filter(Boolean).join(" · ") || "Sin departamento"}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-1.5 rounded-lg border bg-muted/25 px-2 py-1.5 text-[10px] text-muted-foreground">
+                                <span className="truncate">{periodoEval(item.fechaIngreso, evalNum)}</span>
+                                <span className="truncate text-center">Vence: {formatDate(item.fecha)}</span>
+                                <span className={`truncate text-right font-semibold ${toneText}`}>{dias(item.diasDiff)}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => adjust(-1)}
+                                    disabled={saving || cal <= 0}
+                                    aria-label="Restar calificación"
+                                    className="h-10 w-10 rounded-full"
+                                >
+                                    <Minus size={18} />
+                                </Button>
+
+                                <div className="flex min-w-0 flex-1 flex-col items-center">
+                                    <div
+                                        className="flex h-14 min-w-20 items-center justify-center rounded-xl border bg-background px-4 text-3xl font-bold tabular-nums text-foreground"
+                                        aria-label={`Calificación ${cal}`}
+                                    >
+                                        {cal}
+                                    </div>
+                                    <span className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                        Calificación
+                                    </span>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => adjust(1)}
+                                    disabled={saving || cal >= 100}
+                                    aria-label="Sumar calificación"
+                                    className="h-10 w-10 rounded-full"
+                                >
+                                    <Plus size={18} />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>,
+        document.documentElement,
+    )
+}
+
+export function FilaEval({ item, evalNum, colorDias, colorBadge, colorBorde, badgeLabel, onCalificar }: FilaEvalProps) {
+    const [open, setOpen] = useState(false)
+
+    function openModal() {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+        window.setTimeout(() => setOpen(true), 0)
     }
 
     return (
@@ -178,39 +348,21 @@ export function FilaEval({ item, colorDias, colorBadge, colorBorde, badgeLabel, 
                 <span className="text-xs font-medium text-muted-foreground">{formatDate(item.fecha)}</span>
             </div>
 
-            {!editando ? (
-                <button
-                    onClick={() => setEditando(true)}
-                    className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                >
-                    <Pencil size={11} /> Calificar
-                </button>
-            ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                    <input
-                        type="number" min={0} max={100} placeholder="0 – 100"
-                        value={calStr}
-                        onChange={e => setCalStr(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") handleGuardar(); if (e.key === "Escape") { setEditando(false); setCalStr("") } }}
-                        autoFocus
-                        aria-label="Calificación (0 a 100)"
-                        className="h-8 w-24 rounded-md border bg-muted px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    <button
-                        onClick={handleGuardar}
-                        disabled={saving || calStr === ""}
-                        className="h-8 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    >
-                        {saving ? "…" : "Guardar"}
-                    </button>
-                    <button
-                        onClick={() => { setEditando(false); setCalStr("") }}
-                        className="h-8 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                        Cancelar
-                    </button>
-                </div>
-            )}
+            <button
+                onClick={openModal}
+                className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+                <Pencil size={11} /> Calificar
+            </button>
+            <CalificacionModal
+                open={open}
+                item={item}
+                evalNum={evalNum}
+                toneText={colorDias}
+                onCalificar={onCalificar}
+                onClose={() => setOpen(false)}
+                onAfterSave={() => setOpen(false)}
+            />
         </div>
     )
 }

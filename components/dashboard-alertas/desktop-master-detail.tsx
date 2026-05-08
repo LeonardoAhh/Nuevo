@@ -1,21 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Loader2, Minus, Plus, Save, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import {
     dias,
     formatDate,
     type EvalItem,
 } from "@/lib/hooks/useDashboardAlertas"
-import { periodoEval } from "./utils"
-import { MasterHeader } from "./shared"
+import { CalificacionModal, MasterHeader } from "./shared"
 
 // ─── Hook filtrado ────────────────────────────────────────────────────────────
 
@@ -69,6 +60,11 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
         setSelected(next)
     }
 
+    function openCalificacion(item: EvalItem) {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+        window.setTimeout(() => setSelected(item), 0)
+    }
+
     return (
         <>
             <div className="flex flex-1 flex-col overflow-hidden rounded-b-xl border-t min-h-0">
@@ -90,7 +86,7 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
                     ) : filtrados.map(item => (
                         <button
                             key={item.id}
-                            onClick={() => setSelected(item)}
+                            onClick={() => openCalificacion(item)}
                             className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
                         >
                             {/* Acento de color */}
@@ -115,136 +111,15 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
                 </div>
             </div>
 
-            {/* Dialog de calificación */}
-            <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null) }}>
-                <DialogContent className="max-w-sm gap-0 p-0 overflow-hidden">
-                    <VisuallyHidden><DialogTitle>{selected?.nombre ?? "Calificar"}</DialogTitle></VisuallyHidden>
-                    {selected && (
-                        <CalificarDialog
-                            item={selected}
-                            evalNum={evalNum}
-                            toneText={toneText}
-                            onCalificar={onCalificar}
-                            onAfterSave={() => avanzar()}
-                            onClose={() => setSelected(null)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+            <CalificacionModal
+                open={!!selected}
+                item={selected}
+                evalNum={evalNum}
+                toneText={toneText}
+                onCalificar={onCalificar}
+                onAfterSave={avanzar}
+                onClose={() => setSelected(null)}
+            />
         </>
-    )
-}
-
-// ─── Dialog de calificación ───────────────────────────────────────────────────
-
-interface CalificarDialogProps {
-    item: EvalItem
-    evalNum: 1 | 2 | 3
-    toneText: string
-    onCalificar: (dbId: string, cal: number) => Promise<void>
-    onAfterSave: () => void
-    onClose: () => void
-}
-
-function CalificarDialog({ item, evalNum, toneText, onCalificar, onAfterSave, onClose }: CalificarDialogProps) {
-    const [cal, setCal] = useState(0)
-    const [saving, setSaving] = useState(false)
-    const periodo = periodoEval(item.fechaIngreso, evalNum)
-
-    function adjust(delta: number) {
-        setCal(v => Math.min(100, Math.max(0, v + delta)))
-    }
-
-    async function handleGuardar() {
-        setSaving(true)
-        try {
-            await onCalificar(item.dbId, cal)
-            onAfterSave()
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    return (
-        <div className="flex flex-col">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
-                <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{item.nombre}</p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {[item.departamento, item.turno ? `Turno ${item.turno}` : null]
-                            .filter(Boolean).join(" · ") || "Sin departamento"}
-                    </p>
-                </div>
-                <button onClick={onClose} className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground">
-                    <X size={16} />
-                </button>
-            </div>
-
-            {/* Info compacta */}
-            <div className="flex items-center justify-between gap-4 px-5 py-3 text-xs text-muted-foreground border-b">
-                <span>{periodo}</span>
-                <span>Vence: {formatDate(item.fecha)}</span>
-                <span className={`font-semibold ${toneText}`}>{dias(item.diasDiff)}</span>
-            </div>
-
-            {/* Captura */}
-            <div className="flex flex-col items-center gap-4 px-5 py-6">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Calificación</p>
-
-                {/* Stepper */}
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10 rounded-full"
-                        onClick={() => adjust(-1)}
-                        aria-label="Restar"
-                    >
-                        <Minus size={16} />
-                    </Button>
-
-                    <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={cal}
-                        onChange={e => setCal(Math.min(100, Math.max(0, Number(e.target.value))))}
-                        onKeyDown={e => { if (e.key === "Enter") handleGuardar() }}
-                        className="h-14 w-20 rounded-xl border bg-muted/30 text-center text-2xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        aria-label="Calificación"
-                    />
-
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10 rounded-full"
-                        onClick={() => adjust(1)}
-                        aria-label="Sumar"
-                    >
-                        <Plus size={16} />
-                    </Button>
-                </div>
-
-                <p className="text-[11px] text-muted-foreground">
-                    <kbd className="rounded border bg-background px-1 text-[10px]">Enter</kbd> para guardar
-                </p>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t px-5 py-3">
-                <Button
-                    className="w-full gap-2"
-                    onClick={handleGuardar}
-                    disabled={saving}
-                >
-                    {saving
-                        ? <Loader2 size={15} className="animate-spin" />
-                        : <Save size={15} />
-                    }
-                    Guardar calificación
-                </Button>
-            </div>
-        </div>
     )
 }

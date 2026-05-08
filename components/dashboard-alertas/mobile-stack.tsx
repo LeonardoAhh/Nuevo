@@ -1,18 +1,14 @@
 "use client"
 
-import { useMemo, useState, useRef, useEffect } from "react"
+import { useMemo, useState } from "react"
 import {
     Calendar,
     CheckCircle2,
     ChevronLeft,
     Clock,
     Loader2,
-    Pencil,
-    Save,
     Search,
     User,
-    Minus,
-    Plus,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,8 +24,9 @@ import {
     dias,
     formatDate,
 } from "@/lib/hooks/useDashboardAlertas"
-import { iniciales, periodoEval, type MobileStackEvalsProps, type MobileStackFechasProps } from "./utils"
+import { type MobileStackEvalsProps, type MobileStackFechasProps } from "./utils"
 import {
+    CalificacionModal,
     DetalleStat,
     MasterListItem,
     type MasterHeaderProps,
@@ -119,17 +116,11 @@ export function MobileStackEvals({
     items, vencida, evalNum, onCalificar,
 }: MobileStackEvalsProps) {
     const tone: "destructive" | "warning" = vencida ? "destructive" : "warning"
-    const badgeLabel = vencida ? "Vencida" : "Por vencer"
-    const badgeClass = vencida
-        ? "bg-destructive/10 text-destructive"
-        : "bg-warning/10 text-warning"
     const toneText = vencida ? "text-destructive" : "text-warning"
 
     const [search, setSearch] = useState("")
     const [depto, setDepto] = useState("")
     const [selectedId, setSelectedId] = useState<string | null>(null)
-    const [cal, setCal] = useState(100)
-    const [saving, setSaving] = useState(false)
 
     const deptos = useMemo(
         () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
@@ -151,115 +142,55 @@ export function MobileStackEvals({
         [items, selectedId],
     )
 
-    function back() { setSelectedId(null); setCal(100) }
-
-    async function guardar() {
+    function avanzar() {
         if (!seleccionado) return
-        setSaving(true)
-        try {
-            await onCalificar(seleccionado.dbId, cal)
-            setCal(100)
-            const idx = filtrados.findIndex(i => i.id === seleccionado.id)
-            const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
-            setSelectedId(next?.id ?? null)
-        } finally {
-            setSaving(false)
-        }
+        const idx = filtrados.findIndex(i => i.id === seleccionado.id)
+        const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+        setSelectedId(next?.id ?? null)
     }
 
-    if (seleccionado) {
-        return (
-            <div className="flex h-full flex-col">
-                <MobileDetailHeader
-                    nombre={seleccionado.nombre}
-                    badgeLabel={badgeLabel}
-                    badgeClass={badgeClass}
-                    onBack={back}
-                    action={
-                        <Button
-                            size="icon"
-                            onClick={guardar}
-                            disabled={saving}
-                            className="h-10 w-10 shrink-0"
-                            aria-label="Guardar calificación"
-                            title="Guardar calificación"
-                        >
-                            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        </Button>
-                    }
-                />
-                <div className="scrollbar-thin flex-1 overflow-y-auto p-4 pb-8">
-
-                    {/* ── Control de calificación ── */}
-                    <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border bg-muted/30 p-6">
-                        <button
-                            type="button"
-                            onClick={() => setCal(v => Math.max(0, v - 1))}
-                            disabled={saving || cal <= 0}
-                            aria-label="Disminuir calificación"
-                            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition active:scale-95 disabled:opacity-40"
-                        >
-                            <Minus size={24} />
-                        </button>
-
-                        <div className="flex flex-col items-center">
-                            <span className="text-6xl font-bold tracking-tighter text-foreground">
-                                {cal}
-                            </span>
-                            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                Calificación
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setCal(v => Math.min(100, v + 1))}
-                            disabled={saving || cal >= 100}
-                            aria-label="Aumentar calificación"
-                            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition active:scale-95 disabled:opacity-40"
-                        >
-                            <Plus size={24} />
-                        </button>
-                    </div>
-
-                    {/* ── Datos del empleado ── */}
-                    <dl className="grid grid-cols-2 gap-2">
-                        <DetalleStat label="No. Empleado" value={seleccionado.numero ?? "Sin número"} icon={<User size={12} aria-hidden />} />
-                        <DetalleStat label="Fecha de Ingreso" value={seleccionado.fechaIngreso ? formatDate(seleccionado.fechaIngreso) : "Sin registro"} icon={<Calendar size={12} aria-hidden />} />
-                        <DetalleStat label="Periodo" value={periodoEval(seleccionado.fechaIngreso, evalNum)} icon={<Calendar size={12} aria-hidden />} nota={`Vence: ${formatDate(seleccionado.fecha)}`} />
-                        <DetalleStat label="Tiempo" value={dias(seleccionado.diasDiff)} icon={<Clock size={12} aria-hidden />} valueClass={toneText} />
-                    </dl>
-                </div>
-            </div>
-        )
+    function openCalificacion(id: string) {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+        window.setTimeout(() => setSelectedId(id), 0)
     }
 
     return (
-        <div className="flex h-full flex-col">
-            <MobileToolbar
-                total={items.length}
-                filtrados={filtrados.length}
-                search={search}
-                onSearchChange={setSearch}
-                depto={depto}
-                onDeptoChange={setDepto}
-                deptos={deptos}
-            />
-            <div className="scrollbar-thin flex-1 overflow-y-auto">
-                {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
-                    <MasterListItem
-                        key={i.id}
-                        nombre={i.nombre}
-                        meta={[i.departamento, i.turno ? `Turno ${i.turno}` : null].filter(Boolean).join(" · ") || "Sin departamento"}
-                        diasLabel={dias(i.diasDiff)}
-                        fechaLabel={formatDate(i.fecha)}
-                        selected={false}
-                        tone={tone}
-                        onSelect={() => setSelectedId(i.id)}
-                    />
-                ))}
+        <>
+            <div className="flex h-full flex-col">
+                <MobileToolbar
+                    total={items.length}
+                    filtrados={filtrados.length}
+                    search={search}
+                    onSearchChange={setSearch}
+                    depto={depto}
+                    onDeptoChange={setDepto}
+                    deptos={deptos}
+                />
+                <div className="scrollbar-thin flex-1 overflow-y-auto">
+                    {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
+                        <MasterListItem
+                            key={i.id}
+                            nombre={i.nombre}
+                            meta={[i.departamento, i.turno ? `Turno ${i.turno}` : null].filter(Boolean).join(" · ") || "Sin departamento"}
+                            diasLabel={dias(i.diasDiff)}
+                            fechaLabel={formatDate(i.fecha)}
+                            selected={i.id === selectedId}
+                            tone={tone}
+                            onSelect={() => openCalificacion(i.id)}
+                        />
+                    ))}
+                </div>
             </div>
-        </div>
+            <CalificacionModal
+                open={!!seleccionado}
+                item={seleccionado}
+                evalNum={evalNum}
+                toneText={toneText}
+                onCalificar={onCalificar}
+                onClose={() => setSelectedId(null)}
+                onAfterSave={avanzar}
+            />
+        </>
     )
 }
 
