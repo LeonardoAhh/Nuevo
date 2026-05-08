@@ -54,7 +54,7 @@ const DialogContent = React.forwardRef<
         "sm:inset-auto sm:bottom-auto",
         "sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
         "sm:rounded-xl sm:border sm:max-w-lg sm:w-full",
-        "sm:max-h-[85dvh]",
+        "sm:h-[85dvh] sm:max-h-[85dvh]",
         "sm:data-[state=open]:slide-in-from-left-1/2",
         "sm:data-[state=open]:slide-in-from-top-[48%]",
         "sm:data-[state=closed]:slide-out-to-left-1/2",

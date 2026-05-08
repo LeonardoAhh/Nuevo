@@ -188,7 +188,7 @@ export default function DashboardAlertas() {
                             onClose={() => setDialogTipo(null)}
                         />
 
-                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-0 sm:space-y-3 sm:overflow-y-auto sm:p-4 lg:flex lg:flex-col lg:space-y-0 lg:overflow-hidden lg:p-0">
+                        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                             {([
                                 { tipo: "eval1_vencidas", items: eval1Venc, setter: setEval1Venc, vencida: true, col: "eval_1_calificacion", vacio: "No hay evaluaciones de 1er mes vencidas", evalNum: 1 as const },
                                 { tipo: "eval1_por_vencer", items: eval1Prox, setter: setEval1Prox, vencida: false, col: "eval_1_calificacion", vacio: "No hay evaluaciones de 1er mes por vencer", evalNum: 1 as const },

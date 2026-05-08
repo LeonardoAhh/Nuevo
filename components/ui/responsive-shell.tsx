@@ -91,8 +91,8 @@ export function ModalToolbar({
             disabled={saving || secondaryAction.disabled}
             className={cn(
               "rounded-full flex items-center transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shrink-0",
-              secondaryAction.iconOnly 
-                ? "h-10 w-10 sm:h-9 sm:w-9 justify-center" 
+              secondaryAction.iconOnly
+                ? "h-10 w-10 sm:h-9 sm:w-9 justify-center"
                 : "h-10 sm:h-9 px-3 gap-1.5 text-xs font-medium",
               secondaryClasses
             )}
@@ -157,10 +157,16 @@ export function ResponsiveShell({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent raw className={cn(maxWidth, "[&>button.absolute]:hidden")}>
+      <DialogContent
+        raw
+        aria-describedby={description ? "shell-desc" : undefined}
+        className={cn(maxWidth, "flex flex-col overflow-hidden p-0 gap-0 [&>button.absolute]:hidden")}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description ?? title}</DialogDescription>
+          {description && (
+            <DialogDescription id="shell-desc">{description}</DialogDescription>
+          )}
         </DialogHeader>
         {children}
       </DialogContent>

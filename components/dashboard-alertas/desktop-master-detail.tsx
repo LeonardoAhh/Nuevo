@@ -1,35 +1,23 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-    Briefcase,
-    Building2,
-    Calendar,
-    CheckCircle2,
-    Clock,
-    Loader2,
-    Pencil,
-    Save,
-    User,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Loader2, Minus, Plus, Save, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import {
     dias,
     formatDate,
     type EvalItem,
-    type FechaItem,
 } from "@/lib/hooks/useDashboardAlertas"
-import { iniciales, periodoEval } from "./utils"
-import {
-    DetalleStat,
-    MasterEmpty,
-    MasterHeader,
-    MasterListItem,
-} from "./shared"
+import { periodoEval } from "./utils"
+import { MasterHeader } from "./shared"
 
-// ─── Hook compartido: filtrado + selección ────────────────────────────────────
+// ─── Hook filtrado ────────────────────────────────────────────────────────────
 
 function useMasterState<T extends { id: string; departamento?: string | null; nombre: string }>(
     items: T[],
@@ -37,7 +25,6 @@ function useMasterState<T extends { id: string; departamento?: string | null; no
 ) {
     const [search, setSearch] = useState("")
     const [depto, setDepto] = useState("")
-    const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null)
 
     const deptos = useMemo(
         () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
@@ -54,29 +41,10 @@ function useMasterState<T extends { id: string; departamento?: string | null; no
         })
     }, [items, search, depto, extraFilter])
 
-    const seleccionado = useMemo(
-        () => filtrados.find(i => i.id === selectedId) ?? filtrados[0] ?? null,
-        [filtrados, selectedId],
-    )
-
-    function avanzar(currentId: string) {
-        const idx = filtrados.findIndex(i => i.id === currentId)
-        const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
-        setSelectedId(next?.id ?? null)
-    }
-
-    return { search, setSearch, depto, setDepto, deptos, filtrados, seleccionado, setSelectedId, avanzar }
+    return { search, setSearch, depto, setDepto, deptos, filtrados }
 }
 
-// ─── Layout compartido: aside + section ──────────────────────────────────────
-
-const SIN_RESULTADOS = (
-    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-        Sin resultados con los filtros actuales.
-    </p>
-)
-
-// ─── Master-Detail desktop: Evaluaciones ─────────────────────────────────────
+// ─── MasterDetailEvals ────────────────────────────────────────────────────────
 
 interface MasterDetailEvalsProps {
     items: EvalItem[]
@@ -86,17 +54,24 @@ interface MasterDetailEvalsProps {
 }
 
 export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: MasterDetailEvalsProps) {
-    const tone: "destructive" | "warning" = vencida ? "destructive" : "warning"
-    const badgeLabel = vencida ? "Vencida" : "Por vencer"
-    const badgeClass = vencida ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"
     const toneText = vencida ? "text-destructive" : "text-warning"
+    const accentBg = vencida ? "bg-destructive" : "bg-warning"
 
-    const { search, setSearch, depto, setDepto, deptos, filtrados, seleccionado, setSelectedId, avanzar } =
+    const [selected, setSelected] = useState<EvalItem | null>(null)
+
+    const { search, setSearch, depto, setDepto, deptos, filtrados } =
         useMasterState(items, (i, q) => (i.turno ?? "").toLowerCase().includes(q))
 
+    function avanzar() {
+        if (!selected) return
+        const idx = filtrados.findIndex(i => i.id === selected.id)
+        const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+        setSelected(next)
+    }
+
     return (
-        <div className="grid h-[70vh] grid-cols-[minmax(0,280px)_1fr] overflow-hidden rounded-b-xl border-t">
-            <aside className="flex h-full flex-col overflow-hidden border-r">
+        <>
+            <div className="flex flex-1 flex-col overflow-hidden rounded-b-xl border-t min-h-0">
                 <MasterHeader
                     total={items.length}
                     filtrados={filtrados.length}
@@ -106,64 +81,84 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
                     onDeptoChange={setDepto}
                     deptos={deptos}
                 />
-                <div className="scrollbar-thin flex-1 overflow-y-auto">
-                    {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
-                        <MasterListItem
-                            key={i.id}
-                            nombre={i.nombre}
-                            meta={[i.departamento, i.turno ? `Turno ${i.turno}` : null].filter(Boolean).join(" · ") || "Sin departamento"}
-                            diasLabel={dias(i.diasDiff)}
-                            fechaLabel={formatDate(i.fecha)}
-                            selected={seleccionado?.id === i.id}
-                            tone={tone}
-                            onSelect={() => setSelectedId(i.id)}
-                        />
+
+                <div className="scrollbar-thin flex-1 divide-y overflow-y-auto min-h-0">
+                    {filtrados.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                            Sin resultados con los filtros actuales.
+                        </p>
+                    ) : filtrados.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => setSelected(item)}
+                            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
+                        >
+                            {/* Acento de color */}
+                            <span className={`h-8 w-1 shrink-0 rounded-full ${accentBg} opacity-75`} />
+
+                            {/* Nombre + meta */}
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-foreground">{item.nombre}</p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                    {[item.departamento, item.turno ? `Turno ${item.turno}` : null]
+                                        .filter(Boolean).join(" · ") || "Sin departamento"}
+                                </p>
+                            </div>
+
+                            {/* Días + fecha */}
+                            <div className="shrink-0 text-right">
+                                <p className={`text-xs font-semibold ${toneText}`}>{dias(item.diasDiff)}</p>
+                                <p className="text-[11px] text-muted-foreground">{formatDate(item.fecha)}</p>
+                            </div>
+                        </button>
                     ))}
                 </div>
-            </aside>
+            </div>
 
-            <section className="scrollbar-thin h-full overflow-y-auto p-6">
-                {!seleccionado ? (
-                    <MasterEmpty mensaje="Selecciona una evaluación para ver el detalle." />
-                ) : (
-                    <DetalleEval
-                        key={seleccionado.id}
-                        item={seleccionado}
-                        evalNum={evalNum}
-                        badgeLabel={badgeLabel}
-                        badgeClass={badgeClass}
-                        toneText={toneText}
-                        onCalificar={onCalificar}
-                        onAfterSave={() => avanzar(seleccionado.id)}
-                    />
-                )}
-            </section>
-        </div>
+            {/* Dialog de calificación */}
+            <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null) }}>
+                <DialogContent className="max-w-sm gap-0 p-0 overflow-hidden">
+                    <VisuallyHidden><DialogTitle>{selected?.nombre ?? "Calificar"}</DialogTitle></VisuallyHidden>
+                    {selected && (
+                        <CalificarDialog
+                            item={selected}
+                            evalNum={evalNum}
+                            toneText={toneText}
+                            onCalificar={onCalificar}
+                            onAfterSave={() => avanzar()}
+                            onClose={() => setSelected(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }
 
-interface DetalleEvalProps {
+// ─── Dialog de calificación ───────────────────────────────────────────────────
+
+interface CalificarDialogProps {
     item: EvalItem
     evalNum: 1 | 2 | 3
-    badgeLabel: string
-    badgeClass: string
     toneText: string
-    onCalificar: (dbId: string, calificacion: number) => Promise<void>
+    onCalificar: (dbId: string, cal: number) => Promise<void>
     onAfterSave: () => void
+    onClose: () => void
 }
 
-function DetalleEval({ item, evalNum, badgeLabel, badgeClass, toneText, onCalificar, onAfterSave }: DetalleEvalProps) {
-    const [calStr, setCalStr] = useState("")
+function CalificarDialog({ item, evalNum, toneText, onCalificar, onAfterSave, onClose }: CalificarDialogProps) {
+    const [cal, setCal] = useState(0)
     const [saving, setSaving] = useState(false)
     const periodo = periodoEval(item.fechaIngreso, evalNum)
 
+    function adjust(delta: number) {
+        setCal(v => Math.min(100, Math.max(0, v + delta)))
+    }
+
     async function handleGuardar() {
-        const cal = parseInt(calStr, 10)
-        if (isNaN(cal) || cal < 0 || cal > 100) return
         setSaving(true)
         try {
             await onCalificar(item.dbId, cal)
-            setCalStr("")
             onAfterSave()
         } finally {
             setSaving(false)
@@ -171,192 +166,85 @@ function DetalleEval({ item, evalNum, badgeLabel, badgeClass, toneText, onCalifi
     }
 
     return (
-        <div className="flex w-full flex-col gap-6">
-            <header className="flex items-start gap-4">
-                <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-xl font-semibold text-foreground">{item.nombre}</h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <Building2 size={14} aria-hidden />
-                        <span>{item.departamento ?? "Sin departamento"}</span>
-                        {item.turno && (
-                            <>
-                                <span aria-hidden>·</span>
-                                <span>Turno {item.turno}</span>
-                            </>
-                        )}
-                    </div>
+        <div className="flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{item.nombre}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {[item.departamento, item.turno ? `Turno ${item.turno}` : null]
+                            .filter(Boolean).join(" · ") || "Sin departamento"}
+                    </p>
                 </div>
-                <Badge className={`shrink-0 ${badgeClass}`} variant="secondary">{badgeLabel}</Badge>
-            </header>
+                <button onClick={onClose} className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground">
+                    <X size={16} />
+                </button>
+            </div>
 
-            <dl className="grid grid-cols-2 gap-3">
-                <DetalleStat label="No. Empleado" value={item.numero ?? "Sin número"} icon={<User size={14} aria-hidden />} />
-                <DetalleStat label="Fecha de Ingreso" value={item.fechaIngreso ? formatDate(item.fechaIngreso) : "Sin registro"} icon={<Calendar size={14} aria-hidden />} />
-                <DetalleStat label="Periodo" value={periodo} icon={<Calendar size={14} aria-hidden />} nota={`Vence: ${formatDate(item.fecha)}`} />
-                <DetalleStat label="Tiempo" value={dias(item.diasDiff)} icon={<Clock size={14} aria-hidden />} valueClass={toneText} />
-            </dl>
+            {/* Info compacta */}
+            <div className="flex items-center justify-between gap-4 px-5 py-3 text-xs text-muted-foreground border-b">
+                <span>{periodo}</span>
+                <span>Vence: {formatDate(item.fecha)}</span>
+                <span className={`font-semibold ${toneText}`}>{dias(item.diasDiff)}</span>
+            </div>
 
-            <div className="rounded-2xl border bg-muted/30 p-4">
-                <h4 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <Pencil size={14} aria-hidden /> Capturar calificación
-                </h4>
-                <div className="flex flex-wrap items-center gap-2">
-                    <Input
+            {/* Captura */}
+            <div className="flex flex-col items-center gap-4 px-5 py-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Calificación</p>
+
+                {/* Stepper */}
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-full"
+                        onClick={() => adjust(-1)}
+                        aria-label="Restar"
+                    >
+                        <Minus size={16} />
+                    </Button>
+
+                    <input
                         type="number"
                         min={0}
                         max={100}
-                        value={calStr}
-                        onChange={(e) => setCalStr(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleGuardar() }}
-                        placeholder="Calificación 0 – 100"
-                        className="h-10 w-40"
+                        value={cal}
+                        onChange={e => setCal(Math.min(100, Math.max(0, Number(e.target.value))))}
+                        onKeyDown={e => { if (e.key === "Enter") handleGuardar() }}
+                        className="h-14 w-20 rounded-xl border bg-muted/30 text-center text-2xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         aria-label="Calificación"
                     />
+
                     <Button
+                        variant="outline"
                         size="icon"
-                        onClick={handleGuardar}
-                        disabled={saving || calStr === ""}
-                        className="h-10 w-10"
-                        aria-label="Guardar"
-                        title="Guardar"
+                        className="h-10 w-10 rounded-full"
+                        onClick={() => adjust(1)}
+                        aria-label="Sumar"
                     >
-                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        <Plus size={16} />
                     </Button>
-                    <p className="ml-auto text-xs text-muted-foreground">
-                        Pulsa <kbd className="rounded border bg-background px-1 text-[10px]">Enter</kbd> para guardar.
-                    </p>
                 </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                    <kbd className="rounded border bg-background px-1 text-[10px]">Enter</kbd> para guardar
+                </p>
             </div>
-        </div>
-    )
-}
 
-// ─── Master-Detail desktop: Fechas (RG / Término) ────────────────────────────
-
-interface MasterDetailFechasProps {
-    items: FechaItem[]
-    colorBadge: string
-    colorDias: string
-    onEntregado?: (id: string) => Promise<void>
-    onIndeterminado?: (id: string) => Promise<void>
-}
-
-export function MasterDetailFechas({
-    items, colorBadge, colorDias, onEntregado, onIndeterminado,
-}: MasterDetailFechasProps) {
-    const tone: "destructive" | "warning" =
-        items.some(i => i.diasDiff < 0) ? "destructive" : "warning"
-
-    const { search, setSearch, depto, setDepto, deptos, filtrados, seleccionado, setSelectedId, avanzar } =
-        useMasterState(items, (i, q) => (i.puesto ?? "").toLowerCase().includes(q))
-
-    return (
-        <div className="grid h-[70vh] grid-cols-[minmax(0,280px)_1fr] overflow-hidden rounded-b-xl border-t">
-            <aside className="flex h-full flex-col overflow-hidden border-r">
-                <MasterHeader
-                    total={items.length}
-                    filtrados={filtrados.length}
-                    search={search}
-                    onSearchChange={setSearch}
-                    depto={depto}
-                    onDeptoChange={setDepto}
-                    deptos={deptos}
-                />
-                <div className="scrollbar-thin flex-1 overflow-y-auto">
-                    {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
-                        <MasterListItem
-                            key={i.id}
-                            nombre={i.nombre}
-                            meta={[i.puesto, i.departamento].filter(Boolean).join(" · ") || "Sin información"}
-                            diasLabel={dias(i.diasDiff)}
-                            fechaLabel={formatDate(i.fecha)}
-                            selected={seleccionado?.id === i.id}
-                            tone={tone}
-                            onSelect={() => setSelectedId(i.id)}
-                        />
-                    ))}
-                </div>
-            </aside>
-
-            <section className="scrollbar-thin h-full overflow-y-auto p-6">
-                {!seleccionado ? (
-                    <MasterEmpty mensaje="Selecciona un registro para ver el detalle." />
-                ) : (
-                    <DetalleFecha
-                        key={seleccionado.id}
-                        item={seleccionado}
-                        colorBadge={colorBadge}
-                        colorDias={colorDias}
-                        onEntregado={onEntregado}
-                        onIndeterminado={onIndeterminado}
-                        onAfterAction={() => avanzar(seleccionado.id)}
-                    />
-                )}
-            </section>
-        </div>
-    )
-}
-
-interface DetalleFechaProps {
-    item: FechaItem
-    colorBadge: string
-    colorDias: string
-    onEntregado?: (id: string) => Promise<void>
-    onIndeterminado?: (id: string) => Promise<void>
-    onAfterAction: () => void
-}
-
-function DetalleFecha({
-    item, colorBadge, colorDias, onEntregado, onIndeterminado, onAfterAction,
-}: DetalleFechaProps) {
-    const [saving, setSaving] = useState(false)
-
-    async function handle(action?: (id: string) => Promise<void>) {
-        if (!action) return
-        setSaving(true)
-        try { await action(item.id); onAfterAction() } finally { setSaving(false) }
-    }
-
-    return (
-        <div className="flex w-full flex-col gap-6">
-            <header className="flex items-start gap-4">
-                <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-xl font-semibold text-foreground">{item.nombre}</h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <Briefcase size={14} aria-hidden />
-                        <span>{item.puesto ?? "Sin puesto"}</span>
-                        <span aria-hidden>·</span>
-                        <Building2 size={14} aria-hidden />
-                        <span>{item.departamento ?? "Sin departamento"}</span>
-                    </div>
-                </div>
-                <Badge className={`shrink-0 ${colorBadge}`} variant="secondary">{item.etiqueta}</Badge>
-            </header>
-
-            <dl className="grid grid-cols-2 gap-3">
-                <DetalleStat label="No. Empleado" value={item.numero ?? "Sin número"} icon={<User size={14} aria-hidden />} />
-                <DetalleStat label="Fecha de Ingreso" value={item.fechaIngreso ? formatDate(item.fechaIngreso) : "Sin registro"} icon={<Calendar size={14} aria-hidden />} />
-                <DetalleStat label="Fecha" value={formatDate(item.fecha)} icon={<Calendar size={14} aria-hidden />} />
-                <DetalleStat label="Antigüedad" value={dias(item.diasDiff)} icon={<Clock size={14} aria-hidden />} valueClass={colorDias} />
-            </dl>
-
-            {(onEntregado || onIndeterminado) && (
-                <div className="rounded-2xl border bg-muted/30 p-4">
-                    <h4 className="mb-3 text-sm font-semibold text-foreground">Acción rápida</h4>
-                    <div className="flex flex-wrap items-center gap-2">
-                        {onEntregado && (
-                            <Button size="icon" onClick={() => handle(onEntregado)} disabled={saving} className="h-10 w-10" aria-label="Marcar entregado" title="Marcar entregado">
-                                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                            </Button>
-                        )}
-                        {onIndeterminado && (
-                            <Button size="icon" onClick={() => handle(onIndeterminado)} disabled={saving} className="h-10 w-10" aria-label="Marcar como Indeterminado" title="Marcar como Indeterminado">
-                                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Footer */}
+            <div className="border-t px-5 py-3">
+                <Button
+                    className="w-full gap-2"
+                    onClick={handleGuardar}
+                    disabled={saving}
+                >
+                    {saving
+                        ? <Loader2 size={15} className="animate-spin" />
+                        : <Save size={15} />
+                    }
+                    Guardar calificación
+                </Button>
+            </div>
         </div>
     )
 }

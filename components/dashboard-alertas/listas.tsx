@@ -2,7 +2,7 @@
 
 import { CheckCircle2 } from "lucide-react"
 import { DeptoHeader, FilaEval, FilaFecha } from "./shared"
-import { MasterDetailEvals, MasterDetailFechas } from "./desktop-master-detail"
+import { MasterDetailEvals } from "./desktop-master-detail"
 import { MobileStackEvals, MobileStackFechas } from "./mobile-stack"
 import { agruparPorDepto, type ListaEvalsProps, type ListaFechasProps } from "./utils"
 
@@ -104,15 +104,6 @@ export function ListaFechasPorDepto({
                 ))}
             </div>
 
-            <div className="hidden lg:block">
-                <MasterDetailFechas
-                    items={items}
-                    colorBadge={colorBadge}
-                    colorDias={colorDias}
-                    onEntregado={onEntregado}
-                    onIndeterminado={onIndeterminado}
-                />
-            </div>
         </>
     )
 }
