@@ -39,6 +39,17 @@ const AREA_STAFF = [
     { area: "PRODUCCIÓN 4o. TURNO", personal_autorizado: 32 },
 ] as const
 
+const ALLOWED_PUESTOS = new Set([
+    "OPERADOR DE ACABADOS GP-12 A",
+    "OPERADOR DE ACABADOS GP-12 B",
+    "OPERADOR DE ACABADOS GP-12 C",
+    "OPERADOR DE ACABADOS GP-12 D",
+    "OPERADOR DE MÁQUINA A",
+    "OPERADOR DE MÁQUINA B",
+    "OPERADOR DE MÁQUINA C",
+    "OPERADOR DE MÁQUINA D",
+])
+
 type AreaStaffDefinition = (typeof AREA_STAFF)[number]
 
 type AreaStaffSummary = AreaStaffDefinition & {
@@ -169,6 +180,7 @@ export default function ReporteDiarioContent() {
     const [turnoFilter, setTurnoFilter] = useState("")
     const [selectedIncidentTab, setSelectedIncidentTab] = useState<IncidentTab>(INCIDENT_TABS[0])
     const [selectedDay, setSelectedDay] = useState<string>("")
+    const [selectedArea, setSelectedArea] = useState<string>("")
     const [errors, setErrors] = useState<string[]>([])
     const [fileName, setFileName] = useState<string>("")
 
@@ -252,7 +264,9 @@ export default function ReporteDiarioContent() {
         }))
 
         return AREA_STAFF.map((area) => {
-            const rowsInArea = selectedRows.filter((row) => row.area === area.area)
+            const rowsInArea = selectedRows.filter(
+                (row) => row.area === area.area && ALLOWED_PUESTOS.has(row.puesto || ""),
+            )
             const personal_activo = rowsInArea.length
             const personal_incidencia = rowsInArea.reduce((count, row) => {
                 const code = row.days[selectedDay]
@@ -267,6 +281,29 @@ export default function ReporteDiarioContent() {
             }
         })
     }, [selectedRows, selectedDay])
+
+    const selectedAreaDetailRows = useMemo(() => {
+        if (!selectedDay || !selectedArea) return []
+
+        return selectedRows
+            .filter(
+                (row) =>
+                    row.area === selectedArea &&
+                    ALLOWED_PUESTOS.has(row.puesto || "") &&
+                    !!row.days[selectedDay] &&
+                    row.days[selectedDay] !== "-" &&
+                    row.days[selectedDay] !== "A" &&
+                    row.days[selectedDay] !== "D" &&
+                    row.days[selectedDay] !== "DF" &&
+                    row.days[selectedDay] !== "X",
+            )
+            .map((row) => ({
+                key: `${row.numero_empleado}||${row.area}`,
+                numero_empleado: row.numero_empleado,
+                nombre: row.nombre,
+                tipo_incidencia: row.days[selectedDay] || "-",
+            }))
+    }, [selectedRows, selectedDay, selectedArea])
 
     const selectedDayCounts = useMemo(() => {
         const base = INCIDENT_TABS.reduce((acc, c) => ({ ...acc, [c]: 0 }), {} as Record<IncidentTab, number>)
@@ -464,32 +501,90 @@ export default function ReporteDiarioContent() {
                                 ) : (
                                     <>
                                         <div className="grid gap-3 mb-4 sm:grid-cols-2 xl:grid-cols-3">
-                                            {selectedDayAreaSummary.map((area) => (
-                                                <div key={area.area} className="rounded-2xl border border-border bg-background p-4">
-                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                                                        {area.area}
-                                                    </p>
-                                                    <div className="mt-3 grid gap-2 text-sm text-foreground">
-                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                            <span>Autorizado</span>
-                                                            <span className="font-semibold">{area.personal_autorizado}</span>
+                                            {selectedDayAreaSummary.map((area) => {
+                                                const active = selectedArea === area.area
+                                                return (
+                                                    <button
+                                                        key={area.area}
+                                                        type="button"
+                                                        onClick={() => setSelectedArea(area.area)}
+                                                        className={[
+                                                            "text-left rounded-2xl border p-4 transition-all",
+                                                            "bg-background shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                                            active
+                                                                ? "border-foreground bg-foreground/10"
+                                                                : "border-border hover:border-foreground/40 hover:bg-muted/50",
+                                                        ].join(" ")}
+                                                    >
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                                            {area.area}
+                                                        </p>
+                                                        <div className="mt-3 grid gap-2 text-sm text-foreground">
+                                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                                <span>Autorizado</span>
+                                                                <span className="font-semibold">{area.personal_autorizado}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                                <span>Activo</span>
+                                                                <span className="font-semibold">{area.personal_activo}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                                <span>Incidencias</span>
+                                                                <span className="font-semibold">{area.personal_incidencia}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                                <span>Personal real</span>
+                                                                <span className="font-semibold">{area.personal_real}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                            <span>Activo</span>
-                                                            <span className="font-semibold">{area.personal_activo}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                            <span>Incidencias</span>
-                                                            <span className="font-semibold">{area.personal_incidencia}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                            <span>Personal real</span>
-                                                            <span className="font-semibold">{area.personal_real}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
+
+                                        {selectedArea ? (
+                                            <div className="mb-4 rounded-2xl border border-border bg-background p-4">
+                                                <div className="mb-3 flex items-center justify-between gap-3">
+                                                    <p className="text-sm font-semibold text-foreground">Detalle de {selectedArea}</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedArea("")}
+                                                        className="rounded-md border border-border bg-muted px-3 py-1 text-xs text-muted-foreground transition hover:border-foreground/50 hover:text-foreground"
+                                                    >
+                                                        Limpiar
+                                                    </button>
+                                                </div>
+
+                                                {selectedAreaDetailRows.length > 0 ? (
+                                                    <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
+                                                        <table className="min-w-full text-sm">
+                                                            <thead>
+                                                                <tr className="border-b border-border bg-muted/50 text-left">
+                                                                    {['# Empleado', 'Empleado', 'Tipo de incidencia'].map((h) => (
+                                                                        <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                                                                            {h}
+                                                                        </th>
+                                                                    ))}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-border bg-card">
+                                                                {selectedAreaDetailRows.map((row, i) => (
+                                                                    <tr key={row.key} className={i % 2 !== 0 ? 'bg-muted/20' : ''}>
+                                                                        <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{row.numero_empleado}</td>
+                                                                        <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
+                                                                        <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">{row.tipo_incidencia}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-xl border border-dashed border-border bg-background px-4 py-8 text-center text-sm text-muted-foreground">
+                                                        Sin incidencias registradas para esta área en el día seleccionado.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : null}
 
                                         <Tabs value={selectedIncidentTab} onValueChange={(v) => setSelectedIncidentTab(v as IncidentTab)}>
                                             {/* Tabs */}
