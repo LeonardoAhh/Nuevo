@@ -212,9 +212,9 @@ export default function ReporteDiarioContent() {
         const base = emptyIncident()
         if (!selectedDay) return base
         return selectedRows.reduce((acc, row) => {
-            const code = row.days[selectedDay] as IncidentTab
-            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code)) return acc
-            acc[code].push({
+            const code = row.days[selectedDay]
+            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
+            acc[code as IncidentTab].push({
                 key: `${code}||${row.departamento}||${row.area}||${row.turno || "-"}||${row.numero_empleado}`,
                 numero_empleado: row.numero_empleado,
                 nombre: row.nombre,
@@ -230,9 +230,9 @@ export default function ReporteDiarioContent() {
         const base = INCIDENT_TABS.reduce((acc, c) => ({ ...acc, [c]: 0 }), {} as Record<IncidentTab, number>)
         if (!selectedDay) return base
         return selectedRows.reduce((acc, row) => {
-            const code = row.days[selectedDay] as IncidentTab
-            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code)) return acc
-            acc[code] = (acc[code] || 0) + 1
+            const code = row.days[selectedDay]
+            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
+            acc[code as IncidentTab] = (acc[code as IncidentTab] || 0) + 1
             return acc
         }, base)
     }, [selectedRows, selectedDay])
