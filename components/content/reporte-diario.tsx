@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "../ui/alert"
+import { Info } from "lucide-react"
+import { CloudUpload, ChevronDown, Search } from "lucide-react"
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 
@@ -396,81 +398,86 @@ export default function ReporteDiarioContent() {
     }
 
     /* ── shared class strings using Tailwind theme tokens ── */
-    const selectCls = [
-        "w-full rounded-lg border border-border",
-        "bg-background text-foreground",
-        "px-3 py-2.5 text-sm shadow-sm outline-none",
-        "transition focus:border-ring focus:ring-2 focus:ring-ring/30",
-        "disabled:opacity-40 disabled:cursor-not-allowed",
-    ].join(" ")
-
-    const labelCls = "block mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground"
+    const labelCls = "block text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5"
+    const selectCls = "w-full appearance-none rounded-lg border border-border bg-background px-3 py-[7px] text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 hover:border-border/80 disabled:opacity-50"
 
     return (
         <div className="flex flex-col gap-5 max-w-full mx-auto pb-12">
 
             {/* ── Toolbar ──────────────────────────────────────────────── */}
             <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col gap-4">
-                <label className={[
-                    "inline-flex cursor-pointer items-center gap-2 self-start",
-                    "rounded-lg border border-border bg-muted/60 px-4 py-2 text-sm font-medium text-foreground",
-                    "shadow-sm transition hover:bg-muted hover:border-border/80 active:scale-95",
-                ].join(" ")}>
-                    <IconUpload />
-                    {fileName ? "Cambiar archivo" : "Cargar JSON"}
+                <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 px-10 py-6 text-sm text-muted-foreground transition hover:border-primary hover:bg-background active:scale-95">
+                    <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
+                    <span>{fileName ?? "Cargar archivo JSON"}</span>
+                    <span className="text-xs text-muted-foreground/60">Haz clic para seleccionar</span>
                     <input type="file" accept="application/json" onChange={handleFileChange} className="hidden" />
                 </label>
 
+                <div className="flex justify-center">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed text-sm"
+                        style={{
+                            borderColor: 'hsl(var(--warning))',
+                            color: 'hsl(var(--muted-foreground))',
+                        }}>
+                        <Info className="w-4 h-4 shrink-0" style={{ color: 'hsl(var(--warning))' }} />
+                        <span>
+                            <strong
+                                className="font-medium"
+                                style={{ color: 'hsl(var(--warning-foreground))' }}>
+                                Aviso:
+                            </strong>
+                            {' '}El almacenamiento de los datos es temporal y se perderá al recargar la página.
+                        </span>
+                    </div>
+                </div>
+
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                         <span className={labelCls}>Mes</span>
-                        <select value={currentMonth} onChange={(e) => setSelectedMes(e.target.value)}
-                            className={selectCls} disabled={!months.length}>
-                            <option value="">Selecciona un mes</option>
-                            {months.map((m) => <option key={m} value={m}>{formatMes(m)}</option>)}
-                        </select>
+                        <div className="relative">
+                            <select value={currentMonth} onChange={(e) => setSelectedMes(e.target.value)}
+                                className={selectCls} disabled={!months.length}>
+                                {months.map((m) => <option key={m} value={m}>{formatMes(m)}</option>)}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
                     </div>
-                    <div>
+
+                    <div className="flex flex-col gap-1.5">
                         <span className={labelCls}>Departamento</span>
-                        <select value={departamentoFilter} onChange={(e) => setDepartamentoFilter(e.target.value)}
-                            className={selectCls} disabled={!availableDepartments.length}>
-                            <option value="">Todos</option>
-                            {availableDepartments.map((d) => <option key={d} value={d}>{d}</option>)}
-                        </select>
+                        <div className="relative">
+                            <select value={departamentoFilter} onChange={(e) => setDepartamentoFilter(e.target.value)}
+                                className={selectCls} disabled={!availableDepartments.length}>
+                                <option value="">Todos</option>
+                                {availableDepartments.map((d) => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
                     </div>
-                    <div>
+
+                    <div className="flex flex-col gap-1.5">
                         <span className={labelCls}>Turno</span>
-                        <select value={turnoFilter} onChange={(e) => setTurnoFilter(e.target.value)}
-                            className={selectCls} disabled={!availableTurnos.length}>
-                            <option value="">Todos</option>
-                            {availableTurnos.map((t) => <option key={t} value={t}>{t}</option>)}
-                        </select>
+                        <div className="relative">
+                            <select value={turnoFilter} onChange={(e) => setTurnoFilter(e.target.value)}
+                                className={selectCls} disabled={!availableTurnos.length}>
+                                <option value="">Todos</option>
+                                {availableTurnos.map((t) => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
                     </div>
-                    <div>
+
+                    <div className="flex flex-col gap-1.5">
                         <span className={labelCls}>Buscar</span>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                                <IconSearch />
-                            </span>
-                            <Input
-                                placeholder="Nombre, número o área"
-                                value={search}
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                            <Input placeholder="Nombre, número o área" value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-8 w-full rounded-lg border-border bg-background text-foreground text-sm shadow-sm"
-                            />
+                                className="pl-8 rounded-lg border-border bg-background text-sm focus-visible:ring-primary/10 focus-visible:border-primary" />
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div className="flex justify-center">
-                <Alert className="inline-flex items-center gap-2 w-auto [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
-                    <AlertDescription>
-                        Los datos no se almacenan en la nube, resguarda los archivos originales.
-                    </AlertDescription>
-                </Alert>
-            </div>
-
 
 
             {/* ── Calendar ─────────────────────────────────────────────── */}
