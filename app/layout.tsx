@@ -15,7 +15,7 @@ import { InstallPrompt } from "@/components/install-prompt"
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f2f2f5" },
-    { media: "(prefers-color-scheme: dark)",  color: "#1a1a1f" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1a1f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -27,14 +27,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Capacitación Qro",
   description: "Sistema de Administractión, Estandarización y Control de Datos",
-  applicationName: "Vertx System v2.0",
+  applicationName: "Vertx System",
   appleWebApp: {
     capable: true,
     // "black-translucent" lets the app draw under the status bar; our sticky
     // header already reserves env(safe-area-inset-top) so the header color
     // shows through the bar in both light and dark themes.
     statusBarStyle: "black-translucent",
-    title: "Vertx System v2.0",
+    title: "Vertx System",
     startupImage: "/icons/apple-touch-icon.png",
   },
   formatDetection: {
