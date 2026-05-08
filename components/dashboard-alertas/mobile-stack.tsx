@@ -11,6 +11,8 @@ import {
     Save,
     Search,
     User,
+    Minus,
+    Plus,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -126,9 +128,8 @@ export function MobileStackEvals({
     const [search, setSearch] = useState("")
     const [depto, setDepto] = useState("")
     const [selectedId, setSelectedId] = useState<string | null>(null)
-    const [calStr, setCalStr] = useState("")
+    const [cal, setCal] = useState(100)
     const [saving, setSaving] = useState(false)
-    const inputRef = useRef<HTMLInputElement>(null)
 
     const deptos = useMemo(
         () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
@@ -150,26 +151,14 @@ export function MobileStackEvals({
         [items, selectedId],
     )
 
-    // Focus con delay para esperar animación del drawer antes de abrir teclado
-    // Evita que iOS empuje el drawer encima de la status bar
-    useEffect(() => {
-        if (!seleccionado) return
-        const timer = setTimeout(() => {
-            inputRef.current?.focus()
-        }, 300)
-        return () => clearTimeout(timer)
-    }, [seleccionado])
-
-    function back() { setSelectedId(null); setCalStr("") }
+    function back() { setSelectedId(null); setCal(100) }
 
     async function guardar() {
         if (!seleccionado) return
-        const cal = parseInt(calStr, 10)
-        if (isNaN(cal) || cal < 0 || cal > 100) return
         setSaving(true)
         try {
             await onCalificar(seleccionado.dbId, cal)
-            setCalStr("")
+            setCal(100)
             const idx = filtrados.findIndex(i => i.id === seleccionado.id)
             const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
             setSelectedId(next?.id ?? null)
@@ -190,7 +179,7 @@ export function MobileStackEvals({
                         <Button
                             size="icon"
                             onClick={guardar}
-                            disabled={saving || calStr === ""}
+                            disabled={saving}
                             className="h-10 w-10 shrink-0"
                             aria-label="Guardar calificación"
                             title="Guardar calificación"
@@ -199,27 +188,41 @@ export function MobileStackEvals({
                         </Button>
                     }
                 />
-                <div className="scrollbar-thin flex-1 overflow-y-auto p-4">
-                    <div className="mb-4 rounded-2xl border bg-muted/30 p-3">
-                        <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                            <Pencil size={14} aria-hidden /> Capturar calificación
-                        </h4>
-                        <Input
-                            ref={inputRef}
-                            type="number"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            min={0}
-                            max={100}
-                            value={calStr}
-                            onChange={(e) => setCalStr(e.target.value)}
-                            placeholder="0 – 100"
-                            // font-size mínimo 16px — evita zoom automático en iOS
-                            className="h-11 text-base"
-                            aria-label="Calificación"
-                        />
+                <div className="scrollbar-thin flex-1 overflow-y-auto p-4 pb-8">
+
+                    {/* ── Control de calificación ── */}
+                    <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border bg-muted/30 p-6">
+                        <button
+                            type="button"
+                            onClick={() => setCal(v => Math.max(0, v - 1))}
+                            disabled={saving || cal <= 0}
+                            aria-label="Disminuir calificación"
+                            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition active:scale-95 disabled:opacity-40"
+                        >
+                            <Minus size={24} />
+                        </button>
+
+                        <div className="flex flex-col items-center">
+                            <span className="text-6xl font-bold tracking-tighter text-foreground">
+                                {cal}
+                            </span>
+                            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                Calificación
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setCal(v => Math.min(100, v + 1))}
+                            disabled={saving || cal >= 100}
+                            aria-label="Aumentar calificación"
+                            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition active:scale-95 disabled:opacity-40"
+                        >
+                            <Plus size={24} />
+                        </button>
                     </div>
 
+                    {/* ── Datos del empleado ── */}
                     <dl className="grid grid-cols-2 gap-2">
                         <DetalleStat label="No. Empleado" value={seleccionado.numero ?? "Sin número"} icon={<User size={12} aria-hidden />} />
                         <DetalleStat label="Fecha de Ingreso" value={seleccionado.fechaIngreso ? formatDate(seleccionado.fechaIngreso) : "Sin registro"} icon={<Calendar size={12} aria-hidden />} />
