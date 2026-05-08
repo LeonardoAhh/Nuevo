@@ -53,8 +53,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
       { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
       { label: "Promociones", href: "/promociones", icon: TrendingUp },
-      { label: "Reportes", href: "/reportes", icon: FileText },
-      { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
+      { label: "Reportes", href: "/reportes", icon: FileText }, { label: "Reporte Diario", href: "/reporte-diario", icon: FileText }, { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
     ],
@@ -213,8 +212,8 @@ export default function Sidebar({
                                   variant="ghost"
                                   size="icon"
                                   className={`w-full h-10 ${active
-                                      ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                    ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                                     }`}
                                   aria-current={active ? "page" : undefined}
                                   asChild
@@ -261,8 +260,8 @@ export default function Sidebar({
                           key={item.href}
                           variant="ghost"
                           className={`w-full justify-start gap-3 ${active
-                              ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
-                              : "text-muted-foreground hover:text-foreground"
+                            ? "bg-primary/10 text-primary border-l-[3px] border-primary rounded-l-none"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                           aria-current={active ? "page" : undefined}
                           asChild
@@ -303,8 +302,8 @@ export default function Sidebar({
                   variant="ghost"
                   size="icon"
                   className={`w-full h-10 ${pathname === "/settings"
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                     }`}
                   asChild
                 >
