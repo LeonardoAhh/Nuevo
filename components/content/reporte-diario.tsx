@@ -263,7 +263,7 @@ export default function ReporteDiarioContent() {
                 ...area,
                 personal_activo,
                 personal_incidencia,
-                personal_real: Math.max(area.personal_autorizado - personal_incidencia, 0),
+                personal_real: Math.max(personal_activo - personal_incidencia, 0),
             }
         })
     }, [selectedRows, selectedDay])
