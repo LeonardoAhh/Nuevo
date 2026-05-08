@@ -30,6 +30,23 @@ const INCIDENT_TABS = [
 
 type IncidentTab = (typeof INCIDENT_TABS)[number]
 
+const AREA_STAFF = [
+    { area: "A. CALIDAD 1ER TURNO", personal_autorizado: 22 },
+    { area: "A. CALIDAD 2DO. TURNO", personal_autorizado: 22 },
+    { area: "PRODUCCIÓN 1ER. TURNO", personal_autorizado: 32 },
+    { area: "PRODUCCIÓN 2o. TURNO", personal_autorizado: 32 },
+    { area: "PRODUCCIÓN 3ER. TURNO", personal_autorizado: 32 },
+    { area: "PRODUCCIÓN 4o. TURNO", personal_autorizado: 32 },
+] as const
+
+type AreaStaffDefinition = (typeof AREA_STAFF)[number]
+
+type AreaStaffSummary = AreaStaffDefinition & {
+    personal_activo: number
+    personal_incidencia: number
+    personal_real: number
+}
+
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
 interface ReporteRow {
@@ -213,7 +230,7 @@ export default function ReporteDiarioContent() {
         if (!selectedDay) return base
         return selectedRows.reduce((acc, row) => {
             const code = row.days[selectedDay]
-            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
+            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || code === "DF" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
             acc[code as IncidentTab].push({
                 key: `${code}||${row.departamento}||${row.area}||${row.turno || "-"}||${row.numero_empleado}`,
                 numero_empleado: row.numero_empleado,
@@ -226,12 +243,37 @@ export default function ReporteDiarioContent() {
         }, base)
     }, [selectedRows, selectedDay])
 
+    const selectedDayAreaSummary = useMemo<AreaStaffSummary[]>(() => {
+        if (!selectedDay) return AREA_STAFF.map((area) => ({
+            ...area,
+            personal_activo: 0,
+            personal_incidencia: 0,
+            personal_real: area.personal_autorizado,
+        }))
+
+        return AREA_STAFF.map((area) => {
+            const rowsInArea = selectedRows.filter((row) => row.area === area.area)
+            const personal_activo = rowsInArea.length
+            const personal_incidencia = rowsInArea.reduce((count, row) => {
+                const code = row.days[selectedDay]
+                const isIncidence = !!code && code !== "A" && code !== "D" && code !== "DF" && code !== "X" && code !== "-"
+                return count + (isIncidence ? 1 : 0)
+            }, 0)
+            return {
+                ...area,
+                personal_activo,
+                personal_incidencia,
+                personal_real: Math.max(area.personal_autorizado - personal_incidencia, 0),
+            }
+        })
+    }, [selectedRows, selectedDay])
+
     const selectedDayCounts = useMemo(() => {
         const base = INCIDENT_TABS.reduce((acc, c) => ({ ...acc, [c]: 0 }), {} as Record<IncidentTab, number>)
         if (!selectedDay) return base
         return selectedRows.reduce((acc, row) => {
             const code = row.days[selectedDay]
-            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
+            if (!code || code === "-" || code === "X" || code === "A" || code === "D" || code === "DF" || !INCIDENT_TABS.includes(code as IncidentTab)) return acc
             acc[code as IncidentTab] = (acc[code as IncidentTab] || 0) + 1
             return acc
         }, base)
@@ -420,81 +462,111 @@ export default function ReporteDiarioContent() {
                                         Selecciona un día en el calendario.
                                     </p>
                                 ) : (
-                                    <Tabs value={selectedIncidentTab} onValueChange={(v) => setSelectedIncidentTab(v as IncidentTab)}>
-                                        {/* Tabs */}
-                                        <TabsList className="flex flex-wrap gap-1.5 h-auto bg-transparent p-0 mb-4">
-                                            {INCIDENT_TABS.map((code) => {
-                                                const cnt = selectedDayCounts[code] ?? 0
-                                                const active = selectedIncidentTab === code
-                                                return (
-                                                    <TabsTrigger
-                                                        key={code}
-                                                        value={code}
-                                                        className={[
-                                                            "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium",
-                                                            "transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                                                            active
-                                                                ? "border-foreground/50 bg-foreground text-background shadow-md"
-                                                                : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20 hover:bg-muted/50",
-                                                        ].join(" ")}
-                                                    >
-                                                        {INCIDENCIA_LABELS[code] ?? code}
-                                                        <span className={[
-                                                            "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none",
-                                                            active
-                                                                ? "bg-background/20 text-background"
-                                                                : cnt > 0
-                                                                    ? "bg-destructive/15 text-destructive"
-                                                                    : "bg-muted text-muted-foreground",
-                                                        ].join(" ")}>
-                                                            {cnt}
-                                                        </span>
-                                                    </TabsTrigger>
-                                                )
-                                            })}
-                                        </TabsList>
+                                    <>
+                                        <div className="grid gap-3 mb-4 sm:grid-cols-2 xl:grid-cols-3">
+                                            {selectedDayAreaSummary.map((area) => (
+                                                <div key={area.area} className="rounded-2xl border border-border bg-background p-4">
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                                        {area.area}
+                                                    </p>
+                                                    <div className="mt-3 grid gap-2 text-sm text-foreground">
+                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                            <span>Autorizado</span>
+                                                            <span className="font-semibold">{area.personal_autorizado}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                            <span>Activo</span>
+                                                            <span className="font-semibold">{area.personal_activo}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                            <span>Incidencias</span>
+                                                            <span className="font-semibold">{area.personal_incidencia}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                            <span>Personal real</span>
+                                                            <span className="font-semibold">{area.personal_real}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
 
-                                        {/* Tab content */}
-                                        {INCIDENT_TABS.map((code) => (
-                                            <TabsContent key={code} value={code} className="mt-0 focus-visible:outline-none">
-                                                {selectedDayCounts[code] > 0 ? (
-                                                    <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
-                                                        <table className="min-w-full text-sm">
-                                                            <thead>
-                                                                <tr className="border-b border-border bg-muted/50 text-left">
-                                                                    {["Empleado", "# Empleado", "Departamento", "Área", "Turno"].map((h) => (
-                                                                        <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                                                                            {h}
-                                                                        </th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="divide-y divide-border bg-card">
-                                                                {selectedDayIncidentSummary[code].map((row, i) => (
-                                                                    <tr key={row.key} className={i % 2 !== 0 ? "bg-muted/20" : ""}>
-                                                                        <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
-                                                                        <td className="px-4 py-2.5 text-muted-foreground font-mono text-xs">{row.numero_empleado}</td>
-                                                                        <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">{row.departamento}</td>
-                                                                        <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">{row.area}</td>
-                                                                        <td className="px-4 py-2.5">
-                                                                            <span className="inline-flex rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
-                                                                                {row.turno}
-                                                                            </span>
-                                                                        </td>
+                                        <Tabs value={selectedIncidentTab} onValueChange={(v) => setSelectedIncidentTab(v as IncidentTab)}>
+                                            {/* Tabs */}
+                                            <TabsList className="flex flex-wrap gap-1.5 h-auto bg-transparent p-0 mb-4">
+                                                {INCIDENT_TABS.map((code) => {
+                                                    const cnt = selectedDayCounts[code] ?? 0
+                                                    const active = selectedIncidentTab === code
+                                                    return (
+                                                        <TabsTrigger
+                                                            key={code}
+                                                            value={code}
+                                                            className={[
+                                                                "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium",
+                                                                "transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                                                                active
+                                                                    ? "border-foreground/50 bg-foreground text-background shadow-md"
+                                                                    : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/20 hover:bg-muted/50",
+                                                            ].join(" ")}
+                                                        >
+                                                            {INCIDENCIA_LABELS[code] ?? code}
+                                                            <span className={[
+                                                                "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none",
+                                                                active
+                                                                    ? "bg-background/20 text-background"
+                                                                    : cnt > 0
+                                                                        ? "bg-destructive/15 text-destructive"
+                                                                        : "bg-muted text-muted-foreground",
+                                                            ].join(" ")}>
+                                                                {cnt}
+                                                            </span>
+                                                        </TabsTrigger>
+                                                    )
+                                                })}
+                                            </TabsList>
+
+                                            {/* Tab content */}
+                                            {INCIDENT_TABS.map((code) => (
+                                                <TabsContent key={code} value={code} className="mt-0 focus-visible:outline-none">
+                                                    {selectedDayCounts[code] > 0 ? (
+                                                        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
+                                                            <table className="min-w-full text-sm">
+                                                                <thead>
+                                                                    <tr className="border-b border-border bg-muted/50 text-left">
+                                                                        {["Empleado", "# Empleado", "Departamento", "Área", "Turno"].map((h) => (
+                                                                            <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                                                                                {h}
+                                                                            </th>
+                                                                        ))}
                                                                     </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background py-10 text-center">
-                                                        <span className="mb-2 text-muted-foreground/30"><IconEmpty /></span>
-                                                        <p className="text-sm text-muted-foreground">Sin registros para este criterio.</p>
-                                                    </div>
-                                                )}
-                                            </TabsContent>
-                                        ))}
-                                    </Tabs>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-border bg-card">
+                                                                    {selectedDayIncidentSummary[code].map((row, i) => (
+                                                                        <tr key={row.key} className={i % 2 !== 0 ? "bg-muted/20" : ""}>
+                                                                            <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
+                                                                            <td className="px-4 py-2.5 text-muted-foreground font-mono text-xs">{row.numero_empleado}</td>
+                                                                            <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">{row.departamento}</td>
+                                                                            <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">{row.area}</td>
+                                                                            <td className="px-4 py-2.5">
+                                                                                <span className="inline-flex rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                                                                    {row.turno}
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background py-10 text-center">
+                                                            <span className="mb-2 text-muted-foreground/30"><IconEmpty /></span>
+                                                            <p className="text-sm text-muted-foreground">Sin registros para este criterio.</p>
+                                                        </div>
+                                                    )}
+                                                </TabsContent>
+                                            ))}
+                                        </Tabs>
+                                    </>
                                 )}
                             </div>
                         </div>
