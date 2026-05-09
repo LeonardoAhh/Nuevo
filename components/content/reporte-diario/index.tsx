@@ -123,7 +123,7 @@ export default function ReporteDiarioContent() {
     const selectedDayIncidentSummary = useMemo(() => {
         const base = emptyIncident()
         if (!selectedDay) return base
-        return selectedRows.reduce((acc, row) => {
+        const result = selectedRows.reduce((acc, row) => {
             const code = row.days[selectedDay]
             if (!isIncidence(code) || !isIncidentTab(code!)) return acc
             acc[code].push({
@@ -136,6 +136,10 @@ export default function ReporteDiarioContent() {
             })
             return acc
         }, base)
+        for (const tab of INCIDENT_TABS) {
+            result[tab].sort((a, b) => a.departamento.localeCompare(b.departamento))
+        }
+        return result
     }, [selectedRows, selectedDay])
 
     const selectedDayAreaSummary = useMemo<AreaStaffSummary[]>(() => {
