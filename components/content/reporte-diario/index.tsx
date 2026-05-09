@@ -137,7 +137,7 @@ export default function ReporteDiarioContent() {
             return acc
         }, base)
         for (const tab of INCIDENT_TABS) {
-            result[tab].sort((a, b) => a.departamento.localeCompare(b.departamento))
+            result[tab].sort((a, b) => a.area.localeCompare(b.area))
         }
         return result
     }, [selectedRows, selectedDay])

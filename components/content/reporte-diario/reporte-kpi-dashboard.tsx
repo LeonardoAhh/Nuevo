@@ -86,6 +86,7 @@ export default function ReporteKpiDashboard({
         {
             label: "Tasa de asistencia",
             value: `${kpis.tasaAsistencia}%`,
+            sub: "Días con 'A' / total días registrados",
             icon: <TrendingDown className="w-5 h-5" />,
             tone: kpis.tasaAsistencia < 80 ? "destructive" : kpis.tasaAsistencia < 90 ? "warning" : "default",
         },
@@ -96,14 +97,14 @@ export default function ReporteKpiDashboard({
             tone: kpis.totalIncidencias > 0 ? "warning" : "default",
         },
         {
-            label: "Día más afectado",
+            label: "Día con más incidencias",
             value: kpis.worstDay ? `Día ${parseInt(kpis.worstDay, 10)}` : "—",
             sub: kpis.worstDay ? `${kpis.worstDayCount} incidencias` : undefined,
             icon: <CalendarX className="w-5 h-5" />,
             tone: kpis.worstDayCount > 5 ? "destructive" : kpis.worstDayCount > 0 ? "warning" : "default",
         },
         {
-            label: "Área más afectada",
+            label: "Área con más incidencias",
             value: kpis.worstArea || "—",
             sub: kpis.worstArea ? `${kpis.worstAreaCount} incidencias` : undefined,
             icon: <MapPin className="w-5 h-5" />,
