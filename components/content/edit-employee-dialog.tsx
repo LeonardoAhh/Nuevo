@@ -62,10 +62,10 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="space-y-5 px-4 py-5">
+        <div className="space-y-3 px-4 py-3">
           {/* Escolaridad */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Escolaridad</Label>
+          <div className="space-y-1">
+            <Label className="text-xs font-medium">Escolaridad</Label>
             <Select value={form.escolaridad ?? ''} onValueChange={v => set('escolaridad', v)}>
               <SelectTrigger className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
               <SelectContent className="bg-card max-h-56">
@@ -75,16 +75,16 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
           </div>
 
           {/* Evaluaciones */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {([
               { label: '1er mes', key: 'eval_1_calificacion' as const, fecha: record.eval_1_fecha },
               { label: '2do mes', key: 'eval_2_calificacion' as const, fecha: record.eval_2_fecha },
               { label: '3er mes', key: 'eval_3_calificacion' as const, fecha: record.eval_3_fecha },
             ]).map(({ label, key, fecha }) => (
-              <div key={key} className="space-y-1.5">
-                <Label className="text-xs font-medium">
+              <div key={key} className="space-y-1">
+                <Label className="text-xs font-medium leading-tight">
                   Eval. {label}
-                  <span className="block text-muted-foreground font-normal">{formatDate(fecha)}</span>
+                  <span className="block text-muted-foreground font-normal text-[11px]">{formatDate(fecha)}</span>
                 </Label>
                 <Input
                   type="number" min={0} max={100} inputMode="numeric"
@@ -103,9 +103,9 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
           </div>
 
           {/* Contrato + RG */}
-          <div className="grid grid-cols-2 gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Tipo de contrato</Label>
+          <div className="grid grid-cols-2 gap-2 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Tipo de contrato</Label>
               <Select value={form.tipo_contrato ?? record.tipo_contrato} onValueChange={v => set('tipo_contrato', v as TipoContrato)}>
                 <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-card">
@@ -114,10 +114,10 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium leading-tight">
                 RG-REC-048
-                <span className="block text-xs font-normal text-muted-foreground">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
+                <span className="block font-normal text-muted-foreground text-[11px]">Vence: {formatDate(record.fecha_vencimiento_rg)}</span>
               </Label>
               <Select value={form.rg_rec_048 ?? record.rg_rec_048} onValueChange={v => set('rg_rec_048', v as EstadoRG)}>
                 <SelectTrigger className="bg-muted"><SelectValue /></SelectTrigger>
@@ -131,7 +131,7 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
         </div>
 
         {/* Delete zone */}
-        <div className="px-4 pb-5 border-t pt-4">
+        <div className="px-4 pb-3 border-t pt-3">
           {confirmDelete ? (
             <motion.div
               initial={{ opacity: 0, y: 4 }}
