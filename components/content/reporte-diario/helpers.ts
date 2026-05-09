@@ -85,7 +85,15 @@ export function parseReporteJSON(raw: unknown[]): { rows: ReporteRow[]; errors: 
         if (!area) { errors.push(`Fila ${index + 1}: falta área`); return }
 
         const days: Record<string, string> = {}
-        Object.entries(row).forEach(([key, value]) => {
+
+        // Support both formats:
+        // 1. Flat (from JSON file): { "01": "A", "02": "F", ... }
+        // 2. Nested (from Supabase): { days: { "01": "A", "02": "F", ... } }
+        const daysSource = (typeof row.days === "object" && row.days !== null && !Array.isArray(row.days))
+            ? row.days as Record<string, unknown>
+            : row
+
+        Object.entries(daysSource).forEach(([key, value]) => {
             if (!/^\d{2}$/.test(key)) return
             days[key] = normalizeString(value) || ""
         })
