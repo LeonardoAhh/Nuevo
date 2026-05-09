@@ -202,12 +202,9 @@ body {
   overflow: visible !important;
 }
 
-/* Evita que el viewport se redimensione al aparecer el teclado */
-[role="dialog"]:not(.calificacion-captura-modal-portal) {
-  height: 100%;
-  max-height: 100%;
-  overflow-y: auto;
-}
+/* Keyboard handling for dialogs is done in DrawerContent via visualViewport API.
+   Do NOT set height: 100% here — it overrides Tailwind max-h utilities and
+   forces all dialogs to full viewport height regardless of content. */
 
 /* FIXES ESPECÍFICOS VAUL DRAWER */
 
