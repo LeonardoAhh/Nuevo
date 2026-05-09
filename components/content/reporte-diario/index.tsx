@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,6 +21,9 @@ import {
     X,
     Info,
     Download,
+    Save,
+    Database,
+    Trash2,
 } from "lucide-react"
 
 import { INCIDENT_TABS, INCIDENCIA_LABELS, AREA_STAFF, ALLOWED_PUESTOS } from "./constants"
@@ -31,6 +34,9 @@ import ReporteCalendar from "./reporte-calendar"
 import ReporteAreaSummary from "./reporte-area-summary"
 import ReporteIncidentTabs from "./reporte-incident-tabs"
 import ReporteKpiDashboard from "./reporte-kpi-dashboard"
+import ReporteComparison from "./reporte-comparison"
+import { useReporteDiario } from "@/lib/hooks/useReporteDiario"
+import type { ReporteDiarioSummary } from "@/lib/hooks/useReporteDiario"
 
 export default function ReporteDiarioContent() {
     const [rows, setRows] = useState<ReporteRow[]>([])
@@ -46,6 +52,25 @@ export default function ReporteDiarioContent() {
     const [loading, setLoading] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const {
+        loading: dbLoading,
+        saving: dbSaving,
+        fetchSummaries,
+        fetchByMes,
+        saveReport,
+        deleteReport,
+    } = useReporteDiario()
+
+    const [savedSummaries, setSavedSummaries] = useState<ReporteDiarioSummary[]>([])
+    const [loadingDb, setLoadingDb] = useState(true)
+
+    useEffect(() => {
+        fetchSummaries().then((data) => {
+            setSavedSummaries(data)
+            setLoadingDb(false)
+        })
+    }, [fetchSummaries])
 
     const months = useMemo(
         () => Array.from(new Set(rows.map((r) => r.mes))).sort(),
@@ -225,6 +250,67 @@ export default function ReporteDiarioContent() {
         setIsDragging(false)
     }, [])
 
+    const computeKpis = useCallback((reportRows: ReporteRow[], dayH: string[]) => {
+        let totalIncidencias = 0
+        let totalAsistencias = 0
+        let totalDaysTracked = 0
+        for (const row of reportRows) {
+            for (const day of dayH) {
+                const code = row.days[day]
+                if (!code || code === "-" || code === "X") continue
+                totalDaysTracked++
+                if (code === "A") totalAsistencias++
+                else if (isIncidence(code)) totalIncidencias++
+            }
+        }
+        const tasaAsistencia = totalDaysTracked > 0
+            ? Math.round((totalAsistencias / totalDaysTracked) * 100 * 100) / 100
+            : 0
+        return { totalIncidencias, tasaAsistencia }
+    }, [])
+
+    const handleSaveToDb = useCallback(async () => {
+        if (!currentMonth || rows.length === 0) return
+        const monthRows = rows.filter((r) => r.mes === currentMonth)
+        const dCount = daysInMonth(currentMonth)
+        const dHeaders = Array.from({ length: dCount }, (_, i) => String(i + 1).padStart(2, "0"))
+        const { totalIncidencias, tasaAsistencia } = computeKpis(monthRows, dHeaders)
+
+        const result = await saveReport({
+            mes: currentMonth,
+            data: monthRows,
+            total_empleados: monthRows.length,
+            total_incidencias: totalIncidencias,
+            tasa_asistencia: tasaAsistencia,
+        })
+        if (result.success) {
+            const updated = await fetchSummaries()
+            setSavedSummaries(updated)
+        }
+    }, [currentMonth, rows, computeKpis, saveReport, fetchSummaries])
+
+    const handleLoadFromDb = useCallback(async (mes: string) => {
+        const record = await fetchByMes(mes)
+        if (!record) return
+        const { rows: parsed, errors: errs } = parseReporteJSON(record.data as unknown[])
+        if (errs.length > 0) {
+            setErrors(errs)
+            return
+        }
+        setRows(parsed)
+        setSelectedMes(mes)
+        setFileName(`Guardado: ${formatMes(mes)}`)
+        setErrors([])
+    }, [fetchByMes])
+
+    const handleDeleteFromDb = useCallback(async (id: string) => {
+        const result = await deleteReport(id)
+        if (result.success) {
+            const updated = await fetchSummaries()
+            setSavedSummaries(updated)
+        }
+    }, [deleteReport, fetchSummaries])
+
     const handleExportPdf = useCallback(async () => {
         if (!selectedDay || !currentMonth) return
 
@@ -311,17 +397,41 @@ export default function ReporteDiarioContent() {
                     />
                 </label>
 
-                <div className="flex justify-center">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
-                        <Info className="w-4 h-4 shrink-0 text-warning" />
-                        <span>
-                            <strong className="font-medium text-warning-foreground">
-                                Aviso:
-                            </strong>
-                            {" "}El almacenamiento de los datos es temporal y se perderá al recargar la página.
-                        </span>
+                {rows.length > 0 && currentMonth && (
+                    <div className="flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleSaveToDb}
+                            disabled={dbSaving}
+                            className={cn(
+                                "inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition",
+                                "border-primary bg-primary/10 text-primary hover:bg-primary/20",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                            )}
+                        >
+                            {dbSaving ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Save className="w-4 h-4" />
+                            )}
+                            Guardar reporte de {formatMes(currentMonth)}
+                        </button>
                     </div>
-                </div>
+                )}
+
+                {rows.length === 0 && (
+                    <div className="flex justify-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
+                            <Info className="w-4 h-4 shrink-0 text-warning" />
+                            <span>
+                                <strong className="font-medium text-warning-foreground">
+                                    Tip:
+                                </strong>
+                                {" "}Carga un JSON y guárdalo para tener historial mes a mes.
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="flex flex-col gap-1.5">
@@ -478,6 +588,56 @@ export default function ReporteDiarioContent() {
                         </div>
                     </CardContent>
                 </Card>
+            )}
+
+            {/* ── Saved Reports ──────────────────────────────────────────── */}
+            {savedSummaries.length > 0 && (
+                <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                        <div className="flex items-center gap-2">
+                            <Database className="w-4 h-4 text-muted-foreground" />
+                            <p className="text-sm font-semibold text-foreground">Reportes guardados</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Selecciona un mes para cargar sus datos.
+                        </p>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {savedSummaries.map((s) => (
+                                <div
+                                    key={s.id}
+                                    className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:bg-muted/30 transition"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => handleLoadFromDb(s.mes)}
+                                        disabled={dbLoading}
+                                        className="flex-1 text-left"
+                                    >
+                                        <p className="text-sm font-semibold text-foreground">{formatMes(s.mes)}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                            {s.total_empleados} empleados · {s.total_incidencias} incidencias · {s.tasa_asistencia.toFixed(1)}% asistencia
+                                        </p>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteFromDb(s.id)}
+                                        disabled={dbSaving}
+                                        className="ml-2 rounded-md p-1.5 text-muted-foreground/50 transition hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* ── Comparison ──────────────────────────────────────────── */}
+            {savedSummaries.length >= 2 && (
+                <ReporteComparison summaries={savedSummaries} />
             )}
 
             {/* ── Empty state ──────────────────────────────────────────── */}
