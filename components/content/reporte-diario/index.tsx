@@ -384,7 +384,7 @@ export default function ReporteDiarioContent() {
                     ) : (
                         <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
                     )}
-                    <span>{loading ? "Procesando..." : fileName || "Cargar archivo JSON"}</span>
+                    <span>{loading ? "Procesando..." : fileName || "Cargar reporte"}</span>
                     <span className="text-xs text-muted-foreground/60">
                         {isDragging ? "Suelta el archivo aquí" : "Haz clic o arrastra para seleccionar"}
                     </span>
@@ -427,7 +427,7 @@ export default function ReporteDiarioContent() {
                                 <strong className="font-medium text-warning-foreground">
                                     Tip:
                                 </strong>
-                                {" "}Carga un JSON y guárdalo para tener historial mes a mes.
+                                {" "}Carga un reporte y guárdalo para tener historial mes a mes.
                             </span>
                         </div>
                     </div>
