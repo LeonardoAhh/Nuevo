@@ -596,40 +596,69 @@ export default function ReporteDiarioContent() {
                     <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
                         <div className="flex items-center gap-2">
                             <Database className="w-4 h-4 text-muted-foreground" />
-                            <p className="text-sm font-semibold text-foreground">Reportes guardados</p>
+                            <p className="text-sm font-semibold text-foreground">
+                                Reportes guardados
+                                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                    ({savedSummaries.length})
+                                </span>
+                            </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Selecciona un mes para cargar sus datos.
-                        </p>
                     </CardHeader>
-                    <CardContent className="p-4">
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {savedSummaries.map((s) => (
-                                <div
-                                    key={s.id}
-                                    className="flex items-center justify-between rounded-lg border border-border bg-background p-3 hover:bg-muted/30 transition"
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={() => handleLoadFromDb(s.mes)}
-                                        disabled={dbLoading}
-                                        className="flex-1 text-left"
-                                    >
-                                        <p className="text-sm font-semibold text-foreground">{formatMes(s.mes)}</p>
-                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                            {s.total_empleados} empleados · {s.total_incidencias} incidencias · {s.tasa_asistencia.toFixed(1)}% asistencia
-                                        </p>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteFromDb(s.id)}
-                                        disabled={dbSaving}
-                                        className="ml-2 rounded-md p-1.5 text-muted-foreground/50 transition hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            ))}
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/30">
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Mes</th>
+                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Empleados</th>
+                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Incidencias</th>
+                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Asistencia</th>
+                                        <th className="px-4 py-2.5 w-10" />
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {savedSummaries.map((s) => (
+                                        <tr
+                                            key={s.id}
+                                            className="hover:bg-muted/20 transition-colors cursor-pointer"
+                                            onClick={() => handleLoadFromDb(s.mes)}
+                                        >
+                                            <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">
+                                                {formatMes(s.mes)}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
+                                                {s.total_empleados}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right tabular-nums">
+                                                <span className={cn(
+                                                    "font-semibold",
+                                                    s.total_incidencias > 100 ? "text-destructive" : "text-foreground",
+                                                )}>
+                                                    {s.total_incidencias}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right tabular-nums">
+                                                <span className={cn(
+                                                    "font-semibold",
+                                                    s.tasa_asistencia < 80 ? "text-destructive" : s.tasa_asistencia < 90 ? "text-warning" : "text-foreground",
+                                                )}>
+                                                    {s.tasa_asistencia.toFixed(1)}%
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
+                                                    disabled={dbSaving}
+                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </CardContent>
                 </Card>
