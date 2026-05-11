@@ -284,31 +284,31 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         if (h === "salida") salidaCols.push(i)
     })
 
-    const colHoras = headers.findIndex((h) => h === "horas" || h === "horas_registradas")
     const colObs = headers.findIndex((h) =>
         h === "observaciones" || h === "obs" || h === "observacion",
     )
 
     if (colNumero < 0) { errors.push("Columna 'numero_empleado' no encontrada."); return { rows, errors } }
 
+    // headers[] is stored at 1-based indices (from eachCell colNumber).
+    // findIndex returns those same 1-based positions, which getCell expects directly.
     sheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return
 
-        const numero = normalizeString(row.getCell(colNumero + 1).value)
+        const numero = normalizeString(row.getCell(colNumero).value)
         if (!numero) return
 
-        const nombre = colNombre >= 0 ? normalizeString(row.getCell(colNombre + 1).value) : ""
-        const fecha = colFecha >= 0 ? normalizeDate(row.getCell(colFecha + 1).value) : ""
-        const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno + 1).value), 10) || 0 : 0
-        const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia + 1).value) : "A"
+        const nombre = colNombre >= 0 ? normalizeString(row.getCell(colNombre).value) : ""
+        const fecha = colFecha >= 0 ? normalizeDate(row.getCell(colFecha).value) : ""
+        const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno).value), 10) || 0 : 0
+        const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia).value) : "A"
 
         const getTime = (cols: number[], idx: number): string | null => {
             if (idx >= cols.length) return null
-            return normalizeTime(row.getCell(cols[idx] + 1).value)
+            return normalizeTime(row.getCell(cols[idx]).value)
         }
 
-        const horas = colHoras >= 0 ? normalizeString(row.getCell(colHoras + 1).value) : "00:00"
-        const obs = colObs >= 0 ? normalizeString(row.getCell(colObs + 1).value) : ""
+        const obs = colObs >= 0 ? normalizeString(row.getCell(colObs).value) : ""
 
         rows.push({
             numero_empleado: numero,
@@ -324,7 +324,8 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
             salida3: getTime(salidaCols, 2),
             entrada4: getTime(entradaCols, 3),
             salida4: getTime(salidaCols, 3),
-            horas_registradas: horas,
+            entrada5: getTime(entradaCols, 4),
+            salida5: getTime(salidaCols, 4),
             observaciones: obs,
         })
     })
