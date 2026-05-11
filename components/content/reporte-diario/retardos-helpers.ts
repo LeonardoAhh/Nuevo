@@ -31,11 +31,12 @@ export function analyzeRow(
     schedules: ScheduleDefinition[],
 ): PunchAnalysis {
     const base: Pick<PunchAnalysis,
-        "numero_empleado" | "nombre" | "turno" | "incidencia" | "observaciones" |
+        "numero_empleado" | "nombre" | "fecha" | "turno" | "incidencia" | "observaciones" |
         "entrada1" | "salida1" | "entrada2" | "salida2"
     > = {
         numero_empleado: row.numero_empleado,
         nombre: row.nombre,
+        fecha: row.fecha,
         turno: row.turno,
         incidencia: row.incidencia,
         observaciones: row.observaciones,
@@ -216,6 +217,27 @@ function normalizeTime(value: unknown): string | null {
     return null
 }
 
+function normalizeDate(value: unknown): string {
+    if (value == null || value === "") return ""
+    if (value instanceof Date) {
+        return value.toISOString().slice(0, 10)
+    }
+    if (typeof value === "string") {
+        const trimmed = value.trim()
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+            const [d, m, y] = trimmed.split("/")
+            return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
+        }
+        return trimmed
+    }
+    if (typeof value === "number") {
+        const epoch = new Date((value - 25569) * 86400 * 1000)
+        return epoch.toISOString().slice(0, 10)
+    }
+    return ""
+}
+
 export interface ParsePunchResult {
     rows: PunchRow[]
     errors: string[]
@@ -248,6 +270,7 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         h === "numero_empleado" || h === "numero_em" || h === "no_empleado" || h === "numero",
     )
     const colNombre = headers.findIndex((h) => h === "nombre" || h === "nombre_empleado")
+    const colFecha = headers.findIndex((h) => h === "fecha" || h === "date" || h === "dia")
     const colTurno = headers.findIndex((h) => h === "turno")
     const colIncidencia = headers.findIndex((h) =>
         h === "incidencia" || h === "incide" || h === "incidencias",
@@ -275,6 +298,7 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         if (!numero) return
 
         const nombre = colNombre >= 0 ? normalizeString(row.getCell(colNombre + 1).value) : ""
+        const fecha = colFecha >= 0 ? normalizeDate(row.getCell(colFecha + 1).value) : ""
         const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno + 1).value), 10) || 0 : 0
         const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia + 1).value) : "A"
 
@@ -289,6 +313,7 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         rows.push({
             numero_empleado: numero,
             nombre,
+            fecha,
             turno,
             incidencia,
             entrada1: getTime(entradaCols, 0),
