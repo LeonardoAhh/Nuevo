@@ -8,7 +8,7 @@ interface AreaDetailRow {
     numero_empleado: string
     nombre: string
     puesto?: string
-    turno: string
+    turno?: string
     tipo_incidencia: string
 }
 
