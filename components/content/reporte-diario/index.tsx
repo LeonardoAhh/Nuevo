@@ -631,61 +631,43 @@ export default function ReporteDiarioContent() {
                             </p>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-border bg-muted/30">
-                                        <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Mes</th>
-                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Empleados</th>
-                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Incidencias</th>
-                                        <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Asistencia</th>
-                                        <th className="px-4 py-2.5 w-10" />
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {savedSummaries.map((s) => (
-                                        <tr
-                                            key={s.id}
-                                            className="hover:bg-muted/20 transition-colors cursor-pointer"
-                                            onClick={() => handleLoadFromDb(s.mes)}
+                    <CardContent className="p-4">
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                            {savedSummaries.map((s) => (
+                                <div
+                                    key={s.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => handleLoadFromDb(s.mes)}
+                                    onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
+                                    className="text-left rounded-2xl border border-border p-4 bg-background shadow-sm transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                            {formatMes(s.mes)}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
+                                            disabled={dbSaving}
+                                            className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
                                         >
-                                            <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">
-                                                {formatMes(s.mes)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
-                                                {s.total_empleados}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right tabular-nums">
-                                                <span className={cn(
-                                                    "font-semibold",
-                                                    s.total_incidencias > 100 ? "text-destructive" : "text-foreground",
-                                                )}>
-                                                    {s.total_incidencias}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right tabular-nums">
-                                                <span className={cn(
-                                                    "font-semibold",
-                                                    s.tasa_asistencia < 80 ? "text-destructive" : s.tasa_asistencia < 90 ? "text-warning" : "text-foreground",
-                                                )}>
-                                                    {s.tasa_asistencia.toFixed(1)}%
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right">
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
-                                                    disabled={dbSaving}
-                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    <div className="grid gap-2 text-sm text-foreground">
+                                        {[
+                                            { label: "Empleados", value: s.total_empleados },
+                                            { label: "Incidencias", value: s.total_incidencias },
+                                        ].map(({ label, value }) => (
+                                            <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                <span>{label}</span>
+                                                <span className="font-semibold">{value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
