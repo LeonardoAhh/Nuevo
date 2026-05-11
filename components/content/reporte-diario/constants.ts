@@ -29,6 +29,7 @@ export const MEXICO_HOLIDAY_RULES: readonly MexicoHolidayRule[] = [
     { label: "Independencia", month: 8, day: 16, fixed: true },
     { label: "Revolución", month: 10, weekday: 1, occurrence: 3 },
     { label: "Navidad", month: 11, day: 25, fixed: true },
+    { label: "Dia de las madres", month: 5, day: 10, fixed: true },
 ]
 
 export const AREA_STAFF = [
@@ -66,4 +67,4 @@ export const ALLOWED_PUESTOS = new Set([
     "INSPECTOR RECIBO",
 ])
 
-export const NON_INCIDENT_CODES = new Set(["-", "X", "A", "D", "DF"])
+export const NON_INCIDENT_CODES = new Set(["-", "X", "A", "D", "DF", "B"])

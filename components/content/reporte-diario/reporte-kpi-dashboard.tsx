@@ -106,7 +106,7 @@ export default function ReporteKpiDashboard({
             tone: kpis.worstDayCount > 5 ? "destructive" : kpis.worstDayCount > 0 ? "warning" : "default",
         },
         {
-            label: "Área con más incidencias",
+            label: "Área con más incidencias en el mes",
             value: kpis.worstArea || "—",
             sub: kpis.worstArea ? `${kpis.worstAreaCount} incidencias` : undefined,
             icon: <MapPin className="w-5 h-5" />,

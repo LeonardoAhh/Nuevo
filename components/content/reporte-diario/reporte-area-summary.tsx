@@ -60,6 +60,7 @@ export default function ReporteAreaSummary({
                                     { label: "Activo", value: area.personal_activo },
                                     { label: "Incidencias", value: area.personal_incidencia },
                                     { label: "Personal real", value: area.personal_real },
+                                    { label: "% Asistencia", value: area.personal_activo > 0 ? `${Math.round((area.personal_real / area.personal_activo) * 100)}%` : "—" },
                                 ].map(({ label, value }) => (
                                     <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
                                         <span>{label}</span>
