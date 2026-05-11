@@ -69,8 +69,12 @@ export function analyzeRow(
         }
     }
 
-    // Find matching schedule by turno number
-    const schedule = schedules.find((s) => s.turnoNumber === row.turno)
+    // Find matching schedule by turno number (+ day of week for multi-schedule turnos)
+    const dayOfWeek = new Date(row.fecha + "T12:00:00").getDay() // 0=Sun..6=Sat
+    const candidates = schedules.filter((s) => s.turnoNumber === row.turno)
+    const schedule = candidates.length > 1
+        ? candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
+        : candidates[0]
     if (!schedule) {
         return {
             ...base,
