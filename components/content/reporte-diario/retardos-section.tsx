@@ -29,7 +29,7 @@ import {
 } from "./retardos-helpers"
 import RetardosScheduleConfig from "./retardos-schedule-config"
 
-type SortField = "numero_empleado" | "nombre" | "turno" | "status" | "minutos_retardo" | "minutos_trabajados" | "minutos_comida" | "minutos_extra"
+type SortField = "numero_empleado" | "nombre" | "fecha" | "turno" | "status" | "minutos_retardo" | "minutos_trabajados" | "minutos_comida" | "minutos_extra"
 type SortDir = "asc" | "desc"
 
 export default function RetardosSection() {
@@ -288,6 +288,7 @@ export default function RetardosSection() {
                                         {([
                                             ["numero_empleado", "No."],
                                             ["nombre", "Nombre"],
+                                            ["fecha", "Fecha"],
                                             ["turno", "Turno"],
                                             ["status", "Estado"],
                                             ["entrada1", "Entrada"],
@@ -302,17 +303,17 @@ export default function RetardosSection() {
                                             <th
                                                 key={field}
                                                 onClick={() => {
-                                                    if (["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field)) {
+                                                    if (["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field)) {
                                                         toggleSort(field as SortField)
                                                     }
                                                 }}
                                                 className={cn(
                                                     "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap",
-                                                    ["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && "cursor-pointer hover:text-foreground",
+                                                    ["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && "cursor-pointer hover:text-foreground",
                                                 )}
                                             >
                                                 {label}
-                                                {["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && (
+                                                {["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && (
                                                     <SortIcon field={field as SortField} />
                                                 )}
                                             </th>
@@ -325,6 +326,7 @@ export default function RetardosSection() {
                                         <tr key={i} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                                             <td className="px-3 py-2 font-mono text-xs">{a.numero_empleado}</td>
                                             <td className="px-3 py-2 max-w-[200px] truncate">{a.nombre}</td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.fecha || "—"}</td>
                                             <td className="px-3 py-2 text-center">{a.turno}</td>
                                             <td className={cn("px-3 py-2 text-xs font-medium whitespace-nowrap", PUNCH_STATUS_COLORS[a.status])}>
                                                 {PUNCH_STATUS_LABELS[a.status]}

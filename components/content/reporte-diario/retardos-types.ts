@@ -12,6 +12,7 @@ export interface ScheduleDefinition {
 export interface PunchRow {
     numero_empleado: string
     nombre: string
+    fecha: string                   // "YYYY-MM-DD"
     turno: number
     incidencia: string              // "A", "X", "D", "V", etc.
     entrada1: string | null         // entry to shift
@@ -37,6 +38,7 @@ export type PunchStatus =
 export interface PunchAnalysis {
     numero_empleado: string
     nombre: string
+    fecha: string
     turno: number
     incidencia: string
     observaciones: string
