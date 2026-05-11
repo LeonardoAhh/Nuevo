@@ -24,6 +24,13 @@ function diffMinutes(from: string, to: string): number {
     return timeToMinutes(to) - timeToMinutes(from)
 }
 
+/** diffMinutes that handles midnight crossover (e.g., 21:45→02:01 = 256 min) */
+function diffMinutesOvernight(from: string, to: string): number {
+    let diff = timeToMinutes(to) - timeToMinutes(from)
+    if (diff < 0) diff += 1440
+    return diff
+}
+
 // ─── Analyze a single row ────────────────────────────────────────────────────
 
 export function analyzeRow(
@@ -86,23 +93,27 @@ export function analyzeRow(
     if (!row.entrada2) faltantes.push("Ent. comedor")
     if (!row.salida2) faltantes.push("Salida")
 
+    // Detect night shift (entry > exit means crossing midnight)
+    const isNightShift = timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
+    const diff = isNightShift ? diffMinutesOvernight : diffMinutes
+
     // Compute work time: (entrada1→salida1) + (entrada2→salida2)
     let minutosTrabajados = 0
     if (row.entrada1 && row.salida1) {
-        minutosTrabajados += diffMinutes(row.entrada1, row.salida1)
+        minutosTrabajados += diff(row.entrada1, row.salida1)
     }
     if (row.entrada2 && row.salida2) {
-        minutosTrabajados += diffMinutes(row.entrada2, row.salida2)
+        minutosTrabajados += diff(row.entrada2, row.salida2)
     }
     // If only entrada1 and salida2 exist (no lunch punches), count full span
     if (row.entrada1 && row.salida2 && !row.salida1 && !row.entrada2) {
-        minutosTrabajados = diffMinutes(row.entrada1, row.salida2)
+        minutosTrabajados = diff(row.entrada1, row.salida2)
     }
 
     // Compute lunch time: salida1→entrada2
     let minutosComida = 0
     if (row.salida1 && row.entrada2) {
-        minutosComida = diffMinutes(row.salida1, row.entrada2)
+        minutosComida = diff(row.salida1, row.entrada2)
     }
 
     // Exceso de comida
@@ -117,18 +128,26 @@ export function analyzeRow(
     // Compute tardiness: entrada1 vs schedule entry
     let minutosRetardo = 0
     if (row.entrada1) {
-        const diff = diffMinutes(schedule.entryTime, row.entrada1)
-        if (diff > schedule.toleranceMinutes) {
-            minutosRetardo = diff
+        const tardDiff = isNightShift
+            ? diffMinutesOvernight(schedule.entryTime, row.entrada1)
+            : diffMinutes(schedule.entryTime, row.entrada1)
+        // For night shifts, if diff > 720 (12h) the person arrived early, not late
+        const effectiveTard = isNightShift && tardDiff > 720 ? tardDiff - 1440 : tardDiff
+        if (effectiveTard > schedule.toleranceMinutes) {
+            minutosRetardo = effectiveTard
         }
     }
 
     // Compute extra time: salida2 vs schedule exit
     let minutosExtra = 0
     if (row.salida2) {
-        const diff = diffMinutes(schedule.exitTime, row.salida2)
-        if (diff > 10) {
-            minutosExtra = diff
+        const extraDiff = isNightShift
+            ? diffMinutesOvernight(schedule.exitTime, row.salida2)
+            : diffMinutes(schedule.exitTime, row.salida2)
+        // For night shifts, if diff > 720 the person left early, not extra
+        const effectiveExtra = isNightShift && extraDiff > 720 ? extraDiff - 1440 : extraDiff
+        if (effectiveExtra > 10) {
+            minutosExtra = effectiveExtra
         }
     }
 
