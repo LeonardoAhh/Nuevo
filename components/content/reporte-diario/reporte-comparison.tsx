@@ -44,94 +44,65 @@ export default function ReporteComparison({ summaries }: ReporteComparisonProps)
                 </p>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                            <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Mes
-                            </th>
-                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Empleados
-                            </th>
-                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Incidencias
-                            </th>
-                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Tendencia
-                            </th>
-                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Asistencia
-                            </th>
-                            <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Tendencia
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {sorted.map((s, i) => {
-                            const prev = i > 0 ? sorted[i - 1] : null
-                            const incDiff = prev ? s.total_incidencias - prev.total_incidencias : 0
-                            const attDiff = prev ? s.tasa_asistencia - prev.tasa_asistencia : 0
+            <div className="p-4">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+                    {sorted.map((s, i) => {
+                        const prev = i > 0 ? sorted[i - 1] : null
+                        const incDiff = prev ? s.total_incidencias - prev.total_incidencias : 0
+                        const attDiff = prev ? s.tasa_asistencia - prev.tasa_asistencia : 0
 
-                            return (
-                                <tr key={s.id} className="hover:bg-muted/20 transition-colors">
-                                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
-                                        {formatShortMes(s.mes)}
-                                    </td>
-                                    <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">
-                                        {s.total_empleados}
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                                        <span className={cn(
-                                            s.total_incidencias > 50 ? "text-destructive" : "text-foreground",
-                                        )}>
+                        return (
+                            <div
+                                key={s.id}
+                                className="rounded-2xl border border-border p-4 bg-background shadow-sm"
+                            >
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                                    {formatShortMes(s.mes)}
+                                </p>
+                                <div className="grid gap-2 text-sm text-foreground">
+                                    <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                        <span>Empleados</span>
+                                        <span className="font-semibold">{s.total_empleados}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                        <span>Incidencias</span>
+                                        <span className={cn("font-semibold", s.total_incidencias > 50 ? "text-destructive" : "")}>
                                             {s.total_incidencias}
                                         </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        {prev ? (
-                                            <span className="inline-flex items-center gap-1">
-                                                <TrendIcon current={s.total_incidencias} previous={prev.total_incidencias} />
-                                                <span className={cn(
-                                                    "text-xs tabular-nums",
-                                                    incDiff > 0 ? "text-destructive" : incDiff < 0 ? "text-emerald-600" : "text-muted-foreground",
-                                                )}>
-                                                    {incDiff > 0 ? "+" : ""}{incDiff}
-                                                </span>
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground/40">—</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3 text-right tabular-nums">
-                                        <span className={cn(
-                                            "font-semibold",
-                                            s.tasa_asistencia < 80 ? "text-destructive" : s.tasa_asistencia < 90 ? "text-warning" : "text-foreground",
-                                        )}>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                        <span>Asistencia</span>
+                                        <span className={cn("font-semibold", s.tasa_asistencia < 80 ? "text-destructive" : s.tasa_asistencia < 90 ? "text-warning" : "")}>
                                             {s.tasa_asistencia.toFixed(1)}%
                                         </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        {prev ? (
-                                            <span className="inline-flex items-center gap-1">
-                                                <AttendanceTrendIcon current={s.tasa_asistencia} previous={prev.tasa_asistencia} />
-                                                <span className={cn(
-                                                    "text-xs tabular-nums",
-                                                    attDiff > 0 ? "text-emerald-600" : attDiff < 0 ? "text-destructive" : "text-muted-foreground",
-                                                )}>
-                                                    {attDiff > 0 ? "+" : ""}{attDiff.toFixed(1)}%
+                                    </div>
+                                    {prev && (
+                                        <>
+                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                <span>Tend. incidencias</span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <TrendIcon current={s.total_incidencias} previous={prev.total_incidencias} />
+                                                    <span className={cn("text-xs tabular-nums font-semibold", incDiff > 0 ? "text-destructive" : incDiff < 0 ? "text-emerald-600" : "text-muted-foreground")}>
+                                                        {incDiff > 0 ? "+" : ""}{incDiff}
+                                                    </span>
                                                 </span>
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground/40">—</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                                            </div>
+                                            <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                <span>Tend. asistencia</span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <AttendanceTrendIcon current={s.tasa_asistencia} previous={prev.tasa_asistencia} />
+                                                    <span className={cn("text-xs tabular-nums font-semibold", attDiff > 0 ? "text-emerald-600" : attDiff < 0 ? "text-destructive" : "text-muted-foreground")}>
+                                                        {attDiff > 0 ? "+" : ""}{attDiff.toFixed(1)}%
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
         </div>
     )
