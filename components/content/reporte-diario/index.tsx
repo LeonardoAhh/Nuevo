@@ -116,6 +116,19 @@ export default function ReporteDiarioContent() {
         }, {})
     }, [dayHeaders, selectedRows])
 
+    const dayAusentismoPct = useMemo(() => {
+        const total = selectedRows.length
+        if (total === 0) return {} as Record<string, number>
+        return dayHeaders.reduce<Record<string, number>>((acc, day) => {
+            const ausentes = selectedRows.reduce((n, r) => {
+                const code = r.days[day]
+                return n + (code === "F" || code === "P" || code === "I" ? 1 : 0)
+            }, 0)
+            acc[day] = Math.round((ausentes / total) * 100 * 100) / 100
+            return acc
+        }, {})
+    }, [dayHeaders, selectedRows])
+
     const emptyIncident = () => INCIDENT_TABS.reduce(
         (acc, c) => ({ ...acc, [c]: [] as EmployeeRef[] }),
         {} as Record<IncidentTab, EmployeeRef[]>,
@@ -579,6 +592,7 @@ export default function ReporteDiarioContent() {
                         <ReporteCalendar
                             calendarCells={calendarCells}
                             daySummaries={daySummaries}
+                            dayAusentismoPct={dayAusentismoPct}
                             selectedDay={selectedDay}
                             selectedMonthHolidayLabels={selectedMonthHolidayLabels}
                             currentMonth={currentMonth}

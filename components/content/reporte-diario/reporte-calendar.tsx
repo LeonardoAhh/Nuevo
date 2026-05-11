@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 interface ReporteCalendarProps {
     calendarCells: (string | null)[]
     daySummaries: Record<string, number>
+    dayAusentismoPct: Record<string, number>
     selectedDay: string
     selectedMonthHolidayLabels: Record<string, string>
     currentMonth: string
@@ -16,6 +17,7 @@ const WEEK_DAY_NAMES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
 export default function ReporteCalendar({
     calendarCells,
     daySummaries,
+    dayAusentismoPct,
     selectedDay,
     selectedMonthHolidayLabels,
     currentMonth,
@@ -37,6 +39,8 @@ export default function ReporteCalendar({
                 {calendarCells.map((day, idx) => {
                     if (!day) return <div key={idx} />
                     const count = daySummaries[day] ?? 0
+                    const ausPct = dayAusentismoPct[day]
+                    const hasAus = ausPct !== undefined
                     const active = day === selectedDay
                     const holidayLabel = selectedMonthHolidayLabels[`${monthPart}-${day}`]
                     return (
@@ -64,6 +68,19 @@ export default function ReporteCalendar({
                                     {holidayLabel}
                                 </span>
                             ) : null}
+                            {hasAus && (
+                                <span className={cn(
+                                    "mt-1 hidden sm:inline-flex items-center justify-center rounded-full",
+                                    "text-[10px] font-semibold px-1.5 py-0.5 self-start leading-none transition-all",
+                                    active
+                                        ? "bg-background/20 text-background blur-0"
+                                        : ausPct > 2.5
+                                            ? "bg-destructive/15 text-destructive blur-[3px]"
+                                            : "bg-emerald-500/15 text-emerald-600 blur-[3px]",
+                                )}>
+                                    {ausPct.toFixed(1)}%
+                                </span>
+                            )}
                             {count > 0 ? (
                                 <span className={cn(
                                     "mt-auto inline-flex items-center justify-center rounded-full",
