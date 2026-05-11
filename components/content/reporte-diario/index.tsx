@@ -520,7 +520,7 @@ export default function ReporteDiarioContent() {
                                 <SelectItem value="__none__">Todos</SelectItem>
                                 {selectedRows
                                     .slice()
-                                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                                    .sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10))
                                     .map((r) => (
                                         <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
                                             {r.numero_empleado} — {r.nombre}

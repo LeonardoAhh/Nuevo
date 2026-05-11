@@ -80,21 +80,22 @@ export default function ReporteEmployeeDetail({
                         <span className="font-mono text-sm text-muted-foreground">#{employee.numero_empleado}</span>
                         <span>{employee.nombre}</span>
                     </DialogTitle>
-                    <DialogDescription className="flex flex-wrap gap-2 mt-1">
-                        {employee.puesto && <Badge variant="secondary">{employee.puesto}</Badge>}
-                        {employee.departamento && <Badge variant="outline">{employee.departamento}</Badge>}
-                        {employee.area && <Badge variant="outline">{employee.area}</Badge>}
-                        {employee.turno && <Badge variant="outline">Turno {employee.turno}</Badge>}
+                    <DialogDescription asChild>
+                        <div className="flex flex-wrap gap-2 mt-1 text-sm text-muted-foreground">
+                            {employee.puesto && <Badge variant="secondary">{employee.puesto}</Badge>}
+                            {employee.departamento && <Badge variant="outline">{employee.departamento}</Badge>}
+                            {employee.area && <Badge variant="outline">{employee.area}</Badge>}
+                            {employee.turno && <Badge variant="outline">Turno {employee.turno}</Badge>}
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
 
                 {/* KPI row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                     {[
                         { label: "Asistencias", value: stats.asistencias, tone: "text-success" },
                         { label: "Incidencias", value: stats.incidencias, tone: stats.incidencias > 0 ? "text-destructive" : "text-muted-foreground" },
                         { label: "Descansos", value: stats.descansos, tone: "text-info" },
-                        { label: "Tasa asist.", value: stats.tracked > 0 ? `${Math.round((stats.asistencias / stats.tracked) * 100)}%` : "—", tone: "text-foreground" },
                     ].map(({ label, value, tone }) => (
                         <div key={label} className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-center">
                             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
@@ -182,15 +183,6 @@ export default function ReporteEmployeeDetail({
                     </div>
                 )}
 
-                {/* Legend */}
-                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-                    {Object.entries(INCIDENCIA_LABELS).map(([code, label]) => (
-                        <span key={code} className="flex items-center gap-1">
-                            <span className={cn("font-bold", codeTone(code))}>{code}</span>
-                            <span>{label}</span>
-                        </span>
-                    ))}
-                </div>
             </DialogContent>
         </Dialog>
     )
