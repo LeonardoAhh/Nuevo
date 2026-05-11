@@ -55,6 +55,7 @@ export function analyzeRow(
             status: row.incidencia === "D" || row.incidencia === "DF" ? "day_off" : "incidence",
             minutos_trabajados: 0,
             minutos_comida: 0,
+            exceso_comida: 0,
             minutos_retardo: 0,
             minutos_extra: 0,
             marcajes_faltantes: [],
@@ -71,6 +72,7 @@ export function analyzeRow(
             status: "no_schedule",
             minutos_trabajados: 0,
             minutos_comida: 0,
+            exceso_comida: 0,
             minutos_retardo: 0,
             minutos_extra: 0,
             marcajes_faltantes: [],
@@ -101,6 +103,15 @@ export function analyzeRow(
     let minutosComida = 0
     if (row.salida1 && row.entrada2) {
         minutosComida = diffMinutes(row.salida1, row.entrada2)
+    }
+
+    // Exceso de comida
+    let excesoComida = 0
+    if (minutosComida > 0 && schedule) {
+        const limiteComida = schedule.lunchMinutes + schedule.lunchToleranceMinutes
+        if (minutosComida > limiteComida) {
+            excesoComida = minutosComida - schedule.lunchMinutes
+        }
     }
 
     // Compute tardiness: entrada1 vs schedule entry
@@ -136,6 +147,7 @@ export function analyzeRow(
         status,
         minutos_trabajados: Math.max(minutosTrabajados, 0),
         minutos_comida: Math.max(minutosComida, 0),
+        exceso_comida: excesoComida,
         minutos_retardo: minutosRetardo,
         minutos_extra: minutosExtra,
         marcajes_faltantes: faltantes,

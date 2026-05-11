@@ -57,7 +57,11 @@ export default function RetardosSection() {
 
     const filteredAnalyses = useMemo(() => {
         let result = analyses
-        if (filterStatus) result = result.filter((a) => a.status === filterStatus)
+        if (filterStatus === "exceso_comida") {
+            result = result.filter((a) => a.exceso_comida > 0)
+        } else if (filterStatus) {
+            result = result.filter((a) => a.status === filterStatus)
+        }
         if (filterTurno) result = result.filter((a) => String(a.turno) === filterTurno)
         return result.slice().sort((a, b) => {
             const av = a[sortField]
@@ -128,79 +132,82 @@ export default function RetardosSection() {
 
     return (
         <div className="flex flex-col gap-5">
-            {/* ── Schedule Config ──────────────────────────────────── */}
-            <RetardosScheduleConfig schedules={schedules} onChange={setSchedules} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* ── Schedule Config ──────────────────────────────────── */}
+                <RetardosScheduleConfig schedules={schedules} onChange={setSchedules} />
 
-            {/* ── File Upload ──────────────────────────────────────── */}
-            <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
-                    <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
-                    </div>
-                </CardHeader>
-
-                <CardContent className="px-3 py-4 sm:px-5 sm:py-5 space-y-4">
-                    <label
-                        className={cn(
-                            "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-6 text-sm text-muted-foreground transition active:scale-95",
-                            isDragging
-                                ? "border-primary bg-primary/5"
-                                : "border-border bg-muted/40 hover:border-primary hover:bg-background",
-                        )}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                    >
-                        {loading ? (
-                            <Loader2 className="w-7 h-7 text-primary animate-spin" />
-                        ) : (
-                            <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
-                        )}
-                        <span>{loading ? "Procesando..." : fileName || "Cargar archivo de checadas (.xlsx)"}</span>
-                        <span className="text-xs text-muted-foreground/60">
-                            {isDragging ? "Suelta el archivo aquí" : "Columnas: numero_empleado, nombre, turno, incidencia, entrada, salida (×4), horas, observaciones"}
-                        </span>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls"
-                            onChange={handleFileChange}
-                            className="hidden"
-                        />
-                    </label>
-
-                    {/* ── Errors ───────────────────────────────────── */}
-                    {errors.length > 0 && (
-                        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
-                                    <h3 className="text-sm font-semibold text-destructive">Errores</h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setErrors([])}
-                                    className="rounded-md p-1 text-destructive/60 transition hover:text-destructive hover:bg-destructive/10"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <ul className="space-y-1">
-                                {errors.slice(0, 10).map((err, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-destructive/90">
-                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive/60" />
-                                        {err}
-                                    </li>
-                                ))}
-                                {errors.length > 10 && (
-                                    <li className="text-sm text-destructive/70">...y {errors.length - 10} más</li>
-                                )}
-                            </ul>
+                {/* ── File Upload ──────────────────────────────────────── */}
+                <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardHeader>
+
+                    <CardContent className="px-3 py-4 sm:px-5 sm:py-5 space-y-4">
+                        <label
+                            className={cn(
+                                "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-6 text-sm text-muted-foreground transition active:scale-95",
+                                isDragging
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border bg-muted/40 hover:border-primary hover:bg-background",
+                            )}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                        >
+                            {loading ? (
+                                <Loader2 className="w-7 h-7 text-primary animate-spin" />
+                            ) : (
+                                <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
+                            )}
+                            <span>{loading ? "Procesando..." : fileName || "Cargar archivo de checadas (.xlsx)"}</span>
+                            <span className="text-xs text-muted-foreground/60">
+                                {isDragging ? "Suelta el archivo aquí" : "Columnas: numero_empleado, nombre, turno, incidencia, entrada, salida (×4), horas, observaciones"}
+                            </span>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".xlsx,.xls"
+                                onChange={handleFileChange}
+                                className="hidden"
+                            />
+                        </label>
+
+                        {/* ── Errors ───────────────────────────────────── */}
+                        {errors.length > 0 && (
+                            <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
+                                        <h3 className="text-sm font-semibold text-destructive">Errores</h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setErrors([])}
+                                        className="rounded-md p-1 text-destructive/60 transition hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <ul className="space-y-1">
+                                    {errors.slice(0, 10).map((err, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-sm text-destructive/90">
+                                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive/60" />
+                                            {err}
+                                        </li>
+                                    ))}
+                                    {errors.length > 10 && (
+                                        <li className="text-sm text-destructive/70">...y {errors.length - 10} más</li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
 
             {/* ── KPI Dashboard ────────────────────────────────────── */}
             {punchRows.length > 0 && (
@@ -256,6 +263,23 @@ export default function RetardosSection() {
                             </button>
                         )
                     })}
+                    {(() => {
+                        const count = analyses.filter((a) => a.exceso_comida > 0).length
+                        if (count === 0) return null
+                        return (
+                            <button
+                                type="button"
+                                onClick={() => setFilterStatus(filterStatus === "exceso_comida" ? "" : "exceso_comida")}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
+                                    filterStatus === "exceso_comida" ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
+                                )}
+                            >
+                                Exc. comida ({count})
+                            </button>
+                        )
+                    })()}
+
                     {availableTurnos.length > 1 && (
                         <>
                             <span className="text-xs text-muted-foreground self-center mx-1">|</span>
@@ -297,6 +321,7 @@ export default function RetardosSection() {
                                             ["salida2", "Salida"],
                                             ["minutos_trabajados", "Hrs. trab."],
                                             ["minutos_comida", "Comida"],
+                                            ["exceso_comida", "Exc. comida"],
                                             ["minutos_retardo", "Retardo"],
                                             ["minutos_extra", "T. extra"],
                                         ] as [string, string][]).map(([field, label]) => (
@@ -329,7 +354,7 @@ export default function RetardosSection() {
                                             <td className="px-3 py-2 font-mono text-xs">{a.fecha || "—"}</td>
                                             <td className="px-3 py-2 text-center">{a.turno}</td>
                                             <td className={cn("px-3 py-2 text-xs font-medium whitespace-nowrap", PUNCH_STATUS_COLORS[a.status])}>
-                                                {PUNCH_STATUS_LABELS[a.status]}
+                                                {a.status === "incidence" ? (INCIDENCIA_LABELS[a.incidencia] || a.incidencia) : PUNCH_STATUS_LABELS[a.status]}
                                                 {a.marcajes_faltantes.length > 0 && (
                                                     <span className="block text-[10px] text-destructive/70">
                                                         {a.marcajes_faltantes.join(", ")}
@@ -342,6 +367,9 @@ export default function RetardosSection() {
                                             <td className="px-3 py-2 font-mono text-xs">{a.salida2 || "—"}</td>
                                             <td className="px-3 py-2 font-mono text-xs font-medium">{minutesToHHMM(a.minutos_trabajados)}</td>
                                             <td className="px-3 py-2 font-mono text-xs">{a.minutos_comida > 0 ? `${a.minutos_comida} min` : "—"}</td>
+                                            <td className={cn("px-3 py-2 text-xs font-medium", a.exceso_comida > 0 ? "text-amber-600" : "text-muted-foreground")}>
+                                                {a.exceso_comida > 0 ? `${a.exceso_comida} min` : "—"}
+                                            </td>
                                             <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_retardo > 0 ? "text-amber-600 font-medium" : "")}>
                                                 {a.minutos_retardo > 0 ? `${a.minutos_retardo} min` : "—"}
                                             </td>

@@ -6,6 +6,7 @@ export interface ScheduleDefinition {
     exitTime: string        // "HH:mm"
     lunchMinutes: number    // expected lunch duration
     workDays: number[]      // 0=Sun..6=Sat
+    lunchToleranceMinutes: number  // tolerancia comida
     toleranceMinutes: number
 }
 
@@ -55,6 +56,7 @@ export interface PunchAnalysis {
     status: PunchStatus
     minutos_trabajados: number
     minutos_comida: number
+    exceso_comida: number  // minutos extra de comida (sobre lunchMinutes + tolerancia)
     minutos_retardo: number
     minutos_extra: number
     marcajes_faltantes: string[]    // which punches are missing

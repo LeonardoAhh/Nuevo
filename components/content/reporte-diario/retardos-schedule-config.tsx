@@ -42,6 +42,7 @@ export default function RetardosScheduleConfig({ schedules, onChange }: Props) {
                 entryTime: "08:00",
                 exitTime: "17:00",
                 lunchMinutes: 30,
+                lunchToleranceMinutes: 5,
                 workDays: [1, 2, 3, 4, 5],
                 toleranceMinutes: 10,
             },
@@ -104,7 +105,7 @@ export default function RetardosScheduleConfig({ schedules, onChange }: Props) {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
                                     <div className="space-y-1">
                                         <label className={labelCls}>No. turno</label>
                                         <Input
@@ -155,6 +156,18 @@ export default function RetardosScheduleConfig({ schedules, onChange }: Props) {
                                             className="h-8 text-sm"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className={labelCls}>Tol. comida (min)</label>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        max={60}
+                                        value={schedule.lunchToleranceMinutes}
+                                        onChange={(e) => updateSchedule(index, { lunchToleranceMinutes: parseInt(e.target.value) || 0 })}
+                                        className="h-8 text-sm"
+                                    />
                                 </div>
 
                                 <div className="space-y-1">
