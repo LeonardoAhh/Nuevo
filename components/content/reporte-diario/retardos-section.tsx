@@ -1,0 +1,367 @@
+"use client"
+
+import { useCallback, useMemo, useRef, useState } from "react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import {
+    CloudUpload,
+    Loader2,
+    AlertCircle,
+    X,
+    Clock,
+    Timer,
+    UserCheck,
+    AlertTriangle,
+    Zap,
+    UtensilsCrossed,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react"
+
+import type { ScheduleDefinition, PunchRow, PunchAnalysis } from "./retardos-types"
+import { DEFAULT_SCHEDULES, PUNCH_STATUS_LABELS, PUNCH_STATUS_COLORS } from "./retardos-constants"
+import { INCIDENCIA_LABELS } from "./constants"
+import {
+    parseExcelPunches,
+    analyzeAllRows,
+    computeRetardosSummary,
+    minutesToHHMM,
+} from "./retardos-helpers"
+import RetardosScheduleConfig from "./retardos-schedule-config"
+
+type SortField = "numero_empleado" | "nombre" | "turno" | "status" | "minutos_retardo" | "minutos_trabajados" | "minutos_comida" | "minutos_extra"
+type SortDir = "asc" | "desc"
+
+export default function RetardosSection() {
+    const [schedules, setSchedules] = useState<ScheduleDefinition[]>(DEFAULT_SCHEDULES)
+    const [punchRows, setPunchRows] = useState<PunchRow[]>([])
+    const [errors, setErrors] = useState<string[]>([])
+    const [loading, setLoading] = useState(false)
+    const [fileName, setFileName] = useState("")
+    const [isDragging, setIsDragging] = useState(false)
+    const [filterStatus, setFilterStatus] = useState("")
+    const [filterTurno, setFilterTurno] = useState("")
+    const [sortField, setSortField] = useState<SortField>("numero_empleado")
+    const [sortDir, setSortDir] = useState<SortDir>("asc")
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const analyses = useMemo(
+        () => analyzeAllRows(punchRows, schedules),
+        [punchRows, schedules],
+    )
+
+    const summary = useMemo(
+        () => computeRetardosSummary(analyses),
+        [analyses],
+    )
+
+    const filteredAnalyses = useMemo(() => {
+        let result = analyses
+        if (filterStatus) result = result.filter((a) => a.status === filterStatus)
+        if (filterTurno) result = result.filter((a) => String(a.turno) === filterTurno)
+        return result.slice().sort((a, b) => {
+            const av = a[sortField]
+            const bv = b[sortField]
+            const cmp = typeof av === "number" && typeof bv === "number"
+                ? av - bv
+                : String(av).localeCompare(String(bv))
+            return sortDir === "asc" ? cmp : -cmp
+        })
+    }, [analyses, filterStatus, filterTurno, sortField, sortDir])
+
+    const availableTurnos = useMemo(
+        () => Array.from(new Set(punchRows.map((r) => r.turno))).sort((a, b) => a - b),
+        [punchRows],
+    )
+
+    const handleFile = useCallback(async (file: File) => {
+        setLoading(true)
+        setErrors([])
+        try {
+            const { rows, errors: parseErrors } = await parseExcelPunches(file)
+            setPunchRows(rows)
+            setErrors(parseErrors)
+            setFileName(file.name)
+        } catch (err) {
+            setErrors([`Error al leer archivo: ${err instanceof Error ? err.message : String(err)}`])
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) handleFile(file)
+    }, [handleFile])
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        setIsDragging(false)
+        const file = e.dataTransfer.files[0]
+        if (file) handleFile(file)
+    }, [handleFile])
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        setIsDragging(true)
+    }, [])
+
+    const handleDragLeave = useCallback(() => setIsDragging(false), [])
+
+    const toggleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortDir(sortDir === "asc" ? "desc" : "asc")
+        } else {
+            setSortField(field)
+            setSortDir("asc")
+        }
+    }
+
+    const SortIcon = ({ field }: { field: SortField }) => {
+        if (sortField !== field) return null
+        return sortDir === "asc"
+            ? <ChevronUp className="w-3 h-3 inline ml-0.5" />
+            : <ChevronDown className="w-3 h-3 inline ml-0.5" />
+    }
+
+    const labelCls = "block text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5"
+
+    return (
+        <div className="flex flex-col gap-5">
+            {/* ── Schedule Config ──────────────────────────────────── */}
+            <RetardosScheduleConfig schedules={schedules} onChange={setSchedules} />
+
+            {/* ── File Upload ──────────────────────────────────────── */}
+            <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
+                    </div>
+                </CardHeader>
+
+                <CardContent className="px-3 py-4 sm:px-5 sm:py-5 space-y-4">
+                    <label
+                        className={cn(
+                            "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-6 text-sm text-muted-foreground transition active:scale-95",
+                            isDragging
+                                ? "border-primary bg-primary/5"
+                                : "border-border bg-muted/40 hover:border-primary hover:bg-background",
+                        )}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                    >
+                        {loading ? (
+                            <Loader2 className="w-7 h-7 text-primary animate-spin" />
+                        ) : (
+                            <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
+                        )}
+                        <span>{loading ? "Procesando..." : fileName || "Cargar archivo de checadas (.xlsx)"}</span>
+                        <span className="text-xs text-muted-foreground/60">
+                            {isDragging ? "Suelta el archivo aquí" : "Columnas: numero_empleado, nombre, turno, incidencia, entrada, salida (×4), horas, observaciones"}
+                        </span>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </label>
+
+                    {/* ── Errors ───────────────────────────────────── */}
+                    {errors.length > 0 && (
+                        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
+                                    <h3 className="text-sm font-semibold text-destructive">Errores</h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setErrors([])}
+                                    className="rounded-md p-1 text-destructive/60 transition hover:text-destructive hover:bg-destructive/10"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <ul className="space-y-1">
+                                {errors.slice(0, 10).map((err, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm text-destructive/90">
+                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive/60" />
+                                        {err}
+                                    </li>
+                                ))}
+                                {errors.length > 10 && (
+                                    <li className="text-sm text-destructive/70">...y {errors.length - 10} más</li>
+                                )}
+                            </ul>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* ── KPI Dashboard ────────────────────────────────────── */}
+            {punchRows.length > 0 && (
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                    {[
+                        { label: "Empleados", value: summary.total_empleados, icon: UserCheck, color: "text-foreground" },
+                        { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
+                        { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
+                        { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
+                        { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
+                        { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
+                        { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
+                        { label: "Registros", value: summary.total_registros, icon: Clock, color: "text-foreground" },
+                    ].map(({ label, value, icon: Icon, color }) => (
+                        <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+                            </div>
+                            <p className={cn("text-xl font-semibold", color)}>{value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Filters ─────────────────────────────────────────── */}
+            {punchRows.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setFilterStatus("")}
+                        className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
+                            !filterStatus ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
+                        )}
+                    >
+                        Todos ({analyses.length})
+                    </button>
+                    {(["on_time", "late", "missing_punch", "no_schedule", "incidence", "day_off"] as const).map((st) => {
+                        const count = analyses.filter((a) => a.status === st).length
+                        if (count === 0) return null
+                        return (
+                            <button
+                                key={st}
+                                type="button"
+                                onClick={() => setFilterStatus(filterStatus === st ? "" : st)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
+                                    filterStatus === st ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
+                                )}
+                            >
+                                {PUNCH_STATUS_LABELS[st]} ({count})
+                            </button>
+                        )
+                    })}
+                    {availableTurnos.length > 1 && (
+                        <>
+                            <span className="text-xs text-muted-foreground self-center mx-1">|</span>
+                            {availableTurnos.map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => setFilterTurno(filterTurno === String(t) ? "" : String(t))}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
+                                        filterTurno === String(t) ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
+                                    )}
+                                >
+                                    Turno {t}
+                                </button>
+                            ))}
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* ── Data Table ──────────────────────────────────────── */}
+            {punchRows.length > 0 && (
+                <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/40">
+                                        {([
+                                            ["numero_empleado", "No."],
+                                            ["nombre", "Nombre"],
+                                            ["turno", "Turno"],
+                                            ["status", "Estado"],
+                                            ["entrada1", "Entrada"],
+                                            ["salida1", "Sal. comedor"],
+                                            ["entrada2", "Ent. comedor"],
+                                            ["salida2", "Salida"],
+                                            ["minutos_trabajados", "Hrs. trab."],
+                                            ["minutos_comida", "Comida"],
+                                            ["minutos_retardo", "Retardo"],
+                                            ["minutos_extra", "T. extra"],
+                                        ] as [string, string][]).map(([field, label]) => (
+                                            <th
+                                                key={field}
+                                                onClick={() => {
+                                                    if (["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field)) {
+                                                        toggleSort(field as SortField)
+                                                    }
+                                                }}
+                                                className={cn(
+                                                    "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap",
+                                                    ["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && "cursor-pointer hover:text-foreground",
+                                                )}
+                                            >
+                                                {label}
+                                                {["numero_empleado", "nombre", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && (
+                                                    <SortIcon field={field as SortField} />
+                                                )}
+                                            </th>
+                                        ))}
+                                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Obs.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredAnalyses.map((a, i) => (
+                                        <tr key={i} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                                            <td className="px-3 py-2 font-mono text-xs">{a.numero_empleado}</td>
+                                            <td className="px-3 py-2 max-w-[200px] truncate">{a.nombre}</td>
+                                            <td className="px-3 py-2 text-center">{a.turno}</td>
+                                            <td className={cn("px-3 py-2 text-xs font-medium whitespace-nowrap", PUNCH_STATUS_COLORS[a.status])}>
+                                                {PUNCH_STATUS_LABELS[a.status]}
+                                                {a.marcajes_faltantes.length > 0 && (
+                                                    <span className="block text-[10px] text-destructive/70">
+                                                        {a.marcajes_faltantes.join(", ")}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.entrada1 || "—"}</td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.salida1 || "—"}</td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.entrada2 || "—"}</td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.salida2 || "—"}</td>
+                                            <td className="px-3 py-2 font-mono text-xs font-medium">{minutesToHHMM(a.minutos_trabajados)}</td>
+                                            <td className="px-3 py-2 font-mono text-xs">{a.minutos_comida > 0 ? `${a.minutos_comida} min` : "—"}</td>
+                                            <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_retardo > 0 ? "text-amber-600 font-medium" : "")}>
+                                                {a.minutos_retardo > 0 ? `${a.minutos_retardo} min` : "—"}
+                                            </td>
+                                            <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_extra > 0 ? "text-blue-500 font-medium" : "")}>
+                                                {a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "—"}
+                                            </td>
+                                            <td className="px-3 py-2 text-xs text-muted-foreground max-w-[140px] truncate">
+                                                {a.observaciones || (a.incidencia !== "A" ? INCIDENCIA_LABELS[a.incidencia] || a.incidencia : "")}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {filteredAnalyses.length === 0 && punchRows.length > 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-8">
+                                Sin resultados con los filtros actuales.
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    )
+}
