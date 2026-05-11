@@ -93,6 +93,42 @@ export function analyzeRow(
     // Detect night shift (entry > exit means crossing midnight)
     const isNightShift = timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
 
+    // Night shifts: discard previous-day residual punches.
+    // Find the first punch near entryTime; everything before it is from the prior shift.
+    if (isNightShift) {
+        const allPunches = [
+            row.entrada1, row.salida1, row.entrada2, row.salida2,
+            row.entrada3, row.salida3, row.entrada4, row.salida4,
+            row.entrada5, row.salida5,
+        ].filter((p): p is string => p != null)
+
+        if (allPunches.length > 1) {
+            const entryMin = timeToMinutes(schedule.entryTime)
+            const threshold = entryMin - 120
+            const startIdx = allPunches.findIndex((p) => timeToMinutes(p) >= threshold)
+            if (startIdx > 0) {
+                const cleaned = allPunches.slice(startIdx)
+                row = {
+                    ...row,
+                    entrada1: cleaned[0] ?? null,
+                    salida1: cleaned[1] ?? null,
+                    entrada2: cleaned[2] ?? null,
+                    salida2: cleaned[3] ?? null,
+                    entrada3: cleaned[4] ?? null,
+                    salida3: cleaned[5] ?? null,
+                    entrada4: cleaned[6] ?? null,
+                    salida4: cleaned[7] ?? null,
+                    entrada5: cleaned[8] ?? null,
+                    salida5: cleaned[9] ?? null,
+                }
+                base.entrada1 = row.entrada1
+                base.salida1 = row.salida1
+                base.entrada2 = row.entrada2
+                base.salida2 = row.salida2
+            }
+        }
+    }
+
     // Check missing punches
     // Night shifts: only entrada1 is required on the entry day;
     // comedor/salida punches may appear in the next day's report
@@ -316,7 +352,7 @@ function normalizeTime(value: unknown): string | null {
     if (value == null || value === "") return null
     if (typeof value === "string") {
         const trimmed = value.trim()
-        if (!trimmed) return null
+        if (!trimmed || trimmed === "-") return null
         if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) {
             const parts = trimmed.split(":")
             return `${parts[0].padStart(2, "0")}:${parts[1]}`
@@ -385,21 +421,22 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
 
     // Find column indices
     const colNumero = headers.findIndex((h) =>
-        h === "numero_empleado" || h === "numero_em" || h === "no_empleado" || h === "numero",
+        h === "numero_empleado" || h === "numero_em" || h === "no_empleado" || h === "numero"
+        || h === "núm. emp." || h === "num. emp.",
     )
-    const colNombre = headers.findIndex((h) => h === "nombre" || h === "nombre_empleado")
+    const colNombre = headers.findIndex((h) =>
+        h === "nombre" || h === "nombre_empleado" || h === "nombre del empleado",
+    )
     const colFecha = headers.findIndex((h) => h === "fecha" || h === "date" || h === "dia")
-    const colTurno = headers.findIndex((h) => h === "turno")
+    const colTurno = headers.findIndex((h) => h === "turno" || h === "horario")
     const colIncidencia = headers.findIndex((h) =>
-        h === "incidencia" || h === "incide" || h === "incidencias",
+        h === "incidencia" || h === "incide" || h === "incidencias" || h === "tipo",
     )
 
-    // Find entrada/salida pairs by looking for repeated headers
-    const entradaCols: number[] = []
-    const salidaCols: number[] = []
+    // Find all punch columns (entrada/salida) in column order
+    const punchCols: number[] = []
     headers.forEach((h, i) => {
-        if (h === "entrada") entradaCols.push(i)
-        if (h === "salida") salidaCols.push(i)
+        if (h === "entrada" || h === "salida") punchCols.push(i)
     })
 
     const colObs = headers.findIndex((h) =>
@@ -421,10 +458,9 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno).value), 10) || 0 : 0
         const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia).value) : "A"
 
-        const getTime = (cols: number[], idx: number): string | null => {
-            if (idx >= cols.length) return null
-            return normalizeTime(row.getCell(cols[idx]).value)
-        }
+        // Read all punches in column order, filter invalid, reassign sequentially
+        const rawPunches = punchCols.map((col) => normalizeTime(row.getCell(col).value))
+        const validPunches = rawPunches.filter((p): p is string => p != null && p !== "00:00")
 
         const obs = colObs >= 0 ? normalizeString(row.getCell(colObs).value) : ""
 
@@ -434,16 +470,16 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
             fecha,
             turno,
             incidencia,
-            entrada1: getTime(entradaCols, 0),
-            salida1: getTime(salidaCols, 0),
-            entrada2: getTime(entradaCols, 1),
-            salida2: getTime(salidaCols, 1),
-            entrada3: getTime(entradaCols, 2),
-            salida3: getTime(salidaCols, 2),
-            entrada4: getTime(entradaCols, 3),
-            salida4: getTime(salidaCols, 3),
-            entrada5: getTime(entradaCols, 4),
-            salida5: getTime(salidaCols, 4),
+            entrada1: validPunches[0] ?? null,
+            salida1: validPunches[1] ?? null,
+            entrada2: validPunches[2] ?? null,
+            salida2: validPunches[3] ?? null,
+            entrada3: validPunches[4] ?? null,
+            salida3: validPunches[5] ?? null,
+            entrada4: validPunches[6] ?? null,
+            salida4: validPunches[7] ?? null,
+            entrada5: validPunches[8] ?? null,
+            salida5: validPunches[9] ?? null,
             observaciones: obs,
         })
     })

@@ -178,7 +178,7 @@ export default function RetardosSection() {
                             )}
                             <span>{loading ? "Procesando..." : fileName || "Cargar archivo de checadas (.xlsx)"}</span>
                             <span className="text-xs text-muted-foreground/60">
-                                {isDragging ? "Suelta el archivo aquí" : "Columnas: numero_empleado, nombre, turno, incidencia, entrada, salida (×4), horas, observaciones"}
+                                {isDragging ? "Suelta el archivo aquí" : "Columnas: Núm. Emp., Nombre del Empleado, Fecha, Horario, Tipo, Entrada/Salida (×5 pares)"}
                             </span>
                             <input
                                 ref={fileInputRef}
@@ -393,7 +393,7 @@ export default function RetardosSection() {
                                                 )}
                                             </th>
                                         ))}
-                                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Obs.</th>
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -426,9 +426,7 @@ export default function RetardosSection() {
                                             <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_extra > 0 ? "text-blue-500 font-medium" : "")}>
                                                 {a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "—"}
                                             </td>
-                                            <td className="px-3 py-2 text-xs text-muted-foreground max-w-[140px] truncate">
-                                                {a.observaciones || (a.incidencia !== "A" ? INCIDENCIA_LABELS[a.incidencia] || a.incidencia : "")}
-                                            </td>
+
                                         </tr>
                                     ))}
                                 </tbody>
