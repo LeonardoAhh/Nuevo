@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, CalendarCheck, Info, UserPlus, X, CalendarDays, FileUp,
+  XCircle, CalendarCheck, Info, UserPlus, X, CalendarDays, FileUp, Upload,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -21,6 +21,7 @@ import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
 import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
+import { BulkUpdateEmpleados } from "@/components/content/bulk-update-empleados"
 import { supabase } from "@/lib/supabase/client"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ export default function NuevoIngresoContent() {
   const [incidenciasOpen, setIncidenciasOpen] = useState(false)
   const [incidenciasEmpleado, setIncidenciasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
+  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false)
 
   const handleOpenIncidencias = (r: NuevoIngreso) => {
     if (!r.numero) return
@@ -237,6 +239,9 @@ export default function NuevoIngresoContent() {
             </div>
             {!isReadOnly && (
               <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="icon" variant="outline" onClick={() => setBulkUpdateOpen(true)} aria-label="Actualización Masiva" title="Actualización Masiva">
+                  <Upload className="h-4 w-4" />
+                </Button>
                 <Button size="icon" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
                   <FileUp className="h-4 w-4" />
                 </Button>
@@ -580,6 +585,12 @@ export default function NuevoIngresoContent() {
         open={bulkImportOpen}
         onClose={() => setBulkImportOpen(false)}
         employeeNames={employeeNames}
+      />
+
+      <BulkUpdateEmpleados
+        open={bulkUpdateOpen}
+        onClose={() => setBulkUpdateOpen(false)}
+        onUpdated={load}
       />
     </>
   )
