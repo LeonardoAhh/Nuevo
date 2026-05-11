@@ -86,28 +86,41 @@ export function analyzeRow(
         }
     }
 
-    // Check missing punches
-    const faltantes: string[] = []
-    if (!row.entrada1) faltantes.push("Entrada")
-    if (!row.salida1) faltantes.push("Sal. comedor")
-    if (!row.entrada2) faltantes.push("Ent. comedor")
-    if (!row.salida2) faltantes.push("Salida")
-
     // Detect night shift (entry > exit means crossing midnight)
     const isNightShift = timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
+
+    // Check missing punches
+    // Night shifts: only entrada1 is required on the entry day;
+    // comedor/salida punches may appear in the next day's report
+    const faltantes: string[] = []
+    if (!row.entrada1) faltantes.push("Entrada")
+    if (!isNightShift) {
+        if (!row.salida1) faltantes.push("Sal. comedor")
+        if (!row.entrada2) faltantes.push("Ent. comedor")
+        if (!row.salida2) faltantes.push("Salida")
+    }
     const diff = isNightShift ? diffMinutesOvernight : diffMinutes
 
-    // Compute work time: (entrada1→salida1) + (entrada2→salida2)
+    // Compute work time
     let minutosTrabajados = 0
-    if (row.entrada1 && row.salida1) {
-        minutosTrabajados += diff(row.entrada1, row.salida1)
-    }
-    if (row.entrada2 && row.salida2) {
-        minutosTrabajados += diff(row.entrada2, row.salida2)
-    }
-    // If only entrada1 and salida2 exist (no lunch punches), count full span
-    if (row.entrada1 && row.salida2 && !row.salida1 && !row.entrada2) {
-        minutosTrabajados = diff(row.entrada1, row.salida2)
+    if (isNightShift && row.entrada1) {
+        // Night shift: compute from entrada1 to last available punch
+        const lastPunch = row.salida2 || row.entrada2 || row.salida1
+        if (lastPunch) {
+            minutosTrabajados = diff(row.entrada1, lastPunch)
+        }
+    } else {
+        // Day shift: (entrada1→salida1) + (entrada2→salida2)
+        if (row.entrada1 && row.salida1) {
+            minutosTrabajados += diff(row.entrada1, row.salida1)
+        }
+        if (row.entrada2 && row.salida2) {
+            minutosTrabajados += diff(row.entrada2, row.salida2)
+        }
+        // If only entrada1 and salida2 exist (no lunch punches), count full span
+        if (row.entrada1 && row.salida2 && !row.salida1 && !row.entrada2) {
+            minutosTrabajados = diff(row.entrada1, row.salida2)
+        }
     }
 
     // Compute lunch time: salida1→entrada2
