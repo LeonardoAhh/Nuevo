@@ -34,6 +34,7 @@ export const MEXICO_HOLIDAY_RULES: readonly MexicoHolidayRule[] = [
 export const AREA_STAFF = [
     { area: "A. CALIDAD 1ER TURNO", personal_autorizado: 22 },
     { area: "A. CALIDAD 2DO. TURNO", personal_autorizado: 22 },
+    { area: "CALIDAD ADMTVO", personal_autorizado: 21 },
     { area: "PRODUCCIÓN 1ER. TURNO", personal_autorizado: 32 },
     { area: "PRODUCCIÓN 2o. TURNO", personal_autorizado: 32 },
     { area: "PRODUCCIÓN 3ER. TURNO", personal_autorizado: 32 },
@@ -49,6 +50,20 @@ export const ALLOWED_PUESTOS = new Set([
     "OPERADOR DE MÁQUINA B",
     "OPERADOR DE MÁQUINA C",
     "OPERADOR DE MÁQUINA D",
+    "AUXILIAR DE CALIDAD",
+    "INGENIERO DE CALIDAD A,",
+    "INGENIERO DE CALIDAD B",
+    "INGENIERO DE CALIDAD C",
+    "INGENIERO DE CALIDAD D",
+    "INSPECTOR DE CALIDAD A",
+    "INSPECTOR DE CALIDAD B",
+    "INSPECTOR DE CALIDAD C",
+    "INSPECTOR DE CALIDAD D",
+    "SUPERVISOR DE ACABADOS - GP12 A",
+    "SUPERVISOR DE ACABADOS - GP12 B",
+    "SUPERVISOR DE ACABADOS - GP12 C",
+    "SUPERVISOR DE ACABADOS - GP12 D",
+    "INSPECTOR RECIBO",
 ])
 
 export const NON_INCIDENT_CODES = new Set(["-", "X", "A", "D", "DF"])

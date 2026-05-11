@@ -1,12 +1,14 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { INCIDENCIA_LABELS } from "./constants"
+import { INCIDENCIA_LABELS, ALLOWED_PUESTOS } from "./constants"
 
 interface AreaDetailRow {
     key: string
     numero_empleado: string
     nombre: string
+    puesto?: string
+    turno: string
     tipo_incidencia: string
 }
 
@@ -33,7 +35,7 @@ export default function ReporteAreaSummary({
 }: ReporteAreaSummaryProps) {
     return (
         <div>
-            <div className="grid gap-3 mb-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 mb-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
                 {areas.map((area) => {
                     const active = selectedArea === area.area
                     return (
@@ -88,7 +90,7 @@ export default function ReporteAreaSummary({
                             <table className="min-w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/50 text-left">
-                                        {["# Empleado", "Empleado", "Tipo de incidencia"].map((h) => (
+                                        {["# Empleado", "Empleado", "Puesto", "Turno", "Tipo de incidencia"].map((h) => (
                                             <th key={h} className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                                                 {h}
                                             </th>
@@ -100,6 +102,8 @@ export default function ReporteAreaSummary({
                                         <tr key={row.key} className={i % 2 !== 0 ? "bg-muted/20" : ""}>
                                             <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{row.numero_empleado}</td>
                                             <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
+                                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.puesto ?? "—"}</td>
+                                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.turno ?? "—"}</td>
                                             <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">
                                                 {INCIDENCIA_LABELS[row.tipo_incidencia] ?? row.tipo_incidencia}
                                             </td>

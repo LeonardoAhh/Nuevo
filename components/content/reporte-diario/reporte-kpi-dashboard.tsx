@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { Users, TrendingDown, CalendarX, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { isIncidence } from "./helpers"
+import { isIncidence, formatMes } from "./helpers"
 import type { ReporteRow } from "./types"
 
 interface ReporteKpiDashboardProps {
@@ -81,25 +81,27 @@ export default function ReporteKpiDashboard({
         {
             label: "Empleados",
             value: kpis.totalEmpleados,
+            sub: `en ${formatMes(currentMonth)}`,
             icon: <Users className="w-5 h-5" />,
-        },
-        {
-            label: "Tasa de asistencia",
-            value: `${kpis.tasaAsistencia}%`,
-            sub: "Días con 'A' / total días registrados",
-            icon: <TrendingDown className="w-5 h-5" />,
-            tone: kpis.tasaAsistencia < 80 ? "destructive" : kpis.tasaAsistencia < 90 ? "warning" : "default",
         },
         {
             label: "Total incidencias",
             value: kpis.totalIncidencias,
+            sub: `en ${formatMes(currentMonth)}`,
             icon: <CalendarX className="w-5 h-5" />,
             tone: kpis.totalIncidencias > 0 ? "warning" : "default",
         },
         {
             label: "Día con más incidencias",
-            value: kpis.worstDay ? `Día ${parseInt(kpis.worstDay, 10)}` : "—",
-            sub: kpis.worstDay ? `${kpis.worstDayCount} incidencias` : undefined,
+            value: kpis.worstDay
+                ? (() => {
+                    const [y, m] = currentMonth.split("-").map(Number)
+                    const d = new Date(y, m - 1, parseInt(kpis.worstDay, 10))
+                    const weekday = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][d.getDay()]
+                    return `${weekday} ${parseInt(kpis.worstDay, 10)}`
+                })()
+                : "—",
+            sub: kpis.worstDay ? `${kpis.worstDayCount} incidencias en ${formatMes(currentMonth)}` : undefined,
             icon: <CalendarX className="w-5 h-5" />,
             tone: kpis.worstDayCount > 5 ? "destructive" : kpis.worstDayCount > 0 ? "warning" : "default",
         },
@@ -113,7 +115,7 @@ export default function ReporteKpiDashboard({
     ]
 
     return (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {cards.map((card) => (
                 <div
                     key={card.label}

@@ -181,6 +181,8 @@ export default function ReporteDiarioContent() {
                 key: `${row.numero_empleado}||${row.area}`,
                 numero_empleado: row.numero_empleado,
                 nombre: row.nombre,
+                puesto: row.puesto,
+                turno: row.turno,
                 tipo_incidencia: row.days[selectedDay] || "-",
             }))
     }, [selectedRows, selectedDay, selectedArea])
