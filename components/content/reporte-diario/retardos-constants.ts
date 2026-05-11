@@ -109,16 +109,41 @@ export const DEFAULT_SCHEDULES: ScheduleDefinition[] = [
         workDays: [1, 2, 3, 4, 5], // Lun-Vie
         toleranceMinutes: 10,
     },
-    // ── Turno 4 (horario mixto por día) ──────────────────
+    // ── Turno 4 — sub-schedules por día ───────────────────
+    // Domingo: 1er turno
     {
-        id: "turno-4",
-        name: "4to (L,Ma 14-22 / Mi,Ju 22-06 / Do 06-14)",
+        id: "turno-4a",
+        name: "4to (Do 06-14)",
+        turnoNumber: 4,
+        entryTime: "06:00",
+        exitTime: "14:00",
+        lunchMinutes: 30,
+        lunchToleranceMinutes: 5,
+        workDays: [0], // Dom
+        toleranceMinutes: 10,
+    },
+    // Lunes, Martes: 2do turno
+    {
+        id: "turno-4b",
+        name: "4to (L,Ma 14-22)",
         turnoNumber: 4,
         entryTime: "14:00",
         exitTime: "22:00",
         lunchMinutes: 30,
         lunchToleranceMinutes: 5,
-        workDays: [0, 1, 2, 3, 4], // Dom-Jue
+        workDays: [1, 2], // Lun-Mar
+        toleranceMinutes: 10,
+    },
+    // Miércoles, Jueves: 3er turno (nocturno)
+    {
+        id: "turno-4c",
+        name: "4to (Mi,Ju 22-06)",
+        turnoNumber: 4,
+        entryTime: "22:00",
+        exitTime: "06:00",
+        lunchMinutes: 30,
+        lunchToleranceMinutes: 5,
+        workDays: [3, 4], // Mié-Jue
         toleranceMinutes: 10,
     },
     // ── Turno 5 (Mixto) L-V 08-18, S 08-11 ─────────────
