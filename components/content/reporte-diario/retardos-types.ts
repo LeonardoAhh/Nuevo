@@ -23,7 +23,8 @@ export interface PunchRow {
     salida3: string | null
     entrada4: string | null
     salida4: string | null
-    horas_registradas: string       // "HH:mm" from Excel
+    entrada5: string | null
+    salida5: string | null
     observaciones: string
 }
 
