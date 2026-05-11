@@ -16,7 +16,10 @@ import {
     UtensilsCrossed,
     ChevronDown,
     ChevronUp,
+    Download,
+    Search,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 import type { ScheduleDefinition, PunchRow, PunchAnalysis } from "./retardos-types"
 import { DEFAULT_SCHEDULES, PUNCH_STATUS_LABELS, PUNCH_STATUS_COLORS } from "./retardos-constants"
@@ -26,6 +29,7 @@ import {
     analyzeAllRows,
     computeRetardosSummary,
     minutesToHHMM,
+    exportRetardosExcel,
 } from "./retardos-helpers"
 import RetardosScheduleConfig from "./retardos-schedule-config"
 
@@ -43,6 +47,7 @@ export default function RetardosSection() {
     const [filterTurno, setFilterTurno] = useState("")
     const [sortField, setSortField] = useState<SortField>("numero_empleado")
     const [sortDir, setSortDir] = useState<SortDir>("asc")
+    const [searchQuery, setSearchQuery] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const analyses = useMemo(
@@ -59,10 +64,19 @@ export default function RetardosSection() {
         let result = analyses
         if (filterStatus === "exceso_comida") {
             result = result.filter((a) => a.exceso_comida > 0)
+        } else if (filterStatus === "tiempo_extra") {
+            result = result.filter((a) => a.minutos_extra > 0)
         } else if (filterStatus) {
             result = result.filter((a) => a.status === filterStatus)
         }
         if (filterTurno) result = result.filter((a) => String(a.turno) === filterTurno)
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase()
+            result = result.filter((a) =>
+                a.numero_empleado.toLowerCase().includes(q) ||
+                a.nombre.toLowerCase().includes(q),
+            )
+        }
         return result.slice().sort((a, b) => {
             const av = a[sortField]
             const bv = b[sortField]
@@ -71,7 +85,7 @@ export default function RetardosSection() {
                 : String(av).localeCompare(String(bv))
             return sortDir === "asc" ? cmp : -cmp
         })
-    }, [analyses, filterStatus, filterTurno, sortField, sortDir])
+    }, [analyses, filterStatus, filterTurno, searchQuery, sortField, sortDir])
 
     const availableTurnos = useMemo(
         () => Array.from(new Set(punchRows.map((r) => r.turno))).sort((a, b) => a - b),
@@ -233,9 +247,29 @@ export default function RetardosSection() {
                 </div>
             )}
 
-            {/* ── Filters ─────────────────────────────────────────── */}
+            {/* ── Search + Filters ──────────────────────────────────── */}
             {punchRows.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="relative max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por número o nombre..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 h-9 text-sm"
+                    />
+                </div>
+            )}
+            {punchRows.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                    <button
+                        type="button"
+                        onClick={() => exportRetardosExcel(filteredAnalyses)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border transition bg-card border-border text-muted-foreground hover:border-primary hover:text-primary flex items-center gap-1.5"
+                    >
+                        <Download className="w-3.5 h-3.5" />
+                        Descargar Excel
+                    </button>
+                    <span className="text-xs text-muted-foreground self-center mx-1">|</span>
                     <button
                         type="button"
                         onClick={() => setFilterStatus("")}
@@ -263,6 +297,22 @@ export default function RetardosSection() {
                             </button>
                         )
                     })}
+                    {(() => {
+                        const count = analyses.filter((a) => a.minutos_extra > 0).length
+                        if (count === 0) return null
+                        return (
+                            <button
+                                type="button"
+                                onClick={() => setFilterStatus(filterStatus === "tiempo_extra" ? "" : "tiempo_extra")}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
+                                    filterStatus === "tiempo_extra" ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
+                                )}
+                            >
+                                T. extra ({count})
+                            </button>
+                        )
+                    })()}
                     {(() => {
                         const count = analyses.filter((a) => a.exceso_comida > 0).length
                         if (count === 0) return null

@@ -24,6 +24,13 @@ function diffMinutes(from: string, to: string): number {
     return timeToMinutes(to) - timeToMinutes(from)
 }
 
+/** diffMinutes that handles midnight crossover (e.g., 21:45→02:01 = 256 min) */
+function diffMinutesOvernight(from: string, to: string): number {
+    let diff = timeToMinutes(to) - timeToMinutes(from)
+    if (diff < 0) diff += 1440
+    return diff
+}
+
 // ─── Analyze a single row ────────────────────────────────────────────────────
 
 export function analyzeRow(
@@ -86,23 +93,27 @@ export function analyzeRow(
     if (!row.entrada2) faltantes.push("Ent. comedor")
     if (!row.salida2) faltantes.push("Salida")
 
+    // Detect night shift (entry > exit means crossing midnight)
+    const isNightShift = timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
+    const diff = isNightShift ? diffMinutesOvernight : diffMinutes
+
     // Compute work time: (entrada1→salida1) + (entrada2→salida2)
     let minutosTrabajados = 0
     if (row.entrada1 && row.salida1) {
-        minutosTrabajados += diffMinutes(row.entrada1, row.salida1)
+        minutosTrabajados += diff(row.entrada1, row.salida1)
     }
     if (row.entrada2 && row.salida2) {
-        minutosTrabajados += diffMinutes(row.entrada2, row.salida2)
+        minutosTrabajados += diff(row.entrada2, row.salida2)
     }
     // If only entrada1 and salida2 exist (no lunch punches), count full span
     if (row.entrada1 && row.salida2 && !row.salida1 && !row.entrada2) {
-        minutosTrabajados = diffMinutes(row.entrada1, row.salida2)
+        minutosTrabajados = diff(row.entrada1, row.salida2)
     }
 
     // Compute lunch time: salida1→entrada2
     let minutosComida = 0
     if (row.salida1 && row.entrada2) {
-        minutosComida = diffMinutes(row.salida1, row.entrada2)
+        minutosComida = diff(row.salida1, row.entrada2)
     }
 
     // Exceso de comida
@@ -117,18 +128,26 @@ export function analyzeRow(
     // Compute tardiness: entrada1 vs schedule entry
     let minutosRetardo = 0
     if (row.entrada1) {
-        const diff = diffMinutes(schedule.entryTime, row.entrada1)
-        if (diff > schedule.toleranceMinutes) {
-            minutosRetardo = diff
+        const tardDiff = isNightShift
+            ? diffMinutesOvernight(schedule.entryTime, row.entrada1)
+            : diffMinutes(schedule.entryTime, row.entrada1)
+        // For night shifts, if diff > 720 (12h) the person arrived early, not late
+        const effectiveTard = isNightShift && tardDiff > 720 ? tardDiff - 1440 : tardDiff
+        if (effectiveTard > schedule.toleranceMinutes) {
+            minutosRetardo = effectiveTard
         }
     }
 
     // Compute extra time: salida2 vs schedule exit
     let minutosExtra = 0
     if (row.salida2) {
-        const diff = diffMinutes(schedule.exitTime, row.salida2)
-        if (diff > 10) {
-            minutosExtra = diff
+        const extraDiff = isNightShift
+            ? diffMinutesOvernight(schedule.exitTime, row.salida2)
+            : diffMinutes(schedule.exitTime, row.salida2)
+        // For night shifts, if diff > 720 the person left early, not extra
+        const effectiveExtra = isNightShift && extraDiff > 720 ? extraDiff - 1440 : extraDiff
+        if (effectiveExtra > 10) {
+            minutosExtra = effectiveExtra
         }
     }
 
@@ -195,6 +214,76 @@ export function computeRetardosSummary(analyses: PunchAnalysis[]): RetardosSumma
         promedio_comida_minutos: promedioComida,
         pct_puntualidad: pctPuntualidad,
     }
+}
+
+// ─── Excel export ────────────────────────────────────────────────────────────
+
+export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<void> {
+    const ExcelJS = await import("exceljs")
+    const wb = new ExcelJS.Workbook()
+    const sheet = wb.addWorksheet("Retardos")
+
+    sheet.columns = [
+        { header: "No. Empleado", key: "numero_empleado", width: 14 },
+        { header: "Nombre", key: "nombre", width: 30 },
+        { header: "Fecha", key: "fecha", width: 12 },
+        { header: "Turno", key: "turno", width: 8 },
+        { header: "Incidencia", key: "incidencia", width: 12 },
+        { header: "Estado", key: "status", width: 16 },
+        { header: "Entrada", key: "entrada1", width: 10 },
+        { header: "Sal. Comedor", key: "salida1", width: 12 },
+        { header: "Ent. Comedor", key: "entrada2", width: 12 },
+        { header: "Salida", key: "salida2", width: 10 },
+        { header: "Hrs. Trabajadas", key: "hrs_trabajadas", width: 14 },
+        { header: "Comida (min)", key: "minutos_comida", width: 12 },
+        { header: "Exc. Comida (min)", key: "exceso_comida", width: 16 },
+        { header: "Retardo (min)", key: "minutos_retardo", width: 14 },
+        { header: "T. Extra", key: "tiempo_extra", width: 10 },
+        { header: "Observaciones", key: "observaciones", width: 20 },
+    ]
+
+    const headerRow = sheet.getRow(1)
+    headerRow.font = { bold: true }
+    headerRow.alignment = { horizontal: "center" }
+
+    const statusLabels: Record<string, string> = {
+        on_time: "Puntual",
+        late: "Retardo",
+        missing_punch: "Marcaje faltante",
+        no_schedule: "Sin horario",
+        day_off: "Descanso",
+        incidence: "Incidencia",
+    }
+
+    for (const a of analyses) {
+        sheet.addRow({
+            numero_empleado: a.numero_empleado,
+            nombre: a.nombre,
+            fecha: a.fecha,
+            turno: a.turno,
+            incidencia: a.incidencia,
+            status: statusLabels[a.status] || a.status,
+            entrada1: a.entrada1 || "",
+            salida1: a.salida1 || "",
+            entrada2: a.entrada2 || "",
+            salida2: a.salida2 || "",
+            hrs_trabajadas: minutesToHHMM(a.minutos_trabajados),
+            minutos_comida: a.minutos_comida > 0 ? a.minutos_comida : "",
+            exceso_comida: a.exceso_comida > 0 ? a.exceso_comida : "",
+            minutos_retardo: a.minutos_retardo > 0 ? a.minutos_retardo : "",
+            tiempo_extra: a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "",
+            observaciones: a.observaciones,
+        })
+    }
+
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `retardos_${new Date().toISOString().slice(0, 10)}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
 }
 
 // ─── Excel parsing ───────────────────────────────────────────────────────────
