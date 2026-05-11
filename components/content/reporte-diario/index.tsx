@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
     Select,
     SelectContent,
@@ -13,7 +12,6 @@ import {
 import { cn } from "@/lib/utils"
 import {
     CloudUpload,
-    Search,
     Calendar,
     FilePlus,
     AlertCircle,
@@ -35,6 +33,7 @@ import ReporteAreaSummary from "./reporte-area-summary"
 import ReporteIncidentTabs from "./reporte-incident-tabs"
 import ReporteKpiDashboard from "./reporte-kpi-dashboard"
 import ReporteComparison from "./reporte-comparison"
+import ReporteEmployeeDetail from "./reporte-employee-detail"
 import { useReporteDiario } from "@/lib/hooks/useReporteDiario"
 import type { ReporteDiarioSummary } from "@/lib/hooks/useReporteDiario"
 
@@ -42,6 +41,8 @@ export default function ReporteDiarioContent() {
     const [rows, setRows] = useState<ReporteRow[]>([])
     const [selectedMes, setSelectedMes] = useState("")
     const [search, setSearch] = useState("")
+    const [selectedEmployee, setSelectedEmployee] = useState<string>("")
+    const [empDetailOpen, setEmpDetailOpen] = useState(false)
     const [departamentoFilter, setDepartamentoFilter] = useState("")
     const [turnoFilter, setTurnoFilter] = useState("")
     const [selectedIncidentTab, setSelectedIncidentTab] = useState<IncidentTab>(INCIDENT_TABS[0])
@@ -497,16 +498,36 @@ export default function ReporteDiarioContent() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <span className={labelCls}>Buscar</span>
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                            <Input
-                                placeholder="Nombre, número o área"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-8 rounded-lg border-border bg-background text-sm focus-visible:ring-primary/10 focus-visible:border-primary"
-                            />
-                        </div>
+                        <span className={labelCls}>Empleado</span>
+                        <Select
+                            value={selectedEmployee || "__none__"}
+                            onValueChange={(v) => {
+                                if (v === "__none__") {
+                                    setSelectedEmployee("")
+                                    setSearch("")
+                                } else {
+                                    setSelectedEmployee(v)
+                                    setSearch("")
+                                    setEmpDetailOpen(true)
+                                }
+                            }}
+                            disabled={!selectedRows.length}
+                        >
+                            <SelectTrigger className="rounded-lg">
+                                <SelectValue placeholder="Seleccionar empleado" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                                <SelectItem value="__none__">Todos</SelectItem>
+                                {selectedRows
+                                    .slice()
+                                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                                    .map((r) => (
+                                        <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
+                                            {r.numero_empleado} — {r.nombre}
+                                        </SelectItem>
+                                    ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </div>
@@ -710,6 +731,15 @@ export default function ReporteDiarioContent() {
                     </ul>
                 </div>
             )}
+
+            {/* ── Employee Detail Modal ────────────────────────────────── */}
+            <ReporteEmployeeDetail
+                open={empDetailOpen}
+                onClose={() => { setEmpDetailOpen(false); setSelectedEmployee("") }}
+                employee={selectedRows.find((r) => r.numero_empleado === selectedEmployee) ?? null}
+                dayHeaders={dayHeaders}
+                currentMonth={currentMonth}
+            />
         </div>
     )
 }
