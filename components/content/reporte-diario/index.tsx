@@ -283,12 +283,29 @@ export default function ReporteDiarioContent() {
         const dHeaders = Array.from({ length: dCount }, (_, i) => String(i + 1).padStart(2, "0"))
         const { totalIncidencias, tasaAsistencia } = computeKpis(monthRows, dHeaders)
 
+        const diasDisponibles = monthRows.length * dCount
+        let totalAusentismo = 0
+        for (const row of monthRows) {
+            for (const day of dHeaders) {
+                const code = row.days[day]
+                if (code === "F" || code === "P" || code === "I") {
+                    totalAusentismo++
+                }
+            }
+        }
+        const pctAusentismo = diasDisponibles > 0
+            ? Math.round((totalAusentismo / diasDisponibles) * 100 * 100) / 100
+            : 0
+
         const result = await saveReport({
             mes: currentMonth,
             data: monthRows,
             total_empleados: monthRows.length,
             total_incidencias: totalIncidencias,
             tasa_asistencia: tasaAsistencia,
+            dias_disponibles: diasDisponibles,
+            total_ausentismo: totalAusentismo,
+            pct_ausentismo: pctAusentismo,
         })
         if (result.success) {
             const updated = await fetchSummaries()

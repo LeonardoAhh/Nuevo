@@ -16,6 +16,9 @@ export interface ReporteDiarioRecord {
     total_empleados: number
     total_incidencias: number
     tasa_asistencia: number
+    dias_disponibles: number
+    total_ausentismo: number
+    pct_ausentismo: number
     uploaded_by: string | null
     created_at: string
     updated_at: string
@@ -27,6 +30,9 @@ export interface ReporteDiarioSummary {
     total_empleados: number
     total_incidencias: number
     tasa_asistencia: number
+    dias_disponibles: number
+    total_ausentismo: number
+    pct_ausentismo: number
     created_at: string
 }
 
@@ -36,6 +42,9 @@ export interface ReporteDiarioInsert {
     total_empleados: number
     total_incidencias: number
     tasa_asistencia: number
+    dias_disponibles: number
+    total_ausentismo: number
+    pct_ausentismo: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,7 +63,7 @@ export function useReporteDiario() {
         try {
             const { data, error } = await supabase
                 .from("reportes_diarios")
-                .select("id, mes, total_empleados, total_incidencias, tasa_asistencia, created_at")
+                .select("id, mes, total_empleados, total_incidencias, tasa_asistencia, dias_disponibles, total_ausentismo, pct_ausentismo, created_at")
                 .order("mes", { ascending: false })
             if (error) throw new Error(error.message)
             return (data ?? []) as ReporteDiarioSummary[]
@@ -146,7 +155,7 @@ export function useReporteDiario() {
         try {
             const { data, error } = await supabase
                 .from("reportes_diarios")
-                .select("id, mes, total_empleados, total_incidencias, tasa_asistencia, created_at")
+                .select("id, mes, total_empleados, total_incidencias, tasa_asistencia, dias_disponibles, total_ausentismo, pct_ausentismo, created_at")
                 .in("mes", months)
                 .order("mes", { ascending: true })
             if (error) throw new Error(error.message)

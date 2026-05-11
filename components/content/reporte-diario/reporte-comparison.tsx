@@ -24,12 +24,6 @@ function TrendIcon({ current, previous }: { current: number; previous: number })
     return <Minus className="w-3.5 h-3.5 text-muted-foreground" />
 }
 
-function AttendanceTrendIcon({ current, previous }: { current: number; previous: number }) {
-    if (current > previous) return <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-    if (current < previous) return <TrendingDown className="w-3.5 h-3.5 text-destructive" />
-    return <Minus className="w-3.5 h-3.5 text-muted-foreground" />
-}
-
 export default function ReporteComparison({ summaries }: ReporteComparisonProps) {
     if (summaries.length < 2) return null
 
@@ -49,7 +43,7 @@ export default function ReporteComparison({ summaries }: ReporteComparisonProps)
                     {sorted.map((s, i) => {
                         const prev = i > 0 ? sorted[i - 1] : null
                         const incDiff = prev ? s.total_incidencias - prev.total_incidencias : 0
-                        const attDiff = prev ? s.tasa_asistencia - prev.tasa_asistencia : 0
+                        const ausDiff = prev ? s.pct_ausentismo - prev.pct_ausentismo : 0
 
                         return (
                             <div
@@ -65,15 +59,25 @@ export default function ReporteComparison({ summaries }: ReporteComparisonProps)
                                         <span className="font-semibold">{s.total_empleados}</span>
                                     </div>
                                     <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                        <span>Incidencias</span>
-                                        <span className={cn("font-semibold", s.total_incidencias > 50 ? "text-destructive" : "")}>
-                                            {s.total_incidencias}
+                                        <span>Días disponibles</span>
+                                        <span className="font-semibold">{s.dias_disponibles}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                        <span>Total ausentismo</span>
+                                        <span className={cn("font-semibold", s.total_ausentismo > 0 ? "text-destructive" : "")}>
+                                            {s.total_ausentismo}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                        <span>Asistencia</span>
-                                        <span className={cn("font-semibold", s.tasa_asistencia < 80 ? "text-destructive" : s.tasa_asistencia < 90 ? "text-warning" : "")}>
-                                            {s.tasa_asistencia.toFixed(1)}%
+                                        <span>% Ausentismo</span>
+                                        <span className={cn("font-semibold", s.pct_ausentismo > 5 ? "text-destructive" : s.pct_ausentismo > 3 ? "text-warning" : "")}>
+                                            {s.pct_ausentismo.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                        <span>Incidencias</span>
+                                        <span className={cn("font-semibold", s.total_incidencias > 50 ? "text-destructive" : "")}>
+                                            {s.total_incidencias}
                                         </span>
                                     </div>
                                     {prev && (
@@ -88,11 +92,11 @@ export default function ReporteComparison({ summaries }: ReporteComparisonProps)
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                <span>Tend. asistencia</span>
+                                                <span>Tend. ausentismo</span>
                                                 <span className="inline-flex items-center gap-1">
-                                                    <AttendanceTrendIcon current={s.tasa_asistencia} previous={prev.tasa_asistencia} />
-                                                    <span className={cn("text-xs tabular-nums font-semibold", attDiff > 0 ? "text-emerald-600" : attDiff < 0 ? "text-destructive" : "text-muted-foreground")}>
-                                                        {attDiff > 0 ? "+" : ""}{attDiff.toFixed(1)}%
+                                                    <TrendIcon current={s.pct_ausentismo} previous={prev.pct_ausentismo} />
+                                                    <span className={cn("text-xs tabular-nums font-semibold", ausDiff > 0 ? "text-destructive" : ausDiff < 0 ? "text-emerald-600" : "text-muted-foreground")}>
+                                                        {ausDiff > 0 ? "+" : ""}{ausDiff.toFixed(2)}%
                                                     </span>
                                                 </span>
                                             </div>
