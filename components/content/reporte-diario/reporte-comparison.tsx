@@ -70,7 +70,7 @@ export default function ReporteComparison({ summaries }: ReporteComparisonProps)
                                     </div>
                                     <div className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
                                         <span>% Ausentismo</span>
-                                        <span className={cn("font-semibold", s.pct_ausentismo > 5 ? "text-destructive" : s.pct_ausentismo > 3 ? "text-warning" : "")}>
+                                        <span className={cn("font-semibold", s.pct_ausentismo > 2.5 ? "text-destructive" : "text-emerald-600")}>
                                             {s.pct_ausentismo.toFixed(2)}%
                                         </span>
                                     </div>

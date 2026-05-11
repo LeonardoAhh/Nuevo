@@ -74,11 +74,9 @@ export default function ReporteCalendar({
                                     "text-[10px] font-semibold px-1.5 py-0.5 self-start leading-none transition-all",
                                     active
                                         ? "bg-background/20 text-background blur-0"
-                                        : ausPct > 5
+                                        : ausPct > 2.5
                                             ? "bg-destructive/15 text-destructive blur-[3px]"
-                                            : ausPct > 0
-                                                ? "bg-amber-500/15 text-amber-600 blur-[3px]"
-                                                : "bg-emerald-500/15 text-emerald-600 blur-[3px]",
+                                            : "bg-emerald-500/15 text-emerald-600 blur-[3px]",
                                 )}>
                                     {ausPct.toFixed(1)}%
                                 </span>
