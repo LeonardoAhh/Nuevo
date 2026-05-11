@@ -197,6 +197,76 @@ export function computeRetardosSummary(analyses: PunchAnalysis[]): RetardosSumma
     }
 }
 
+// ─── Excel export ────────────────────────────────────────────────────────────
+
+export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<void> {
+    const ExcelJS = await import("exceljs")
+    const wb = new ExcelJS.Workbook()
+    const sheet = wb.addWorksheet("Retardos")
+
+    sheet.columns = [
+        { header: "No. Empleado", key: "numero_empleado", width: 14 },
+        { header: "Nombre", key: "nombre", width: 30 },
+        { header: "Fecha", key: "fecha", width: 12 },
+        { header: "Turno", key: "turno", width: 8 },
+        { header: "Incidencia", key: "incidencia", width: 12 },
+        { header: "Estado", key: "status", width: 16 },
+        { header: "Entrada", key: "entrada1", width: 10 },
+        { header: "Sal. Comedor", key: "salida1", width: 12 },
+        { header: "Ent. Comedor", key: "entrada2", width: 12 },
+        { header: "Salida", key: "salida2", width: 10 },
+        { header: "Hrs. Trabajadas", key: "hrs_trabajadas", width: 14 },
+        { header: "Comida (min)", key: "minutos_comida", width: 12 },
+        { header: "Exc. Comida (min)", key: "exceso_comida", width: 16 },
+        { header: "Retardo (min)", key: "minutos_retardo", width: 14 },
+        { header: "T. Extra", key: "tiempo_extra", width: 10 },
+        { header: "Observaciones", key: "observaciones", width: 20 },
+    ]
+
+    const headerRow = sheet.getRow(1)
+    headerRow.font = { bold: true }
+    headerRow.alignment = { horizontal: "center" }
+
+    const statusLabels: Record<string, string> = {
+        on_time: "Puntual",
+        late: "Retardo",
+        missing_punch: "Marcaje faltante",
+        no_schedule: "Sin horario",
+        day_off: "Descanso",
+        incidence: "Incidencia",
+    }
+
+    for (const a of analyses) {
+        sheet.addRow({
+            numero_empleado: a.numero_empleado,
+            nombre: a.nombre,
+            fecha: a.fecha,
+            turno: a.turno,
+            incidencia: a.incidencia,
+            status: statusLabels[a.status] || a.status,
+            entrada1: a.entrada1 || "",
+            salida1: a.salida1 || "",
+            entrada2: a.entrada2 || "",
+            salida2: a.salida2 || "",
+            hrs_trabajadas: minutesToHHMM(a.minutos_trabajados),
+            minutos_comida: a.minutos_comida > 0 ? a.minutos_comida : "",
+            exceso_comida: a.exceso_comida > 0 ? a.exceso_comida : "",
+            minutos_retardo: a.minutos_retardo > 0 ? a.minutos_retardo : "",
+            tiempo_extra: a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "",
+            observaciones: a.observaciones,
+        })
+    }
+
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `retardos_${new Date().toISOString().slice(0, 10)}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+}
+
 // ─── Excel parsing ───────────────────────────────────────────────────────────
 
 function normalizeString(value: unknown): string {
