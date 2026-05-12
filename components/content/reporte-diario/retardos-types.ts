@@ -72,3 +72,19 @@ export interface RetardosSummary {
     promedio_comida_minutos: number
     pct_puntualidad: number
 }
+
+export interface EmployeeSummary {
+    numero_empleado: string
+    nombre: string
+    turno: number
+    total_dias: number
+    dias_puntual: number
+    dias_retardo: number
+    dias_faltantes: number
+    pct_puntualidad: number
+    total_minutos_retardo: number
+    total_minutos_extra: number
+    total_minutos_trabajados: number
+    promedio_comida_minutos: number
+    registros: PunchAnalysis[]
+}

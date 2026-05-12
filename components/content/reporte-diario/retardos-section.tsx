@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState, lazy, Suspense } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import {
@@ -18,22 +18,31 @@ import {
     ChevronUp,
     Download,
     Search,
+    Trash2,
+    BarChart3,
+    Users,
+    Table,
+    Plus,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
-import type { ScheduleDefinition, PunchRow, PunchAnalysis } from "./retardos-types"
+import type { ScheduleDefinition, PunchRow } from "./retardos-types"
 import { DEFAULT_SCHEDULES, PUNCH_STATUS_LABELS, PUNCH_STATUS_COLORS } from "./retardos-constants"
 import { INCIDENCIA_LABELS } from "./constants"
 import {
     parseExcelPunches,
     analyzeAllRows,
     computeRetardosSummary,
+    computeEmployeeSummaries,
     minutesToHHMM,
     exportRetardosExcel,
     mergeNightShiftPunches,
     classifyPunchesBySchedule,
 } from "./retardos-helpers"
 import RetardosScheduleConfig from "./retardos-schedule-config"
+
+const RetardosCharts = lazy(() => import("./retardos-charts"))
+const RetardosEmployeeSummary = lazy(() => import("./retardos-employee-summary"))
 
 type SortField = "numero_empleado" | "nombre" | "fecha" | "turno" | "status" | "minutos_retardo" | "minutos_trabajados" | "minutos_comida" | "minutos_extra"
 type SortDir = "asc" | "desc"
@@ -54,18 +63,21 @@ function SortIcon({ field, activeField, activeDir }: {
         : <ChevronDown className="w-3 h-3 inline ml-0.5" />
 }
 
+type ViewTab = "table" | "employees" | "charts"
+
 export default function RetardosSection() {
     const [schedules, setSchedules] = useState<ScheduleDefinition[]>(DEFAULT_SCHEDULES)
     const [punchRows, setPunchRows] = useState<PunchRow[]>([])
     const [errors, setErrors] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
-    const [fileName, setFileName] = useState("")
+    const [fileNames, setFileNames] = useState<string[]>([])
     const [isDragging, setIsDragging] = useState(false)
     const [filterStatus, setFilterStatus] = useState("")
     const [filterTurno, setFilterTurno] = useState("")
     const [sortField, setSortField] = useState<SortField>("numero_empleado")
     const [sortDir, setSortDir] = useState<SortDir>("asc")
     const [searchQuery, setSearchQuery] = useState("")
+    const [activeTab, setActiveTab] = useState<ViewTab>("table")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const analyses = useMemo(() => {
@@ -76,6 +88,11 @@ export default function RetardosSection() {
 
     const summary = useMemo(
         () => computeRetardosSummary(analyses),
+        [analyses],
+    )
+
+    const employeeSummaries = useMemo(
+        () => computeEmployeeSummaries(analyses),
         [analyses],
     )
 
@@ -111,32 +128,50 @@ export default function RetardosSection() {
         [punchRows],
     )
 
-    const handleFile = useCallback(async (file: File) => {
+    const handleFiles = useCallback(async (files: File[]) => {
         setLoading(true)
-        setErrors([])
-        try {
-            const { rows, errors: parseErrors } = await parseExcelPunches(file)
-            setPunchRows(rows)
-            setErrors(parseErrors)
-            setFileName(file.name)
-        } catch (err) {
-            setErrors([`Error al leer archivo: ${err instanceof Error ? err.message : String(err)}`])
-        } finally {
-            setLoading(false)
+        const allNewRows: PunchRow[] = []
+        const allErrors: string[] = []
+        const names: string[] = []
+        for (const file of files) {
+            try {
+                const { rows, errors: parseErrors } = await parseExcelPunches(file)
+                allNewRows.push(...rows)
+                allErrors.push(...parseErrors)
+                names.push(file.name)
+            } catch (err) {
+                allErrors.push(`${file.name}: ${err instanceof Error ? err.message : String(err)}`)
+            }
         }
+        setPunchRows((prev) => [...prev, ...allNewRows])
+        setErrors((prev) => [...prev, ...allErrors])
+        setFileNames((prev) => [...prev, ...names])
+        setLoading(false)
     }, [])
 
     const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) handleFile(file)
-    }, [handleFile])
+        const files = e.target.files
+        if (files && files.length > 0) handleFiles(Array.from(files))
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }, [handleFiles])
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         setIsDragging(false)
-        const file = e.dataTransfer.files[0]
-        if (file) handleFile(file)
-    }, [handleFile])
+        const files = Array.from(e.dataTransfer.files)
+        if (files.length > 0) handleFiles(files)
+    }, [handleFiles])
+
+    const handleReset = useCallback(() => {
+        setPunchRows([])
+        setErrors([])
+        setFileNames([])
+        setFilterStatus("")
+        setFilterTurno("")
+        setSearchQuery("")
+        setActiveTab("table")
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }, [])
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -188,14 +223,20 @@ export default function RetardosSection() {
                             ) : (
                                 <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
                             )}
-                            <span>{loading ? "Procesando..." : fileName || "Cargar archivo de checadas (.xlsx)"}</span>
+                            <span>{loading ? "Procesando..." : fileNames.length > 0 ? `${fileNames.length} archivo(s) cargado(s)` : "Cargar archivo(s) de checadas (.xlsx)"}</span>
                             <span className="text-xs text-muted-foreground/60">
-                                {isDragging ? "Suelta el archivo aquí" : "Columnas: Núm. Emp., Nombre del Empleado, Fecha, Horario, Tipo, Entrada/Salida (×5 pares)"}
+                                {isDragging ? "Suelta los archivos aquí" : "Puedes cargar múltiples archivos. Columnas: Núm. Emp., Nombre, Fecha, Horario, Tipo, Entrada/Salida (×5)"}
                             </span>
+                            {fileNames.length > 0 && (
+                                <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
+                                    <Plus className="w-3 h-3" /> Suelta otro archivo para agregar más días
+                                </span>
+                            )}
                             <input
                                 ref={fileInputRef}
                                 type="file"
                                 accept=".xlsx,.xls"
+                                multiple
                                 onChange={handleFileChange}
                                 className="hidden"
                             />
@@ -237,18 +278,16 @@ export default function RetardosSection() {
 
             {/* ── KPI Dashboard ────────────────────────────────────── */}
             {punchRows.length > 0 && (
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                <div className="flex gap-3 overflow-x-auto">
                     {[
-                        { label: "Empleados", value: summary.total_empleados, icon: UserCheck, color: "text-foreground" },
                         { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
                         { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
                         { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
                         { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
                         { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
                         { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
-                        { label: "Registros", value: summary.total_registros, icon: Clock, color: "text-foreground" },
                     ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <div key={label} className="flex-1 min-w-[140px] rounded-xl border border-border bg-card p-4 shadow-sm">
                             <div className="flex items-center gap-2 mb-2">
                                 <Icon className="w-4 h-4 text-muted-foreground" />
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
@@ -259,8 +298,51 @@ export default function RetardosSection() {
                 </div>
             )}
 
-            {/* ── Search + Filters ──────────────────────────────────── */}
+            {/* ── View Tabs + Reset ─────────────────────────────────── */}
             {punchRows.length > 0 && (
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
+                        {([
+                            { key: "table" as ViewTab, label: "Tabla", icon: Table },
+                            { key: "employees" as ViewTab, label: "Empleados", icon: Users },
+                            { key: "charts" as ViewTab, label: "Gráficas", icon: BarChart3 },
+                        ]).map(({ key, label, icon: Icon }) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => setActiveTab(key)}
+                                className={cn(
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition",
+                                    activeTab === key
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                <Icon className="w-3.5 h-3.5" />
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {fileNames.length > 0 && (
+                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                                {fileNames.join(", ")}
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-destructive/40 text-destructive hover:bg-destructive/10 transition"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Limpiar datos
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Search + Filters ──────────────────────────────────── */}
+            {punchRows.length > 0 && activeTab === "table" && (
                 <div className="relative max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -271,7 +353,7 @@ export default function RetardosSection() {
                     />
                 </div>
             )}
-            {punchRows.length > 0 && (
+            {punchRows.length > 0 && activeTab === "table" && (
                 <div className="flex flex-wrap gap-2 items-center">
                     <button
                         type="button"
@@ -363,8 +445,22 @@ export default function RetardosSection() {
                 </div>
             )}
 
+            {/* ── Employee Summary View ─────────────────────────────── */}
+            {punchRows.length > 0 && activeTab === "employees" && (
+                <Suspense fallback={<div className="text-sm text-muted-foreground text-center py-8">Cargando...</div>}>
+                    <RetardosEmployeeSummary summaries={employeeSummaries} />
+                </Suspense>
+            )}
+
+            {/* ── Charts View ──────────────────────────────────────── */}
+            {punchRows.length > 0 && activeTab === "charts" && (
+                <Suspense fallback={<div className="text-sm text-muted-foreground text-center py-8">Cargando gráficas...</div>}>
+                    <RetardosCharts analyses={analyses} />
+                </Suspense>
+            )}
+
             {/* ── Data Table ──────────────────────────────────────── */}
-            {punchRows.length > 0 && (
+            {punchRows.length > 0 && activeTab === "table" && (
                 <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
