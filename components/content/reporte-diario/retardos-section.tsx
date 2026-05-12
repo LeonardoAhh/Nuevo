@@ -267,7 +267,7 @@ export default function RetardosSection() {
                             ) : (
                                 <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
                             )}
-                            <span className="text-center">{loading ? "Procesando..." : fileNames.length > 0 ? `${fileNames.length} archivo(s)` : "Cargar checadas (.xlsx)"}</span>
+                            <span className="text-center">{loading ? "Procesando..." : fileNames.length > 0 ? `${fileNames.length} archivo(s)` : "Cargar reporte (.xlsx)"}</span>
                             <span className="text-xs text-muted-foreground/60 text-center">
                                 {isDragging ? "Suelta aquí" : "Múltiples archivos"}
                             </span>
