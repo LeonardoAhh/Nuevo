@@ -278,18 +278,16 @@ export default function RetardosSection() {
 
             {/* ── KPI Dashboard ────────────────────────────────────── */}
             {punchRows.length > 0 && (
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                <div className="flex gap-3 overflow-x-auto">
                     {[
-                        { label: "Empleados", value: summary.total_empleados, icon: UserCheck, color: "text-foreground" },
                         { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
                         { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
                         { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
                         { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
                         { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
                         { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
-                        { label: "Registros", value: summary.total_registros, icon: Clock, color: "text-foreground" },
                     ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <div key={label} className="flex-1 min-w-[140px] rounded-xl border border-border bg-card p-4 shadow-sm">
                             <div className="flex items-center gap-2 mb-2">
                                 <Icon className="w-4 h-4 text-muted-foreground" />
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
