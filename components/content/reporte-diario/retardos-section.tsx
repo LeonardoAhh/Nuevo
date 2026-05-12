@@ -39,7 +39,8 @@ import {
     mergeNightShiftPunches,
     classifyPunchesBySchedule,
 } from "./retardos-helpers"
-import RetardosScheduleConfig from "./retardos-schedule-config"
+// Schedule config removed — kept internally for analysis
+// import RetardosScheduleConfig from "./retardos-schedule-config"
 
 const RetardosCharts = lazy(() => import("./retardos-charts"))
 const RetardosEmployeeSummary = lazy(() => import("./retardos-employee-summary"))
@@ -193,11 +194,9 @@ export default function RetardosSection() {
 
     return (
         <div className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* ── Schedule Config ──────────────────────────────────── */}
-                <RetardosScheduleConfig schedules={schedules} onChange={setSchedules} />
-
-                {/* ── File Upload ──────────────────────────────────────── */}
+            {/* ── Upload + KPIs ─────────────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* ── File Upload (1/3) ────────────────────────────────── */}
                 <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                     <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
                         <div className="flex items-center gap-2">
@@ -209,7 +208,7 @@ export default function RetardosSection() {
                     <CardContent className="px-3 py-4 sm:px-5 sm:py-5 space-y-4">
                         <label
                             className={cn(
-                                "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-6 text-sm text-muted-foreground transition active:scale-95",
+                                "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-6 text-sm text-muted-foreground transition active:scale-95",
                                 isDragging
                                     ? "border-primary bg-primary/5"
                                     : "border-border bg-muted/40 hover:border-primary hover:bg-background",
@@ -223,13 +222,13 @@ export default function RetardosSection() {
                             ) : (
                                 <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
                             )}
-                            <span>{loading ? "Procesando..." : fileNames.length > 0 ? `${fileNames.length} archivo(s) cargado(s)` : "Cargar archivo(s) de checadas (.xlsx)"}</span>
-                            <span className="text-xs text-muted-foreground/60">
-                                {isDragging ? "Suelta los archivos aquí" : "Puedes cargar múltiples archivos. Columnas: Núm. Emp., Nombre, Fecha, Horario, Tipo, Entrada/Salida (×5)"}
+                            <span className="text-center">{loading ? "Procesando..." : fileNames.length > 0 ? `${fileNames.length} archivo(s)` : "Cargar checadas (.xlsx)"}</span>
+                            <span className="text-xs text-muted-foreground/60 text-center">
+                                {isDragging ? "Suelta aquí" : "Múltiples archivos"}
                             </span>
                             {fileNames.length > 0 && (
                                 <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
-                                    <Plus className="w-3 h-3" /> Suelta otro archivo para agregar más días
+                                    <Plus className="w-3 h-3" /> Agregar más
                                 </span>
                             )}
                             <input
@@ -244,59 +243,55 @@ export default function RetardosSection() {
 
                         {/* ── Errors ───────────────────────────────────── */}
                         {errors.length > 0 && (
-                            <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-5 py-4">
-                                <div className="flex items-center justify-between mb-3">
+                            <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3">
+                                <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
-                                        <h3 className="text-sm font-semibold text-destructive">Errores</h3>
+                                        <h3 className="text-xs font-semibold text-destructive">Errores</h3>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setErrors([])}
                                         className="rounded-md p-1 text-destructive/60 transition hover:text-destructive hover:bg-destructive/10"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X className="w-3 h-3" />
                                     </button>
                                 </div>
                                 <ul className="space-y-1">
-                                    {errors.slice(0, 10).map((err, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-destructive/90">
-                                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive/60" />
-                                            {err}
-                                        </li>
+                                    {errors.slice(0, 5).map((err, i) => (
+                                        <li key={i} className="text-xs text-destructive/90 truncate">{err}</li>
                                     ))}
-                                    {errors.length > 10 && (
-                                        <li className="text-sm text-destructive/70">...y {errors.length - 10} más</li>
+                                    {errors.length > 5 && (
+                                        <li className="text-xs text-destructive/70">...y {errors.length - 5} más</li>
                                     )}
                                 </ul>
                             </div>
                         )}
                     </CardContent>
                 </Card>
-            </div>
 
-
-            {/* ── KPI Dashboard ────────────────────────────────────── */}
-            {punchRows.length > 0 && (
-                <div className="flex gap-3 overflow-x-auto">
-                    {[
-                        { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
-                        { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
-                        { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
-                        { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
-                        { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
-                        { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
-                    ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className="flex-1 min-w-[140px] rounded-xl border border-border bg-card p-4 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Icon className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+                {/* ── KPIs (2/3) ───────────────────────────────────────── */}
+                {punchRows.length > 0 && (
+                    <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                            { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
+                            { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
+                            { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
+                            { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
+                            { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
+                            { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
+                        ].map(({ label, value, icon: Icon, color }) => (
+                            <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Icon className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+                                </div>
+                                <p className={cn("text-xl font-semibold", color)}>{value}</p>
                             </div>
-                            <p className={cn("text-xl font-semibold", color)}>{value}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* ── View Tabs + Reset ─────────────────────────────────── */}
             {punchRows.length > 0 && (
