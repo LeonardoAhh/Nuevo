@@ -37,28 +37,52 @@ export const DEFAULT_SCHEDULES: ScheduleDefinition[] = [
         workDays: [0, 3, 4, 5, 6], // Mié-Dom
         toleranceMinutes: 10,
     },
-    // ── Turno 13 (2A) L-V 14-22, Sáb 14-18 ─────────────
+    // ── Turno 13a (2A) L-V 14-22 ───────────────────────
     {
-        id: "turno-13",
-        name: "2A (L-V 14-22, S 14-18)",
+        id: "turno-13a",
+        name: "2A (L-V 14-22)",
         turnoNumber: 13,
         entryTime: "14:00",
         exitTime: "22:00",
         lunchMinutes: 30,
         lunchToleranceMinutes: 5,
-        workDays: [1, 2, 3, 4, 5, 6], // Lun-Sáb
+        workDays: [1, 2, 3, 4, 5], // Lun-Vie
         toleranceMinutes: 10,
     },
-    // ── Turno 23 (2B) L-V 14-22, Sáb 10-14 ─────────────
+    // ── Turno 13b (2A) S 14-18 ─────────────────────────
     {
-        id: "turno-23",
-        name: "2B (L-V 14-22, S 10-14)",
+        id: "turno-13b",
+        name: "2A (S 14-18)",
+        turnoNumber: 13,
+        entryTime: "14:00",
+        exitTime: "18:00",
+        lunchMinutes: 0,
+        lunchToleranceMinutes: 0,
+        workDays: [6], // Sáb
+        toleranceMinutes: 10,
+    },
+    // ── Turno 23a (2B) L-V 14-22 ───────────────────────
+    {
+        id: "turno-23a",
+        name: "2B (L-V 14-22)",
         turnoNumber: 23,
         entryTime: "14:00",
         exitTime: "22:00",
         lunchMinutes: 30,
         lunchToleranceMinutes: 5,
-        workDays: [1, 2, 3, 4, 5, 6], // Lun-Sáb
+        workDays: [1, 2, 3, 4, 5], // Lun-Vie
+        toleranceMinutes: 10,
+    },
+    // ── Turno 23b (2B) S 10-14 ─────────────────────────
+    {
+        id: "turno-23b",
+        name: "2B (S 10-14)",
+        turnoNumber: 23,
+        entryTime: "10:00",
+        exitTime: "14:00",
+        lunchMinutes: 0,
+        lunchToleranceMinutes: 0,
+        workDays: [6], // Sáb
         toleranceMinutes: 10,
     },
     // ── Turno 7 (2C) L-S 14-22 ──────────────────────────
@@ -194,16 +218,28 @@ export const DEFAULT_SCHEDULES: ScheduleDefinition[] = [
         workDays: [0, 3, 4, 5, 6], // Mié-Dom
         toleranceMinutes: 10,
     },
-    // ── Turno 27 (Mixto 3) L-V 12-22, S 08-11 ──────────
+    // ── Turno 27a (Mixto 3) L-V 12-22 ──────────────────
     {
-        id: "turno-27",
-        name: "Mixto 3 (L-V 12-22, S 08-11)",
+        id: "turno-27a",
+        name: "Mixto 3 (L-V 12-22)",
         turnoNumber: 27,
         entryTime: "12:00",
         exitTime: "22:00",
         lunchMinutes: 60,
         lunchToleranceMinutes: 5,
-        workDays: [1, 2, 3, 4, 5, 6], // Lun-Sáb
+        workDays: [1, 2, 3, 4, 5], // Lun-Vie
+        toleranceMinutes: 10,
+    },
+    // ── Turno 27b (Mixto 3) S 08-11 ────────────────────
+    {
+        id: "turno-27b",
+        name: "Mixto 3 (S 08-11)",
+        turnoNumber: 27,
+        entryTime: "08:00",
+        exitTime: "11:00",
+        lunchMinutes: 0,
+        lunchToleranceMinutes: 0,
+        workDays: [6], // Sáb
         toleranceMinutes: 10,
     },
     // ── Turno 30 (Ciclados) 14-22 ───────────────────────
@@ -230,28 +266,52 @@ export const DEFAULT_SCHEDULES: ScheduleDefinition[] = [
         workDays: [1, 2, 3, 4, 5, 6], // Lun-Sáb
         toleranceMinutes: 10,
     },
-    // ── Turno 32 (2do) Dom-Jue 14-22, Dom 06-14 ────────
+    // ── Turno 32a (2do) L-J 14-22 ──────────────────────
     {
-        id: "turno-32",
-        name: "2do (L-J 14-22, D 06-14)",
+        id: "turno-32a",
+        name: "2do (L-J 14-22)",
         turnoNumber: 32,
         entryTime: "14:00",
         exitTime: "22:00",
         lunchMinutes: 30,
         lunchToleranceMinutes: 5,
-        workDays: [0, 1, 2, 3, 4], // Dom-Jue
+        workDays: [1, 2, 3, 4], // Lun-Jue
         toleranceMinutes: 10,
     },
-    // ── Turno 33 (Mixto) L 07-20, Ma-V 08-18 ───────────
+    // ── Turno 32b (1er) D 06-14 ────────────────────────
     {
-        id: "turno-33",
-        name: "Mixto (L 07-20, Ma-V 08-18)",
+        id: "turno-32b",
+        name: "2do (D 06-14)",
+        turnoNumber: 32,
+        entryTime: "06:00",
+        exitTime: "14:00",
+        lunchMinutes: 30,
+        lunchToleranceMinutes: 5,
+        workDays: [0], // Dom
+        toleranceMinutes: 10,
+    },
+    // ── Turno 33a (Mixto) L 07-20 ──────────────────────
+    {
+        id: "turno-33a",
+        name: "Mixto (L 07-20)",
+        turnoNumber: 33,
+        entryTime: "07:00",
+        exitTime: "20:00",
+        lunchMinutes: 60,
+        lunchToleranceMinutes: 5,
+        workDays: [1], // Lun
+        toleranceMinutes: 10,
+    },
+    // ── Turno 33b (Mixto) Ma-V 08-18 ───────────────────
+    {
+        id: "turno-33b",
+        name: "Mixto (Ma-V 08-18)",
         turnoNumber: 33,
         entryTime: "08:00",
         exitTime: "18:00",
         lunchMinutes: 60,
         lunchToleranceMinutes: 5,
-        workDays: [1, 2, 3, 4, 5], // Lun-Vie
+        workDays: [2, 3, 4, 5], // Mar-Vie
         toleranceMinutes: 10,
     },
     // ── Turno 34 (1er) Dom-Vie 06-14 ────────────────────
