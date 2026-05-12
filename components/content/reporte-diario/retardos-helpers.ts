@@ -482,13 +482,20 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         // Read all punches in column order; treat "-" as null (already handled by normalizeTime)
         const rawPunches = punchCols.map((col) => normalizeTime(row.getCell(col).value))
 
-        // Only reassign sequentially if "00:00" errors were filtered out;
-        // otherwise preserve original column positions so missing punches
-        // (e.g. forgot to clock in from lunch) stay in their correct slot.
-        const has0000 = rawPunches.some((p) => p === "00:00")
+        // De-duplicate adjacent identical timestamps (e.g. double-tap at clock-in)
+        // then filter 00:00 errors. If any 00:00 or duplicates were removed,
+        // reassign sequentially; otherwise preserve original column positions.
+        const deduped: (string | null)[] = []
+        for (let k = 0; k < rawPunches.length; k++) {
+            const p = rawPunches[k]
+            if (p != null && k > 0 && rawPunches[k - 1] === p) continue
+            deduped.push(p)
+        }
+        const has0000 = deduped.some((p) => p === "00:00")
+        const hadDuplicates = deduped.length < rawPunches.length
         let finalPunches: (string | null)[]
-        if (has0000) {
-            finalPunches = rawPunches.filter((p) => p != null && p !== "00:00")
+        if (has0000 || hadDuplicates) {
+            finalPunches = deduped.filter((p) => p != null && p !== "00:00")
         } else {
             finalPunches = rawPunches
         }
