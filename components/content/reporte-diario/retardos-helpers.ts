@@ -5,7 +5,7 @@ import type {
     PunchStatus,
     RetardosSummary,
 } from "./retardos-types"
-import { SKIP_ANALYSIS_CODES } from "./retardos-constants"
+import { SKIP_ANALYSIS_CODES, PUNCH_STATUS_LABELS } from "./retardos-constants"
 
 // ─── Time utils ──────────────────────────────────────────────────────────────
 
@@ -29,6 +29,23 @@ function diffMinutesOvernight(from: string, to: string): number {
     let diff = timeToMinutes(to) - timeToMinutes(from)
     if (diff < 0) diff += 1440
     return diff
+}
+
+// ─── Schedule resolution ─────────────────────────────────────────────────────
+
+/** Resolve the matching schedule for a punch row by turno number + day of week */
+export function resolveSchedule(
+    row: PunchRow,
+    schedules: ScheduleDefinition[],
+): ScheduleDefinition | undefined {
+    const dayOfWeek = row.fecha
+        ? new Date(row.fecha + "T12:00:00").getDay()
+        : -1
+    const candidates = schedules.filter((s) => s.turnoNumber === row.turno)
+    if (candidates.length > 1 && dayOfWeek >= 0) {
+        return candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
+    }
+    return candidates[0]
 }
 
 // ─── Analyze a single row ────────────────────────────────────────────────────
@@ -70,11 +87,7 @@ export function analyzeRow(
     }
 
     // Find matching schedule by turno number (+ day of week for multi-schedule turnos)
-    const dayOfWeek = new Date(row.fecha + "T12:00:00").getDay() // 0=Sun..6=Sat
-    const candidates = schedules.filter((s) => s.turnoNumber === row.turno)
-    const schedule = candidates.length > 1
-        ? candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
-        : candidates[0]
+    const schedule = resolveSchedule(row, schedules)
     if (!schedule) {
         return {
             ...base,
@@ -310,15 +323,6 @@ export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<vo
     headerRow.font = { bold: true }
     headerRow.alignment = { horizontal: "center" }
 
-    const statusLabels: Record<string, string> = {
-        on_time: "Puntual",
-        late: "Retardo",
-        missing_punch: "Marcaje faltante",
-        no_schedule: "Sin horario",
-        day_off: "Descanso",
-        incidence: "Incidencia",
-    }
-
     for (const a of analyses) {
         sheet.addRow({
             numero_empleado: a.numero_empleado,
@@ -326,7 +330,7 @@ export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<vo
             fecha: a.fecha,
             turno: a.turno,
             incidencia: a.incidencia,
-            status: statusLabels[a.status] || a.status,
+            status: PUNCH_STATUS_LABELS[a.status] || a.status,
             entrada1: a.entrada1 || "",
             salida1: a.salida1 || "",
             entrada2: a.entrada2 || "",
@@ -581,12 +585,7 @@ export function mergeNightShiftPunches(
             const current = empRows[i]
 
             // Resolve schedule for current row
-            const dayOfWeek = new Date(current.fecha + "T12:00:00").getDay()
-            const candidates = schedules.filter((s) => s.turnoNumber === current.turno)
-            const schedule =
-                candidates.length > 1
-                    ? candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
-                    : candidates[0]
+            const schedule = resolveSchedule(current, schedules)
 
             const isNight = schedule
                 ? timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
@@ -625,6 +624,10 @@ export function mergeNightShiftPunches(
 
                     // Update next-day row with remaining punches only
                     empRows[i + 1] = assignPunches(next, remaining)
+                    // Skip empty next-day row (all punches were residuals)
+                    if (remaining.length === 0) {
+                        processed.add(i + 1)
+                    }
                 }
             }
 
@@ -638,20 +641,6 @@ export function mergeNightShiftPunches(
 }
 
 // ─── Schedule-aware punch classification ─────────────────────────────────────
-
-function resolveSchedule(
-    row: PunchRow,
-    schedules: ScheduleDefinition[],
-): ScheduleDefinition | undefined {
-    const dayOfWeek = row.fecha
-        ? new Date(row.fecha + "T12:00:00").getDay()
-        : -1
-    const candidates = schedules.filter((s) => s.turnoNumber === row.turno)
-    if (candidates.length > 1 && dayOfWeek >= 0) {
-        return candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
-    }
-    return candidates[0]
-}
 
 /**
  * For day shifts with lunch, reclassify punches using the schedule

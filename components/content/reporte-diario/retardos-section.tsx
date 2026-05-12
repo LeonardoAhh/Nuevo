@@ -38,6 +38,22 @@ import RetardosScheduleConfig from "./retardos-schedule-config"
 type SortField = "numero_empleado" | "nombre" | "fecha" | "turno" | "status" | "minutos_retardo" | "minutos_trabajados" | "minutos_comida" | "minutos_extra"
 type SortDir = "asc" | "desc"
 
+const SORTABLE_FIELDS = new Set<SortField>([
+    "numero_empleado", "nombre", "fecha", "turno", "status",
+    "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra",
+])
+
+function SortIcon({ field, activeField, activeDir }: {
+    field: SortField
+    activeField: SortField
+    activeDir: SortDir
+}) {
+    if (activeField !== field) return null
+    return activeDir === "asc"
+        ? <ChevronUp className="w-3 h-3 inline ml-0.5" />
+        : <ChevronDown className="w-3 h-3 inline ml-0.5" />
+}
+
 export default function RetardosSection() {
     const [schedules, setSchedules] = useState<ScheduleDefinition[]>(DEFAULT_SCHEDULES)
     const [punchRows, setPunchRows] = useState<PunchRow[]>([])
@@ -138,14 +154,7 @@ export default function RetardosSection() {
         }
     }
 
-    const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return null
-        return sortDir === "asc"
-            ? <ChevronUp className="w-3 h-3 inline ml-0.5" />
-            : <ChevronDown className="w-3 h-3 inline ml-0.5" />
-    }
 
-    const labelCls = "block text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5"
 
     return (
         <div className="flex flex-col gap-5">
@@ -381,18 +390,18 @@ export default function RetardosSection() {
                                             <th
                                                 key={field}
                                                 onClick={() => {
-                                                    if (["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field)) {
+                                                    if (SORTABLE_FIELDS.has(field as SortField)) {
                                                         toggleSort(field as SortField)
                                                     }
                                                 }}
                                                 className={cn(
                                                     "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap",
-                                                    ["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && "cursor-pointer hover:text-foreground",
+                                                    SORTABLE_FIELDS.has(field as SortField) && "cursor-pointer hover:text-foreground",
                                                 )}
                                             >
                                                 {label}
-                                                {["numero_empleado", "nombre", "fecha", "turno", "status", "minutos_trabajados", "minutos_comida", "minutos_retardo", "minutos_extra"].includes(field) && (
-                                                    <SortIcon field={field as SortField} />
+                                                {SORTABLE_FIELDS.has(field as SortField) && (
+                                                    <SortIcon field={field as SortField} activeField={sortField} activeDir={sortDir} />
                                                 )}
                                             </th>
                                         ))}
