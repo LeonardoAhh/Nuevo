@@ -31,6 +31,7 @@ import {
     minutesToHHMM,
     exportRetardosExcel,
     mergeNightShiftPunches,
+    classifyPunchesBySchedule,
 } from "./retardos-helpers"
 import RetardosScheduleConfig from "./retardos-schedule-config"
 
@@ -53,7 +54,8 @@ export default function RetardosSection() {
 
     const analyses = useMemo(() => {
         const merged = mergeNightShiftPunches(punchRows, schedules)
-        return analyzeAllRows(merged, schedules)
+        const classified = classifyPunchesBySchedule(merged, schedules)
+        return analyzeAllRows(classified, schedules)
     }, [punchRows, schedules])
 
     const summary = useMemo(

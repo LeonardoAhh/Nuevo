@@ -636,3 +636,56 @@ export function mergeNightShiftPunches(
 
     return result
 }
+
+// ─── Schedule-aware punch classification ─────────────────────────────────────
+
+function resolveSchedule(
+    row: PunchRow,
+    schedules: ScheduleDefinition[],
+): ScheduleDefinition | undefined {
+    const dayOfWeek = row.fecha
+        ? new Date(row.fecha + "T12:00:00").getDay()
+        : -1
+    const candidates = schedules.filter((s) => s.turnoNumber === row.turno)
+    if (candidates.length > 1 && dayOfWeek >= 0) {
+        return candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
+    }
+    return candidates[0]
+}
+
+/**
+ * For day shifts with lunch, reclassify punches using the schedule
+ * so that the last punch maps to salida (shift exit) when appropriate,
+ * instead of being blindly assigned by sequential order.
+ *
+ * Pattern for 4-punch day shift: entrada, sal.comedor, ent.comedor, salida
+ * When only 3 punches exist, check if last punch is near exitTime → salida.
+ */
+export function classifyPunchesBySchedule(
+    rows: PunchRow[],
+    schedules: ScheduleDefinition[],
+): PunchRow[] {
+    return rows.map((row) => {
+        const schedule = resolveSchedule(row, schedules)
+        if (!schedule) return row
+
+        const isNight = timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
+        if (isNight) return row
+        if (schedule.lunchMinutes === 0) return row
+
+        const punches = punchArray(row).filter((p): p is string => p != null)
+        if (punches.length !== 3) return row
+
+        // 3 punches for a day shift with lunch: check if last is near exitTime
+        const exitMin = timeToMinutes(schedule.exitTime)
+        const lastMin = timeToMinutes(punches[2])
+        const midShift = (timeToMinutes(schedule.entryTime) + exitMin) / 2
+
+        // If last punch is closer to exitTime than to mid-shift, it's the salida
+        if (Math.abs(lastMin - exitMin) < Math.abs(lastMin - midShift)) {
+            return assignPunches(row, [punches[0], punches[1], null, punches[2]])
+        }
+
+        return row
+    })
+}
