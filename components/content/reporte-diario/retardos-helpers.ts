@@ -341,17 +341,26 @@ export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<vo
 
 // ─── Excel parsing ───────────────────────────────────────────────────────────
 
+function extractFormulaResult(value: unknown): unknown {
+    if (value != null && typeof value === "object" && "result" in (value as Record<string, unknown>)) {
+        return (value as Record<string, unknown>).result
+    }
+    return value
+}
+
 function normalizeString(value: unknown): string {
-    if (value == null) return ""
-    if (typeof value === "string") return value.trim()
-    if (typeof value === "number") return String(value)
+    const v = extractFormulaResult(value)
+    if (v == null) return ""
+    if (typeof v === "string") return v.replace(/_x000D_\n?/g, "").trim()
+    if (typeof v === "number") return String(v)
     return ""
 }
 
 function normalizeTime(value: unknown): string | null {
-    if (value == null || value === "") return null
-    if (typeof value === "string") {
-        const trimmed = value.trim()
+    const v = extractFormulaResult(value)
+    if (v == null || v === "") return null
+    if (typeof v === "string") {
+        const trimmed = v.trim()
         if (!trimmed || trimmed === "-") return null
         if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) {
             const parts = trimmed.split(":")
@@ -359,25 +368,26 @@ function normalizeTime(value: unknown): string | null {
         }
         return trimmed
     }
-    if (typeof value === "number") {
-        const totalMinutes = Math.round(value * 24 * 60)
+    if (typeof v === "number") {
+        const totalMinutes = Math.round(v * 24 * 60)
         const h = Math.floor(totalMinutes / 60) % 24
         const m = totalMinutes % 60
         return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
     }
-    if (value instanceof Date) {
-        return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
+    if (v instanceof Date) {
+        return `${String(v.getHours()).padStart(2, "0")}:${String(v.getMinutes()).padStart(2, "0")}`
     }
     return null
 }
 
 function normalizeDate(value: unknown): string {
-    if (value == null || value === "") return ""
-    if (value instanceof Date) {
-        return value.toISOString().slice(0, 10)
+    const v = extractFormulaResult(value)
+    if (v == null || v === "") return ""
+    if (v instanceof Date) {
+        return v.toISOString().slice(0, 10)
     }
-    if (typeof value === "string") {
-        const trimmed = value.trim()
+    if (typeof v === "string") {
+        const trimmed = v.trim()
         if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10)
         if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
             const [d, m, y] = trimmed.split("/")
@@ -385,8 +395,8 @@ function normalizeDate(value: unknown): string {
         }
         return trimmed
     }
-    if (typeof value === "number") {
-        const epoch = new Date((value - 25569) * 86400 * 1000)
+    if (typeof v === "number") {
+        const epoch = new Date((v - 25569) * 86400 * 1000)
         return epoch.toISOString().slice(0, 10)
     }
     return ""
@@ -485,4 +495,116 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
     })
 
     return { rows, errors }
+}
+
+// ─── Night-shift cross-date merge ────────────────────────────────────────────
+
+function punchArray(row: PunchRow): (string | null)[] {
+    return [
+        row.entrada1, row.salida1, row.entrada2, row.salida2,
+        row.entrada3, row.salida3, row.entrada4, row.salida4,
+        row.entrada5, row.salida5,
+    ]
+}
+
+function assignPunches(row: PunchRow, punches: (string | null)[]): PunchRow {
+    return {
+        ...row,
+        entrada1: punches[0] ?? null,
+        salida1: punches[1] ?? null,
+        entrada2: punches[2] ?? null,
+        salida2: punches[3] ?? null,
+        entrada3: punches[4] ?? null,
+        salida3: punches[5] ?? null,
+        entrada4: punches[6] ?? null,
+        salida4: punches[7] ?? null,
+        entrada5: punches[8] ?? null,
+        salida5: punches[9] ?? null,
+    }
+}
+
+/**
+ * For night-shift employees whose punches span two calendar dates,
+ * pull the "residual" early-morning punches from the next-day row
+ * into the entry-day row so that one row = one full shift.
+ */
+export function mergeNightShiftPunches(
+    rows: PunchRow[],
+    schedules: ScheduleDefinition[],
+): PunchRow[] {
+    // Group by employee, preserving original order
+    const byEmployee = new Map<string, PunchRow[]>()
+    for (const row of rows) {
+        const empRows = byEmployee.get(row.numero_empleado) ?? []
+        empRows.push(row)
+        byEmployee.set(row.numero_empleado, empRows)
+    }
+
+    const result: PunchRow[] = []
+
+    for (const [, empRows] of byEmployee) {
+        // Sort by fecha ascending
+        empRows.sort((a, b) => a.fecha.localeCompare(b.fecha))
+
+        // Track which rows had residuals removed (to avoid pushing duplicates)
+        const processed = new Set<number>()
+
+        for (let i = 0; i < empRows.length; i++) {
+            const current = empRows[i]
+
+            // Resolve schedule for current row
+            const dayOfWeek = new Date(current.fecha + "T12:00:00").getDay()
+            const candidates = schedules.filter((s) => s.turnoNumber === current.turno)
+            const schedule =
+                candidates.length > 1
+                    ? candidates.find((s) => s.workDays.includes(dayOfWeek)) ?? candidates[0]
+                    : candidates[0]
+
+            const isNight = schedule
+                ? timeToMinutes(schedule.entryTime) > timeToMinutes(schedule.exitTime)
+                : false
+
+            if (isNight && i + 1 < empRows.length) {
+                const next = empRows[i + 1]
+                const nextPunches = punchArray(next).filter((p): p is string => p != null)
+                const entryMin = timeToMinutes(schedule!.entryTime)
+                const threshold = entryMin - 120 // e.g. 20:00 for 22:00 entry
+
+                // Split next-day punches: residuals (before threshold) vs remaining
+                const residuals: string[] = []
+                const remaining: string[] = []
+                let foundNextEntry = false
+                for (const p of nextPunches) {
+                    const m = timeToMinutes(p)
+                    if (!foundNextEntry && m < threshold) {
+                        residuals.push(p)
+                    } else {
+                        foundNextEntry = true
+                        remaining.push(p)
+                    }
+                }
+
+                if (residuals.length > 0) {
+                    // Merge: current punches + residuals, de-duplicate adjacent
+                    const currentPunches = punchArray(current).filter((p): p is string => p != null)
+                    const merged: string[] = []
+                    for (const p of [...currentPunches, ...residuals]) {
+                        if (merged.length === 0 || merged[merged.length - 1] !== p) {
+                            merged.push(p)
+                        }
+                    }
+                    empRows[i] = assignPunches(current, merged)
+
+                    // Update next-day row with remaining punches only
+                    empRows[i + 1] = assignPunches(next, remaining)
+                }
+            }
+
+            if (!processed.has(i)) {
+                result.push(empRows[i])
+            }
+        }
+    }
+
+    return result
 }
