@@ -479,9 +479,19 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno).value), 10) || 0 : 0
         const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia).value) : "A"
 
-        // Read all punches in column order, filter invalid, reassign sequentially
+        // Read all punches in column order; treat "-" as null (already handled by normalizeTime)
         const rawPunches = punchCols.map((col) => normalizeTime(row.getCell(col).value))
-        const validPunches = rawPunches.filter((p): p is string => p != null && p !== "00:00")
+
+        // Only reassign sequentially if "00:00" errors were filtered out;
+        // otherwise preserve original column positions so missing punches
+        // (e.g. forgot to clock in from lunch) stay in their correct slot.
+        const has0000 = rawPunches.some((p) => p === "00:00")
+        let finalPunches: (string | null)[]
+        if (has0000) {
+            finalPunches = rawPunches.filter((p) => p != null && p !== "00:00")
+        } else {
+            finalPunches = rawPunches
+        }
 
         const obs = colObs >= 0 ? normalizeString(row.getCell(colObs).value) : ""
 
@@ -491,16 +501,16 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
             fecha,
             turno,
             incidencia,
-            entrada1: validPunches[0] ?? null,
-            salida1: validPunches[1] ?? null,
-            entrada2: validPunches[2] ?? null,
-            salida2: validPunches[3] ?? null,
-            entrada3: validPunches[4] ?? null,
-            salida3: validPunches[5] ?? null,
-            entrada4: validPunches[6] ?? null,
-            salida4: validPunches[7] ?? null,
-            entrada5: validPunches[8] ?? null,
-            salida5: validPunches[9] ?? null,
+            entrada1: finalPunches[0] ?? null,
+            salida1: finalPunches[1] ?? null,
+            entrada2: finalPunches[2] ?? null,
+            salida2: finalPunches[3] ?? null,
+            entrada3: finalPunches[4] ?? null,
+            salida3: finalPunches[5] ?? null,
+            entrada4: finalPunches[6] ?? null,
+            salida4: finalPunches[7] ?? null,
+            entrada5: finalPunches[8] ?? null,
+            salida5: finalPunches[9] ?? null,
             observaciones: obs,
         })
     })
