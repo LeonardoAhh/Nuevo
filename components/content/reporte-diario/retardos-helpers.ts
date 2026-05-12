@@ -132,12 +132,18 @@ export function analyzeRow(
     // Check missing punches
     // Night shifts: only entrada1 is required on the entry day;
     // comedor/salida punches may appear in the next day's report
+    const noLunch = schedule.lunchMinutes === 0
     const faltantes: string[] = []
     if (!row.entrada1) faltantes.push("Entrada")
     if (!isNightShift) {
-        if (!row.salida1) faltantes.push("Sal. comedor")
-        if (!row.entrada2) faltantes.push("Ent. comedor")
-        if (!row.salida2) faltantes.push("Salida")
+        if (noLunch) {
+            // No-lunch schedule: only need entrada + salida (salida1 = shift exit)
+            if (!row.salida1) faltantes.push("Salida")
+        } else {
+            if (!row.salida1) faltantes.push("Sal. comedor")
+            if (!row.entrada2) faltantes.push("Ent. comedor")
+            if (!row.salida2) faltantes.push("Salida")
+        }
     }
     const diff = isNightShift ? diffMinutesOvernight : diffMinutes
 
@@ -149,8 +155,13 @@ export function analyzeRow(
         if (lastPunch) {
             minutosTrabajados = diff(row.entrada1, lastPunch)
         }
+    } else if (noLunch) {
+        // No-lunch schedule: entrada1→salida1 is the full shift
+        if (row.entrada1 && row.salida1) {
+            minutosTrabajados = diff(row.entrada1, row.salida1)
+        }
     } else {
-        // Day shift: (entrada1→salida1) + (entrada2→salida2)
+        // Day shift with lunch: (entrada1→salida1) + (entrada2→salida2)
         if (row.entrada1 && row.salida1) {
             minutosTrabajados += diff(row.entrada1, row.salida1)
         }
