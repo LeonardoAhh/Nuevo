@@ -4,6 +4,7 @@ import type {
     PunchAnalysis,
     PunchStatus,
     RetardosSummary,
+    EmployeeSummary,
 } from "./retardos-types"
 import { SKIP_ANALYSIS_CODES, PUNCH_STATUS_LABELS } from "./retardos-constants"
 
@@ -291,6 +292,50 @@ export function computeRetardosSummary(analyses: PunchAnalysis[]): RetardosSumma
         promedio_comida_minutos: promedioComida,
         pct_puntualidad: pctPuntualidad,
     }
+}
+
+// ─── Employee summaries ──────────────────────────────────────────────────────
+
+export function computeEmployeeSummaries(analyses: PunchAnalysis[]): EmployeeSummary[] {
+    const byEmployee = new Map<string, PunchAnalysis[]>()
+    for (const a of analyses) {
+        const rows = byEmployee.get(a.numero_empleado) ?? []
+        rows.push(a)
+        byEmployee.set(a.numero_empleado, rows)
+    }
+
+    const summaries: EmployeeSummary[] = []
+    for (const [empId, registros] of byEmployee) {
+        const working = registros.filter(
+            (a) => a.status !== "day_off" && a.status !== "incidence",
+        )
+        const diasPuntual = working.filter((a) => a.status === "on_time").length
+        const diasRetardo = working.filter((a) => a.status === "late").length
+        const diasFaltantes = working.filter((a) => a.status === "missing_punch").length
+        const withLunch = working.filter((a) => a.minutos_comida > 0)
+
+        summaries.push({
+            numero_empleado: empId,
+            nombre: registros[0].nombre,
+            turno: registros[0].turno,
+            total_dias: working.length,
+            dias_puntual: diasPuntual,
+            dias_retardo: diasRetardo,
+            dias_faltantes: diasFaltantes,
+            pct_puntualidad: working.length > 0
+                ? Math.round((diasPuntual / working.length) * 100)
+                : 0,
+            total_minutos_retardo: working.reduce((s, a) => s + a.minutos_retardo, 0),
+            total_minutos_extra: working.reduce((s, a) => s + a.minutos_extra, 0),
+            total_minutos_trabajados: working.reduce((s, a) => s + a.minutos_trabajados, 0),
+            promedio_comida_minutos: withLunch.length > 0
+                ? Math.round(withLunch.reduce((s, a) => s + a.minutos_comida, 0) / withLunch.length)
+                : 0,
+            registros,
+        })
+    }
+
+    return summaries.sort((a, b) => a.numero_empleado.localeCompare(b.numero_empleado))
 }
 
 // ─── Excel export ────────────────────────────────────────────────────────────
