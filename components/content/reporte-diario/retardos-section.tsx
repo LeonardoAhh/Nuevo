@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState, lazy, Suspense } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import {
@@ -23,11 +23,25 @@ import {
     Users,
     Table,
     Plus,
+    MoreVertical,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { PaginationBar } from "@/components/ui/pagination-bar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 import type { ScheduleDefinition, PunchRow } from "./retardos-types"
-import { DEFAULT_SCHEDULES, PUNCH_STATUS_LABELS, PUNCH_STATUS_COLORS } from "./retardos-constants"
+import { DEFAULT_SCHEDULES, PUNCH_STATUS_LABELS, PUNCH_STATUS_COLORS, PUNCH_STATUS_BADGE_VARIANTS } from "./retardos-constants"
 import { INCIDENCIA_LABELS } from "./constants"
 import {
     parseExcelPunches,
@@ -79,6 +93,9 @@ export default function RetardosSection() {
     const [sortDir, setSortDir] = useState<SortDir>("asc")
     const [searchQuery, setSearchQuery] = useState("")
     const [activeTab, setActiveTab] = useState<ViewTab>("table")
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState<25 | 50 | 100>(50)
+    const [density, setDensity] = useState<"compact" | "cozy">("cozy")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const analyses = useMemo(() => {
@@ -124,10 +141,36 @@ export default function RetardosSection() {
         })
     }, [analyses, filterStatus, filterTurno, searchQuery, sortField, sortDir])
 
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [filterStatus, filterTurno, searchQuery, pageSize])
+
+    const totalPages = Math.max(1, Math.ceil(filteredAnalyses.length / pageSize))
+
+    const pageRows = useMemo(() => {
+        const start = (currentPage - 1) * pageSize
+        return filteredAnalyses.slice(start, start + pageSize)
+    }, [filteredAnalyses, currentPage, pageSize])
+
     const availableTurnos = useMemo(
         () => Array.from(new Set(punchRows.map((r) => r.turno))).sort((a, b) => a - b),
         [punchRows],
     )
+
+    const statusOptions = useMemo(() => {
+        const opts: Array<{ value: string; label: string; count: number }> = [
+            { value: "all", label: "Todos", count: analyses.length },
+        ]
+            ; (["on_time", "late", "missing_punch", "no_schedule", "incidence", "day_off"] as const).forEach((st) => {
+                const count = analyses.filter((a) => a.status === st).length
+                if (count > 0) opts.push({ value: st, label: PUNCH_STATUS_LABELS[st], count })
+            })
+        const teCount = analyses.filter((a) => a.minutos_extra > 0).length
+        if (teCount > 0) opts.push({ value: "tiempo_extra", label: "T. extra", count: teCount })
+        const ecCount = analyses.filter((a) => a.exceso_comida > 0).length
+        if (ecCount > 0) opts.push({ value: "exceso_comida", label: "Exc. comida", count: ecCount })
+        return opts
+    }, [analyses])
 
     const handleFiles = useCallback(async (files: File[]) => {
         setLoading(true)
@@ -201,7 +244,7 @@ export default function RetardosSection() {
                     <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-muted-foreground" />
-                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
+                            <p className="text-sm font-semibold text-foreground">Seleccione archivo</p>
                         </div>
                     </CardHeader>
 
@@ -274,16 +317,16 @@ export default function RetardosSection() {
                 {punchRows.length > 0 && (
                     <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {[
-                            { label: "Retardos", value: summary.total_retardos, icon: AlertTriangle, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
-                            { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, icon: AlertCircle, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
-                            { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, icon: Timer, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
-                            { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), icon: Clock, color: "text-foreground" },
-                            { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), icon: Zap, color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
-                            { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, icon: UtensilsCrossed, color: "text-foreground" },
-                        ].map(({ label, value, icon: Icon, color }) => (
+                            { label: "Retardos", value: summary.total_retardos, color: summary.total_retardos > 0 ? "text-amber-600" : "text-emerald-600" },
+                            { label: "Marcajes faltantes", value: summary.total_faltas_marcaje, color: summary.total_faltas_marcaje > 0 ? "text-destructive" : "text-emerald-600" },
+                            { label: "Puntualidad", value: `${summary.pct_puntualidad}%`, color: summary.pct_puntualidad >= 90 ? "text-emerald-600" : "text-amber-600" },
+                            { label: "Hrs. trabajadas", value: minutesToHHMM(summary.total_minutos_trabajados), color: "text-foreground" },
+                            { label: "Tiempo extra", value: minutesToHHMM(summary.total_minutos_extra), color: summary.total_minutos_extra > 0 ? "text-blue-500" : "text-foreground" },
+                            { label: "Prom. comida", value: `${summary.promedio_comida_minutos} min`, color: "text-foreground" },
+                        ].map(({ label, value, color }) => (
                             <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Icon className="w-4 h-4 text-muted-foreground" />
+                                    <UtensilsCrossed className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
                                 </div>
                                 <p className={cn("text-xl font-semibold", color)}>{value}</p>
@@ -293,7 +336,7 @@ export default function RetardosSection() {
                 )}
             </div>
 
-            {/* ── View Tabs + Reset ─────────────────────────────────── */}
+            {/* ── View Tabs + Acciones (kebab) ─────────────────────────────── */}
             {punchRows.length > 0 && (
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
@@ -318,126 +361,102 @@ export default function RetardosSection() {
                             </button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                        {fileNames.length > 0 && (
-                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                                {fileNames.join(", ")}
-                            </span>
-                        )}
-                        <button
-                            type="button"
-                            onClick={handleReset}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-destructive/40 text-destructive hover:bg-destructive/10 transition"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Limpiar datos
-                        </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                aria-label="Acciones"
+                                className="h-9 w-9"
+                            >
+                                <MoreVertical className="w-4 h-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-60">
+                            {fileNames.length > 0 && (
+                                <>
+                                    <div className="px-2 py-1.5 text-[11px] text-muted-foreground truncate">
+                                        {fileNames.join(", ")}
+                                    </div>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
+                            <DropdownMenuItem onSelect={() => exportRetardosExcel(filteredAnalyses)}>
+                                <Download className="w-4 h-4" />
+                                Descargar Excel
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onSelect={handleReset}
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Limpiar datos
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
+
+            {/* ── Toolbar: Search + Turno Select ───────────────────────────── */}
+            {punchRows.length > 0 && activeTab === "table" && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por número o nombre..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 h-9 text-sm"
+                        />
                     </div>
-                </div>
-            )}
-
-            {/* ── Search + Filters ──────────────────────────────────── */}
-            {punchRows.length > 0 && activeTab === "table" && (
-                <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por número o nombre..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 h-9 text-sm"
-                    />
-                </div>
-            )}
-            {punchRows.length > 0 && activeTab === "table" && (
-                <div className="flex flex-wrap gap-2 items-center">
-                    <button
-                        type="button"
-                        onClick={() => exportRetardosExcel(filteredAnalyses)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border transition bg-card border-border text-muted-foreground hover:border-primary hover:text-primary flex items-center gap-1.5"
-                    >
-                        <Download className="w-3.5 h-3.5" />
-                        Descargar Excel
-                    </button>
-                    <span className="text-xs text-muted-foreground self-center mx-1">|</span>
-                    <button
-                        type="button"
-                        onClick={() => setFilterStatus("")}
-                        className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
-                            !filterStatus ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
-                        )}
-                    >
-                        Todos ({analyses.length})
-                    </button>
-                    {(["on_time", "late", "missing_punch", "no_schedule", "incidence", "day_off"] as const).map((st) => {
-                        const count = analyses.filter((a) => a.status === st).length
-                        if (count === 0) return null
-                        return (
-                            <button
-                                key={st}
-                                type="button"
-                                onClick={() => setFilterStatus(filterStatus === st ? "" : st)}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
-                                    filterStatus === st ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
-                                )}
-                            >
-                                {PUNCH_STATUS_LABELS[st]} ({count})
-                            </button>
-                        )
-                    })}
-                    {(() => {
-                        const count = analyses.filter((a) => a.minutos_extra > 0).length
-                        if (count === 0) return null
-                        return (
-                            <button
-                                type="button"
-                                onClick={() => setFilterStatus(filterStatus === "tiempo_extra" ? "" : "tiempo_extra")}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
-                                    filterStatus === "tiempo_extra" ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
-                                )}
-                            >
-                                T. extra ({count})
-                            </button>
-                        )
-                    })()}
-                    {(() => {
-                        const count = analyses.filter((a) => a.exceso_comida > 0).length
-                        if (count === 0) return null
-                        return (
-                            <button
-                                type="button"
-                                onClick={() => setFilterStatus(filterStatus === "exceso_comida" ? "" : "exceso_comida")}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
-                                    filterStatus === "exceso_comida" ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
-                                )}
-                            >
-                                Exc. comida ({count})
-                            </button>
-                        )
-                    })()}
-
                     {availableTurnos.length > 1 && (
-                        <>
-                            <span className="text-xs text-muted-foreground self-center mx-1">|</span>
-                            {availableTurnos.map((t) => (
-                                <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => setFilterTurno(filterTurno === String(t) ? "" : String(t))}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-medium border transition",
-                                        filterTurno === String(t) ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:border-foreground/40",
-                                    )}
-                                >
-                                    Turno {t}
-                                </button>
-                            ))}
-                        </>
+                        <Select
+                            value={filterTurno || "all"}
+                            onValueChange={(v) => setFilterTurno(v === "all" ? "" : v)}
+                        >
+                            <SelectTrigger className="h-9 w-full text-sm sm:w-44">
+                                <SelectValue placeholder="Turno" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los turnos</SelectItem>
+                                {availableTurnos.map((t) => (
+                                    <SelectItem key={t} value={String(t)}>
+                                        Turno {t}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     )}
                 </div>
+            )}
+
+            {/* ── Segmented Control: Estado ───────────────────────────────── */}
+            {punchRows.length > 0 && activeTab === "table" && (
+                <Tabs
+                    value={filterStatus || "all"}
+                    onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}
+                    className="w-full"
+                >
+                    <TabsList className="flex h-auto flex-wrap justify-start gap-1 rounded-lg border border-border bg-muted/40 p-1">
+                        {statusOptions.map(({ value, label, count }) => (
+                            <TabsTrigger
+                                key={value}
+                                value={value}
+                                className="group h-8 gap-1.5 rounded-md px-3 text-xs font-medium text-muted-foreground hover:bg-background/60 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                {label}
+                                <Badge
+                                    variant="secondary"
+                                    size="sm"
+                                    className="bg-muted text-muted-foreground group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary"
+                                >
+                                    {count}
+                                </Badge>
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
             )}
 
             {/* ── Employee Summary View ─────────────────────────────── */}
@@ -456,92 +475,169 @@ export default function RetardosSection() {
 
             {/* ── Data Table ──────────────────────────────────────── */}
             {punchRows.length > 0 && activeTab === "table" && (
-                <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-border bg-muted/40">
-                                        {([
-                                            ["numero_empleado", "No."],
-                                            ["nombre", "Nombre"],
-                                            ["fecha", "Fecha"],
-                                            ["turno", "Turno"],
-                                            ["status", "Estado"],
-                                            ["entrada1", "Entrada"],
-                                            ["salida1", "Sal. comedor"],
-                                            ["entrada2", "Ent. comedor"],
-                                            ["salida2", "Salida"],
-                                            ["minutos_trabajados", "Hrs. trab."],
-                                            ["minutos_comida", "Comida"],
-                                            ["exceso_comida", "Exc. comida"],
-                                            ["minutos_retardo", "Retardo"],
-                                            ["minutos_extra", "T. extra"],
-                                        ] as [string, string][]).map(([field, label]) => (
-                                            <th
-                                                key={field}
-                                                onClick={() => {
-                                                    if (SORTABLE_FIELDS.has(field as SortField)) {
-                                                        toggleSort(field as SortField)
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap",
-                                                    SORTABLE_FIELDS.has(field as SortField) && "cursor-pointer hover:text-foreground",
-                                                )}
-                                            >
-                                                {label}
-                                                {SORTABLE_FIELDS.has(field as SortField) && (
-                                                    <SortIcon field={field as SortField} activeField={sortField} activeDir={sortDir} />
-                                                )}
-                                            </th>
-                                        ))}
-
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredAnalyses.map((a, i) => (
-                                        <tr key={i} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                                            <td className="px-3 py-2 font-mono text-xs">{a.numero_empleado}</td>
-                                            <td className="px-3 py-2 max-w-[200px] truncate">{a.nombre}</td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.fecha || "—"}</td>
-                                            <td className="px-3 py-2 text-center">{a.turno}</td>
-                                            <td className={cn("px-3 py-2 text-xs font-medium whitespace-nowrap", PUNCH_STATUS_COLORS[a.status])}>
-                                                {a.status === "incidence" ? (INCIDENCIA_LABELS[a.incidencia] || a.incidencia) : PUNCH_STATUS_LABELS[a.status]}
-                                                {a.marcajes_faltantes.length > 0 && (
-                                                    <span className="block text-[10px] text-destructive/70">
-                                                        {a.marcajes_faltantes.join(", ")}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.entrada1 || "—"}</td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.salida1 || "—"}</td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.entrada2 || "—"}</td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.salida2 || "—"}</td>
-                                            <td className="px-3 py-2 font-mono text-xs font-medium">{minutesToHHMM(a.minutos_trabajados)}</td>
-                                            <td className="px-3 py-2 font-mono text-xs">{a.minutos_comida > 0 ? `${a.minutos_comida} min` : "—"}</td>
-                                            <td className={cn("px-3 py-2 text-xs font-medium", a.exceso_comida > 0 ? "text-amber-600" : "text-muted-foreground")}>
-                                                {a.exceso_comida > 0 ? `${a.exceso_comida} min` : "—"}
-                                            </td>
-                                            <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_retardo > 0 ? "text-amber-600 font-medium" : "")}>
-                                                {a.minutos_retardo > 0 ? `${a.minutos_retardo} min` : "—"}
-                                            </td>
-                                            <td className={cn("px-3 py-2 font-mono text-xs", a.minutos_extra > 0 ? "text-blue-500 font-medium" : "")}>
-                                                {a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "—"}
-                                            </td>
-
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                <div className="space-y-3">
+                    {/* Density + Page size toolbar */}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            Mostrando <span className="font-medium text-foreground">{pageRows.length}</span> de {filteredAnalyses.length} registros
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
+                                {(["compact", "cozy"] as const).map((d) => (
+                                    <button
+                                        key={d}
+                                        type="button"
+                                        onClick={() => setDensity(d)}
+                                        className={cn(
+                                            "px-2.5 py-1 rounded-md text-[11px] font-medium transition",
+                                            density === d
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground",
+                                        )}
+                                        aria-pressed={density === d}
+                                    >
+                                        {d === "compact" ? "Compacto" : "Cómodo"}
+                                    </button>
+                                ))}
+                            </div>
+                            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as 25 | 50 | 100)}>
+                                <SelectTrigger className="h-9 w-24 text-sm" aria-label="Filas por página">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="25">25 / pág</SelectItem>
+                                    <SelectItem value="50">50 / pág</SelectItem>
+                                    <SelectItem value="100">100 / pág</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                        {filteredAnalyses.length === 0 && punchRows.length > 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-8">
-                                Sin resultados con los filtros actuales.
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
+                    </div>
+
+                    <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                        <CardContent className="p-0">
+                            <TooltipProvider delayDuration={200}>
+                                <div className="overflow-auto max-h-[640px] relative">
+                                    <table className="w-full text-sm">
+                                        <thead className="sticky top-0 z-20 bg-card">
+                                            <tr className="border-b border-border bg-muted/60 backdrop-blur">
+                                                {([
+                                                    ["numero_empleado", "No.", true],
+                                                    ["nombre", "Nombre", true],
+                                                    ["fecha", "Fecha", false],
+                                                    ["turno", "Turno", false],
+                                                    ["status", "Estado", false],
+                                                    ["entrada1", "Entrada", false],
+                                                    ["salida1", "Sal. comedor", false],
+                                                    ["entrada2", "Ent. comedor", false],
+                                                    ["salida2", "Salida", false],
+                                                    ["minutos_trabajados", "Hrs. trab.", false],
+                                                    ["minutos_comida", "Comida", false],
+                                                    ["exceso_comida", "Exc. comida", false],
+                                                    ["minutos_retardo", "Retardo", false],
+                                                    ["minutos_extra", "T. extra", false],
+                                                ] as [string, string, boolean][]).map(([field, label, isSticky], idx) => (
+                                                    <th
+                                                        key={field}
+                                                        onClick={() => {
+                                                            if (SORTABLE_FIELDS.has(field as SortField)) {
+                                                                toggleSort(field as SortField)
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap bg-muted/60",
+                                                            SORTABLE_FIELDS.has(field as SortField) && "cursor-pointer hover:text-foreground",
+                                                            isSticky && "sticky bg-muted/95 backdrop-blur",
+                                                            idx === 0 && "left-0 z-10",
+                                                            idx === 1 && "left-[64px] z-10 border-r border-border",
+                                                        )}
+                                                    >
+                                                        {label}
+                                                        {SORTABLE_FIELDS.has(field as SortField) && (
+                                                            <SortIcon field={field as SortField} activeField={sortField} activeDir={sortDir} />
+                                                        )}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pageRows.map((a, i) => {
+                                                const cellY = density === "compact" ? "py-1" : "py-2"
+                                                return (
+                                                    <tr
+                                                        key={`${a.numero_empleado}-${a.fecha}-${i}`}
+                                                        className="border-b border-border/50 hover:bg-muted/40 odd:bg-muted/10 transition-colors"
+                                                    >
+                                                        <td className={cn("px-3 font-mono text-xs sticky left-0 bg-card", cellY)}>
+                                                            {a.numero_empleado}
+                                                        </td>
+                                                        <td className={cn("px-3 max-w-[200px] truncate sticky left-[64px] bg-card border-r border-border", cellY)}>
+                                                            {a.nombre}
+                                                        </td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.fecha || "—"}</td>
+                                                        <td className={cn("px-3 text-center", cellY)}>{a.turno}</td>
+                                                        <td className={cn("px-3 whitespace-nowrap", cellY)}>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Badge
+                                                                    variant={PUNCH_STATUS_BADGE_VARIANTS[a.status] || "secondary"}
+                                                                    size="sm"
+                                                                >
+                                                                    {a.status === "incidence"
+                                                                        ? (INCIDENCIA_LABELS[a.incidencia] || a.incidencia)
+                                                                        : PUNCH_STATUS_LABELS[a.status]}
+                                                                </Badge>
+                                                                {a.marcajes_faltantes.length > 0 && (
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <button type="button" aria-label="Marcajes faltantes">
+                                                                                <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                                                                            </button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>
+                                                                            Faltan: {a.marcajes_faltantes.join(", ")}
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.entrada1 || "—"}</td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.salida1 || "—"}</td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.entrada2 || "—"}</td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.salida2 || "—"}</td>
+                                                        <td className={cn("px-3 font-mono text-xs font-medium", cellY)}>{minutesToHHMM(a.minutos_trabajados)}</td>
+                                                        <td className={cn("px-3 font-mono text-xs", cellY)}>{a.minutos_comida > 0 ? `${a.minutos_comida} min` : "—"}</td>
+                                                        <td className={cn("px-3 text-xs font-medium", a.exceso_comida > 0 ? "text-warning" : "text-muted-foreground", cellY)}>
+                                                            {a.exceso_comida > 0 ? `${a.exceso_comida} min` : "—"}
+                                                        </td>
+                                                        <td className={cn("px-3 font-mono text-xs", a.minutos_retardo > 0 ? "text-warning font-medium" : "", cellY)}>
+                                                            {a.minutos_retardo > 0 ? `${a.minutos_retardo} min` : "—"}
+                                                        </td>
+                                                        <td className={cn("px-3 font-mono text-xs", a.minutos_extra > 0 ? "text-info font-medium" : "", cellY)}>
+                                                            {a.minutos_extra > 0 ? minutesToHHMM(a.minutos_extra) : "—"}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </TooltipProvider>
+                            {filteredAnalyses.length === 0 && punchRows.length > 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-8">
+                                    Sin resultados con los filtros actuales.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <PaginationBar
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </div>
             )}
         </div>
     )

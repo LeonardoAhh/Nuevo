@@ -389,10 +389,19 @@ export const PUNCH_STATUS_LABELS: Record<string, string> = {
 }
 
 export const PUNCH_STATUS_COLORS: Record<string, string> = {
-    on_time: "text-emerald-600",
-    late: "text-amber-600",
+    on_time: "text-success",
+    late: "text-warning",
     missing_punch: "text-destructive",
     no_schedule: "text-muted-foreground",
     day_off: "text-muted-foreground",
-    incidence: "text-blue-500",
+    incidence: "text-info",
+}
+
+export const PUNCH_STATUS_BADGE_VARIANTS: Record<string, "success" | "warning" | "destructive" | "info" | "secondary"> = {
+    on_time: "success",
+    late: "warning",
+    missing_punch: "destructive",
+    no_schedule: "secondary",
+    day_off: "secondary",
+    incidence: "info",
 }
