@@ -146,16 +146,28 @@ export const DEFAULT_SCHEDULES: ScheduleDefinition[] = [
         workDays: [3, 4], // Mié-Jue
         toleranceMinutes: 10,
     },
-    // ── Turno 5 (Mixto) L-V 08-18, S 08-11 ─────────────
+    // ── Turno 5a (Mixto L-V) 08-18 ──────────────────────
     {
-        id: "turno-5",
-        name: "Mixto (L-V 08-18, S 08-11)",
+        id: "turno-5a",
+        name: "Mixto (L-V 08-18)",
         turnoNumber: 5,
         entryTime: "08:00",
         exitTime: "18:00",
         lunchMinutes: 60,
         lunchToleranceMinutes: 5,
-        workDays: [1, 2, 3, 4, 5, 6], // Lun-Sáb
+        workDays: [1, 2, 3, 4, 5], // Lun-Vie
+        toleranceMinutes: 10,
+    },
+    // ── Turno 5b (Mixto S) 08-11 ──────────────────────
+    {
+        id: "turno-5b",
+        name: "Mixto (S 08-11)",
+        turnoNumber: 5,
+        entryTime: "08:00",
+        exitTime: "11:00",
+        lunchMinutes: 0,
+        lunchToleranceMinutes: 0,
+        workDays: [6], // Sáb
         toleranceMinutes: 10,
     },
     // ── Turno 8 (Mixto 1) L-V 08-18 ─────────────────────
