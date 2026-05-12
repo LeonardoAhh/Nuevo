@@ -30,6 +30,7 @@ import {
     computeRetardosSummary,
     minutesToHHMM,
     exportRetardosExcel,
+    mergeNightShiftPunches,
 } from "./retardos-helpers"
 import RetardosScheduleConfig from "./retardos-schedule-config"
 
@@ -50,10 +51,10 @@ export default function RetardosSection() {
     const [searchQuery, setSearchQuery] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const analyses = useMemo(
-        () => analyzeAllRows(punchRows, schedules),
-        [punchRows, schedules],
-    )
+    const analyses = useMemo(() => {
+        const merged = mergeNightShiftPunches(punchRows, schedules)
+        return analyzeAllRows(merged, schedules)
+    }, [punchRows, schedules])
 
     const summary = useMemo(
         () => computeRetardosSummary(analyses),
