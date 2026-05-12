@@ -56,11 +56,13 @@ export function analyzeRow(
     schedules: ScheduleDefinition[],
 ): PunchAnalysis {
     const base: Pick<PunchAnalysis,
-        "numero_empleado" | "nombre" | "fecha" | "turno" | "incidencia" | "observaciones" |
+        "numero_empleado" | "nombre" | "departamento" | "area" | "fecha" | "turno" | "incidencia" | "observaciones" |
         "entrada1" | "salida1" | "entrada2" | "salida2"
     > = {
         numero_empleado: row.numero_empleado,
         nombre: row.nombre,
+        departamento: row.departamento,
+        area: row.area,
         fecha: row.fecha,
         turno: row.turno,
         incidencia: row.incidencia,
@@ -348,6 +350,8 @@ export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<vo
     sheet.columns = [
         { header: "No. Empleado", key: "numero_empleado", width: 14 },
         { header: "Nombre", key: "nombre", width: 30 },
+        { header: "Departamento", key: "departamento", width: 18 },
+        { header: "Área", key: "area", width: 22 },
         { header: "Fecha", key: "fecha", width: 12 },
         { header: "Turno", key: "turno", width: 8 },
         { header: "Incidencia", key: "incidencia", width: 12 },
@@ -372,6 +376,8 @@ export async function exportRetardosExcel(analyses: PunchAnalysis[]): Promise<vo
         sheet.addRow({
             numero_empleado: a.numero_empleado,
             nombre: a.nombre,
+            departamento: a.departamento,
+            area: a.area,
             fecha: a.fecha,
             turno: a.turno,
             incidencia: a.incidencia,
@@ -502,6 +508,12 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
     const colIncidencia = headers.findIndex((h) =>
         h === "incidencia" || h === "incide" || h === "incidencias" || h === "tipo",
     )
+    const colDepto = headers.findIndex((h) =>
+        h === "departamento" || h === "depto" || h === "depart" || h === "department",
+    )
+    const colArea = headers.findIndex((h) =>
+        h === "area" || h === "área" || h === "area_trabajo",
+    )
 
     // Find all punch columns (entrada/salida) in column order
     const punchCols: number[] = []
@@ -527,6 +539,8 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         const fecha = colFecha >= 0 ? normalizeDate(row.getCell(colFecha).value) : ""
         const turno = colTurno >= 0 ? parseInt(normalizeString(row.getCell(colTurno).value), 10) || 0 : 0
         const incidencia = colIncidencia >= 0 ? normalizeString(row.getCell(colIncidencia).value) : "A"
+        const departamento = colDepto >= 0 ? normalizeString(row.getCell(colDepto).value) : ""
+        const area = colArea >= 0 ? normalizeString(row.getCell(colArea).value) : ""
 
         // Read all punches in column order; treat "-" as null (already handled by normalizeTime)
         const rawPunches = punchCols.map((col) => normalizeTime(row.getCell(col).value))
@@ -554,6 +568,8 @@ export async function parseExcelPunches(file: File): Promise<ParsePunchResult> {
         rows.push({
             numero_empleado: numero,
             nombre,
+            departamento,
+            area,
             fecha,
             turno,
             incidencia,

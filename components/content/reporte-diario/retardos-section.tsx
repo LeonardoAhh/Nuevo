@@ -128,7 +128,9 @@ export default function RetardosSection() {
             const q = searchQuery.toLowerCase()
             result = result.filter((a) =>
                 a.numero_empleado.toLowerCase().includes(q) ||
-                a.nombre.toLowerCase().includes(q),
+                a.nombre.toLowerCase().includes(q) ||
+                a.departamento.toLowerCase().includes(q) ||
+                a.area.toLowerCase().includes(q),
             )
         }
         return result.slice().sort((a, b) => {
@@ -404,7 +406,7 @@ export default function RetardosSection() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar por número o nombre..."
+                            placeholder="Buscar por número, nombre, depto o área..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9 h-9 text-sm"
@@ -523,6 +525,8 @@ export default function RetardosSection() {
                                                 {([
                                                     ["numero_empleado", "No.", true],
                                                     ["nombre", "Nombre", true],
+                                                    ["departamento", "Depto.", false],
+                                                    ["area", "Área", false],
                                                     ["fecha", "Fecha", false],
                                                     ["turno", "Turno", false],
                                                     ["status", "Estado", false],
@@ -572,6 +576,12 @@ export default function RetardosSection() {
                                                         </td>
                                                         <td className={cn("px-3 max-w-[200px] truncate sticky left-[64px] bg-card border-r border-border", cellY)}>
                                                             {a.nombre}
+                                                        </td>
+                                                        <td className={cn("px-3 text-xs text-muted-foreground max-w-[160px] truncate", cellY)} title={a.departamento}>
+                                                            {a.departamento || "—"}
+                                                        </td>
+                                                        <td className={cn("px-3 text-xs text-muted-foreground max-w-[200px] truncate", cellY)} title={a.area}>
+                                                            {a.area || "—"}
                                                         </td>
                                                         <td className={cn("px-3 font-mono text-xs", cellY)}>{a.fecha || "—"}</td>
                                                         <td className={cn("px-3 text-center", cellY)}>{a.turno}</td>
