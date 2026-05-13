@@ -25,6 +25,7 @@ import {
     Trash2,
     Clock,
     ArrowRight,
+    UserX,
 } from "lucide-react"
 
 import { INCIDENT_TABS, INCIDENCIA_LABELS, AREA_STAFF, ALLOWED_PUESTOS } from "./constants"
@@ -406,22 +407,39 @@ export default function ReporteDiarioContent() {
     return (
         <div className="flex flex-col gap-5 max-w-full mx-auto pb-12">
 
-            {/* ── Link to Retardos ────────────────────────────────── */}
-            <Link
-                href="/retardos"
-                className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
-            >
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-                        <Clock className="w-4 h-4 text-primary" />
+            {/* ── Quick access: Retardos & Ausentismo ─────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link
+                    href="/retardos"
+                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
+                            <Clock className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
+                            <p className="text-xs text-muted-foreground">Control de checadas, retardos y tiempo extra</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
-                        <p className="text-xs text-muted-foreground">Control de checadas, retardos y tiempo extra</p>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+                </Link>
+                <Link
+                    href="/reporte-diario/ausentismo"
+                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-destructive/10">
+                            <UserX className="w-4 h-4 text-destructive" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">Ranking de ausentismo</p>
+                            <p className="text-xs text-muted-foreground">Faltas, incidencias y cronología por empleado</p>
+                        </div>
                     </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
-            </Link>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+                </Link>
+            </div>
 
             {/* ── Toolbar ──────────────────────────────────────────────── */}
             <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col gap-4">
