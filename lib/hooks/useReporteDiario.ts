@@ -97,6 +97,28 @@ export function useReporteDiario() {
         }
     }, [])
 
+    /** Fetch full report data for multiple months (used by ausentismo analytics) */
+    const fetchByMesList = useCallback(async (mesList: string[]): Promise<ReporteDiarioRecord[]> => {
+        if (mesList.length === 0) return []
+        setLoading(true)
+        setError(null)
+        try {
+            const { data, error } = await supabase
+                .from("reportes_diarios")
+                .select("*")
+                .in("mes", mesList)
+                .order("mes", { ascending: true })
+            if (error) throw new Error(error.message)
+            return (data ?? []) as ReporteDiarioRecord[]
+        } catch (err) {
+            const msg = describeSupabaseError(err, "Error al cargar reportes")
+            setError(msg)
+            return []
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
     /** Save (upsert) a report for a given month */
     const saveReport = useCallback(async (
         report: ReporteDiarioInsert,
@@ -175,6 +197,7 @@ export function useReporteDiario() {
         error,
         fetchSummaries,
         fetchByMes,
+        fetchByMesList,
         saveReport,
         deleteReport,
         fetchComparison,
