@@ -357,6 +357,7 @@ export default function ReporteDiarioContent() {
 
         const jsPDF = (await import("jspdf")).default
         const autoTable = (await import("jspdf-autotable")).default
+        const { addReportFooter } = await import("@/lib/pdf-footer")
 
         const doc = new jsPDF()
         const dayNum = parseInt(selectedDay, 10)
@@ -399,6 +400,7 @@ export default function ReporteDiarioContent() {
             y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8
         }
 
+        addReportFooter(doc)
         doc.save(`reporte-diario-${currentMonth}-dia-${selectedDay}.pdf`)
     }, [selectedDay, currentMonth, selectedDayAreaSummary, selectedDayIncidentSummary])
 

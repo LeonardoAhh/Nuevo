@@ -9,6 +9,7 @@ import { useCapacitacion } from "@/lib/hooks"
 import type { Employee } from "@/lib/hooks"
 import { getTipoCursoByName } from "@/lib/catalogo"
 import { notify } from "@/lib/notify"
+import { addReportFooter } from "@/lib/pdf-footer"
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -173,6 +174,7 @@ export default function ReportesContent() {
         })
       }
       
+      addReportFooter(doc)
       const fileName = `Reporte_Capacitacion_${new Date().toISOString().split("T")[0]}.pdf`
       doc.save(fileName)
       notify.success("Reporte generado exitosamente")
