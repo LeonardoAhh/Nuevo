@@ -246,6 +246,9 @@ export default function Sidebar({
                                 variants={itemVariants}
                                 initial="hidden"
                                 animate="visible"
+                                whileHover={{ scale: 1.15, y: -2 }}
+                                whileTap={{ scale: 0.85 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 17 }}
                               >
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -253,7 +256,7 @@ export default function Sidebar({
                                       variant="ghost"
                                       size="icon"
                                       className={`relative w-full h-10 transition-colors ${active
-                                        ? "bg-primary/10 text-primary"
+                                        ? "bg-primary/10 text-primary shadow-sm shadow-primary/20"
                                         : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                                         }`}
                                       aria-current={active ? "page" : undefined}
@@ -267,11 +270,16 @@ export default function Sidebar({
                                             transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                           />
                                         )}
-                                        <item.icon
-                                          size={20}
-                                          fill={active ? "currentColor" : "none"}
-                                          strokeWidth={active ? 1.5 : 2}
-                                        />
+                                        <motion.span
+                                          animate={active ? { scale: [1, 1.12, 1] } : {}}
+                                          transition={active ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
+                                        >
+                                          <item.icon
+                                            size={20}
+                                            fill={active ? "currentColor" : "none"}
+                                            strokeWidth={active ? 1.5 : 2}
+                                          />
+                                        </motion.span>
                                       </Link>
                                     </Button>
                                   </TooltipTrigger>
@@ -305,11 +313,14 @@ export default function Sidebar({
                               variants={itemVariants}
                               initial="hidden"
                               animate="visible"
+                              whileHover={{ x: 4, scale: 1.02 }}
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             >
                               <Button
                                 variant="ghost"
                                 className={`relative w-full justify-start gap-3 transition-colors ${active
-                                  ? "bg-primary/10 text-primary"
+                                  ? "bg-primary/10 text-primary shadow-sm shadow-primary/20"
                                   : "text-muted-foreground hover:text-foreground"
                                   }`}
                                 aria-current={active ? "page" : undefined}
@@ -326,11 +337,16 @@ export default function Sidebar({
                                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                     />
                                   )}
-                                  <item.icon
-                                    size={18}
-                                    fill={active ? "currentColor" : "none"}
-                                    strokeWidth={active ? 1.5 : 2}
-                                  />
+                                  <motion.span
+                                    animate={active ? { scale: [1, 1.1, 1] } : {}}
+                                    transition={active ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
+                                  >
+                                    <item.icon
+                                      size={18}
+                                      fill={active ? "currentColor" : "none"}
+                                      strokeWidth={active ? 1.5 : 2}
+                                    />
+                                  </motion.span>
                                   <span className="text-sm">{item.label}</span>
                                 </Link>
                               </Button>
