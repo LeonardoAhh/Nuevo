@@ -16,11 +16,11 @@
   width: 100%;
   max-width: 210mm;
   margin: 0 auto;
-  padding: 8mm;
+  padding: 6mm;
   background: var(--print-bg);
   color: var(--print-text);
   font-family: inherit;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .pageBreakSection {
@@ -96,9 +96,9 @@
 /* Section headers */
 .sectionHeader {
   font-weight: 700;
-  font-size: 0.7rem;
-  padding: 0.3rem 0.5rem;
-  margin-top: 0.6rem;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  margin-top: 0.4rem;
   text-transform: uppercase;
   color: var(--print-text);
   border: 1px solid var(--print-border);
@@ -118,7 +118,7 @@
 .table th,
 .table td {
   border: 1px solid var(--print-border);
-  padding: 0.2rem 0.35rem;
+  padding: 0.15rem 0.3rem;
   vertical-align: top;
 }
 
@@ -143,12 +143,12 @@
 }
 
 .tdSmall {
-  font-size: 0.5rem;
-  line-height: 1.15;
+  font-size: 0.48rem;
+  line-height: 1.1;
   word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
-  max-width: 280px;
+  max-width: 260px;
 }
 
 /* Result row */
@@ -207,8 +207,8 @@
   display: grid;
   gap: 0.5rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.8rem;
+  margin-bottom: 0.3rem;
   text-align: center;
   font-size: 0.68rem;
   page-break-inside: avoid;

@@ -22,7 +22,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       {/* Header */}
       <div className={styles.headerRow}>
         <div className={styles.headerLeft}>
-          <h1>EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
+          <h1>EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'operativo' ? 'OPERATIVO' : 'ADMINISTRATIVO'}</h1>
           <p>Periodo de evaluación: <span className={styles.periodBadge}>{data.periodo || '—'}</span></p>
         </div>
         <div className={styles.headerRight}>
