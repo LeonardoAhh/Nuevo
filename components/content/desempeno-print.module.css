@@ -211,6 +211,8 @@
   margin-bottom: 0.5rem;
   text-align: center;
   font-size: 0.68rem;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .signatureGrid > div {

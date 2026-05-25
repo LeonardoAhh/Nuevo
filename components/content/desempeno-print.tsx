@@ -132,7 +132,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       {/* Compromisos + firmas */}
-      <div className={tieneCompromisos || blankMode ? styles.pageBreakSection : undefined}>
+      <div className={tieneCompromisos && !blankMode ? styles.pageBreakSection : undefined}>
         {!blankMode && pond.calificacionFinal < 80 && tieneCompromisos && (
           <div className={styles.warningBox}>
             En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
@@ -174,7 +174,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       <div className={styles.footerText}>
-        <span>{data.tipo === 'operativo' ? 'RG-ADM-063' : 'RG-ADM-062'}</span>
+        <span>{data.tipo === 'operativo' ? 'RG-ADM-063' : 'RG-ADM-064'}</span>
         <span>REV.03</span>
       </div>
     </div>
