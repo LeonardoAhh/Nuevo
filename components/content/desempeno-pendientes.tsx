@@ -236,8 +236,8 @@ export default function DesempenoPendientes({ onClose }: Props = {}) {
   const currentSelected = activeGroup?.items.find((i) => i.dbId === selectedId) ?? null
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="rounded-none border-x-0 border-t-0 shadow-none min-h-full">
+      <CardHeader className="pt-3 pb-2 px-5">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg font-bold uppercase tracking-wide">
