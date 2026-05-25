@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList } from "lucide-react"
+import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen } from "lucide-react"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -159,6 +160,24 @@ export default function DesempenoSearch() {
                     <span className="relative">Guía</span>
                   </motion.button>
                 </div>
+                {/* ── Evaluaciones guardadas (admin/dev only) ── */}
+                {!isEvaluador && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        asChild
+                      >
+                        <Link href="/desempeno/objetivos" aria-label="Evaluaciones guardadas">
+                          <FolderOpen className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Evaluaciones guardadas</TooltipContent>
+                  </Tooltip>
+                )}
                 {data && (
                   <>
                     <Tooltip>
