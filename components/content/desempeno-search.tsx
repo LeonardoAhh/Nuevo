@@ -88,20 +88,16 @@ export default function DesempenoSearch() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Buscar empleado</CardTitle>
               <div className="flex items-center gap-1.5">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setGuiaOpen(true)}
-                      aria-label="Ver guía de evaluación"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Ver guía de evaluación</TooltipContent>
-                </Tooltip>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 px-2.5 text-xs"
+                  onClick={() => setGuiaOpen(true)}
+                  aria-label="Ver guía de evaluación"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  Guía
+                </Button>
                 {data && (
                   <>
                     <Tooltip>
