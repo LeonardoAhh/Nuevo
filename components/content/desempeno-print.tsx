@@ -5,9 +5,10 @@ import styles from "./desempeno-print.module.css"
 
 interface Props {
   data: DesempenoData
+  blankMode?: boolean
 }
 
-export default function DesempenoPrint({ data }: Props) {
+export default function DesempenoPrint({ data, blankMode }: Props) {
   const objetivos = [...data.objetivos]
   while (objetivos.length < 5) {
     objetivos.push({ numero: objetivos.length + 1, descripcion: "", resultado: "NA", porcentaje: "NA", comentarios: "" })
@@ -131,33 +132,27 @@ export default function DesempenoPrint({ data }: Props) {
       </div>
 
       {/* Compromisos + firmas */}
-      <div className={tieneCompromisos ? styles.pageBreakSection : undefined}>
-        {pond.calificacionFinal < 80 && tieneCompromisos && (
+      <div className={tieneCompromisos || blankMode ? styles.pageBreakSection : undefined}>
+        {!blankMode && pond.calificacionFinal < 80 && tieneCompromisos && (
           <div className={styles.warningBox}>
             En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
           </div>
         )}
 
-        {tieneCompromisos && (
+        {(tieneCompromisos || blankMode) && (
           <div className={styles.notesSection}>
-            {data.compromisos && (
-              <div>
-                <strong>Compromisos / Acuerdos:</strong>
-                <p style={{ whiteSpace: 'pre-line' }}>{data.compromisos}</p>
-              </div>
-            )}
-            {data.fecha_revision && (
-              <div>
-                <strong>Fecha de revisión:</strong>
-                <p>{data.fecha_revision}</p>
-              </div>
-            )}
-            {data.observaciones && (
-              <div>
-                <strong>Observaciones:</strong>
-                <p>{data.observaciones}</p>
-              </div>
-            )}
+            <div>
+              <strong>Compromisos / Acuerdos:</strong>
+              <p style={{ whiteSpace: 'pre-line' }}>{data.compromisos || (blankMode ? '\u00A0' : '')}</p>
+            </div>
+            <div>
+              <strong>Fecha de revisión:</strong>
+              <p>{data.fecha_revision || (blankMode ? '\u00A0' : '')}</p>
+            </div>
+            <div>
+              <strong>Observaciones:</strong>
+              <p>{data.observaciones || (blankMode ? '\u00A0' : '')}</p>
+            </div>
           </div>
         )}
 
