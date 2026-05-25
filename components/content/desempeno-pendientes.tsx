@@ -212,7 +212,11 @@ function EmployeeBadge({ item, isSelected, onSelect }: EmployeeBadgeProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function DesempenoPendientes() {
+interface Props {
+  onClose?: () => void
+}
+
+export default function DesempenoPendientes({ onClose }: Props = {}) {
   const { loading, deptGroups, totalEmployees, totalEvals, cargar } = usePendingEvals()
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -245,16 +249,29 @@ export default function DesempenoPendientes() {
               </p>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={cargar}
-            disabled={loading}
-            aria-label="Actualizar evaluaciones"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={cargar}
+              disabled={loading}
+              aria-label="Actualizar evaluaciones"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </Button>
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onClose}
+                aria-label="Cerrar panel"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 

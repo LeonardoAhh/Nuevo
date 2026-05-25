@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Printer, AlertCircle, Save, Loader2, HelpCircle } from "lucide-react"
+import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList } from "lucide-react"
+import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +17,9 @@ import { DesempenoForm } from "./desempeno-form-operativo"
 import DesempenoPendientes from "./desempeno-pendientes"
 import { DesempenoSaveSuccess } from "./desempeno-save-success"
 import { DesempenoGuia, guiaYaVista } from "./desempeno-guia"
+import { PendientesDrawer } from "./desempeno-pendientes-drawer"
 import { useRole } from "@/lib/hooks"
+import { usePendingEvals } from "@/lib/hooks/usePendingEvals"
 
 export default function DesempenoSearch() {
   const [numeroBuscado, setNumeroBuscado] = useState("")
@@ -25,7 +28,9 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0])
   const { data, setData, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } = useDesempeno()
   const { isEvaluador } = useRole()
+  const { totalEvals } = usePendingEvals()
   const [guiaOpen, setGuiaOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Auto-show the guide on first visit for evaluadores
   useEffect(() => {
@@ -75,29 +80,85 @@ export default function DesempenoSearch() {
   return (
     <TooltipProvider>
       <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Pendientes Hero */}
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <DesempenoPendientes />
-          </CardContent>
-        </Card>
-
         {/* Buscador */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Buscar empleado</CardTitle>
               <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 px-2.5 text-xs"
-                  onClick={() => setGuiaOpen(true)}
-                  aria-label="Ver guía de evaluación"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  Guía
-                </Button>
+                {/* ── Pendientes trigger ────────────────── */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="relative h-8 w-8"
+                      onClick={() => setDrawerOpen(true)}
+                      aria-label="Ver evaluaciones pendientes"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      {totalEvals > 0 && (
+                        <motion.span
+                          className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 420, damping: 14 }}
+                        >
+                          {totalEvals > 99 ? "99+" : totalEvals}
+                        </motion.span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {totalEvals > 0
+                      ? `${totalEvals} evaluación${totalEvals !== 1 ? "es" : ""} pendiente${totalEvals !== 1 ? "s" : ""}`
+                      : "Sin evaluaciones pendientes"}
+                  </TooltipContent>
+                </Tooltip>
+
+                {/* ── Animated guide button ───────────────── */}
+                <div className="relative">
+                  {/* Pulse ring 1 */}
+                  <motion.span
+                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary/25"
+                    animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+                  />
+                  {/* Pulse ring 2 — staggered */}
+                  <motion.span
+                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary/15"
+                    animate={{ scale: [1, 1.9], opacity: [0.4, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.8 }}
+                  />
+
+                  <motion.button
+                    className="relative flex h-8 items-center gap-1.5 overflow-hidden rounded-xl bg-primary px-3.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/30 transition-shadow hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    whileHover={{ scale: 1.07 }}
+                    whileTap={{ scale: 0.91 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 17 }}
+                    onClick={() => setGuiaOpen(true)}
+                    aria-label="Ver guía de evaluación"
+                  >
+                    {/* Shimmer sweep */}
+                    <motion.span
+                      className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                      initial={{ x: "-130%" }}
+                      animate={{ x: "230%" }}
+                      transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 3.2, ease: "easeInOut" }}
+                    />
+
+                    {/* Icon with wobble */}
+                    <motion.span
+                      className="relative"
+                      animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.15, 1] }}
+                      transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 2.8, ease: "easeInOut" }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </motion.span>
+
+                    <span className="relative">Guía</span>
+                  </motion.button>
+                </div>
                 {data && (
                   <>
                     <Tooltip>
@@ -221,6 +282,7 @@ export default function DesempenoSearch() {
         />
 
         <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
+        <PendientesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       </div>
     </TooltipProvider>
   )
