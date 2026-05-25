@@ -174,7 +174,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       <div className={styles.footerText}>
-        <span>{data.tipo === 'operativo' ? 'RG-ADM-063' : 'RG-ADM-064'}</span>
+        <span>{data.tipo === 'operativo' ? 'RG-ADM-063' : 'RG-ADM-062'}</span>
         <span>REV.03</span>
       </div>
     </div>
