@@ -23,6 +23,7 @@ import { CapCoursesTab } from "@/components/content/cap-courses-tab"
 import { CapHistorialTab } from "@/components/content/cap-historial-tab"
 import { CapImportTab } from "@/components/content/cap-import-tab"
 import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
+import { CapBulkCreateEmployees } from "@/components/content/cap-bulk-create-employees"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
 
 // Hooks
@@ -86,6 +87,7 @@ export default function CapacitacionContent() {
   const [editEmpSaving, setEditEmpSaving] = useState(false)
 
   const [newEmpOpen, setNewEmpOpen] = useState(false)
+  const [bulkCreateEmpOpen, setBulkCreateEmpOpen] = useState(false)
   const [newEmpSaving, setNewEmpSaving] = useState(false)
   const [newEmpSuccess, setNewEmpSuccess] = useState(false)
 
@@ -386,6 +388,7 @@ export default function CapacitacionContent() {
             addCoursesSuccess={addCoursesSuccess}
             onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
             onBulkImport={bulkImport.openDialog}
+            onBulkCreateEmployees={() => setBulkCreateEmpOpen(true)}
             onViewEmployee={handleViewEmployee}
             onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
             onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
@@ -414,6 +417,12 @@ export default function CapacitacionContent() {
       </Tabs>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
+      <CapBulkCreateEmployees
+        open={bulkCreateEmpOpen}
+        onClose={() => setBulkCreateEmpOpen(false)}
+        onCreated={() => { setBulkCreateEmpOpen(false); loadEmployees() }}
+      />
+
       <CapBulkImportDialog
         open={bulkImport.open}
         text={bulkImport.text}

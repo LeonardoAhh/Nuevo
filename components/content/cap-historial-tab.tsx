@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, CheckCircle2, X, CalendarDays } from "lucide-react"
+import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +24,7 @@ interface CapHistorialTabProps {
   addCoursesSuccess: boolean
   onNewEmployee: () => void
   onBulkImport: () => void
+  onBulkCreateEmployees: () => void
   onViewEmployee: (emp: Employee) => void
   onEditEmployee: (emp: Employee) => void
   onAddCourses: (emp: Employee) => void
@@ -34,7 +35,7 @@ interface CapHistorialTabProps {
 export function CapHistorialTab({
   employees, loadingEmployees, progressMap, isReadOnly,
   newEmpSuccess, addCoursesSuccess,
-  onNewEmployee, onBulkImport,
+  onNewEmployee, onBulkImport, onBulkCreateEmployees,
   onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee, onIncidencias,
 }: CapHistorialTabProps) {
   const [empSearch, setEmpSearch]         = useState("")
@@ -78,8 +79,11 @@ export function CapHistorialTab({
               <CardDescription>Registro de cursos tomados por empleado.</CardDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button size="icon" variant="outline" onClick={onBulkImport} aria-label="Carga masiva" title="Carga masiva">
+              <Button size="icon" variant="outline" onClick={onBulkImport} aria-label="Carga masiva de cursos" title="Carga masiva de cursos">
                 <Layers className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="outline" onClick={onBulkCreateEmployees} aria-label="Carga masiva de empleados" title="Carga masiva de empleados">
+                <Users className="h-4 w-4" />
               </Button>
               <Button size="icon" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
                 <UserPlus className="h-4 w-4" />
