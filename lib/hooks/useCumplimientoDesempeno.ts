@@ -91,8 +91,7 @@ export function useCumplimientoDesempeno(periodo: string) {
       const [empRes, evalRes, entregaRes] = await Promise.all([
         supabase
           .from("employees")
-          .select("id, numero, nombre, puesto, departamento, area, fecha_ingreso")
-          .order("nombre"),
+          .select("id, numero, nombre, puesto, departamento, area, fecha_ingreso"),
         supabase
           .from("evaluaciones_desempeno")
           .select("id, numero_empleado, calificacion_final")
@@ -167,6 +166,15 @@ export function useCumplimientoDesempeno(periodo: string) {
         deptMap.get(key)!.push(emp)
       }
 
+      // Sort por número de empleado ascendente. Si el numero es parseable
+      // a int lo usamos; si no, fallback a comparación alfanumérica natural.
+      const compareByNumero = (a: EmpleadoCumplimiento, b: EmpleadoCumplimiento) => {
+        const na = parseInt(a.numero, 10)
+        const nb = parseInt(b.numero, 10)
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb
+        return a.numero.localeCompare(b.numero, "es", { numeric: true })
+      }
+
       const groups: DeptCumplimiento[] = Array.from(deptMap.entries())
         .map(([departamento, items]) => {
           // Empleados "no_aplica" se muestran pero NO cuentan en KPIs.
@@ -179,7 +187,7 @@ export function useCumplimientoDesempeno(periodo: string) {
           const porcentaje = total === 0 ? 0 : Math.round((entregadas / total) * 100)
           return {
             departamento,
-            empleados: items.sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+            empleados: items.sort(compareByNumero),
             total,
             entregadas,
             pendientes,
