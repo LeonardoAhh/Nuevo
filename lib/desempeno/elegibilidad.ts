@@ -25,15 +25,15 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export const MESES_MIN_ANTIGUEDAD_SEMESTRAL = 2
+export const MESES_MIN_ANTIGUEDAD_SEMESTRAL = 3
 
 /**
  * Mapa periodo → fecha fin (inclusive). Solo periodos semestrales.
  * Formato YYYY-MM-DD.
  */
 export const PERIODO_FIN: Record<string, string> = {
-  "ENE-JUN 2026": "2026-06-30",
-  "JUL-DIC 2026": "2026-12-31",
+  "DIC-MAY 2026": "2026-05-31",
+  "JUN-NOV 2026": "2026-11-30",
 }
 
 export function esPeriodoSemestral(periodo: string): boolean {
@@ -64,7 +64,7 @@ export interface ElegibilidadResultado {
  * Determina si un empleado es elegible para evaluación en un periodo.
  *
  * @param fechaIngreso YYYY-MM-DD o null
- * @param periodo p.ej. "ENE-JUN 2026"
+ * @param periodo p.ej. "DIC-MAY 2026"
  */
 export function esElegibleParaPeriodo(
   fechaIngreso: string | null | undefined,

@@ -101,12 +101,7 @@ const RECORDATORIOS = [
   {
     icon: FileText,
     title: "Documentos dados de alta en el SGI",
-    body: "Los formatos RG-ADM-062 y RG-ADM-063 están dados de alta ante el Sistema de Gestión Integral.",
-  },
-  {
-    icon: Building2,
-    title: "Solicitar modificaciones",
-    body: "Si la evaluación requiere ajustes o el formato necesita un cambio, acude con Leonardo Hernández antes de imprimir la versión final.",
+    body: "Los formatos RG-ADM-062 y RG-ADM-063 están dados de alta ante el SGI.",
   },
 ] as const
 
@@ -120,11 +115,6 @@ const SECURITY = [
     icon: Lock,
     title: "Máxima seguridad para tu información",
     body: "Se garantiza la privacidad de los datos aplicando estrictos controles de seguridad, tanto mientras interactúas con la plataforma como al almacenarlos.",
-  },
-  {
-    icon: Database,
-    title: "Accesos a la medida",
-    body: "Cada persona solo puede ver y modificar la información que le corresponde. Por ejemplo, un evaluador únicamente accederá a los datos asignados a su perfil.",
   },
 ] as const
 
@@ -415,7 +405,7 @@ export function GuiaEvaluadorPage() {
                   aria-haspopup="listbox"
                   aria-expanded="true"
                 >
-                  ENE-JUN 2026
+                  DIC - MAY 2026
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                 </button>
 
@@ -440,14 +430,14 @@ export function GuiaEvaluadorPage() {
                   className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden />
-                  <span className="font-medium">ENE-JUN 2026</span>
+                  <span className="font-medium">DIC - MAY 2026</span>
                 </div>
                 <div
                   role="option"
                   aria-selected="false"
                   className="cursor-pointer border-t border-border px-3 py-2 text-sm text-muted-foreground"
                 >
-                  JUL-DIC 2026
+                  JUN - NOV 2026
                 </div>
               </div>
             </div>
@@ -707,7 +697,6 @@ export function GuiaEvaluadorPage() {
               aria-label="Barra de acciones"
             >
               <ToolbarBtn icon={BookOpen} label="Guía" />
-              <ToolbarBtn icon={FolderOpen} label="Guardadas" />
               <ToolbarBtn icon={ClipboardList} label="Pendientes" badge={32} />
               <div className="mx-1 h-6 w-px bg-border" aria-hidden />
               <ToolbarBtn icon={Save} label="Guardar" variant="outline" />
@@ -721,11 +710,6 @@ export function GuiaEvaluadorPage() {
               icon={BookOpen}
               title="Guía"
               body="Abre esta misma guía dentro del sistema."
-            />
-            <BtnDesc
-              icon={FolderOpen}
-              title="Guardadas"
-              body="Sección disponible solo a roles únicos."
             />
             <BtnDesc
               icon={ClipboardList}
@@ -742,23 +726,19 @@ export function GuiaEvaluadorPage() {
               title="Imprimir"
               body="Abre el diálogo del navegador para imprimir o exportar a PDF."
             />
-            <BtnDesc
-              icon={Sparkles}
-              title="Modo Evaluador"
-              body="Si entras con las credenciales de evaluador, algunos controles de roles únicos se ocultan automáticamente."
-            />
           </div>
 
           {/* Pendientes drawer mockup */}
           <div className="mt-10">
             <SectionLabel>Sección · Evaluaciones Pendientes</SectionLabel>
+            <SectionLabel>Seguimiento Nuevos Ingresos</SectionLabel>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Al pulsar{" "}
               <strong className="font-mono uppercase tracking-[0.1em]">
                 Pendientes
               </strong>{" "}
               se abre un panel lateral con el desglose por departamento. Cada
-              chip representa a un colaborador con evaluaciones por realizar.
+              No. Empleado representa a un colaborador con evaluaciones por realizar.
             </p>
 
             <div className="mt-5">
@@ -931,7 +911,7 @@ export function GuiaEvaluadorPage() {
                       VIÑOPLASTIC · PLANTA QRO
                     </div>
                     <div className="font-mono text-[0.55rem] uppercase tracking-[0.18em] text-muted-foreground">
-                      Evaluación de desempeño · ENE-JUN 2026
+                      Evaluación de desempeño · DIC-MAY 2026
                     </div>
                   </div>
                   <div className="font-mono text-[0.55rem] uppercase tracking-[0.22em] text-muted-foreground">
@@ -984,8 +964,7 @@ export function GuiaEvaluadorPage() {
           <Tip>
             Imprime{" "}
             <strong className="font-serif italic">por ambos lados</strong>{" "}
-            cuando el formato lo permita; el diseño está dado de alta en el SGI
-            y debe entregarse <strong>tal cual</strong>.
+            cuando el formato lo permita.
           </Tip>
         </Step>
 
@@ -1034,7 +1013,7 @@ export function GuiaEvaluadorPage() {
           n="08"
           title="Seguridad de los datos"
           kicker="Confidencialidad"
-          intro="La información captada en una evaluación es sensible. El sistema aplica varias capas para protegerla."
+          intro="La información capturada en una evaluación es sensible. El sistema aplica varias capas para protegerla."
           viewport={viewport}
           reverse
         >
@@ -1070,7 +1049,7 @@ export function GuiaEvaluadorPage() {
           <Tip>
             Si detectas un comportamiento extraño dentro del sistema reporta de
             inmediato a{" "}
-            <strong className="font-serif italic">Leonardo Hernández</strong>.
+            <strong className="font-serif italic">Recursos Humanos</strong>.
           </Tip>
         </Step>
       </main>

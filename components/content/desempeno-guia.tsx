@@ -191,7 +191,7 @@ function Illus2({ active }: IllusProps) {
   const isSemestral = phase === "semestral" || phase === "open_s"
   const dropOpen    = phase === "open_s" || phase === "open_m"
   const options     = isSemestral
-    ? ["ENE-JUN 2026", "JUL-DEC 2026"]
+    ? ["DIC-MAY 2026", "JUN-NOV 2026"]
     : ["MAYO 2026", "JUNIO 2026"]
 
   return (
@@ -220,7 +220,7 @@ function Illus2({ active }: IllusProps) {
       <div className="w-full overflow-hidden rounded-md border bg-background shadow-sm">
         <div className="flex items-center justify-between px-3 py-2.5">
           <span className="text-sm text-foreground">
-            {isSemestral ? "ENE-JUN 2026" : "MAYO 2026"}
+            {isSemestral ? "DIC-MAY 2026" : "MAYO 2026"}
           </span>
           <motion.div
             animate={{ rotate: dropOpen ? 180 : 0 }}

@@ -18,7 +18,7 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
       "ASISTENTE DE PRODUCCIÓN A",
       "ASISTENTE DE PRODUCCIÓN B",
       "PLANEADOR DE PRODUCCIÓN",
-      "SUPERVISOR DE PRODUCCIÓN A",
+      "SUPERVISOR DE PRODUCCIÓN A", 
       "SUPERVISOR DE PRODUCCIÓN B",
       "SUPERVISOR DE PRODUCCIÓN C",
       "SUPERVISOR DE PRODUCCIÓN D",
@@ -379,7 +379,7 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
 }
 
 export const PERIODOS_DESEMPENO = {
-  semestrales: ["ENE-JUN 2026", "JUL-DIC 2026"] as const,
+  semestrales: ["DIC-MAY 2026", "JUN-NOV 2026"] as const,
   mensuales: [
     "ENE-FEB 2026",
     "FEB-MAR 2026",
