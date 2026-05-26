@@ -4,6 +4,8 @@
 
 @layer base {
     :root {
+        --font-serif: "Georgia", "Times New Roman", serif; /* ejemplo */
+        --font-mono: "JetBrains Mono", "Fira Code", monospace;
         /* Premium warm-neutral palette — 220° tint reduces coldness, lower saturation reduces fatigue */
         --background: 220 14% 96%;
         --foreground: 222 14% 16%;
