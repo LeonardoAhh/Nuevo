@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import { Fraunces, JetBrains_Mono } from "next/font/google"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
@@ -7,6 +8,25 @@ import { SonnerProvider } from "@/components/ui/sonner-provider"
 import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 import { ConnectionStatus } from "@/components/connection-status"
 import { InstallPrompt } from "@/components/install-prompt"
+
+// Editorial serif + technical mono shared by the login hero and
+// the post-login transition. Exposed as CSS variables so any
+// consumer can use `font-serif` / `font-mono` Tailwind classes
+// instead of hard-coding font-family strings.
+const fontSerif = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  weight: ["300", "600", "800"],
+  style: ["normal", "italic"],
+})
+
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["400", "500"],
+})
 
 // Values below match --card tokens in app/globals.css so the mobile browser /
 // PWA status bar (Android) and the sticky header blend seamlessly. The theme
@@ -83,7 +103,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${fontSerif.variable} ${fontMono.variable}`}
+      >
         <ViewportFix />
         <ThemeProvider>{children}</ThemeProvider>
         <PWARegister />
