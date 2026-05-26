@@ -16,6 +16,7 @@ import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto } from "@/lib/catalog
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import DesempenoPrint from "./desempeno-print"
+import DesempenoCumplimiento from "./desempeno-cumplimiento"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
   if (OBJETIVOS_POR_PUESTO[puesto]) {
@@ -325,6 +326,9 @@ export default function DesempenoObjetivos() {
           </CardContent>
         </Card>
       )}
+      {/* Cumplimiento por departamento — al final del flujo */}
+      <DesempenoCumplimiento />
+
       {/* Hidden print area */}
       {data && (
         <div className="print-area hidden print:block">

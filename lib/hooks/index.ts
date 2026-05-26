@@ -41,6 +41,8 @@ export { usePromociones } from './usePromociones'
 export { usePromocionesImport } from './usePromocionesImport'
 export { useNotificationHistory, formatDateMX, formatDateTimeMX } from './useNotificationHistory'
 export type { TipoFilter } from './useNotificationHistory'
+export { useCumplimientoDesempeno, PERIODOS_DISPONIBLES } from './useCumplimientoDesempeno'
+export type { PeriodoCodigo, EntregaEvaluaciones, CumplimientoRow } from './useCumplimientoDesempeno'
 export type {
   AptitudStatus,
   CursoRequerido,
