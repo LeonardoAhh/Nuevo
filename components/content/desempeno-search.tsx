@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
+import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
@@ -184,7 +185,7 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
+  const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
     useDesempeno()
   const { isEvaluador } = useRole()
   const { totalEvals } = usePendingEvals()
@@ -216,6 +217,14 @@ export default function DesempenoSearch() {
   const requiereCompromisos = ponderacion !== null && ponderacion.calificacionFinal < 80
   const tieneCompromisos = !!(data?.compromisos?.trim())
   const bloqueado = requiereCompromisos && !tieneCompromisos
+
+  // Elegibilidad por antigüedad para evaluaciones semestrales.
+  // Empleados con < 2 meses respecto al fin del periodo no son evaluables.
+  const periodoEvaluacion = data?.periodo || periodoSeleccionado
+  const elegibilidad = data
+    ? esElegibleParaPeriodo(fechaIngreso, periodoEvaluacion)
+    : { elegible: true, motivo: "", cutoff: null, reglaAplica: false }
+  const noElegible = elegibilidad.reglaAplica && !elegibilidad.elegible
 
   const previewData: DesempenoData = {
     ...(data ?? {
@@ -291,12 +300,14 @@ export default function DesempenoSearch() {
                       }
                       label="Guardar"
                       tooltip={
-                        bloqueado
+                        noElegible
+                          ? "Empleado no elegible para este periodo semestral (< 2 meses)"
+                          : bloqueado
                           ? "Captura compromisos primero (calificación < 80%)"
                           : "Guardar evaluación"
                       }
                       onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
-                      disabled={saving || bloqueado}
+                      disabled={saving || bloqueado || noElegible}
                       variant="outline"
                     />
 
@@ -304,12 +315,14 @@ export default function DesempenoSearch() {
                       icon={<Printer className="h-3.5 w-3.5" />}
                       label="Imprimir"
                       tooltip={
-                        bloqueado
+                        noElegible
+                          ? "Empleado no elegible para este periodo semestral (< 2 meses)"
+                          : bloqueado
                           ? "Captura compromisos primero (calificación < 80%)"
                           : "Imprimir evaluación"
                       }
                       onClick={() => window.print()}
-                      disabled={bloqueado}
+                      disabled={bloqueado || noElegible}
                       variant="default"
                     />
                   </>
@@ -400,6 +413,16 @@ export default function DesempenoSearch() {
           <Alert className="flex items-center gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
             <AlertDescription>
               La calificación es menor a <strong>80%.</strong> No puedes guardar, imprimir o descargar el PDF hasta que captures los compromisos de mejora.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {noElegible && (
+          <Alert className="flex items-center gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Empleado no elegible para evaluación semestral.</strong>{" "}
+              {elegibilidad.motivo} Cambia el periodo o espera al siguiente semestre.
             </AlertDescription>
           </Alert>
         )}

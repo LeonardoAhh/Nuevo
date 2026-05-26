@@ -29,6 +29,7 @@ export interface EvaluacionHistorial {
 
 export function useDesempeno() {
   const [data, setData] = useState<DesempenoData | null>(null)
+  const [fechaIngreso, setFechaIngreso] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -45,26 +46,38 @@ export function useDesempeno() {
       // Search in both employees and nuevo_ingreso tables
       const { data: emp } = await supabase
         .from("employees")
-        .select("id, numero, nombre, puesto")
+        .select("id, numero, nombre, puesto, fecha_ingreso")
         .eq("numero", numero)
         .maybeSingle()
 
-      let empleadoData: { numero: string; nombre: string; puesto: string } | null = null
+      let empleadoData: { numero: string; nombre: string; puesto: string; fechaIngreso: string | null } | null = null
 
       if (emp) {
-        empleadoData = { numero: emp.numero!, nombre: emp.nombre, puesto: emp.puesto || "" }
+        empleadoData = {
+          numero: emp.numero!,
+          nombre: emp.nombre,
+          puesto: emp.puesto || "",
+          fechaIngreso: emp.fecha_ingreso ?? null,
+        }
       } else {
         const { data: ni } = await supabase
           .from("nuevo_ingreso")
-          .select("numero, nombre, puesto")
+          .select("numero, nombre, puesto, fecha_ingreso")
           .eq("numero", numero)
           .maybeSingle()
         if (ni) {
-          empleadoData = { numero: ni.numero!, nombre: ni.nombre, puesto: ni.puesto || "" }
+          empleadoData = {
+            numero: ni.numero!,
+            nombre: ni.nombre,
+            puesto: ni.puesto || "",
+            fechaIngreso: ni.fecha_ingreso ?? null,
+          }
         }
       }
 
       if (!empleadoData) throw new Error("Empleado no encontrado")
+
+      setFechaIngreso(empleadoData.fechaIngreso)
 
       const { data: evalData } = await supabase
         .from("evaluaciones_desempeno")
@@ -286,25 +299,30 @@ export function useDesempeno() {
       // Find employee info
       let nombre = ""
       let puesto = ""
+      let fechaIngresoEmp: string | null = null
       const { data: emp } = await supabase
         .from("employees")
-        .select("nombre, puesto")
+        .select("nombre, puesto, fecha_ingreso")
         .eq("numero", evalRow.numero_empleado)
         .maybeSingle()
       if (emp) {
         nombre = emp.nombre
         puesto = emp.puesto || ""
+        fechaIngresoEmp = emp.fecha_ingreso ?? null
       } else {
         const { data: ni } = await supabase
           .from("nuevo_ingreso")
-          .select("nombre, puesto")
+          .select("nombre, puesto, fecha_ingreso")
           .eq("numero", evalRow.numero_empleado)
           .maybeSingle()
         if (ni) {
           nombre = ni.nombre
           puesto = ni.puesto || ""
+          fechaIngresoEmp = ni.fecha_ingreso ?? null
         }
       }
+
+      setFechaIngreso(fechaIngresoEmp)
 
       const result: DesempenoData = {
         numero_empleado: evalRow.numero_empleado,
@@ -365,7 +383,7 @@ export function useDesempeno() {
   }, [])
 
   return {
-    data, setData, loading, saving, saveSuccess, resetSaveSuccess, error,
+    data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
     buscarEmpleado, guardar,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
