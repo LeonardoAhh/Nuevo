@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronsUpDown,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -49,6 +50,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/cursos": "Cursos",
   "/bot": "Bot WhatsApp",
   "/eventos": "Eventos",
+  "/guia-evaluador": "Guía Evaluador",
   "/settings": "Configuración",
 }
 
@@ -200,6 +202,20 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
                   <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
                     <Settings size={16} />
                     <span>Configuración</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  asChild
+                  className={
+                    pathname === "/guia-evaluador"
+                      ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
+                      : ""
+                  }
+                >
+                  <Link href="/guia-evaluador" className="flex items-center gap-2 cursor-pointer">
+                    <BookOpen size={16} />
+                    <span>Guía Evaluador</span>
                   </Link>
                 </DropdownMenuItem>
 

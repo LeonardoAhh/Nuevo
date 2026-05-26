@@ -304,7 +304,7 @@ export function GuiaEvaluadorPage() {
           n="01"
           title="Acceder al sistema"
           kicker="Login"
-          intro="Abre el sistema en tu navegador y captura las credenciales del rol Evaluador."
+          intro="Abre el sistema en tu navegador y captura las credenciales proporcionadas para ingresar.."
           viewport={viewport}
         >
           <div className="grid gap-10 md:grid-cols-[1.1fr_1fr] md:items-start">
@@ -347,7 +347,7 @@ export function GuiaEvaluadorPage() {
             {/* Credenciales */}
             <div className="space-y-6">
               <div>
-                <SectionLabel>Credenciales del rol Evaluador</SectionLabel>
+                <SectionLabel>Credenciales del Evaluador</SectionLabel>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   Este acceso es compartido entre los evaluadores de planta y
                   está diseñado exclusivamente para consultar información y
@@ -376,7 +376,6 @@ export function GuiaEvaluadorPage() {
             </div>
           </div>
         </Step>
-
         {/* ── PASO 02 · MODALIDAD Y PERIODO ────────────────────── */}
         <Step
           id="paso-02"
@@ -1099,7 +1098,7 @@ export function GuiaEvaluadorPage() {
               Accede al sistema
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-              Usa las credenciales del "Evaluador" y completa tus evaluaciones
+              Usa las credenciales y completa tus evaluaciones
               pendientes.
             </p>
 
