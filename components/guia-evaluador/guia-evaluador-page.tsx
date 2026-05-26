@@ -446,7 +446,7 @@ export function GuiaEvaluadorPage() {
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <Bullet n="A">
               <strong className="font-serif italic">Semestral</strong> — para
-              evaluaciones formales (ENE-JUN, JUL-DIC).
+              evaluaciones formales (DIC-MAY, JUN-NOV).
             </Bullet>
             <Bullet n="B">
               <strong className="font-serif italic">Mensual</strong> — para
