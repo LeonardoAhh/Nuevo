@@ -20,6 +20,7 @@ import {
   ImageIcon,
   FileText,
   CalendarClock,
+  ListChecks,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -58,6 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Cumplimiento", href: "/reportes", icon: FileText },
       { label: "Reporte Diario", href: "/reporte-diario", icon: CalendarClock },
       { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
+      { label: "Cumplimiento Evaluaciones", href: "/desempeno/cumplimiento", icon: ListChecks },
       { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
       { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
     ],

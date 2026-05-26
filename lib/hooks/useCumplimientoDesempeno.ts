@@ -1,0 +1,235 @@
+"use client"
+
+import { useCallback, useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export type EstatusEntrega = "auto" | "manual" | "pendiente"
+
+export interface EmpleadoCumplimiento {
+  id: string
+  numero: string
+  nombre: string
+  puesto: string | null
+  departamento: string | null
+  area: string | null
+  estatus: EstatusEntrega
+  /** id de evaluaciones_desempeno si existe (auto) */
+  evaluacionId: string | null
+  /** id de desempeno_entregas si existe (manual) */
+  entregaId: string | null
+  fechaEntrega: string | null
+  notas: string | null
+  calificacionFinal: number | null
+}
+
+export interface DeptCumplimiento {
+  departamento: string
+  empleados: EmpleadoCumplimiento[]
+  total: number
+  entregadas: number
+  pendientes: number
+  porcentaje: number
+}
+
+export interface ResumenCumplimiento {
+  total: number
+  entregadas: number
+  pendientes: number
+  porcentaje: number
+}
+
+interface EmployeeRow {
+  id: string
+  numero: string | null
+  nombre: string
+  puesto: string | null
+  departamento: string | null
+  area: string | null
+}
+
+interface EvaluacionRow {
+  id: string
+  numero_empleado: string
+  calificacion_final: number | null
+}
+
+interface EntregaRow {
+  id: string
+  numero_empleado: string
+  entregada: boolean
+  fecha_entrega: string | null
+  notas: string | null
+}
+
+// ─── Hook ───────────────────────────────────────────────────────────────────
+
+export function useCumplimientoDesempeno(periodo: string) {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [deptGroups, setDeptGroups] = useState<DeptCumplimiento[]>([])
+  const [resumen, setResumen] = useState<ResumenCumplimiento>({
+    total: 0,
+    entregadas: 0,
+    pendientes: 0,
+    porcentaje: 0,
+  })
+
+  const cargar = useCallback(async () => {
+    if (!periodo) return
+    setLoading(true)
+    setError(null)
+    try {
+      const [empRes, evalRes, entregaRes] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("id, numero, nombre, puesto, departamento, area")
+          .order("nombre"),
+        supabase
+          .from("evaluaciones_desempeno")
+          .select("id, numero_empleado, calificacion_final")
+          .eq("periodo", periodo),
+        supabase
+          .from("desempeno_entregas")
+          .select("id, numero_empleado, entregada, fecha_entrega, notas")
+          .eq("periodo", periodo),
+      ])
+
+      if (empRes.error) throw new Error("Error cargando empleados: " + empRes.error.message)
+      if (evalRes.error) throw new Error("Error cargando evaluaciones: " + evalRes.error.message)
+      if (entregaRes.error) throw new Error("Error cargando entregas: " + entregaRes.error.message)
+
+      const empleados = (empRes.data ?? []) as EmployeeRow[]
+      const evaluaciones = (evalRes.data ?? []) as EvaluacionRow[]
+      const entregas = (entregaRes.data ?? []) as EntregaRow[]
+
+      const evalMap = new Map<string, EvaluacionRow>()
+      for (const e of evaluaciones) {
+        if (!evalMap.has(e.numero_empleado)) evalMap.set(e.numero_empleado, e)
+      }
+
+      const entregaMap = new Map<string, EntregaRow>()
+      for (const e of entregas) entregaMap.set(e.numero_empleado, e)
+
+      const empleadosCumplimiento: EmpleadoCumplimiento[] = []
+      for (const emp of empleados) {
+        if (!emp.numero) continue
+        const evalRow = evalMap.get(emp.numero)
+        const entregaRow = entregaMap.get(emp.numero)
+
+        let estatus: EstatusEntrega = "pendiente"
+        if (evalRow) estatus = "auto"
+        else if (entregaRow?.entregada) estatus = "manual"
+
+        empleadosCumplimiento.push({
+          id: emp.id,
+          numero: emp.numero,
+          nombre: emp.nombre,
+          puesto: emp.puesto,
+          departamento: emp.departamento,
+          area: emp.area,
+          estatus,
+          evaluacionId: evalRow?.id ?? null,
+          entregaId: entregaRow?.id ?? null,
+          fechaEntrega: entregaRow?.fecha_entrega ?? null,
+          notas: entregaRow?.notas ?? null,
+          calificacionFinal: evalRow?.calificacion_final ?? null,
+        })
+      }
+
+      // Group by departamento
+      const deptMap = new Map<string, EmpleadoCumplimiento[]>()
+      for (const emp of empleadosCumplimiento) {
+        const key = emp.departamento ?? "Sin departamento"
+        if (!deptMap.has(key)) deptMap.set(key, [])
+        deptMap.get(key)!.push(emp)
+      }
+
+      const groups: DeptCumplimiento[] = Array.from(deptMap.entries())
+        .map(([departamento, items]) => {
+          const total = items.length
+          const entregadas = items.filter((i) => i.estatus !== "pendiente").length
+          const pendientes = total - entregadas
+          const porcentaje = total === 0 ? 0 : Math.round((entregadas / total) * 100)
+          return {
+            departamento,
+            empleados: items.sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+            total,
+            entregadas,
+            pendientes,
+            porcentaje,
+          }
+        })
+        .sort((a, b) => a.departamento.localeCompare(b.departamento, "es"))
+
+      const totalGlobal = empleadosCumplimiento.length
+      const entregadasGlobal = empleadosCumplimiento.filter((e) => e.estatus !== "pendiente").length
+
+      setDeptGroups(groups)
+      setResumen({
+        total: totalGlobal,
+        entregadas: entregadasGlobal,
+        pendientes: totalGlobal - entregadasGlobal,
+        porcentaje: totalGlobal === 0 ? 0 : Math.round((entregadasGlobal / totalGlobal) * 100),
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error al cargar cumplimiento"
+      setError(msg)
+      notify.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }, [periodo])
+
+  useEffect(() => {
+    void cargar()
+  }, [cargar])
+
+  const marcarEntrega = useCallback(
+    async (
+      numero: string,
+      entregada: boolean,
+      opts?: { fechaEntrega?: string | null; notas?: string | null },
+    ) => {
+      if (!periodo) return
+      setSaving(true)
+      try {
+        const payload = {
+          numero_empleado: numero,
+          periodo,
+          entregada,
+          fecha_entrega: opts?.fechaEntrega ?? (entregada ? new Date().toISOString().slice(0, 10) : null),
+          notas: opts?.notas ?? null,
+        }
+
+        const { error: upErr } = await supabase
+          .from("desempeno_entregas")
+          .upsert(payload, { onConflict: "numero_empleado,periodo" })
+
+        if (upErr) throw upErr
+
+        notify.success(entregada ? "Marcada como entregada" : "Marca de entrega quitada")
+        await cargar()
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error al actualizar entrega"
+        notify.error(msg)
+      } finally {
+        setSaving(false)
+      }
+    },
+    [periodo, cargar],
+  )
+
+  return {
+    loading,
+    saving,
+    error,
+    deptGroups,
+    resumen,
+    cargar,
+    marcarEntrega,
+  }
+}
