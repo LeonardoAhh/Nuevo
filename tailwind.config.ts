@@ -14,6 +14,10 @@ const config: Config = {
       screens: {
         xs: "480px",
       },
+      fontFamily: {
+        serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
