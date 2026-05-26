@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronsUpDown,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -200,6 +201,18 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
                   <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
                     <Settings size={16} />
                     <span>Configuración</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/guia-evaluador"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <BookOpen size={16} />
+                    <span>Guía del Evaluador</span>
                   </Link>
                 </DropdownMenuItem>
 
