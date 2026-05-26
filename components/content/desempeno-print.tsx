@@ -43,7 +43,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       {/* PARTE 1: Objetivos (40%) */}
-      <div className={styles.sectionHeader}>Cumplimiento de Objetivos (40%)</div>
+      <div className={styles.sectionHeader}>Cumplimiento de Objetivos 40%</div>
       <table className={styles.table}>
         <thead>
           <tr>
