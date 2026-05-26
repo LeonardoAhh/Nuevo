@@ -1,3 +1,5 @@
+export { useCumplimientoDepartamental } from './useCumplimientoDepartamental'
+export type { EntregaDepartamento } from './useCumplimientoDepartamental'
 export { useProfile } from './useProfile'
 export { useSkills } from './useSkills'
 export { useUser } from './useUser'
