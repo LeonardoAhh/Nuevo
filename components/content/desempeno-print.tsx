@@ -73,7 +73,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
       {/* PARTE 2: Cumplimiento (30%) */}
       <div className={styles.sectionHeader}>Responsabilidades 30%</div>
-      <table className={styles.table}>
+      <table className={`${styles.table} ${styles.tableObjetivos}`}>
         <thead>
           <tr>
             <th>Cumplimiento de responsabilidades</th>
@@ -100,7 +100,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
       {/* PARTE 3: Competencias (30%) */}
       <div className={styles.sectionHeader}>Competencias Blandas 30%</div>
-      <table className={styles.table}>
+      <table className={`${styles.table} ${styles.tableCompetencias}`}>
         <thead>
           <tr>
             <th>Competencia</th>

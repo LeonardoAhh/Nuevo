@@ -20,7 +20,7 @@
   background: var(--print-bg);
   color: var(--print-text);
   font-family: inherit;
-  font-size: 0.65rem;
+  font-size: 0.70rem;
 }
 
 .pageBreakSection {
@@ -34,20 +34,20 @@
   grid-template-columns: 1fr auto;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .headerLeft h1 {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   color: var(--print-text);
 }
 
 .headerLeft p {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   margin: 0;
   color: var(--print-text-secondary);
 }
@@ -75,30 +75,30 @@
   grid-template-columns: 2fr 2fr 1fr;
   gap: 0;
   margin-bottom: 0;
-  font-size: 0.62rem;
+  font-size: 0.70rem;
 }
 
 .infoGridBottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  margin-bottom: 0.5rem;
-  font-size: 0.62rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
 }
 
 .infoGridTop div,
 .infoGridBottom div {
   background: transparent;
-  padding: 0.35rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--print-border);
 }
 
 /* Section headers */
 .sectionHeader {
   font-weight: 700;
-  font-size: 0.65rem;
-  padding: 0.2rem 0.5rem;
-  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  padding: 0.18rem 0.55rem;
+  margin-top: 0.3rem;
   text-transform: uppercase;
   color: var(--print-text);
   border: 1px solid var(--print-border);
@@ -110,15 +110,16 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   page-break-inside: avoid;
   break-inside: avoid;
+  line-height: 1.22;
 }
 
 .table th,
 .table td {
   border: 1px solid var(--print-border);
-  padding: 0.15rem 0.3rem;
+  padding: 0.08rem 0.35rem;
   vertical-align: top;
 }
 
@@ -126,7 +127,7 @@
   background: var(--print-bg-subtle);
   font-weight: 600;
   text-align: left;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--print-text-th);
 }
 
@@ -139,27 +140,49 @@
 }
 
 .tdBold {
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .tdSmall {
-  font-size: 0.48rem;
-  line-height: 1.1;
+  font-size: 0.6rem;
+  line-height: 1.18;
   word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
   max-width: 260px;
 }
 
+/* Override: SOLO tabla Competencias Blandas mas compacta */
+.tableCompetencias {
+  font-size: 0.62rem;
+}
+
+.tableCompetencias th {
+  font-size: 0.6rem;
+}
+
+.tableCompetencias .tdSmall {
+  font-size: 0.5rem;
+}
+
+/* Override: SOLO tabla Cumplimiento de Objetivos mas compacta */
+.tableObjetivos {
+  font-size: 0.62rem;
+}
+
+.tableObjetivos th {
+  font-size: 0.6rem;
+}
+
 /* Result row */
 .resultRow {
   display: flex;
   justify-content: space-between;
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.5rem;
   background: var(--print-bg-subtle);
   border: 1px solid var(--print-border);
   border-top: none;
-  font-size: 0.65rem;
+  font-size: 0.54rem;
 }
 
 /* Calificación final */
@@ -167,19 +190,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0.7rem;
-  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  margin-top: 0.35rem;
   background: var(--print-bg-accent);
   color: var(--print-bg);
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 700;
 }
 
 .warningBox {
   background: var(--print-bg-warning);
   border: 1px solid var(--print-border-warning);
-  padding: 0.3rem 0.5rem;
-  font-size: 0.65rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
   font-weight: 600;
   margin-top: 0.3rem;
 }
@@ -188,14 +211,14 @@
 .notesSection {
   display: grid;
   gap: 0;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .notesSection div {
-  padding: 0.3rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--print-border);
-  font-size: 0.65rem;
+  font-size: 0.72rem;
 }
 
 .notesSection p {
@@ -207,10 +230,10 @@
   display: grid;
   gap: 0.5rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0.8rem;
+  margin-top: 0.55rem;
   margin-bottom: 0.3rem;
   text-align: center;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -221,8 +244,8 @@
 }
 
 .signatureName {
-  font-weight: 700;
-  font-size: 0.68rem;
+  font-weight: 500;
+  font-size: 0.70rem;
   margin-bottom: 0.1rem;
 }
 
@@ -234,7 +257,7 @@
   display: flex;
   justify-content: space-between;
   padding: 0 6mm 3mm 6mm;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: var(--print-text-footer);
 }
 
