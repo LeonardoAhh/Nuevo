@@ -20,8 +20,8 @@ import { useRole, type AppRole } from "@/lib/hooks"
  * `font-mono`. Sin hex/rgb ni `font-family` hardcoded.
  */
 
-const MIN_MS = 4500
-const EXIT_MS = 700
+const MIN_MS = 6000
+const EXIT_MS = 400
 const WORDMARK = "VIÑOPLASTIC"
 const SPLIT_AT = 4 // "VIÑO" | "PLASTIC"
 
