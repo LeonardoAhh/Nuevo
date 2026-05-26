@@ -15,6 +15,23 @@ import {
 } from "@/lib/types/desempeno"
 import { getTipoDesempenoByPuesto } from "@/lib/catalogo"
 
+// Mapea texto libre de periodo a un código canónico ('ENE-JUN-2026', etc.)
+// Mantener sincronizado con el bloque equivalente en
+// supabase/migrations/20260526_cumplimiento_desempeno.sql (paso 5.b).
+function deriveCodigoFromPeriodo(periodo: string | null | undefined): string | null {
+  if (!periodo) return null
+  const up = periodo.toUpperCase()
+  if (/(ENE|ENERO).*(JUN|JUNIO).*2026/.test(up)) return "ENE-JUN-2026"
+  if (/(JUL|JULIO).*(DIC|DICIEMBRE).*2026/.test(up)) return "JUL-DIC-2026"
+  if (/(ENE|ENERO).*(JUN|JUNIO).*2025/.test(up)) return "ENE-JUN-2025"
+  if (/(JUL|JULIO).*(DIC|DICIEMBRE).*2025/.test(up)) return "JUL-DIC-2025"
+  if (/2026.?[-/_ ]?1\b/.test(periodo)) return "ENE-JUN-2026"
+  if (/2026.?[-/_ ]?2\b/.test(periodo)) return "JUL-DIC-2026"
+  if (/2025.?[-/_ ]?1\b/.test(periodo)) return "ENE-JUN-2025"
+  if (/2025.?[-/_ ]?2\b/.test(periodo)) return "JUL-DIC-2025"
+  return null
+}
+
 export interface EvaluacionHistorial {
   id: string
   numero_empleado: string
@@ -174,6 +191,7 @@ export function useDesempeno() {
         evaluador_puesto: evalData.evaluador_puesto || null,
         tipo: evalData.tipo,
         periodo: evalData.periodo || null,
+        periodo_codigo: deriveCodigoFromPeriodo(evalData.periodo),
         objetivos: evalData.objetivos,
         cumplimiento_responsabilidades: evalData.cumplimiento_responsabilidades,
         competencias: evalData.competencias,
