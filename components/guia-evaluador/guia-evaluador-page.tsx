@@ -347,7 +347,7 @@ export function GuiaEvaluadorPage() {
             {/* Credenciales */}
             <div className="space-y-6">
               <div>
-                <SectionLabel>Credenciales del Evaluador</SectionLabel>
+                <SectionLabel>Credenciales</SectionLabel>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   Este acceso es compartido entre los evaluadores de planta y
                   está diseñado exclusivamente para consultar información y
