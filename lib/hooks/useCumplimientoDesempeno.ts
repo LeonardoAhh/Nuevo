@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
+import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type EstatusEntrega = "auto" | "manual" | "pendiente"
+export type EstatusEntrega = "auto" | "manual" | "pendiente" | "no_aplica"
 
 export interface EmpleadoCumplimiento {
   id: string
@@ -15,6 +16,7 @@ export interface EmpleadoCumplimiento {
   puesto: string | null
   departamento: string | null
   area: string | null
+  fechaIngreso: string | null
   estatus: EstatusEntrega
   /** id de evaluaciones_desempeno si existe (auto) */
   evaluacionId: string | null
@@ -23,6 +25,8 @@ export interface EmpleadoCumplimiento {
   fechaEntrega: string | null
   notas: string | null
   calificacionFinal: number | null
+  /** Motivo de no elegibilidad cuando estatus = "no_aplica". */
+  motivoNoAplica: string | null
 }
 
 export interface DeptCumplimiento {
@@ -48,6 +52,7 @@ interface EmployeeRow {
   puesto: string | null
   departamento: string | null
   area: string | null
+  fecha_ingreso: string | null
 }
 
 interface EvaluacionRow {
@@ -86,7 +91,7 @@ export function useCumplimientoDesempeno(periodo: string) {
       const [empRes, evalRes, entregaRes] = await Promise.all([
         supabase
           .from("employees")
-          .select("id, numero, nombre, puesto, departamento, area")
+          .select("id, numero, nombre, puesto, departamento, area, fecha_ingreso")
           .order("nombre"),
         supabase
           .from("evaluaciones_desempeno")
@@ -120,9 +125,21 @@ export function useCumplimientoDesempeno(periodo: string) {
         const evalRow = evalMap.get(emp.numero)
         const entregaRow = entregaMap.get(emp.numero)
 
-        let estatus: EstatusEntrega = "pendiente"
-        if (evalRow) estatus = "auto"
-        else if (entregaRow?.entregada) estatus = "manual"
+        // Antigüedad < 2 meses respecto al cierre del periodo → no aplica
+        const elegibilidad = esElegibleParaPeriodo(emp.fecha_ingreso, periodo)
+
+        let estatus: EstatusEntrega
+        let motivoNoAplica: string | null = null
+        if (elegibilidad.reglaAplica && !elegibilidad.elegible) {
+          estatus = "no_aplica"
+          motivoNoAplica = elegibilidad.motivo
+        } else if (evalRow) {
+          estatus = "auto"
+        } else if (entregaRow?.entregada) {
+          estatus = "manual"
+        } else {
+          estatus = "pendiente"
+        }
 
         empleadosCumplimiento.push({
           id: emp.id,
@@ -131,12 +148,14 @@ export function useCumplimientoDesempeno(periodo: string) {
           puesto: emp.puesto,
           departamento: emp.departamento,
           area: emp.area,
+          fechaIngreso: emp.fecha_ingreso,
           estatus,
           evaluacionId: evalRow?.id ?? null,
           entregaId: entregaRow?.id ?? null,
           fechaEntrega: entregaRow?.fecha_entrega ?? null,
           notas: entregaRow?.notas ?? null,
           calificacionFinal: evalRow?.calificacion_final ?? null,
+          motivoNoAplica,
         })
       }
 
@@ -150,8 +169,12 @@ export function useCumplimientoDesempeno(periodo: string) {
 
       const groups: DeptCumplimiento[] = Array.from(deptMap.entries())
         .map(([departamento, items]) => {
-          const total = items.length
-          const entregadas = items.filter((i) => i.estatus !== "pendiente").length
+          // Empleados "no_aplica" se muestran pero NO cuentan en KPIs.
+          const elegibles = items.filter((i) => i.estatus !== "no_aplica")
+          const total = elegibles.length
+          const entregadas = elegibles.filter(
+            (i) => i.estatus === "auto" || i.estatus === "manual",
+          ).length
           const pendientes = total - entregadas
           const porcentaje = total === 0 ? 0 : Math.round((entregadas / total) * 100)
           return {
@@ -165,8 +188,11 @@ export function useCumplimientoDesempeno(periodo: string) {
         })
         .sort((a, b) => a.departamento.localeCompare(b.departamento, "es"))
 
-      const totalGlobal = empleadosCumplimiento.length
-      const entregadasGlobal = empleadosCumplimiento.filter((e) => e.estatus !== "pendiente").length
+      const elegiblesGlobal = empleadosCumplimiento.filter((e) => e.estatus !== "no_aplica")
+      const totalGlobal = elegiblesGlobal.length
+      const entregadasGlobal = elegiblesGlobal.filter(
+        (e) => e.estatus === "auto" || e.estatus === "manual",
+      ).length
 
       setDeptGroups(groups)
       setResumen({
@@ -192,9 +218,18 @@ export function useCumplimientoDesempeno(periodo: string) {
     async (
       numero: string,
       entregada: boolean,
-      opts?: { fechaEntrega?: string | null; notas?: string | null },
+      opts?: { fechaEntrega?: string | null; notas?: string | null; fechaIngreso?: string | null },
     ) => {
       if (!periodo) return
+
+      // Defensa client-side: rechazar marcado de empleados no elegibles.
+      // (RLS en DB es la defensa final, pero esto evita el round-trip.)
+      const elegibilidad = esElegibleParaPeriodo(opts?.fechaIngreso ?? null, periodo)
+      if (elegibilidad.reglaAplica && !elegibilidad.elegible) {
+        notify.error(elegibilidad.motivo)
+        return
+      }
+
       setSaving(true)
       try {
         const payload = {

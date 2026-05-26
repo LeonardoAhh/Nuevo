@@ -16,6 +16,7 @@ import {
   Search,
   Filter,
   ExternalLink,
+  MinusCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -78,6 +79,14 @@ function EstatusBadge({ estatus }: { estatus: EmpleadoCumplimiento["estatus"] })
       </Badge>
     )
   }
+  if (estatus === "no_aplica") {
+    return (
+      <Badge className="bg-muted text-muted-foreground hover:bg-muted/80 border-0 gap-1">
+        <MinusCircle className="h-3 w-3" />
+        No aplica (&lt; 2 meses)
+      </Badge>
+    )
+  }
   return (
     <Badge className="bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.2)] border-0 gap-1">
       <Clock className="h-3 w-3" />
@@ -92,12 +101,13 @@ interface EmployeeRowProps {
   emp: EmpleadoCumplimiento
   saving: boolean
   isReadOnly: boolean
-  onToggle: (numero: string, entregada: boolean) => void
+  onToggle: (numero: string, entregada: boolean, fechaIngreso: string | null) => void
 }
 
 function EmployeeRow({ emp, saving, isReadOnly, onToggle }: EmployeeRowProps) {
   const entregadaManual = emp.estatus === "manual"
   const entregadaAuto = emp.estatus === "auto"
+  const noAplica = emp.estatus === "no_aplica"
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-lg border border-border/60 bg-card px-3 py-2.5">
@@ -134,13 +144,13 @@ function EmployeeRow({ emp, saving, isReadOnly, onToggle }: EmployeeRowProps) {
             </Link>
           </Button>
         )}
-        {!entregadaAuto && !isReadOnly && (
+        {!entregadaAuto && !noAplica && !isReadOnly && (
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-muted-foreground">Manual</span>
             <Switch
               checked={entregadaManual}
               disabled={saving}
-              onCheckedChange={(checked) => onToggle(emp.numero, checked)}
+              onCheckedChange={(checked) => onToggle(emp.numero, checked, emp.fechaIngreso)}
               aria-label="Marcar entrega manual"
             />
           </div>
@@ -159,7 +169,7 @@ export default function DesempenoCumplimientoContent() {
     useCumplimientoDesempeno(periodo)
 
   const [search, setSearch] = useState("")
-  const [filterEstatus, setFilterEstatus] = useState<"all" | "pendiente" | "entregada">("all")
+  const [filterEstatus, setFilterEstatus] = useState<"all" | "pendiente" | "entregada" | "no_aplica">("all")
   const [expandedDept, setExpandedDept] = useState<Record<string, boolean>>({})
 
   const toggleDept = (dept: string) =>
@@ -178,7 +188,8 @@ export default function DesempenoCumplimientoContent() {
             if (!hit) return false
           }
           if (filterEstatus === "pendiente" && e.estatus !== "pendiente") return false
-          if (filterEstatus === "entregada" && e.estatus === "pendiente") return false
+          if (filterEstatus === "entregada" && e.estatus !== "auto" && e.estatus !== "manual") return false
+          if (filterEstatus === "no_aplica" && e.estatus !== "no_aplica") return false
           return true
         })
         return { ...g, empleados }
@@ -250,6 +261,7 @@ export default function DesempenoCumplimientoContent() {
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="entregada">Entregadas</SelectItem>
               <SelectItem value="pendiente">Pendientes</SelectItem>
+              <SelectItem value="no_aplica">No aplica</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -337,7 +349,9 @@ export default function DesempenoCumplimientoContent() {
                               emp={emp}
                               saving={saving}
                               isReadOnly={isReadOnly}
-                              onToggle={(numero, entregada) => marcarEntrega(numero, entregada)}
+                              onToggle={(numero, entregada, fechaIngreso) =>
+                                marcarEntrega(numero, entregada, { fechaIngreso })
+                              }
                             />
                           ))}
                         </div>
