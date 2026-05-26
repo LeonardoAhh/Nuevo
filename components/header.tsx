@@ -45,6 +45,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/calificaciones": "Calificaciones",
   "/promociones": "Promociones",
   "/desempeno": "Evaluación Desempeño",
+  "/desempeno/cumplimiento": "Cumplimiento Evaluaciones",
   "/examenes": "Exámenes",
   "/whatsapp": "WhatsApp Bot",
   "/cursos": "Cursos",

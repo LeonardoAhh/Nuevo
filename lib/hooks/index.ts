@@ -40,6 +40,13 @@ export type { IncidenciaRecord, IncidenciaInsert, IncidenciaCategory, Incidencia
 export { usePromociones } from './usePromociones'
 export { usePromocionesImport } from './usePromocionesImport'
 export { useNotificationHistory, formatDateMX, formatDateTimeMX } from './useNotificationHistory'
+export { useCumplimientoDesempeno } from './useCumplimientoDesempeno'
+export type {
+  EstatusEntrega,
+  EmpleadoCumplimiento,
+  DeptCumplimiento,
+  ResumenCumplimiento,
+} from './useCumplimientoDesempeno'
 export type { TipoFilter } from './useNotificationHistory'
 export type {
   AptitudStatus,
