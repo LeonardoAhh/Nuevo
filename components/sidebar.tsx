@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useRole } from "@/lib/hooks"
-import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
+import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
@@ -144,7 +144,7 @@ export default function Sidebar({
   const { canEdit, isEvaluador, loading: roleLoading } = useRole()
 
   const isItemVisible = (href: string) =>
-    !isEvaluador || EVALUADOR_ALLOWED_ROUTES.some((r) => href === r || href.startsWith(r + '/'))
+    !isEvaluador || isEvaluadorAllowedRoute(href)
 
   const visibleSections = NAV_SECTIONS
     .filter((s) => {

@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
 import { useRole } from "@/lib/hooks"
-import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
+import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 
 interface DashboardProps {
   content?: ReactNode
@@ -27,10 +27,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
 
   useEffect(() => {
     if (roleLoading || !isEvaluador) return
-    const allowed = EVALUADOR_ALLOWED_ROUTES.some(
-      (r) => pathname === r || pathname.startsWith(r + '/')
-    )
-    if (!allowed) {
+    if (!isEvaluadorAllowedRoute(pathname ?? '')) {
       router.replace('/desempeno')
     }
   }, [pathname, isEvaluador, roleLoading, router])
