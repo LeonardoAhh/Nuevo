@@ -9,8 +9,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import {
   calcularPonderacion,
@@ -19,7 +32,33 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { EVALUADORES_DESEMPENO, EVALUADORES_PUESTO } from "@/lib/catalogo"
+import { EVALUADORES_PUESTO, DEPARTAMENTOS_EVALUADORES } from "@/lib/catalogo"
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const TIPO_LABEL: Record<string, string> = {
+  jefe: "JEFE",
+  administrativo: "ADMINISTRATIVO",
+  operativo: "OPERATIVO",
+}
+
+const INSTRUCCIONES =
+  "La siguiente evaluación está integrada por 3 partes. En la primera deberá " +
+  "anotar los objetivos SMART del puesto evaluado, así como el % del objetivo " +
+  "logrado en cada uno, o su promedio durante el periodo de la presente evaluación. " +
+  "La segunda parte será prellenada con la información de RH y SGI, la tercera " +
+  "parte deberá ser evaluada por el jefe inmediato."
+
+// Pasos del modal de cumplimiento que son de solo lectura
+const CUMPLIMIENTO_READONLY_STEPS = new Set([2, 4])
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getTipoLabel(tipo: string | undefined): string {
+  return tipo ? (TIPO_LABEL[tipo] ?? tipo.toUpperCase()) : ""
+}
+
+// ─── Tipos ───────────────────────────────────────────────────────────────────
 
 interface Props {
   data: DesempenoData
@@ -28,11 +67,15 @@ interface Props {
 
 type ModalType = "objetivos" | "cumplimiento" | "competencias" | "compromisos" | null
 
+// ─── Animaciones ─────────────────────────────────────────────────────────────
+
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
 }
+
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function StepDots({ total, current }: { total: number; current: number }) {
   return (
@@ -40,13 +83,30 @@ function StepDots({ total, current }: { total: number; current: number }) {
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
-          className={`h-1.5 rounded-full transition-all duration-200 ${i === current ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30"
-            }`}
+          className={`h-1.5 rounded-full transition-all duration-200 ${
+            i === current ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30"
+          }`}
         />
       ))}
     </div>
   )
 }
+
+interface InfoFieldProps {
+  label: string
+  children: React.ReactNode
+}
+
+function InfoField({ label, children }: InfoFieldProps) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+// ─── Componente principal ────────────────────────────────────────────────────
 
 export function DesempenoForm({ data, onUpdate }: Props) {
   const [modal, setModal] = useState<ModalType>(null)
@@ -61,6 +121,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
 
   const ponderacion = calcularPonderacion(data)
   const canEdit = !!onUpdate
+
+  // ── Handlers modales ──────────────────────────────────────────────────────
 
   const openModal = (type: ModalType) => {
     if (!canEdit) return
@@ -84,14 +146,20 @@ export function DesempenoForm({ data, onUpdate }: Props) {
     if (modal === "objetivos") onUpdate({ ...data, objetivos: editObjetivos })
     if (modal === "cumplimiento") onUpdate({ ...data, cumplimiento_responsabilidades: editCumplimiento })
     if (modal === "competencias") onUpdate({ ...data, competencias: editCompetencias })
-    if (modal === "compromisos") onUpdate({ ...data, compromisos: editCompromisos, fecha_revision: editFechaRevision, observaciones: editObservaciones })
+    if (modal === "compromisos") {
+      onUpdate({ ...data, compromisos: editCompromisos, fecha_revision: editFechaRevision, observaciones: editObservaciones })
+    }
     setModal(null)
   }
 
-  const totalSteps = modal === "objetivos" ? editObjetivos.length
+  // ── Navegación por pasos ──────────────────────────────────────────────────
+
+  const totalSteps =
+    modal === "objetivos" ? editObjetivos.length
     : modal === "cumplimiento" ? editCumplimiento.length
-      : modal === "competencias" ? editCompetencias.length
-        : 1
+    : modal === "competencias" ? editCompetencias.length
+    : 1
+
   const isLastStep = step >= totalSteps - 1
 
   const goNext = () => {
@@ -105,12 +173,62 @@ export function DesempenoForm({ data, onUpdate }: Props) {
     setStep((s) => Math.max(0, s - 1))
   }
 
+  // ── Handler evaluador (solo campos que cambian) ───────────────────────────
+
+  const handleEvaluadorChange = (nombre: string) => {
+    onUpdate?.({
+      ...data,
+      evaluador_nombre: nombre,
+      evaluador_puesto: EVALUADORES_PUESTO[nombre] ?? "",
+    })
+  }
+
+  // ── Handler fecha con formato automático ─────────────────────────────────
+
+  const handleFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value.replace(/[^0-9/]/g, "")
+    const prev = editFechaRevision
+    if (v.length > prev.length) {
+      const digits = v.replace(/\//g, "")
+      if (digits.length >= 2 && !v.includes("/")) {
+        v = digits.slice(0, 2) + "/" + digits.slice(2)
+      }
+      if (digits.length >= 4) {
+        v = digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4)
+      }
+    }
+    if (v.length <= 10) setEditFechaRevision(v)
+  }
+
+  // ── Incidencias agrupadas por mes ─────────────────────────────────────────
+
+  const incidenciasPorMes =
+    data.incidencias && data.incidencias.length > 0
+      ? data.incidencias.reduce<Record<string, typeof data.incidencias>>((acc, inc) => {
+          const key = inc.mes || "Sin mes"
+          ;(acc[key] ??= []).push(inc)
+          return acc
+        }, {})
+      : null
+
+  const mesesOrdenados = incidenciasPorMes
+    ? Object.keys(incidenciasPorMes).sort().reverse()
+    : []
+
+  // ── Botón de edición reutilizable ─────────────────────────────────────────
+
   const EditButton = ({ section }: { section: ModalType }) => {
     if (!canEdit) return null
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openModal(section)} aria-label="Editar">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => openModal(section)}
+            aria-label={`Editar ${section}`}
+          >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
@@ -119,70 +237,103 @@ export function DesempenoForm({ data, onUpdate }: Props) {
     )
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <TooltipProvider>
       <div className="print:hidden space-y-6">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <Card>
-          <CardHeader>
-            {/* Instrucciones */}
+          <CardHeader className="space-y-3">
             <p className="text-xs text-muted-foreground italic leading-relaxed">
-              <strong>Instrucciones para el evaluador:</strong> La siguiente evaluación está integrada por 3 partes. En la primera deberá anotar los objetivos SMART del puesto evaluado, así como el % del objetivo logrado en cada uno, o su promedio durante el periodo de la presente evaluación. La segunda parte será prellenada con la información de RH y SGI, la tercera parte deberá ser evaluada por el jefe inmediato.
+              <strong>Instrucciones para el evaluador:</strong> {INSTRUCCIONES}
             </p>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-lg font-bold uppercase tracking-wide">EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === 'jefe' ? 'JEFE' : data.tipo === 'administrativo' ? 'ADMINISTRATIVO' : 'OPERATIVO'}</h1>
-                <div className="text-sm text-muted-foreground">Periodo de evaluación: <Badge variant="secondary">{data.periodo || '—'}</Badge></div>
+
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <h1 className="text-base font-bold uppercase tracking-wide sm:text-lg">
+                  EVALUACIÓN DE DESEMPEÑO PERSONAL {getTipoLabel(data.tipo)}
+                </h1>
+                <div className="text-sm text-muted-foreground">
+                  Periodo de evaluación:{" "}
+                  <Badge variant="secondary">{data.periodo || "—"}</Badge>
+                </div>
               </div>
-              <img src="/logo-vino-plastic.png" alt="Logo" className="h-10 w-auto" />
+              <img
+                src="/logo-vino-plastic.png"
+                alt="Logo VIÑOPLASTIC"
+                className="h-10 w-auto object-contain"
+                onError={(e) => {
+                  ;(e.currentTarget as HTMLImageElement).style.display = "none"
+                }}
+              />
             </div>
           </CardHeader>
-          <CardContent className="pt-0 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Número empleado</Label>
-                <div className="font-bold text-lg">{data.numero_empleado || "—"}</div>
-              </div>
-              <div>
-                <Label>Nombre</Label>
-                <div className="font-bold">{data.nombre || "—"}</div>
-              </div>
-              <div>
-                <Label>Puesto del evaluado</Label>
-                <div className="font-bold">{data.puesto || "—"}</div>
-              </div>
-              <div>
-                <Label>Evaluador</Label>
+
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <InfoField label="Número empleado">
+                <span className="text-lg font-bold">{data.numero_empleado || "—"}</span>
+              </InfoField>
+
+              <InfoField label="Nombre">
+                <span className="font-bold">{data.nombre || "—"}</span>
+              </InfoField>
+
+              <InfoField label="Puesto del evaluado">
+                <span className="font-bold">{data.puesto || "—"}</span>
+              </InfoField>
+
+              <InfoField label="Evaluador">
                 {canEdit ? (
                   <Select
-                    value={data.evaluador_nombre || ""}
-                    onValueChange={(value) => onUpdate?.({ ...data, evaluador_nombre: value, evaluador_puesto: EVALUADORES_PUESTO[value] || "" })}
+                    value={data.evaluador_nombre ?? ""}
+                    onValueChange={handleEvaluadorChange}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Selecciona evaluador">
                       <SelectValue placeholder="Selecciona evaluador" />
                     </SelectTrigger>
                     <SelectContent>
-                      {EVALUADORES_DESEMPENO.map((evaluador) => (
-                        <SelectItem key={evaluador} value={evaluador}>
-                          {evaluador}
-                        </SelectItem>
+                      {Object.entries(DEPARTAMENTOS_EVALUADORES).map(([depto, evaluadores]) => (
+                        <SelectGroup key={depto}>
+                          <SelectLabel className="rounded bg-muted/50 px-2 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            {depto}
+                          </SelectLabel>
+                          {evaluadores.map((nombre) => (
+                            <SelectItem key={nombre} value={nombre}>
+                              {nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div>{data.evaluador_nombre || "—"}</div>
+                  <span
+                    className="font-medium"
+                    role="text"
+                    aria-label={`Evaluador: ${data.evaluador_nombre || "sin asignar"}`}
+                  >
+                    {data.evaluador_nombre || "—"}
+                  </span>
                 )}
-                <div className="text-sm text-muted-foreground">{data.evaluador_puesto ? `- ${data.evaluador_puesto}` : ""}</div>
-              </div>
+                {data.evaluador_puesto && (
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    — {data.evaluador_puesto}
+                  </p>
+                )}
+              </InfoField>
             </div>
           </CardContent>
         </Card>
 
-
-        {/* Two-column layout */}
+        {/* ── Layout dos columnas ── */}
         <div className="grid gap-6 lg:grid-cols-2 print:grid-cols-1">
-          {/* Left column */}
+
+          {/* Columna izquierda */}
           <div className="space-y-6">
+
             {/* PARTE 1: Objetivos (40%) */}
             <Card>
               <CardHeader className="pb-3">
@@ -191,7 +342,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <EditButton section="objetivos" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Los objetivos en <strong>0</strong> o <strong>N/A</strong> deben cambiarse por un porcentaje del <strong>1%</strong> al <strong>100%</strong> para considerarse cumplidos.
+                  Los objetivos en <strong>Numero</strong> o <strong>N/A</strong> deben evaluarse a un porcentaje del <strong>1%</strong> al <strong>100%</strong> para considerarse cumplidos.
                 </p>
               </CardHeader>
               <CardContent>
@@ -199,10 +350,10 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-2">#</th>
-                        <th className="text-left p-2">Objetivos SMART</th>
-                        <th className="text-left p-2">Objetivos</th>
-                        <th className="text-left p-2">% Obtenido</th>
+                        <th className="p-2 text-left">#</th>
+                        <th className="p-2 text-left">Objetivos SMART</th>
+                        <th className="p-2 text-left">Objetivos</th>
+                        <th className="p-2 text-left">% Obtenido</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -217,7 +368,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
+                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte1}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte1}%</span>
                 </div>
@@ -232,7 +383,12 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <EditButton section="competencias" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  <strong>Escala de evaluación (0 al 4):</strong> <strong>0:</strong> Competencia no demostrada; <strong>1:</strong> Aplicación ocasional; <strong>2:</strong> Aplicación intermitente; <strong>3:</strong> Aplicación frecuente; <strong>4:</strong> Totalmente integrado en el desempeño cotidiano.
+                  <strong>Escala de evaluación (0 al 4):</strong>{" "}
+                  <strong>0:</strong> Competencia no demostrada;{" "}
+                  <strong>1:</strong> Aplicación ocasional;{" "}
+                  <strong>2:</strong> Aplicación intermitente;{" "}
+                  <strong>3:</strong> Aplicación frecuente;{" "}
+                  <strong>4:</strong> Totalmente integrado en el desempeño cotidiano.
                 </p>
               </CardHeader>
               <CardContent>
@@ -240,9 +396,9 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-2">Competencia</th>
-                        <th className="text-left p-2">Cal.</th>
-                        <th className="text-left p-2">%</th>
+                        <th className="p-2 text-left">Competencia</th>
+                        <th className="p-2 text-left">Cal.</th>
+                        <th className="p-2 text-left">%</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -256,55 +412,59 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
+                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte3}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte3}%</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Incidencias */}
-            {data.incidencias && data.incidencias.length > 0 && (() => {
-              const porMes = data.incidencias.reduce<Record<string, typeof data.incidencias>>((acc, inc) => {
-                const key = inc.mes || "Sin mes"
-                  ; (acc[key] ??= []).push(inc)
-                return acc
-              }, {})
-              const meses = Object.keys(porMes).sort().reverse()
-              return (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Incidencias</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Listado de incidencias registradas, incluye todos los periodos vigentes.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="max-h-72 overflow-y-auto space-y-3">
-                      {meses.map((mes) => (
-                        <div key={mes}>
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">{mes}</h4>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {porMes[mes].map((inc, idx) => (
-                              <div key={idx} className="rounded-md border border-border px-2.5 py-1.5 flex items-center justify-between gap-2">
-                                <span className="text-xs font-medium truncate">{inc.categoria}</span>
-                                <span className={`text-xs font-mono tabular-nums shrink-0 ${(inc.valor ?? 0) > 0 ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
-                                  {inc.valor ?? 0}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+            {/* Incidencias — solo si hay datos */}
+            {incidenciasPorMes && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Incidencias</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Listado de incidencias registradas, incluye todos los periodos vigentes.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-72 overflow-y-auto space-y-3">
+                    {mesesOrdenados.map((mes) => (
+                      <div key={mes}>
+                        <h4 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">
+                          {mes}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {incidenciasPorMes[mes].map((inc, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5"
+                            >
+                              <span className="truncate text-xs font-medium">{inc.categoria}</span>
+                              <span
+                                className={`shrink-0 font-mono text-xs tabular-nums ${
+                                  (inc.valor ?? 0) > 0
+                                    ? "font-semibold text-destructive"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {inc.valor ?? 0}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })()}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Right column */}
+          {/* Columna derecha */}
           <div className="space-y-6">
+
             {/* PARTE 2: Cumplimiento (30%) */}
             <Card>
               <CardHeader className="pb-3">
@@ -321,9 +481,9 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-2">Responsabilidad</th>
-                        <th className="text-left p-2">% Cump</th>
-                        <th className="text-left p-2">Evalúa</th>
+                        <th className="p-2 text-left">Responsabilidad</th>
+                        <th className="p-2 text-left">% Cump</th>
+                        <th className="p-2 text-left">Evalúa</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -337,7 +497,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-3 flex justify-between text-sm font-semibold border-t pt-2">
+                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte2}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte2}%</span>
                 </div>
@@ -356,34 +516,33 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                 </p>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div>
-                  <Label>Compromisos / Acuerdos</Label>
+                <InfoField label="Compromisos / Acuerdos">
                   <p className="whitespace-pre-line">{data.compromisos || "—"}</p>
-                </div>
-                <div>
-                  <Label>Fecha de revisión</Label>
+                </InfoField>
+                <InfoField label="Fecha de revisión">
                   <p>{data.fecha_revision || "—"}</p>
-                </div>
-                <div>
-                  <Label>Observaciones</Label>
+                </InfoField>
+                <InfoField label="Observaciones">
                   <p>{data.observaciones || "—"}</p>
-                </div>
+                </InfoField>
               </CardContent>
             </Card>
 
             {/* Calificación Final */}
             <Card className="text-center">
-              <CardContent className="pt-6 pb-6">
-                <div className="text-8xl font-bold text-primary">{ponderacion.calificacionFinal}%</div>
-                <p className="text-muted-foreground mt-2 text-sm"><strong>Calificación del periodo</strong></p>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+              <CardContent className="pb-6 pt-6">
+                <div className="text-8xl font-bold text-primary">
+                  {ponderacion.calificacionFinal}%
                 </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  <strong>Calificación del periodo</strong>
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* ═══ MODALES EN STEPS ═══ */}
+        {/* ══ MODALES ══════════════════════════════════════════════════════════ */}
 
         {/* Modal Objetivos */}
         <ResponsiveShell
@@ -400,12 +559,11 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             onClose={closeModal}
             onConfirm={goNext}
             confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={step > 0 ? {
-              icon: <ChevronLeft className="h-4 w-4" />,
-              label: "Anterior",
-              onClick: goPrev,
-              iconOnly: true,
-            } : undefined}
+            secondaryAction={
+              step > 0
+                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
+                : undefined
+            }
           />
           <StepDots total={editObjetivos.length} current={step} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -431,7 +589,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                       <Input
                         value={editObjetivos[step].resultado}
                         readOnly
-                        className="bg-muted cursor-not-allowed"
+                        className="cursor-not-allowed bg-muted"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -480,12 +638,11 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             onClose={closeModal}
             onConfirm={goNext}
             confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={step > 0 ? {
-              icon: <ChevronLeft className="h-4 w-4" />,
-              label: "Anterior",
-              onClick: goPrev,
-              iconOnly: true,
-            } : undefined}
+            secondaryAction={
+              step > 0
+                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
+                : undefined
+            }
           />
           <StepDots total={editCumplimiento.length} current={step} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -503,15 +660,17 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                 >
                   <div className="rounded-lg bg-muted px-3 py-2">
                     <p className="text-sm font-medium">{editCumplimiento[step].descripcion}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Evalúa: {editCumplimiento[step].evalua}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Evalúa: {editCumplimiento[step].evalua}
+                    </p>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">% Cumplimiento</Label>
-                    {step === 2 || step === 4 ? (
+                    {CUMPLIMIENTO_READONLY_STEPS.has(step) ? (
                       <Input
                         value={editCumplimiento[step].porcentaje}
                         readOnly
-                        className="bg-muted cursor-not-allowed"
+                        className="cursor-not-allowed bg-muted"
                       />
                     ) : (
                       <Input
@@ -558,12 +717,11 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             onClose={closeModal}
             onConfirm={goNext}
             confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={step > 0 ? {
-              icon: <ChevronLeft className="h-4 w-4" />,
-              label: "Anterior",
-              onClick: goPrev,
-              iconOnly: true,
-            } : undefined}
+            secondaryAction={
+              step > 0
+                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
+                : undefined
+            }
           />
           <StepDots total={editCompetencias.length} current={step} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -601,7 +759,9 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">% Equivalente</Label>
-                      <div className="text-sm font-semibold mt-2">{Math.round((editCompetencias[step].calificacion / 4) * 100)}%</div>
+                      <div className="mt-2 text-sm font-semibold">
+                        {Math.round((editCompetencias[step].calificacion / 4) * 100)}%
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -652,20 +812,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               <Label className="text-xs text-muted-foreground">Fecha de revisión</Label>
               <Input
                 value={editFechaRevision}
-                onChange={(e) => {
-                  let v = e.target.value.replace(/[^0-9/]/g, '')
-                  const prev = editFechaRevision
-                  if (v.length > prev.length) {
-                    const digits = v.replace(/\//g, '')
-                    if (digits.length >= 2 && !v.includes('/')) {
-                      v = digits.slice(0, 2) + '/' + digits.slice(2)
-                    }
-                    if (digits.length >= 4) {
-                      v = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4)
-                    }
-                  }
-                  if (v.length <= 10) setEditFechaRevision(v)
-                }}
+                onChange={handleFechaChange}
                 placeholder="DD/MM/AAAA"
                 maxLength={10}
               />
@@ -680,6 +827,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
             </div>
           </div>
         </ResponsiveShell>
+
       </div>
     </TooltipProvider>
   )

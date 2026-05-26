@@ -12,28 +12,185 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
-import { DEFAULT_OBJETIVOS_POR_TIPO, DEFAULT_CUMPLIMIENTO, DEFAULT_COMPETENCIAS, calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
+import {
+  DEFAULT_OBJETIVOS_POR_TIPO,
+  DEFAULT_CUMPLIMIENTO,
+  DEFAULT_COMPETENCIAS,
+  calcularPonderacion,
+  type DesempenoData,
+} from "@/lib/types/desempeno"
 import DesempenoPrint from "./desempeno-print"
 import { DesempenoForm } from "./desempeno-form-operativo"
-import DesempenoPendientes from "./desempeno-pendientes"
 import { DesempenoSaveSuccess } from "./desempeno-save-success"
 import { DesempenoGuia, guiaYaVista } from "./desempeno-guia"
 import { PendientesDrawer } from "./desempeno-pendientes-drawer"
 import { useRole } from "@/lib/hooks"
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals"
 
+// ─── Sub-componente: botón de acción con ícono + label responsivo ─────────────
+
+interface ActionButtonProps {
+  icon: React.ReactNode
+  label: string
+  tooltip: string
+  onClick?: () => void
+  disabled?: boolean
+  variant?: "default" | "outline" | "ghost"
+  asChild?: boolean
+  href?: string
+  className?: string
+  /** Badge numérico encima del ícono */
+  badge?: number
+  /** Si true, anima la entrada del badge */
+  animateBadge?: boolean
+}
+
+function ActionButton({
+  icon,
+  label,
+  tooltip,
+  onClick,
+  disabled,
+  variant = "outline",
+  href,
+  className = "",
+  badge,
+  animateBadge,
+}: ActionButtonProps) {
+  const inner = (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        // Base
+        "relative inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        "disabled:pointer-events-none disabled:opacity-50",
+        // Variant styles
+        variant === "default"
+          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+          : variant === "ghost"
+          ? "text-muted-foreground hover:bg-accent hover:text-foreground"
+          : "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+        className,
+      ].join(" ")}
+      aria-label={tooltip}
+    >
+      {/* Badge */}
+      {badge !== undefined && badge > 0 && (
+        animateBadge ? (
+          <motion.span
+            className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 420, damping: 14 }}
+          >
+            {badge > 99 ? "99+" : badge}
+          </motion.span>
+        ) : (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )
+      )}
+
+      {/* Ícono — siempre visible */}
+      <span className="shrink-0">{icon}</span>
+
+      {/* Label — solo en md+ */}
+      <span className="hidden md:inline">{label}</span>
+    </button>
+  )
+
+  const wrapped = href ? <Link href={href}>{inner}</Link> : inner
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{wrapped}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+// ─── Botón "Guía" con animaciones especiales ──────────────────────────────────
+
+interface GuiaButtonProps {
+  onClick: () => void
+}
+
+function GuiaButton({ onClick }: GuiaButtonProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="relative">
+          {/* Pulse rings */}
+          <motion.span
+            className="pointer-events-none absolute inset-0 rounded-lg bg-primary/25"
+            animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+          />
+          <motion.span
+            className="pointer-events-none absolute inset-0 rounded-lg bg-primary/15"
+            animate={{ scale: [1, 1.9], opacity: [0.4, 0] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.8 }}
+          />
+
+          <motion.button
+            className="relative flex h-[34px] items-center gap-1.5 overflow-hidden rounded-lg bg-primary px-2.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/30 transition-shadow hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.93 }}
+            transition={{ type: "spring", stiffness: 420, damping: 17 }}
+            onClick={onClick}
+            aria-label="Ver guía de evaluación"
+          >
+            {/* Shimmer */}
+            <motion.span
+              className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+              initial={{ x: "-130%" }}
+              animate={{ x: "230%" }}
+              transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 3.2, ease: "easeInOut" }}
+            />
+
+            {/* Ícono con wobble */}
+            <motion.span
+              className="relative shrink-0"
+              animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.15, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 2.8, ease: "easeInOut" }}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+            </motion.span>
+
+            {/* Label — solo en md+ */}
+            <span className="relative hidden md:inline">Guía</span>
+          </motion.button>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>Ver guía de evaluación</TooltipContent>
+    </Tooltip>
+  )
+}
+
+// ─── Separador visual entre grupos de acciones ────────────────────────────────
+
+function ActionDivider() {
+  return <div className="h-5 w-px bg-border" aria-hidden />
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
 export default function DesempenoSearch() {
   const [numeroBuscado, setNumeroBuscado] = useState("")
-
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales")
-  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0])
-  const { data, setData, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } = useDesempeno()
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
+    PERIODOS_DESEMPENO.semestrales[0]
+  )
+  const { data, setData, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
+    useDesempeno()
   const { isEvaluador } = useRole()
   const { totalEvals } = usePendingEvals()
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  // Auto-show the guide on first visit for evaluadores
   useEffect(() => {
     if (!isEvaluador) return
     if (!guiaYaVista()) setGuiaOpen(true)
@@ -47,11 +204,13 @@ export default function DesempenoSearch() {
     if (numeroBuscado) buscarEmpleado(numeroBuscado)
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-sm text-muted-foreground">Cargando...</div>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-sm text-muted-foreground">Cargando...</div>
+      </div>
+    )
+  }
 
   const ponderacion = data ? calcularPonderacion(data) : null
   const requiereCompromisos = ponderacion !== null && ponderacion.calificacionFinal < 80
@@ -80,140 +239,91 @@ export default function DesempenoSearch() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Buscador */}
+      <div className="mx-auto max-w-7xl space-y-6">
+
+        {/* ── Buscador ── */}
         <Card>
           <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base">Buscar empleado</CardTitle>
-              <div className="flex items-center gap-1.5">
-                {/* ── Pendientes trigger ────────────────── */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="relative h-8 w-8"
-                      onClick={() => setDrawerOpen(true)}
-                      aria-label="Ver evaluaciones pendientes"
-                    >
-                      <ClipboardList className="h-4 w-4" />
-                      {totalEvals > 0 && (
-                        <motion.span
-                          className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 420, damping: 14 }}
-                        >
-                          {totalEvals > 99 ? "99+" : totalEvals}
-                        </motion.span>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {totalEvals > 0
-                      ? `${totalEvals} evaluación${totalEvals !== 1 ? "es" : ""} pendiente${totalEvals !== 1 ? "s" : ""}`
-                      : "Sin evaluaciones pendientes"}
-                  </TooltipContent>
-                </Tooltip>
 
-                {/* ── Animated guide button ───────────────── */}
-                <div className="relative">
-                  {/* Pulse ring 1 */}
-                  <motion.span
-                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary/25"
-                    animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-                  />
-                  {/* Pulse ring 2 — staggered */}
-                  <motion.span
-                    className="pointer-events-none absolute inset-0 rounded-xl bg-primary/15"
-                    animate={{ scale: [1, 1.9], opacity: [0.4, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.8 }}
-                  />
+              {/* ── Barra de acciones ────────────────────────────────────── */}
+              <div className="flex items-center gap-1">
 
-                  <motion.button
-                    className="relative flex h-8 items-center gap-1.5 overflow-hidden rounded-xl bg-primary px-3.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/30 transition-shadow hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    whileHover={{ scale: 1.07 }}
-                    whileTap={{ scale: 0.91 }}
-                    transition={{ type: "spring", stiffness: 420, damping: 17 }}
-                    onClick={() => setGuiaOpen(true)}
-                    aria-label="Ver guía de evaluación"
-                  >
-                    {/* Shimmer sweep */}
-                    <motion.span
-                      className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                      initial={{ x: "-130%" }}
-                      animate={{ x: "230%" }}
-                      transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 3.2, ease: "easeInOut" }}
-                    />
+                {/* Grupo 1: Onboarding */}
+                <GuiaButton onClick={() => setGuiaOpen(true)} />
 
-                    {/* Icon with wobble */}
-                    <motion.span
-                      className="relative"
-                      animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.15, 1] }}
-                      transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 2.8, ease: "easeInOut" }}
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-                    </motion.span>
+                <ActionDivider />
 
-                    <span className="relative">Guía</span>
-                  </motion.button>
-                </div>
-                {/* ── Evaluaciones guardadas (admin/dev only) ── */}
+                {/* Grupo 2: Navegación */}
                 {!isEvaluador && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <Link href="/desempeno/objetivos" aria-label="Evaluaciones guardadas">
-                          <FolderOpen className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Evaluaciones guardadas</TooltipContent>
-                  </Tooltip>
+                  <ActionButton
+                    icon={<FolderOpen className="h-3.5 w-3.5" />}
+                    label="Guardadas"
+                    tooltip="Evaluaciones guardadas"
+                    href="/desempeno/objetivos"
+                  />
                 )}
+
+                <ActionButton
+                  icon={<ClipboardList className="h-3.5 w-3.5" />}
+                  label="Pendientes"
+                  tooltip={
+                    totalEvals > 0
+                      ? `${totalEvals} evaluación${totalEvals !== 1 ? "es" : ""} pendiente${totalEvals !== 1 ? "s" : ""}`
+                      : "Sin evaluaciones pendientes"
+                  }
+                  onClick={() => setDrawerOpen(true)}
+                  badge={totalEvals}
+                  animateBadge
+                />
+
+                {/* Grupo 3: Acciones sobre la evaluación activa */}
                 {data && (
                   <>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
-                          disabled={saving || bloqueado}
-                          aria-label="Guardar evaluación"
-                        >
-                          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Guardar evaluación"}</TooltipContent>
-                    </Tooltip>
+                    <ActionDivider />
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button size="icon" className="h-8 w-8" onClick={() => window.print()} disabled={bloqueado} aria-label="Imprimir">
-                          <Printer className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Imprimir"}</TooltipContent>
-                    </Tooltip>
+                    <ActionButton
+                      icon={
+                        saving
+                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          : <Save className="h-3.5 w-3.5" />
+                      }
+                      label="Guardar"
+                      tooltip={
+                        bloqueado
+                          ? "Captura compromisos primero (calificación < 80%)"
+                          : "Guardar evaluación"
+                      }
+                      onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
+                      disabled={saving || bloqueado}
+                      variant="outline"
+                    />
+
+                    <ActionButton
+                      icon={<Printer className="h-3.5 w-3.5" />}
+                      label="Imprimir"
+                      tooltip={
+                        bloqueado
+                          ? "Captura compromisos primero (calificación < 80%)"
+                          : "Imprimir evaluación"
+                      }
+                      onClick={() => window.print()}
+                      disabled={bloqueado}
+                      variant="default"
+                    />
                   </>
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-2 pb-4">
+
+          <CardContent className="pb-4 pt-2">
             <div className="grid gap-4 md:grid-cols-[1fr_auto]">
               <div>
+                {/* Campo de búsqueda */}
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={numeroBuscado}
                     onChange={(e) => setNumeroBuscado(e.target.value)}
@@ -222,7 +332,9 @@ export default function DesempenoSearch() {
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   />
                 </div>
-                <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto] items-end">
+
+                {/* Periodo */}
+                <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
                   <div className="space-y-2">
                     <div className="text-sm font-semibold">Periodo de evaluación</div>
                     <div className="grid grid-cols-2 gap-2">
@@ -237,8 +349,11 @@ export default function DesempenoSearch() {
                       ))}
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-foreground">Seleccionar periodo</label>
+                    <label className="block text-sm font-medium text-foreground">
+                      Seleccionar periodo
+                    </label>
                     <Select
                       value={periodoSeleccionado}
                       onValueChange={(value) => setPeriodoSeleccionado(value as DesempenoPeriodo)}
@@ -248,27 +363,32 @@ export default function DesempenoSearch() {
                       </SelectTrigger>
                       <SelectContent>
                         {PERIODOS_DESEMPENO[periodoModo].map((periodo) => (
-                          <SelectItem key={periodo} value={periodo}>{periodo}</SelectItem>
+                          <SelectItem key={periodo} value={periodo}>
+                            {periodo}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               </div>
+
+              {/* Botón buscar */}
               <div className="flex items-end justify-end">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button onClick={handleSearch} size="icon" aria-label="Buscar Empleado">
+                    <Button onClick={handleSearch} size="icon" aria-label="Buscar empleado">
                       <Search className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Buscar Empleado</TooltipContent>
+                  <TooltipContent>Buscar empleado</TooltipContent>
                 </Tooltip>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Alertas */}
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -292,7 +412,6 @@ export default function DesempenoSearch() {
           </div>
         )}
 
-        {/* ── Save success animation ────────────────────────────────── */}
         <DesempenoSaveSuccess
           visible={saveSuccess}
           nombre={data?.nombre}

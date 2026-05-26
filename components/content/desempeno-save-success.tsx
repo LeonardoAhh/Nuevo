@@ -1,177 +1,220 @@
 "use client"
 
-import { useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState, useCallback } from "react"
+import { createPortal } from "react-dom"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { Check } from "lucide-react"
 
-// ─── Particle config ────────────────────────────────────────────────────────
-// Each particle shoots from the center toward a random direction and fades out.
-const PARTICLES: { tx: number; ty: number; size: number; delay: number; opacity: number }[] = [
-  { tx: -72, ty: -110, size: 10, delay: 0.05, opacity: 0.9 },
-  { tx:  48, ty: -130, size:  7, delay: 0.10, opacity: 0.7 },
-  { tx: -40, ty: -150, size:  9, delay: 0.03, opacity: 0.8 },
-  { tx:  80, ty:  -90, size:  6, delay: 0.15, opacity: 0.6 },
-  { tx: -90, ty:  -70, size:  8, delay: 0.08, opacity: 0.75 },
-  { tx:  30, ty: -160, size: 11, delay: 0.12, opacity: 0.65 },
-  { tx: -55, ty: -125, size:  6, delay: 0.18, opacity: 0.7 },
-  { tx:  65, ty: -140, size:  8, delay: 0.06, opacity: 0.85 },
-  { tx: -20, ty:  -95, size:  5, delay: 0.20, opacity: 0.6 },
-  { tx:  55, ty: -115, size:  7, delay: 0.14, opacity: 0.8 },
-]
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const AUTO_CLOSE_MS = 4500
 
-// Auto-close after this many ms (must match the progress-bar animation duration)
-const AUTO_CLOSE_MS = 5500
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+const CONFETTI = Array.from({ length: 18 }, (_, i) => {
+  const angle = (i / 18) * Math.PI * 2
+  const dist = 80 + Math.random() * 60
+  return {
+    tx: Math.cos(angle) * dist,
+    ty: Math.sin(angle) * dist - 30,
+    size: 4 + Math.random() * 5,
+    delay: Math.random() * 0.15,
+    rotation: Math.random() * 360,
+    color: [
+      "bg-primary",
+      "bg-primary/70",
+      "bg-blue-400",
+      "bg-emerald-400",
+      "bg-amber-400",
+      "bg-rose-400",
+    ][i % 6],
+    shape: i % 3 === 0 ? "rounded-full" : i % 3 === 1 ? "rounded-sm" : "rounded-none",
+  }
+})
 
-interface Props {
+// ─── Animated Counter ─────────────────────────────────────────────────────────
+function AnimatedScore({ value, reduce }: { value: number; reduce: boolean | null }) {
+  const [display, setDisplay] = useState(0)
+
+  useEffect(() => {
+    if (reduce) {
+      setDisplay(value)
+      return
+    }
+    const duration = 1200
+    const start = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(eased * value))
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+    const delay = setTimeout(() => requestAnimationFrame(tick), 900)
+    return () => clearTimeout(delay)
+  }, [value, reduce])
+
+  return <>{display}</>
+}
+
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+interface DesempenoSaveSuccessProps {
   visible: boolean
   nombre?: string
   calificacion?: number
   onDone: () => void
 }
 
-export function DesempenoSaveSuccess({ visible, nombre, calificacion, onDone }: Props) {
-  // Auto-dismiss
+// ─── Componente ───────────────────────────────────────────────────────────────
+export function DesempenoSaveSuccess({
+  visible,
+  nombre,
+  calificacion,
+  onDone,
+}: DesempenoSaveSuccessProps) {
+  const reduce = useReducedMotion()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
   useEffect(() => {
     if (!visible) return
     const t = setTimeout(onDone, AUTO_CLOSE_MS)
     return () => clearTimeout(t)
   }, [visible, onDone])
 
-  return (
+  const handleBackdrop = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.target === e.currentTarget) onDone()
+    },
+    [onDone],
+  )
+
+  if (!mounted) return null
+
+  const score = calificacion !== undefined ? calificacion : undefined
+  const isGood = score !== undefined && score >= 80
+
+  return createPortal(
     <AnimatePresence>
       {visible && (
-        // ── Backdrop ────────────────────────────────────────────────────────
         <motion.div
-          className="fixed inset-0 z-[300] flex items-center justify-center bg-background/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-[6px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          onClick={onDone}
+          transition={{ duration: 0.2 }}
+          onPointerDown={handleBackdrop}
+          role="status"
+          aria-live="polite"
+          aria-label={`Evaluación guardada${nombre ? ` para ${nombre}` : ""}${score !== undefined ? `. Calificación: ${score}%` : ""}`}
         >
-          {/* ── Card ──────────────────────────────────────────────────────── */}
           <motion.div
-            className="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl border border-border/60 bg-card px-12 py-10 shadow-2xl"
-            initial={{ scale: 0.65, opacity: 0, y: 50, rotate: -3 }}
-            animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
-            exit={{ scale: 0.88, opacity: 0, y: -16 }}
-            transition={{ type: "spring", stiffness: 230, damping: 18, delay: 0.04 }}
-            onClick={(e) => e.stopPropagation()}
+            className="relative flex w-[320px] flex-col items-center gap-6 overflow-hidden rounded-2xl border border-border/40 bg-card p-8 pt-10 shadow-2xl"
+            initial={{ scale: 0.5, opacity: 0, y: 60 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: -20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22 }}
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            {/* ── Soft background glow ──────────────────────────────────── */}
-            <motion.div
-              className="pointer-events-none absolute inset-0 rounded-3xl bg-primary/5"
-              animate={{ opacity: [0.4, 0.8, 0.4] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            />
-
-            {/* ── Particles ─────────────────────────────────────────────── */}
-            {PARTICLES.map((p, i) => (
+            {/* ── Confetti ─────────────────────────────────────────────── */}
+            {!reduce && CONFETTI.map((c, i) => (
               <motion.span
                 key={i}
-                className="pointer-events-none absolute rounded-full bg-primary"
+                className={`pointer-events-none absolute ${c.color} ${c.shape}`}
                 style={{
-                  width: p.size,
-                  height: p.size,
-                  // Start from the visual center of the card
+                  width: c.size,
+                  height: c.size * (c.shape === "rounded-full" ? 1 : 0.6),
                   left: "50%",
-                  top: "42%",
-                  marginLeft: -(p.size / 2),
-                  marginTop: -(p.size / 2),
+                  top: "25%",
                 }}
-                initial={{ x: 0, y: 0, opacity: p.opacity, scale: 0 }}
-                animate={{ x: p.tx, y: p.ty, opacity: 0, scale: 1 }}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 0, rotate: 0 }}
+                animate={{
+                  x: c.tx,
+                  y: c.ty,
+                  opacity: 0,
+                  scale: 1,
+                  rotate: c.rotation,
+                }}
                 transition={{
-                  duration: 0.75,
-                  delay: p.delay,
+                  duration: 0.9,
+                  delay: 0.3 + c.delay,
                   ease: [0.16, 1, 0.3, 1],
                 }}
               />
             ))}
 
-            {/* ── Checkmark SVG ─────────────────────────────────────────── */}
-            <div className="relative z-10 flex items-center justify-center">
-              {/* Ripple ring */}
-              <motion.div
-                className="absolute h-28 w-28 rounded-full border-2 border-primary/20"
-                initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: [0.6, 1.4], opacity: [0.6, 0] }}
-                transition={{ duration: 1.1, delay: 0.55, ease: "easeOut" }}
-              />
-              {/* Fill ring */}
-              <motion.div
-                className="absolute h-20 w-20 rounded-full bg-primary/10"
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.15, 1] }}
-                transition={{ duration: 0.45, times: [0, 0.65, 1], ease: "easeOut", delay: 0.08 }}
-              />
+            {/* ── Checkmark circle ─────────────────────────────────────── */}
+            <div className="relative flex items-center justify-center">
+              {/* Ripple */}
+              {!reduce && (
+                <motion.div
+                  className="absolute h-24 w-24 rounded-full border border-primary/20"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1.6, opacity: [0.5, 0] }}
+                  transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                />
+              )}
 
-              <svg
-                width="72"
-                height="72"
-                viewBox="0 0 72 72"
-                fill="none"
-                className="relative z-10"
-                aria-hidden
+              {/* Circle bg */}
+              <motion.div
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-primary"
+                initial={{ scale: 0 }}
+                animate={{ scale: reduce ? 1 : [0, 1.2, 1] }}
+                transition={{
+                  duration: reduce ? 0 : 0.5,
+                  times: [0, 0.6, 1],
+                  ease: "easeOut",
+                  delay: reduce ? 0 : 0.1,
+                }}
               >
-                {/* Circle outline */}
-                <motion.circle
-                  cx="36"
-                  cy="36"
-                  r="30"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="3"
-                  fill="none"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0, rotate: -90 }}
-                  animate={{ pathLength: 1, rotate: -90 }}
-                  style={{ originX: "36px", originY: "36px" }}
-                  transition={{ duration: 0.65, ease: [0.4, 0, 0.2, 1], delay: 0.12 }}
-                />
-                {/* Checkmark */}
-                <motion.path
-                  d="M22 37 L31 46 L50 27"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="4"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.38, ease: "easeOut", delay: 0.78 }}
-                />
-              </svg>
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: reduce ? 0 : 0.45, duration: 0.3, type: "spring", stiffness: 300 }}
+                >
+                  <Check className="h-8 w-8 text-primary-foreground" strokeWidth={3} />
+                </motion.div>
+              </motion.div>
             </div>
 
-            {/* ── Text ──────────────────────────────────────────────────── */}
+            {/* ── Texto ────────────────────────────────────────────────── */}
             <motion.div
-              className="relative z-10 space-y-1.5 text-center"
-              initial={{ opacity: 0, y: 10 }}
+              className="relative z-10 space-y-1 text-center"
+              initial={{ opacity: 0, y: reduce ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.72, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: reduce ? 0 : 0.5, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="text-lg font-bold text-foreground">¡Evaluación guardada!</p>
+              <p className="text-base font-bold text-foreground">¡Evaluación guardada!</p>
               {nombre && (
-                <p className="text-sm text-muted-foreground">{nombre}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{nombre}</p>
               )}
             </motion.div>
 
-            {/* ── Score badge ───────────────────────────────────────────── */}
-            {calificacion !== undefined && (
+            {/* ── Score ─────────────────────────────────────────────────── */}
+            {score !== undefined && (
               <motion.div
-                className="relative z-10 flex items-center justify-center"
+                className="relative z-10"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.9 }}
+                transition={{ type: "spring", stiffness: 280, damping: 18, delay: reduce ? 0 : 0.7 }}
               >
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-5 py-1.5 text-2xl font-bold tabular-nums text-primary">
-                  {calificacion % 1 === 0 ? calificacion : calificacion.toFixed(1)}%
-                </span>
+                <div className={`
+                  flex items-baseline gap-0.5 rounded-xl px-5 py-2
+                  ${isGood
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  }
+                `}>
+                  <span className="text-3xl font-black tabular-nums">
+                    <AnimatedScore value={score} reduce={reduce} />
+                  </span>
+                  <span className="text-lg font-bold">%</span>
+                </div>
               </motion.div>
             )}
 
-            {/* ── Auto-close progress bar ───────────────────────────────── */}
+            {/* ── Progress bar ──────────────────────────────────────────── */}
             <motion.div
-              className="absolute bottom-0 left-0 h-[3px] rounded-full bg-primary/50"
+              className="absolute bottom-0 left-0 h-[3px] bg-primary/40"
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{ duration: AUTO_CLOSE_MS / 1000, ease: "linear" }}
@@ -179,6 +222,7 @@ export function DesempenoSaveSuccess({ visible, nombre, calificacion, onDone }: 
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

@@ -381,9 +381,9 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
 export const PERIODOS_DESEMPENO = {
   semestrales: ["ENE-JUN 2026", "JUL-DIC 2026"] as const,
   mensuales: [
-    "ENE-FEB 2027",
-    "FEB-MAR 2027",
-    "MAR-ABR 2027",
+    "ENE-FEB 2026",
+    "FEB-MAR 2026",
+    "MAR-ABR 2026",
     "ABR-MAY 2026",
     "MAY-JUN 2026",
     "JUN-JUL 2026",
@@ -392,7 +392,6 @@ export const PERIODOS_DESEMPENO = {
     "SEP-OCT 2026",
     "OCT-NOV 2026",
     "NOV-DIC 2026",
-    "DIC-ENE 2026-2027"
   ] as const,
 } as const
 
@@ -500,4 +499,72 @@ export function getTipoCursoByName(nombreCurso: string): TipoCurso {
 
   // Default
   return "SIN TIPO"
+}
+
+
+export const DEPARTAMENTOS_EVALUADORES: Record<string, string[]> = {
+  "Dirección": [
+    "VIÑOLAS GONZALEZ JOSE LUIS",
+    "HERNANDEZ RUIZ MIGUEL ANGEL",
+  ],
+  "Gerencia": [
+    "TERRAZAS MARTINEZ JAIME",
+  ],
+  "Producción": [
+    "GOMEZ SANCHEZ CARLOS ARIEL",
+    "JUAREZ HERNANDEZ SERGIO RICARDO",
+    "RUEDA MUÑOZ FRANCISCO",
+    "BIBIANO GARCIA FLOR",
+    "ALVARADO FRAGOSO JORGE ALBERTO",
+    "CHONG ALTUZAR JOSE ANTONIO",
+    "DIAZ GUTIERREZ JOSE GUADALUPE",
+    "FLORES IBARRA VICTOR MANUEL",
+    "HERNANDEZ GARCIA JOVANIC TOMAS",
+    "MARTINEZ COBOS OMAR",
+    "OCHOA ORTUÑO JOSE MA.",
+    "ORTIZ OLVERA JUAN FIDEL",
+    "PEREZ SAMANIEGO ISRAEL",
+    "SIXTOS PINEDA LUIS ANGEL",
+    "VALDIVIA FRANCO CARLOS ALAIN",
+    "VILLAMAR HINOJOSA DEISY",
+    ],
+  "Montaje": [
+    "HERNANDEZ CRUZ JORGE",
+  ],
+  "Acabados GP12": [
+    "GUTIERREZ LOPEZ GUADALUPE",
+    "VAZQUEZ IRETA SOFIA GUADALUPE",
+  ],
+  "Recursos Humanos": [
+    "BONILLA HERNANDEZ ADRIANA BEATRIZ",
+    "HERNANDEZ GUDIÑO NOEMI",
+  ],
+  "Calidad": [
+    "CENOBIO HERNANDEZ JORGE ALBERTO",
+  ],
+  "Metrología": [
+    "ESQUIVEL MATA ARIADNA NAYELY",
+  ],
+  "SGI": [
+    "AGUILLON RANGEL LIZBETH",
+    "PEREZ BAUTISTA EDGAR",
+  ],
+  "Mantenimiento": [
+    "BRAVO GARCIA JESUS FERNANDO",
+  ],
+  "Almacén": [
+    "GARCIA JUAREZ XICOTENCATL",
+    ],
+  "Logística": [
+    "CORONA ARCE LILIANA",
+  ],
+  "Moldes": [
+    "GOMEZ SANCHEZ CESAR",
+  ],
+  "Proyectos": [
+    "SALINAS ORTIZ ANA ERIKA",
+  ],
+  "SISTEMAS": [
+    "CABRERO BOO MANUEL ALBERTO",
+    ],
 }
