@@ -7,6 +7,23 @@ export type AppRole = 'dev' | 'admin' | 'evaluador'
 /** Rutas permitidas para el rol evaluador */
 export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings', '/cursos', '/bot', '/eventos']
 
+/**
+ * Rutas explícitamente bloqueadas para evaluador, incluso si
+ * caen bajo un prefijo en EVALUADOR_ALLOWED_ROUTES (ej. /desempeno/*).
+ */
+export const EVALUADOR_DENIED_ROUTES = ['/desempeno/cumplimiento']
+
+/** Helper: determina si una ruta es accesible para evaluador. */
+export function isEvaluadorAllowedRoute(path: string): boolean {
+  const denied = EVALUADOR_DENIED_ROUTES.some(
+    (r) => path === r || path.startsWith(r + '/'),
+  )
+  if (denied) return false
+  return EVALUADOR_ALLOWED_ROUTES.some(
+    (r) => path === r || path.startsWith(r + '/'),
+  )
+}
+
 export function useRole() {
   const { user, loading: userLoading } = useUser()
   const [role, setRole] = useState<AppRole>('admin')

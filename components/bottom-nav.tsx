@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 import { useRole } from "@/lib/hooks"
-import { EVALUADOR_ALLOWED_ROUTES } from "@/lib/hooks/useRole"
+import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -119,10 +119,7 @@ export default function BottomNav() {
       ...group,
       items: group.items.filter((item) => {
         if (!isEvaluador) return true
-        const allowed = EVALUADOR_ALLOWED_ROUTES.some(
-          (r) => item.href === r || item.href.startsWith(r + "/"),
-        )
-        return allowed && !EVALUADOR_PRIMARY_HREFS.has(item.href)
+        return isEvaluadorAllowedRoute(item.href) && !EVALUADOR_PRIMARY_HREFS.has(item.href)
       }),
     }))
     .filter((group) => group.items.length > 0)
