@@ -359,7 +359,7 @@ export function GuiaEvaluadorPage() {
                 empresa está prohibido. Para reportar cualquier irregularidad,
                 acude con{" "}
                 <strong className="font-serif italic text-foreground">
-                  Leonardo Hernández
+                  Recursos Humanos
                 </strong>
                 .
               </Tip>
