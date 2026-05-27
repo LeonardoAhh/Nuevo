@@ -563,7 +563,7 @@ export function GuiaEvaluadorPage() {
           n="04"
           title="Cómo evaluar cada sección"
           kicker="Criterios 40 / 30 / 30"
-          intro="La evaluación está dividida en tres secciones con pesos distintos. La suma ponderada determina la calificación final."
+          intro="La evaluación está dividida en tres secciones con ponderaciones distintas. La suma ponderada determina la calificación final."
           viewport={viewport}
           reverse
         >
