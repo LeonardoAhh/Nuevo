@@ -149,19 +149,19 @@ function DetailCard({ item, onClose }: DetailCardProps) {
               const entry = item.evals.find((e) => e.periodo === p)
               const isVencida = entry && entry.diasDiff < 0
               return (
-                <div key={p} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 px-3 py-2 sm:p-3 min-w-0">
-                  <span className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-semibold shrink-0 ${PERIODO_COLORS[p]}`}>
+                <div key={p} className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-center min-w-0">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-semibold ${PERIODO_COLORS[p]}`}>
                     <GraduationCap size={12} /> {p}
                   </span>
                   {entry ? (
-                    <div className="flex flex-col items-end gap-0.5 sm:gap-1 text-right min-w-0">
-                      <span className="text-[11px] sm:text-xs font-medium text-foreground truncate">{formatDate(entry.fecha)}</span>
-                      <span className={`flex items-center gap-1 text-[11px] font-semibold ${isVencida ? "text-destructive" : "text-[hsl(var(--success))]"}`}>
+                    <div className="flex flex-col items-center gap-0.5 min-w-0">
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground">{formatDate(entry.fecha)}</span>
+                      <span className={`inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold ${isVencida ? "text-destructive" : "text-[hsl(var(--success))]"}`}>
                         <Clock3 size={11} /> {dias(entry.diasDiff)}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground/60 italic text-right">Sin pendiente</span>
+                    <span className="text-xs text-muted-foreground/60 italic">Sin pendiente</span>
                   )}
                 </div>
               )

@@ -32,7 +32,7 @@ export function PendientesDrawer({ open, onClose, filterDepartamentos, periodoSe
           className={[
             "fixed top-[50px] bottom-0 right-0 z-[100]",
             "flex h-[calc(100dvh-50px)] w-full flex-col overflow-hidden bg-card",
-            "shadow-2xl md:w-[480px] md:border-l md:border-border/60",
+            "shadow-2xl md:w-[480px] lg:w-[560px] md:border-l md:border-border/60",
           ].join(" ")}
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
