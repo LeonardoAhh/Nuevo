@@ -38,7 +38,7 @@ export function useDesempeno() {
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
 
-  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamento?: string | null) => {
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null) => {
     setLoading(true)
     setError(null)
 
@@ -79,11 +79,12 @@ export function useDesempeno() {
 
       if (!empleadoData) throw new Error("Empleado no encontrado")
 
-      // Scope por departamento: el evaluador solo puede abrir empleados de su área
-      if (restrictDepartamento) {
-        if (normalizeDepartamento(empleadoData.departamento) !== normalizeDepartamento(restrictDepartamento)) {
+      // Scope por departamento: el evaluador solo puede abrir empleados de las áreas asignadas
+      if (restrictDepartamentos && restrictDepartamentos.length > 0) {
+        const permitidos = restrictDepartamentos.map(normalizeDepartamento)
+        if (!permitidos.includes(normalizeDepartamento(empleadoData.departamento))) {
           throw new Error(
-            `Este empleado pertenece a otro departamento. Solo puedes evaluar a tu área (${restrictDepartamento}).`,
+            `Este empleado pertenece a otro departamento. Solo puedes evaluar a tu área (${restrictDepartamentos.join(", ")}).`,
           )
         }
       }

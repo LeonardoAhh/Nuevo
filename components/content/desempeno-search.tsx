@@ -187,8 +187,8 @@ export default function DesempenoSearch() {
   )
   const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
     useDesempeno()
-  const { isEvaluador, departamentoScope } = useRole()
-  const { totalEvals } = usePendingEvals(departamentoScope)
+  const { isEvaluador, departamentosScope } = useRole()
+  const { totalEvals } = usePendingEvals(departamentosScope)
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -202,7 +202,7 @@ export default function DesempenoSearch() {
   }, [periodoModo])
 
   const handleSearch = () => {
-    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentoScope)
+    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentosScope)
   }
 
   if (loading) {
@@ -443,7 +443,12 @@ export default function DesempenoSearch() {
         />
 
         <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
-        <PendientesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} filterDepartamento={departamentoScope} />
+        <PendientesDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          filterDepartamentos={departamentosScope}
+          periodoSemestral={periodoModo === "semestrales" ? periodoSeleccionado : PERIODOS_DESEMPENO.semestrales[0]}
+        />
       </div>
     </TooltipProvider>
   )
