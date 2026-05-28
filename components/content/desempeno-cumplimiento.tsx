@@ -83,7 +83,7 @@ function EstatusBadge({ estatus }: { estatus: EmpleadoCumplimiento["estatus"] })
     return (
       <Badge className="bg-muted text-muted-foreground hover:bg-muted/80 border-0 gap-1">
         <MinusCircle className="h-3 w-3" />
-        No aplica (&lt; 2 meses)
+        No aplica (&lt; 3 meses)
       </Badge>
     )
   }
