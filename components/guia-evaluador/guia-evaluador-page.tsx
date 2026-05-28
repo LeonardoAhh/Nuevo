@@ -972,7 +972,7 @@ export function GuiaEvaluadorPage() {
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
-            className="grid gap-4 sm:grid-cols-2 md:grid-cols-3"
+            className="mx-auto grid w-full max-w-2xl gap-4 grid-cols-1 sm:grid-cols-2"
           >
             {RECORDATORIOS.map((r) => {
               const Icon = r.icon
@@ -1012,7 +1012,7 @@ export function GuiaEvaluadorPage() {
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
-            className="grid gap-4 sm:grid-cols-2 md:grid-cols-3"
+            className="mx-auto grid w-full max-w-2xl gap-4 grid-cols-1 sm:grid-cols-2"
           >
             {SECURITY.map((s) => {
               const Icon = s.icon
