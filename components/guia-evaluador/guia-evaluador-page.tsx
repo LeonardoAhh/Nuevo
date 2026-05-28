@@ -772,8 +772,6 @@ export function GuiaEvaluadorPage() {
                 <strong className="font-semibold text-foreground">
                   sus departamentos asignados
                 </strong>
-                . Ambas vistas se filtran de forma automática según tu rol;
-                Dirección y Recursos Humanos ven todos los departamentos.
               </p>
             </div>
 
@@ -785,8 +783,7 @@ export function GuiaEvaluadorPage() {
                 </SectionLabel>
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                   Desglose por departamento. Cada No. Empleado representa a un
-                  colaborador con evaluaciones de periodo de prueba (1er, 2° y
-                  3er mes) por realizar.
+                  colaborador con evaluaciones de periodo de prueba.
                 </p>
 
                 <div className="mt-4">
