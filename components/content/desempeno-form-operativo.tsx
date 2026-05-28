@@ -334,8 +334,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <CardTitle className="text-base">Cumplimiento de Objetivos (40%)</CardTitle>
                   <EditButton section="objetivos" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Los objetivos en <strong>Numero</strong> o <strong>N/A</strong> deben evaluarse a un porcentaje del <strong>1%</strong> al <strong>100%</strong> para considerarse cumplidos.
+                  <p className="text-xs text-muted-foreground mt-1">
+                  Sin importar cómo se exprese el resultado (un <strong>número</strong>, <strong>días</strong>, <strong>N/A</strong>, etc.), cada objetivo debe evaluarse con un porcentaje de cumplimiento del <strong>1%</strong> al <strong>100%</strong> para considerarse válido.
                 </p>
               </CardHeader>
               <CardContent>
@@ -466,7 +466,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <EditButton section="cumplimiento" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  La segunda parte será prellenada con la información de RH y SGI.
+                  Algunos datos de esta sección son prellenados por el sistema.
                 </p>
               </CardHeader>
               <CardContent>
@@ -661,7 +661,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                           next[step] = { ...next[step], porcentaje: e.target.value }
                           setEditCumplimiento(next)
                         }}
-                        placeholder="Edita aquí"
+                        placeholder="Captura % aqui"
                       />
                     )}
                   </div>
@@ -713,17 +713,18 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Calificación (0-4)</Label>
-                      <Input
+                                            <Input
                         type="number"
                         min={0}
                         max={4}
-                        value={editCompetencias[step].calificacion}
+                        value={editCompetencias[step].calificacion === 0 ? "" : editCompetencias[step].calificacion}
                         onChange={(e) => {
                           const val = Math.min(4, Math.max(0, parseInt(e.target.value) || 0))
                           const next = [...editCompetencias]
                           next[step] = { ...next[step], calificacion: val }
                           setEditCompetencias(next)
                         }}
+                        placeholder="0"
                       />
                     </div>
                     <div className="space-y-1.5">
