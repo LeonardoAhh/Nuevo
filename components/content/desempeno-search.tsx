@@ -340,7 +340,7 @@ export default function DesempenoSearch() {
                   <Input
                     value={numeroBuscado}
                     onChange={(e) => setNumeroBuscado(e.target.value)}
-                    placeholder="Buscar por número de empleado ej: 3204"
+                    placeholder="Ingresa el número de empleado"
                     className="pl-10"
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   />
