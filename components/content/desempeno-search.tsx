@@ -187,8 +187,8 @@ export default function DesempenoSearch() {
   )
   const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
     useDesempeno()
-  const { isEvaluador } = useRole()
-  const { totalEvals } = usePendingEvals()
+  const { isEvaluador, departamentoScope } = useRole()
+  const { totalEvals } = usePendingEvals(departamentoScope)
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -202,7 +202,7 @@ export default function DesempenoSearch() {
   }, [periodoModo])
 
   const handleSearch = () => {
-    if (numeroBuscado) buscarEmpleado(numeroBuscado)
+    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentoScope)
   }
 
   if (loading) {
@@ -443,7 +443,7 @@ export default function DesempenoSearch() {
         />
 
         <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
-        <PendientesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        <PendientesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} filterDepartamento={departamentoScope} />
       </div>
     </TooltipProvider>
   )

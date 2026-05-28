@@ -501,6 +501,18 @@ export function getTipoCursoByName(nombreCurso: string): TipoCurso {
 }
 
 
+/**
+ * Normaliza un nombre de departamento para comparación tolerante a
+ * acentos, mayúsculas y espacios sobrantes.
+ */
+export function normalizeDepartamento(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+}
+
 export const DEPARTAMENTOS_EVALUADORES: Record<string, string[]> = {
   "Dirección": [
     "VIÑOLAS GONZALEZ JOSE LUIS",

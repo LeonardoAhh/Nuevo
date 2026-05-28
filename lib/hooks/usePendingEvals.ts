@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { daysFromToday } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
+import { normalizeDepartamento } from "@/lib/catalogo"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ export interface DeptGroup {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function usePendingEvals() {
+export function usePendingEvals(filterDepartamento?: string | null) {
   const [loading, setLoading] = useState(true)
   const [deptGroups, setDeptGroups] = useState<DeptGroup[]>([])
   const [totalEmployees, setTotalEmployees] = useState(0)
@@ -94,11 +95,18 @@ export function usePendingEvals() {
         eval_3_calificacion: number | null
       }>
 
+      // Scope por departamento: si el evaluador tiene un departamento
+      // asignado, solo se consideran empleados de esa área.
+      const deptFiltro = filterDepartamento ? normalizeDepartamento(filterDepartamento) : null
+      const registrosScope = deptFiltro
+        ? registros.filter((r) => normalizeDepartamento(r.departamento) === deptFiltro)
+        : registros
+
       // Build one EmployeePending per employee (only if they have pending evals)
       const employeeMap = new Map<string, EmployeePending>()
       let evalCount = 0
 
-      for (const r of registros) {
+      for (const r of registrosScope) {
         const evalDefs: [string | null, number | null, EvalPeriodo][] = [
           [r.eval_1_fecha, r.eval_1_calificacion, "1er Mes"],
           [r.eval_2_fecha, r.eval_2_calificacion, "2° Mes"],
@@ -163,7 +171,7 @@ export function usePendingEvals() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [filterDepartamento])
 
   useEffect(() => { cargar() }, [cargar])
 

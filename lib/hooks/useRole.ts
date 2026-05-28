@@ -27,6 +27,7 @@ export function isEvaluadorAllowedRoute(path: string): boolean {
 export function useRole() {
   const { user, loading: userLoading } = useUser()
   const [role, setRole] = useState<AppRole>('admin')
+  const [departamento, setDepartamento] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function useRole() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, departamento')
           .eq('user_id', user.id)
           .order('created_at', { ascending: true })
           .limit(1)
@@ -48,6 +49,7 @@ export function useRole() {
 
         if (!error && data?.role) {
           setRole(data.role as AppRole)
+          setDepartamento((data.departamento as string | null) ?? null)
         }
       } catch {
         // Default to admin (read-only) on error
@@ -71,5 +73,8 @@ export function useRole() {
   /** true si el usuario puede gestionar evaluaciones (dev o evaluador) */
   const canEvaluate = role === 'dev' || role === 'evaluador'
 
-  return { role, canEdit, isReadOnly, isEvaluador, canEvaluate, loading }
+  /** Departamento asignado al evaluador (null = sin restricción: admin/dev) */
+  const departamentoScope = isEvaluador ? departamento : null
+
+  return { role, departamento, departamentoScope, canEdit, isReadOnly, isEvaluador, canEvaluate, loading }
 }
