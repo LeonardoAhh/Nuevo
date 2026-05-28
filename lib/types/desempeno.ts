@@ -95,7 +95,7 @@ export const DEFAULT_CUMPLIMIENTO: CumplimientoItem[] = [
     {
         descripcion: "No presentar más de dos permisos por mes.",
         porcentaje: "NA",
-        evalua: "RH",
+        evalua: "JEFE",
         comentarios: "",
     },
 ];
