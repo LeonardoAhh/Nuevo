@@ -225,7 +225,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
         aria-label={`Editar ${section}`}
       >
         <Pencil className="h-3.5 w-3.5" />
-        Editar
+        Capturar
       </Button>
     )
   }
@@ -594,7 +594,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                           next[step] = { ...next[step], porcentaje: e.target.value }
                           setEditObjetivos(next)
                         }}
-                        placeholder="Edita aquí"
+                        placeholder="Captura % aqui"
                       />
                     </div>
                   </div>
