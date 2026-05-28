@@ -597,27 +597,15 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">% Obtenido (1-100)</Label>
                       <Input
-                        value={editObjetivos[step].porcentaje}
+                        value={editObjetivos[step].porcentaje === "NA" ? "" : editObjetivos[step].porcentaje}
                         onChange={(e) => {
                           const next = [...editObjetivos]
                           next[step] = { ...next[step], porcentaje: e.target.value }
                           setEditObjetivos(next)
                         }}
-                        placeholder="Ej: 80"
+                        placeholder="Edita aquí"
                       />
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Comentarios</Label>
-                    <Input
-                      value={editObjetivos[step].comentarios}
-                      onChange={(e) => {
-                        const next = [...editObjetivos]
-                        next[step] = { ...next[step], comentarios: e.target.value }
-                        setEditObjetivos(next)
-                      }}
-                      placeholder="Comentarios"
-                    />
                   </div>
                 </motion.div>
               )}
@@ -631,7 +619,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           onClose={closeModal}
           maxWidth="sm:max-w-md"
           title="Responsabilidades"
-          description="Porcentaje de cumplimiento y comentarios"
+          description="Porcentaje de cumplimiento"
         >
           <ModalToolbar
             title="Responsabilidades"
@@ -676,27 +664,15 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                       />
                     ) : (
                       <Input
-                        value={editCumplimiento[step].porcentaje}
+                        value={editCumplimiento[step].porcentaje === "NA" ? "" : editCumplimiento[step].porcentaje}
                         onChange={(e) => {
                           const next = [...editCumplimiento]
                           next[step] = { ...next[step], porcentaje: e.target.value }
                           setEditCumplimiento(next)
                         }}
-                        placeholder="Ej: 80"
+                        placeholder="Edita aquí"
                       />
                     )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Comentarios</Label>
-                    <Input
-                      value={editCumplimiento[step].comentarios}
-                      onChange={(e) => {
-                        const next = [...editCumplimiento]
-                        next[step] = { ...next[step], comentarios: e.target.value }
-                        setEditCumplimiento(next)
-                      }}
-                      placeholder="Comentarios"
-                    />
                   </div>
                 </motion.div>
               )}
@@ -765,18 +741,6 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                         {Math.round((editCompetencias[step].calificacion / 4) * 100)}%
                       </div>
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Comentarios</Label>
-                    <Input
-                      value={editCompetencias[step].comentarios}
-                      onChange={(e) => {
-                        const next = [...editCompetencias]
-                        next[step] = { ...next[step], comentarios: e.target.value }
-                        setEditCompetencias(next)
-                      }}
-                      placeholder="Comentarios"
-                    />
                   </div>
                 </motion.div>
               )}
