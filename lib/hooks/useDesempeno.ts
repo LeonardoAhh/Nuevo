@@ -13,7 +13,7 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { getTipoDesempenoByPuesto } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento } from "@/lib/catalogo"
 
 export interface EvaluacionHistorial {
   id: string
@@ -38,7 +38,7 @@ export function useDesempeno() {
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
 
-  const buscarEmpleado = useCallback(async (numero: string) => {
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamento?: string | null) => {
     setLoading(true)
     setError(null)
 
@@ -46,23 +46,24 @@ export function useDesempeno() {
       // Search in both employees and nuevo_ingreso tables
       const { data: emp } = await supabase
         .from("employees")
-        .select("id, numero, nombre, puesto, fecha_ingreso")
+        .select("id, numero, nombre, puesto, departamento, fecha_ingreso")
         .eq("numero", numero)
         .maybeSingle()
 
-      let empleadoData: { numero: string; nombre: string; puesto: string; fechaIngreso: string | null } | null = null
+      let empleadoData: { numero: string; nombre: string; puesto: string; departamento: string | null; fechaIngreso: string | null } | null = null
 
       if (emp) {
         empleadoData = {
           numero: emp.numero!,
           nombre: emp.nombre,
           puesto: emp.puesto || "",
+          departamento: emp.departamento ?? null,
           fechaIngreso: emp.fecha_ingreso ?? null,
         }
       } else {
         const { data: ni } = await supabase
           .from("nuevo_ingreso")
-          .select("numero, nombre, puesto, fecha_ingreso")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso")
           .eq("numero", numero)
           .maybeSingle()
         if (ni) {
@@ -70,12 +71,22 @@ export function useDesempeno() {
             numero: ni.numero!,
             nombre: ni.nombre,
             puesto: ni.puesto || "",
+            departamento: ni.departamento ?? null,
             fechaIngreso: ni.fecha_ingreso ?? null,
           }
         }
       }
 
       if (!empleadoData) throw new Error("Empleado no encontrado")
+
+      // Scope por departamento: el evaluador solo puede abrir empleados de su área
+      if (restrictDepartamento) {
+        if (normalizeDepartamento(empleadoData.departamento) !== normalizeDepartamento(restrictDepartamento)) {
+          throw new Error(
+            `Este empleado pertenece a otro departamento. Solo puedes evaluar a tu área (${restrictDepartamento}).`,
+          )
+        }
+      }
 
       setFechaIngreso(empleadoData.fechaIngreso)
 

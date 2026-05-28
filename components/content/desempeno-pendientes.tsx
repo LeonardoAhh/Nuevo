@@ -214,10 +214,11 @@ function EmployeeBadge({ item, isSelected, onSelect }: EmployeeBadgeProps) {
 
 interface Props {
   onClose?: () => void
+  filterDepartamento?: string | null
 }
 
-export default function DesempenoPendientes({ onClose }: Props = {}) {
-  const { loading, deptGroups, totalEmployees, totalEvals, cargar } = usePendingEvals()
+export default function DesempenoPendientes({ onClose, filterDepartamento }: Props = {}) {
+  const { loading, deptGroups, totalEmployees, totalEvals, cargar } = usePendingEvals(filterDepartamento)
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
