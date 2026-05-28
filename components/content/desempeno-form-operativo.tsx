@@ -18,12 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import {
   calcularPonderacion,
@@ -222,20 +217,16 @@ export function DesempenoForm({ data, onUpdate }: Props) {
   const EditButton = ({ section }: { section: ModalType }) => {
     if (!canEdit) return null
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => openModal(section)}
-            aria-label={`Editar ${section}`}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Editar</TooltipContent>
-      </Tooltip>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 gap-1.5 px-2.5"
+        onClick={() => openModal(section)}
+        aria-label={`Editar ${section}`}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+        Editar
+      </Button>
     )
   }
 
