@@ -320,13 +320,6 @@ export function GuiaEvaluadorPage() {
 />
 <MockField icon={Lock} label="Contraseña" value="Se enviará por correo" />
 
-                <div className="flex items-center justify-between text-[0.65rem] text-[color:hsl(var(--primary-foreground)/0.6)]">
-                  <span className="font-mono uppercase tracking-[0.18em]">
-                    ¿Olvidaste tu contraseña?
-                  </span>
-                  <LogIn className="h-3 w-3" aria-hidden />
-                </div>
-
                 <div className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 font-mono text-[0.65rem] uppercase tracking-[0.22em] text-primary-foreground">
                   Entrar
                   <ArrowRight className="h-3 w-3" aria-hidden />
