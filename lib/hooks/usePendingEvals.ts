@@ -41,7 +41,7 @@ export interface DeptGroup {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function usePendingEvals(filterDepartamento?: string | null) {
+export function usePendingEvals(filterDepartamentos?: string[] | null) {
   const [loading, setLoading] = useState(true)
   const [deptGroups, setDeptGroups] = useState<DeptGroup[]>([])
   const [totalEmployees, setTotalEmployees] = useState(0)
@@ -95,11 +95,13 @@ export function usePendingEvals(filterDepartamento?: string | null) {
         eval_3_calificacion: number | null
       }>
 
-      // Scope por departamento: si el evaluador tiene un departamento
-      // asignado, solo se consideran empleados de esa área.
-      const deptFiltro = filterDepartamento ? normalizeDepartamento(filterDepartamento) : null
+      // Scope por departamento: si el evaluador tiene departamentos
+      // asignados, solo se consideran empleados de esas áreas.
+      const deptFiltro = filterDepartamentos && filterDepartamentos.length > 0
+        ? filterDepartamentos.map(normalizeDepartamento)
+        : null
       const registrosScope = deptFiltro
-        ? registros.filter((r) => normalizeDepartamento(r.departamento) === deptFiltro)
+        ? registros.filter((r) => deptFiltro.includes(normalizeDepartamento(r.departamento)))
         : registros
 
       // Build one EmployeePending per employee (only if they have pending evals)
@@ -171,7 +173,7 @@ export function usePendingEvals(filterDepartamento?: string | null) {
     } finally {
       setLoading(false)
     }
-  }, [filterDepartamento])
+  }, [filterDepartamentos])
 
   useEffect(() => { cargar() }, [cargar])
 
