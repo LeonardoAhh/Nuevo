@@ -443,7 +443,12 @@ export default function DesempenoSearch() {
         />
 
         <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
-        <PendientesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} filterDepartamentos={departamentosScope} />
+        <PendientesDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          filterDepartamentos={departamentosScope}
+          periodoSemestral={periodoModo === "semestrales" ? periodoSeleccionado : PERIODOS_DESEMPENO.semestrales[0]}
+        />
       </div>
     </TooltipProvider>
   )

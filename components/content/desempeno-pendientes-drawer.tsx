@@ -9,9 +9,10 @@ interface Props {
   open: boolean
   onClose: () => void
   filterDepartamentos?: string[] | null
+  periodoSemestral?: string
 }
 
-export function PendientesDrawer({ open, onClose, filterDepartamentos }: Props) {
+export function PendientesDrawer({ open, onClose, filterDepartamentos, periodoSemestral }: Props) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function PendientesDrawer({ open, onClose, filterDepartamentos }: Props) 
           transition={{ type: "spring", stiffness: 280, damping: 30 }}
         >
           <div className="flex-1 overflow-y-auto scrollbar-thin">
-            <DesempenoPendientes onClose={onClose} filterDepartamentos={filterDepartamentos} />
+            <DesempenoPendientes onClose={onClose} filterDepartamentos={filterDepartamentos} periodoSemestral={periodoSemestral} />
           </div>
         </motion.aside>
       )}

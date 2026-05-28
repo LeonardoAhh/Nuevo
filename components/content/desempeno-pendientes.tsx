@@ -15,6 +15,8 @@ import {
   CalendarCheck,
   FileText,
   Info,
+  UserPlus,
+  CalendarRange,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +29,8 @@ import {
 } from "@/lib/hooks/usePendingEvals"
 import { formatDate } from "@/lib/hooks/useNuevoIngreso"
 import { dias } from "@/lib/hooks/useDashboardAlertas"
+import { PERIODOS_DESEMPENO } from "@/lib/catalogo"
+import DesempenoSemestralPendientes from "./desempeno-semestral-pendientes"
 
 // ─── Motion variants ─────────────────────────────────────────────────────────
 
@@ -215,12 +219,15 @@ function EmployeeBadge({ item, isSelected, onSelect }: EmployeeBadgeProps) {
 interface Props {
   onClose?: () => void
   filterDepartamentos?: string[] | null
+  /** Periodo semestral de referencia para la vista de avance semestral */
+  periodoSemestral?: string
 }
 
-export default function DesempenoPendientes({ onClose, filterDepartamentos }: Props = {}) {
+export default function DesempenoPendientes({ onClose, filterDepartamentos, periodoSemestral }: Props = {}) {
   const { loading, deptGroups, totalEmployees, totalEvals, cargar } = usePendingEvals(filterDepartamentos)
   const [activeTab, setActiveTab] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [vista, setVista] = useState<"mensual" | "semestral">("mensual")
 
   const activeGroup = deptGroups.find((g) => g.departamento === activeTab) ?? deptGroups[0] ?? null
   const activeKey = activeGroup?.departamento ?? null
@@ -244,7 +251,7 @@ export default function DesempenoPendientes({ onClose, filterDepartamentos }: Pr
             <CardTitle className="text-lg font-bold uppercase tracking-wide">
               EVALUACIONES PENDIENTES
             </CardTitle>
-            {!loading && totalEmployees > 0 && (
+            {vista === "mensual" && !loading && totalEmployees > 0 && (
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {totalEmployees} empleado{totalEmployees !== 1 ? "s" : ""} · {totalEvals} evaluación{totalEvals !== 1 ? "es" : ""}
               </p>
@@ -277,6 +284,33 @@ export default function DesempenoPendientes({ onClose, filterDepartamentos }: Pr
       </CardHeader>
 
       <CardContent className="pt-2 pb-4 space-y-4">
+        {/* Toggle vista: Nuevo Ingreso (mensual) / Semestrales */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={vista === "mensual" ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setVista("mensual")}
+            className="gap-1.5"
+          >
+            <UserPlus className="h-3.5 w-3.5" /> Nuevo Ingreso
+          </Button>
+          <Button
+            variant={vista === "semestral" ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setVista("semestral")}
+            className="gap-1.5"
+          >
+            <CalendarRange className="h-3.5 w-3.5" /> Semestrales
+          </Button>
+        </div>
+
+        {vista === "semestral" ? (
+          <DesempenoSemestralPendientes
+            periodo={periodoSemestral ?? PERIODOS_DESEMPENO.semestrales[0]}
+            filterDepartamentos={filterDepartamentos}
+          />
+        ) : (
+        <>
         {/* Info banner */}
         <Alert className="flex items-center gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
           <AlertDescription>
@@ -398,6 +432,8 @@ export default function DesempenoPendientes({ onClose, filterDepartamentos }: Pr
             </span>
             <span className="sm:ml-auto font-bold text-foreground">Clic en No. Empleado para ver el detalle</span>
           </div>
+        )}
+        </>
         )}
       </CardContent>
     </Card>
