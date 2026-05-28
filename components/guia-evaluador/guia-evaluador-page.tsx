@@ -314,11 +314,11 @@ export function GuiaEvaluadorPage() {
                 </div>
 
                 <MockField
-                  icon={Mail}
-                  label="Correo"
-                  value="evaluadorqro@vinoplastic.com"
-                />
-                <MockField icon={Lock} label="Contraseña" value="••••••••••••" />
+  icon={Mail}
+  label="Correo"
+  value="Se enviará por correo"
+/>
+<MockField icon={Lock} label="Contraseña" value="Se enviará por correo" />
 
                 <div className="flex items-center justify-between text-[0.65rem] text-[color:hsl(var(--primary-foreground)/0.6)]">
                   <span className="font-mono uppercase tracking-[0.18em]">
@@ -345,14 +345,11 @@ export function GuiaEvaluadorPage() {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-5">
-                <CredentialRow
-                  label="Correo"
-                  value="evaluadorqro@vinoplastic.com"
-                />
-                <div className="my-3 h-px bg-border" />
-                <CredentialRow label="Contraseña" value="vinoqro2026" />
-              </div>
+              <div className="rounded-xl border border-border bg-card p-5 text-center">
+  <p className="text-sm text-muted-foreground">
+    Las credenciales de acceso serán enviadas a tu correo electrónico.
+  </p>
+</div>
 
               <Tip>
                 El uso indebido de este acceso o compartirlo fuera de la
