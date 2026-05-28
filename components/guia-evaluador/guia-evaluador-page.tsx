@@ -13,11 +13,14 @@ import {
   AlertTriangle,
   ArrowRight,
   Award,
+  Ban,
   BookOpen,
   Building2,
+  CalendarRange,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
+  Clock3,
   Database,
   FileText,
   FolderOpen,
@@ -31,6 +34,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  UserPlus,
   Users,
 } from "lucide-react"
 
@@ -90,6 +94,23 @@ const PENDIENTES_CHIPS = [
   { num: "4140", evals: 3, status: "vencida" as const },
   { num: "4144", evals: 3, status: "pendiente" as const },
   { num: "4149", evals: 3, status: "pendiente" as const },
+]
+
+type SemestralEstado = "completado" | "pendiente" | "no_elegible"
+type SemestralRow = {
+  num: string
+  nombre: string
+  puesto: string
+  estado: SemestralEstado
+  calificacion?: number
+}
+
+const SEMESTRAL_PERIODO = "DIC-MAY"
+const SEMESTRAL_ROWS: readonly SemestralRow[] = [
+  { num: "4087", nombre: "PÉREZ DOMÍNGUEZ LAURA", puesto: "Analista Calidad", estado: "completado", calificacion: 88 },
+  { num: "4112", nombre: "RAMÍREZ SOTO JUAN CARLOS", puesto: "Operador", estado: "pendiente" },
+  { num: "4129", nombre: "MORALES CRUZ DIANA", puesto: "Auxiliar", estado: "pendiente" },
+  { num: "4151", nombre: "TORRES VEGA ANA SOFÍA", puesto: "Becaria", estado: "no_elegible" },
 ]
 
 const RECORDATORIOS = [
@@ -721,129 +742,302 @@ export function GuiaEvaluadorPage() {
           {/* Pendientes drawer mockup */}
           <div className="mt-10">
             <SectionLabel>Sección · Evaluaciones Pendientes</SectionLabel>
-            <SectionLabel>Seguimiento Nuevos Ingresos</SectionLabel>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
               Al pulsar{" "}
               <strong className="font-mono uppercase tracking-[0.1em]">
                 Pendientes
               </strong>{" "}
-              se abre un panel lateral con el desglose por departamento. Cada
-              No. Empleado representa a un colaborador con evaluaciones por realizar.
+              se abre un panel lateral con dos vistas que puedes alternar:{" "}
+              <strong className="font-serif italic text-foreground">
+                Nuevo Ingreso
+              </strong>{" "}
+              (evaluaciones del periodo de prueba) y{" "}
+              <strong className="font-serif italic text-foreground">
+                Semestrales
+              </strong>{" "}
+              (avance de la evaluación formal del personal de planta).
             </p>
 
-            <div className="mt-5">
-              <MockFrame label="drawer · pendientes">
-                <div className="space-y-4 p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.22em]">
-                        Evaluaciones Pendientes
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        56 empleados · 116 evaluaciones
-                      </div>
-                    </div>
-                  </div>
+            {/* Scope por rol */}
+            <div
+              role="note"
+              className="mt-4 flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4"
+            >
+              <ShieldCheck
+                className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                aria-hidden
+              />
+              <p className="text-sm leading-relaxed text-foreground/85">
+                Cada evaluador ve únicamente los pendientes de{" "}
+                <strong className="font-semibold text-foreground">
+                  sus departamentos asignados
+                </strong>
+                . Ambas vistas se filtran de forma automática según tu rol;
+                Dirección y Recursos Humanos ven todos los departamentos.
+              </p>
+            </div>
 
-                  <div className="rounded-md bg-foreground px-3 py-2 text-xs text-[color:hsl(var(--background))]">
-                    Desglose por departamento de evaluaciones pendientes
-                  </div>
+            <div className="mt-6 space-y-8">
+              {/* ── Vista A · Nuevo Ingreso ─────────────────────── */}
+              <div>
+                <SectionLabel className="text-[0.65rem] text-muted-foreground">
+                  Vista · Nuevo Ingreso
+                </SectionLabel>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                  Desglose por departamento. Cada No. Empleado representa a un
+                  colaborador con evaluaciones de periodo de prueba (1er, 2° y
+                  3er mes) por realizar.
+                </p>
 
-                  {/* Chips: wrap on mobile */}
-                  <div
-                    className="flex flex-wrap gap-2"
-                    role="group"
-                    aria-label="Filtrar por departamento"
-                  >
-                    {PENDIENTES_DEPTS.map((d) => (
-                      <button
-                        key={d.name}
-                        type="button"
-                        aria-pressed={d.active ?? false}
-                        className={[
-                          "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
-                          d.active
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border bg-card text-muted-foreground hover:border-primary/50",
-                        ].join(" ")}
-                      >
-                        {d.name}
-                        <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-muted px-1 text-[10px] font-bold tabular-nums text-foreground">
-                          {d.count}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                <div className="mt-4">
+                  <MockFrame label="drawer · nuevo ingreso">
+                    <div className="space-y-4 p-5">
+                      <PendientesVistaToggle active="mensual" />
 
-                  <div className="text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-2 font-mono uppercase tracking-[0.18em]">
-                      <Users className="h-3 w-3" aria-hidden />4 empleados ·
-                      ALMACÉN
-                    </span>
-                  </div>
-
-                  {/* Employee chips — 2 cols on mobile, 4 on sm+ */}
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {PENDIENTES_CHIPS.map((c) => {
-                      const isOverdue = c.status === "vencida"
-                      return (
-                        <div
-                          key={c.num}
-                          className={[
-                            "relative cursor-pointer rounded-md border px-3 py-2 text-center transition-opacity hover:opacity-80",
-                            isOverdue
-                              ? "border-destructive/40 bg-destructive/5"
-                              : "border-success/40 bg-success/5",
-                          ].join(" ")}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Empleado ${c.num} — ${c.evals} evaluaciones — ${c.status}`}
-                        >
-                          <span
-                            className={[
-                              "absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full",
-                              isOverdue ? "bg-destructive" : "bg-success",
-                            ].join(" ")}
-                            aria-hidden
-                          />
-                          <div className="font-serif text-lg font-bold">
-                            <span
-                              className={
-                                isOverdue ? "text-destructive" : "text-success"
-                              }
-                            >
-                              {c.num}
-                            </span>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.22em]">
+                            Evaluaciones Pendientes
                           </div>
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                            {c.evals} evals
+                          <div className="text-xs text-muted-foreground">
+                            56 empleados · 116 evaluaciones
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
 
-                  <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className="h-2 w-2 rounded-full bg-destructive"
-                        aria-hidden
-                      />
-                      Vencida
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className="h-2 w-2 rounded-full bg-success"
-                        aria-hidden
-                      />
-                      Pendiente
-                    </span>
-                    <span className="ml-auto font-medium text-foreground">
-                      Clic en No. Empleado para ver el detalle
-                    </span>
-                  </div>
+                      <div className="rounded-md bg-foreground px-3 py-2 text-xs text-[color:hsl(var(--background))]">
+                        Desglose por departamento de evaluaciones pendientes
+                      </div>
+
+                      {/* Chips: wrap on mobile */}
+                      <div
+                        className="flex flex-wrap gap-2"
+                        role="group"
+                        aria-label="Filtrar por departamento"
+                      >
+                        {PENDIENTES_DEPTS.map((d) => (
+                          <button
+                            key={d.name}
+                            type="button"
+                            aria-pressed={d.active ?? false}
+                            className={[
+                              "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
+                              d.active
+                                ? "border-primary bg-primary/10 text-foreground"
+                                : "border-border bg-card text-muted-foreground hover:border-primary/50",
+                            ].join(" ")}
+                          >
+                            {d.name}
+                            <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-muted px-1 text-[10px] font-bold tabular-nums text-foreground">
+                              {d.count}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-2 font-mono uppercase tracking-[0.18em]">
+                          <Users className="h-3 w-3" aria-hidden />4 empleados ·
+                          ALMACÉN
+                        </span>
+                      </div>
+
+                      {/* Employee chips — 2 cols on mobile, 4 on sm+ */}
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {PENDIENTES_CHIPS.map((c) => {
+                          const isOverdue = c.status === "vencida"
+                          return (
+                            <div
+                              key={c.num}
+                              className={[
+                                "relative cursor-pointer rounded-md border px-3 py-2 text-center transition-opacity hover:opacity-80",
+                                isOverdue
+                                  ? "border-destructive/40 bg-destructive/5"
+                                  : "border-success/40 bg-success/5",
+                              ].join(" ")}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Empleado ${c.num} — ${c.evals} evaluaciones — ${c.status}`}
+                            >
+                              <span
+                                className={[
+                                  "absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full",
+                                  isOverdue ? "bg-destructive" : "bg-success",
+                                ].join(" ")}
+                                aria-hidden
+                              />
+                              <div className="font-serif text-lg font-bold">
+                                <span
+                                  className={
+                                    isOverdue
+                                      ? "text-destructive"
+                                      : "text-success"
+                                  }
+                                >
+                                  {c.num}
+                                </span>
+                              </div>
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                {c.evals} evals
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full bg-destructive"
+                            aria-hidden
+                          />
+                          Vencida
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full bg-success"
+                            aria-hidden
+                          />
+                          Pendiente
+                        </span>
+                        <span className="ml-auto font-medium text-foreground">
+                          Clic en No. Empleado para ver el detalle
+                        </span>
+                      </div>
+                    </div>
+                  </MockFrame>
                 </div>
-              </MockFrame>
+              </div>
+
+              {/* ── Vista B · Semestrales ───────────────────────── */}
+              <div>
+                <SectionLabel className="text-[0.65rem] text-muted-foreground">
+                  Vista · Semestrales
+                </SectionLabel>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                  Lista del personal de planta con su estado en el periodo
+                  semestral seleccionado:{" "}
+                  <strong className="font-semibold text-foreground">
+                    completado
+                  </strong>{" "}
+                  (con su calificación),{" "}
+                  <strong className="font-semibold text-foreground">
+                    pendiente
+                  </strong>{" "}
+                  o{" "}
+                  <strong className="font-semibold text-foreground">
+                    no aplica
+                  </strong>{" "}
+                  (menos de 3 meses de antigüedad al cierre del periodo).
+                </p>
+
+                <div className="mt-4">
+                  <MockFrame label="drawer · semestrales">
+                    <div className="space-y-4 p-5">
+                      <PendientesVistaToggle active="semestral" />
+
+                      {/* Banner del periodo */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarRange
+                            className="h-3.5 w-3.5 text-muted-foreground"
+                            aria-hidden
+                          />
+                          Avance semestral ·{" "}
+                          <strong className="font-semibold">
+                            {SEMESTRAL_PERIODO}
+                          </strong>{" "}
+                          · 2 pendientes de 4
+                        </span>
+                      </div>
+
+                      {/* Chips por departamento */}
+                      <div
+                        className="flex flex-wrap gap-2"
+                        role="group"
+                        aria-label="Filtrar por departamento"
+                      >
+                        {PENDIENTES_DEPTS.map((d) => (
+                          <button
+                            key={d.name}
+                            type="button"
+                            aria-pressed={d.active ?? false}
+                            className={[
+                              "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
+                              d.active
+                                ? "border-primary bg-primary/10 text-foreground"
+                                : "border-border bg-card text-muted-foreground hover:border-primary/50",
+                            ].join(" ")}
+                          >
+                            {d.name}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Filas de empleados */}
+                      <ul className="space-y-2">
+                        {SEMESTRAL_ROWS.map((r) => (
+                          <li
+                            key={r.num}
+                            className={[
+                              "flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5",
+                              r.estado === "no_elegible" ? "opacity-60" : "",
+                            ].join(" ")}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-bold leading-tight text-foreground">
+                                {r.nombre}
+                              </p>
+                              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                #{r.num} · {r.puesto}
+                              </p>
+                            </div>
+                            <div className="shrink-0">
+                              {r.estado === "completado" ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                                  <CheckCircle2 className="h-3 w-3" aria-hidden />
+                                  Completado · {r.calificacion}%
+                                </span>
+                              ) : r.estado === "no_elegible" ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                  <Ban className="h-3 w-3" aria-hidden />
+                                  No aplica (&lt; 3 meses)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-bold text-warning">
+                                  <Clock3 className="h-3 w-3" aria-hidden />
+                                  Pendiente
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <CheckCircle2
+                            className="h-3 w-3 text-success"
+                            aria-hidden
+                          />
+                          Completado
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3 w-3 text-warning" aria-hidden />
+                          Pendiente
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <Ban
+                            className="h-3 w-3 text-muted-foreground"
+                            aria-hidden
+                          />
+                          No aplica
+                        </span>
+                      </div>
+                    </div>
+                  </MockFrame>
+                </div>
+              </div>
             </div>
           </div>
         </Step>
@@ -1292,6 +1486,40 @@ function Tip({ children }: { children: React.ReactNode }) {
     >
       <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
       <p className="text-sm leading-relaxed text-foreground/85">{children}</p>
+    </div>
+  )
+}
+
+function PendientesVistaToggle({ active }: { active: "mensual" | "semestral" }) {
+  const opciones = [
+    { key: "mensual" as const, label: "Nuevo Ingreso", icon: UserPlus },
+    { key: "semestral" as const, label: "Semestrales", icon: CalendarRange },
+  ]
+  return (
+    <div
+      className="grid grid-cols-2 gap-2"
+      role="group"
+      aria-label="Cambiar vista de pendientes"
+    >
+      {opciones.map(({ key, label, icon: Icon }) => {
+        const isActive = key === active
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={isActive}
+            className={[
+              "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
+              isActive
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-background text-muted-foreground hover:border-primary/50",
+            ].join(" ")}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden />
+            {label}
+          </button>
+        )
+      })}
     </div>
   )
 }
