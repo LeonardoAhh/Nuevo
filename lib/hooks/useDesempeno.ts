@@ -114,12 +114,6 @@ export function useDesempeno() {
         .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
         .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
 
-      // Count total permisos (PERMISO + TXT + PERMISO HORAS)
-      const permisoCats = ['PERMISO', 'TXT', 'PERMISO HORAS']
-      const totalPermisos = incidencias
-        .filter((i: Record<string, unknown>) => permisoCats.includes(i.categoria as string))
-        .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
-
       // Map cumplimiento from saved data or use defaults
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
         ? (evalData.cumplimiento_responsabilidades as CumplimientoItem[])
@@ -129,10 +123,6 @@ export function useDesempeno() {
       // index 2 = "Cumplir con asistencia" → based on faltas
       if (cumplimiento[2]) {
         cumplimiento[2].porcentaje = String(aplicarEscala(totalFaltas))
-      }
-      // index 4 = "No presentar más de dos permisos por mes" → based on permisos
-      if (cumplimiento[4]) {
-        cumplimiento[4].porcentaje = String(aplicarEscala(totalPermisos))
       }
 
       // Map competencias from saved data or use defaults

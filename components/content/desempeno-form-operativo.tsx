@@ -46,7 +46,7 @@ const INSTRUCCIONES =
   "parte deberá ser evaluada por el jefe inmediato."
 
 // Pasos del modal de cumplimiento que son de solo lectura
-const CUMPLIMIENTO_READONLY_STEPS = new Set([2, 4])
+const CUMPLIMIENTO_READONLY_STEPS = new Set([2])
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
