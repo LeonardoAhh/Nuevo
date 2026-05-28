@@ -33,6 +33,7 @@ import {
   type Competencia,
 } from "@/lib/types/desempeno"
 import { EVALUADORES_PUESTO, DEPARTAMENTOS_EVALUADORES } from "@/lib/catalogo"
+import { useRole } from "@/lib/hooks"
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ function InfoField({ label, children }: InfoFieldProps) {
 // ─── Componente principal ────────────────────────────────────────────────────
 
 export function DesempenoForm({ data, onUpdate }: Props) {
+  const { isEvaluador } = useRole()
   const [modal, setModal] = useState<ModalType>(null)
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -419,8 +421,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               </CardContent>
             </Card>
 
-            {/* Incidencias — solo si hay datos */}
-            {incidenciasPorMes && (
+            {/* Incidencias — solo si hay datos y el usuario no es evaluador */}
+            {incidenciasPorMes && !isEvaluador && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Incidencias</CardTitle>
