@@ -1,23 +1,25 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, useReducedMotion, type Variants } from "framer-motion"
-import { useRole, type AppRole } from "@/lib/hooks"
+import { useRole } from "@/lib/hooks"
 
 /**
- * PostLoginLoading — "Industrial Bloom"
+ * PostLoginLoading — "Minimal Editorial"
  *
- * Pantalla de transición tras login. Extiende el lenguaje editorial
- * del LoginHero (panel oscuro derivado de `--primary`, beam, grid,
- * orbes, sello mono "Desde 1970") y resuelve al dashboard con un
- * wipe diagonal de `clip-path`.
+ * Pantalla de transición tras login. Sobre el fondo limpio del tema
+ * (`--background`), centra el wordmark serif VIÑOPLASTIC, un filete,
+ * la planta y una barra de progreso fina, con un caption de estado
+ * real debajo. Resuelve al dashboard con un wipe diagonal de
+ * `clip-path`.
  *
- * Tokens: todos los colores derivan de `--primary`, `--warning` y
- * `--primary-foreground` (HSL del tema). Las fuentes vienen de las
- * variables `--font-serif` y `--font-mono` declaradas en
- * `app/layout.tsx` y expuestas por Tailwind como `font-serif` /
- * `font-mono`. Sin hex/rgb ni `font-family` hardcoded.
+ * Tokens: todos los colores derivan del tema (`--background`,
+ * `--foreground`, `--primary`, `--warning`, `--muted`, `--border`,
+ * `--card`) en HSL. Las fuentes vienen de las variables
+ * `--font-serif` y `--font-mono` declaradas en `app/layout.tsx` y
+ * expuestas por Tailwind como `font-serif` / `font-mono`. Sin
+ * hex/rgb ni `font-family` hardcoded.
  */
 
 const MIN_MS = 6000
@@ -26,20 +28,6 @@ const WORDMARK = "VIÑOPLASTIC"
 const SPLIT_AT = 4 // "VIÑO" | "PLASTIC"
 
 const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1]
-
-const roleLabel = (role: AppRole | null | undefined, loading: boolean) => {
-  if (loading) return "RESOLVING"
-  switch (role) {
-    case "dev":
-      return "DEV"
-    case "admin":
-      return "ADMIN"
-    case "evaluador":
-      return "EVALUADOR"
-    default:
-      return "USUARIO"
-  }
-}
 
 export function PostLoginLoading() {
   const searchParams = useSearchParams()
@@ -70,14 +58,11 @@ export function PostLoginLoading() {
     return () => clearTimeout(t)
   }, [roleLoading, minDone, role, redirectTo, router])
 
-  const tags = useMemo(
-    () => [
-      { k: "AUTH", v: "OK" },
-      { k: "ROLE", v: roleLabel(role, roleLoading) },
-      { k: "READY", v: minDone && !roleLoading ? "TRUE" : "…" },
-    ],
-    [role, roleLoading, minDone],
-  )
+  const statusLabel = roleLoading
+    ? "Verificando acceso…"
+    : !minDone
+      ? "Preparando tu espacio…"
+      : "Listo"
 
   // ── Variants ──────────────────────────────────────────────────────────
   const wordmarkContainer: Variants = {
@@ -144,17 +129,8 @@ export function PostLoginLoading() {
           ease: easeOutExpo,
         }}
       >
-        {/* ─── Background layers ──────────────────────────────────── */}
-        <div className="vp-base absolute inset-0" aria-hidden />
-        <div className="vp-conic absolute -inset-1/4" aria-hidden />
-
-        <span className="vp-orb vp-orb--a" aria-hidden />
-        <span className="vp-orb vp-orb--b" aria-hidden />
-        <span className="vp-orb vp-orb--c" aria-hidden />
-
-        <span className="vp-beam absolute" aria-hidden />
-        <div className="vp-grid absolute inset-0" aria-hidden />
-        <div className="vp-grain absolute inset-0" aria-hidden />
+        {/* ─── Background ─────────────────────────────────────────── */}
+        <div className="vp-veil absolute inset-0" aria-hidden />
 
         {/* ─── Center column ──────────────────────────────────────── */}
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center">
@@ -228,173 +204,60 @@ export function PostLoginLoading() {
             <span className="vp-progress__fill block h-full w-full" aria-hidden />
           </motion.div>
 
-          {/* Status tags */}
-          <motion.div
-            className="vp-tags mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2.0, duration: 0.5 }}
+          {/* Caption de estado real */}
+          <motion.p
+            className="vp-status mt-6 flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-[0.28em]"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: prefersReducedMotion ? 0 : 1.9,
+              duration: 0.5,
+              ease: easeOutExpo,
+            }}
+            aria-hidden
           >
-            {tags.map((t, i) => (
-              <motion.span
-                key={t.k}
-                className="vp-tag inline-flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-[0.22em]"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: 2.0 + i * 0.18,
-                  duration: 0.45,
-                  ease: easeOutExpo,
-                }}
-              >
-                <span className="vp-tag__dot" aria-hidden />
-                <span className="vp-tag__k">{t.k}</span>
-                <span className="vp-tag__sep" aria-hidden>
-                  ·
-                </span>
-                <span className="vp-tag__v">{t.v}</span>
-              </motion.span>
-            ))}
-          </motion.div>
+            <span className="vp-status__dot" aria-hidden />
+            {statusLabel}
+          </motion.p>
 
-          <span className="sr-only">Preparando tu espacio…</span>
+          <span className="sr-only">{statusLabel}</span>
         </div>
       </motion.div>
 
       {/* ─── Local styles ──────────────────────────────────────────── */}
       <style jsx>{`
         /* ============================================================
-           Tokens locales — todos derivan del tema (--primary, --warning,
-           --primary-foreground). Sin hex/rgb hardcoded; solo keywords
-           CSS (black/white) para los mix de oscuridad/transparencia.
+           Tokens locales — todos derivan del tema (--background,
+           --foreground, --primary, --warning, --muted, --border,
+           --card). Sin hex/rgb ni font-family hardcoded.
            ============================================================ */
         .vp-loader {
-          --p: var(--primary, 221 62% 55%);
-          --p-soft: hsl(var(--p) / 0.18);
-          --accent: hsl(var(--warning, 38 70% 48%));
-          --accent-soft: hsl(var(--warning, 38 70% 48%) / 0.35);
-          --ink: color-mix(in oklab, hsl(var(--p)) 78%, black 22%);
-          --ink-deep: color-mix(in oklab, hsl(var(--p)) 35%, black 65%);
-          --ink-base: color-mix(in oklab, hsl(var(--p)) 12%, black 88%);
-          --text: hsl(var(--primary-foreground, 0 0% 98%));
-          --text-mute: hsl(var(--primary-foreground, 0 0% 98%) / 0.62);
-          --text-faint: hsl(var(--primary-foreground, 0 0% 98%) / 0.38);
-          --line: hsl(var(--primary-foreground, 0 0% 98%) / 0.09);
+          --brand: hsl(var(--primary));
+          --brand-soft: hsl(var(--primary) / 0.1);
+          --accent: hsl(var(--warning));
+          --text: hsl(var(--foreground));
+          --text-mute: hsl(var(--muted-foreground));
+          --text-faint: hsl(var(--muted-foreground) / 0.55);
+          --line: hsl(var(--border));
 
           color: var(--text);
           isolation: isolate;
         }
-        /* Stage holds the dark backdrop so the wipe reveals whatever
-           the parent route paints behind it (dashboard bg-background). */
+        /* Stage paints the theme background so the wipe reveals
+           whatever the parent route paints behind it (dashboard). */
         .vp-stage {
-          background: var(--ink-base);
+          background: hsl(var(--background));
           isolation: isolate;
           will-change: clip-path, transform;
         }
 
-        /* Capa 0 · base + halo cónico ──────────────────────────── */
-        .vp-base {
-          background:
-            radial-gradient(120% 80% at 50% 20%, var(--ink) 0%, transparent 60%),
-            radial-gradient(80% 60% at 80% 100%, var(--p-soft) 0%, transparent 70%),
-            linear-gradient(180deg, var(--ink-deep) 0%, var(--ink-base) 100%);
-        }
-        .vp-conic {
-          background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            hsl(var(--p) / 0.35) 60deg,
-            transparent 140deg,
-            hsl(var(--p) / 0.22) 220deg,
-            transparent 300deg,
-            hsl(var(--p) / 0.35) 360deg
-          );
-          opacity: 0.55;
-          mix-blend-mode: screen;
-          filter: blur(70px);
-          animation: vp-spin 38s linear infinite;
-        }
-
-        /* Capa 1 · orbes ─────────────────────────────────────── */
-        .vp-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(60px);
-          mix-blend-mode: screen;
-          opacity: 0.85;
-          will-change: transform;
-        }
-        .vp-orb--a {
-          width: 32rem;
-          height: 32rem;
-          left: -8rem;
-          top: -10rem;
-          background: radial-gradient(closest-side, hsl(var(--p) / 0.95), transparent 70%);
-          animation: vp-drift-a 18s ease-in-out infinite;
-        }
-        .vp-orb--b {
-          width: 26rem;
-          height: 26rem;
-          right: -6rem;
-          bottom: -8rem;
+        /* Veladura sutil — un solo halo estático de marca */
+        .vp-veil {
           background: radial-gradient(
-            closest-side,
-            hsl(var(--p) / 0.7) 0%,
-            var(--accent-soft) 60%,
-            transparent 80%
+            120% 90% at 50% 12%,
+            var(--brand-soft) 0%,
+            transparent 55%
           );
-          animation: vp-drift-b 22s ease-in-out infinite;
-        }
-        .vp-orb--c {
-          width: 18rem;
-          height: 18rem;
-          left: 55%;
-          top: 60%;
-          background: radial-gradient(closest-side, hsl(var(--p) / 0.55), transparent 70%);
-          animation: vp-drift-c 26s ease-in-out infinite;
-        }
-
-        /* Capa 2 · beam diagonal ─────────────────────────────── */
-        .vp-beam {
-          inset: -20% -40%;
-          background: linear-gradient(
-            115deg,
-            transparent 40%,
-            hsl(var(--primary-foreground, 0 0% 98%) / 0.06) 48%,
-            hsl(var(--primary-foreground, 0 0% 98%) / 0.14) 50%,
-            hsl(var(--primary-foreground, 0 0% 98%) / 0.06) 52%,
-            transparent 60%
-          );
-          animation: vp-beam 9s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        /* Capa 3 · grid técnico ──────────────────────────────── */
-        .vp-grid {
-          background-image:
-            linear-gradient(var(--line) 1px, transparent 1px),
-            linear-gradient(90deg, var(--line) 1px, transparent 1px);
-          background-size: 64px 64px;
-          mask-image: radial-gradient(
-            ellipse 70% 60% at 50% 50%,
-            black 30%,
-            transparent 80%
-          );
-          -webkit-mask-image: radial-gradient(
-            ellipse 70% 60% at 50% 50%,
-            black 30%,
-            transparent 80%
-          );
-          opacity: 0.5;
-        }
-
-        /* Capa 4 · grano ─────────────────────────────────────── */
-        .vp-grain {
-          pointer-events: none;
-          opacity: 0.06;
-          mix-blend-mode: overlay;
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-          background-size: 200px 200px;
         }
 
         /* Sello ──────────────────────────────────────────────── */
@@ -423,15 +286,7 @@ export function PostLoginLoading() {
           color: var(--text);
         }
         .vp-title__b {
-          color: transparent;
-          background: linear-gradient(
-            90deg,
-            var(--accent) 0%,
-            hsl(var(--p) / 0.9) 60%,
-            var(--text) 100%
-          );
-          -webkit-background-clip: text;
-          background-clip: text;
+          color: var(--brand);
         }
 
         /* Filete ─────────────────────────────────────────────── */
@@ -465,98 +320,32 @@ export function PostLoginLoading() {
         /* Progress ───────────────────────────────────────────── */
         .vp-progress {
           border-radius: 999px;
-          background: hsl(var(--primary-foreground, 0 0% 98%) / 0.06);
+          background: hsl(var(--muted));
         }
         .vp-progress__fill {
           background: linear-gradient(
             90deg,
             transparent 0%,
-            var(--accent) 40%,
-            hsl(var(--p) / 1) 60%,
+            var(--brand) 50%,
             transparent 100%
           );
           background-size: 200% 100%;
           animation: vp-shimmer 2.4s ease-in-out infinite;
         }
 
-        /* Tags ───────────────────────────────────────────────── */
-        .vp-tag {
-          color: var(--text-faint);
-          padding: 0.3rem 0.65rem;
-          border: 1px solid var(--line);
-          border-radius: 999px;
-          background: hsl(var(--primary-foreground, 0 0% 98%) / 0.02);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-        .vp-tag__k {
+        /* Caption de estado ──────────────────────────────────── */
+        .vp-status {
           color: var(--text-mute);
         }
-        .vp-tag__sep {
-          color: var(--text-faint);
-          opacity: 0.7;
-        }
-        .vp-tag__v {
-          color: var(--accent);
-          font-variant-numeric: tabular-nums;
-        }
-        .vp-tag__dot {
+        .vp-status__dot {
           width: 5px;
           height: 5px;
           border-radius: 50%;
           background: var(--accent);
-          box-shadow:
-            0 0 0 2px hsl(var(--warning, 38 70% 48%) / 0.18),
-            0 0 10px var(--accent);
           animation: vp-pulse 2.4s ease-in-out infinite;
         }
 
         /* Keyframes ──────────────────────────────────────────── */
-        @keyframes vp-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        @keyframes vp-drift-a {
-          0%,
-          100% {
-            transform: translate(0, 0) scale(1);
-          }
-          50% {
-            transform: translate(30px, 40px) scale(1.05);
-          }
-        }
-        @keyframes vp-drift-b {
-          0%,
-          100% {
-            transform: translate(0, 0) scale(1);
-          }
-          50% {
-            transform: translate(-40px, -30px) scale(1.08);
-          }
-        }
-        @keyframes vp-drift-c {
-          0%,
-          100% {
-            transform: translate(0, 0) scale(1);
-          }
-          50% {
-            transform: translate(20px, -25px) scale(0.95);
-          }
-        }
-        @keyframes vp-beam {
-          0% {
-            transform: translateX(-30%);
-            opacity: 0;
-          }
-          40% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateX(30%);
-            opacity: 0;
-          }
-        }
         @keyframes vp-pulse {
           0%,
           100% {
@@ -579,18 +368,12 @@ export function PostLoginLoading() {
 
         /* Reduced motion ─────────────────────────────────────── */
         @media (prefers-reduced-motion: reduce) {
-          .vp-conic,
-          .vp-orb,
-          .vp-beam,
-          .vp-tag__dot,
+          .vp-status__dot,
           .vp-progress__fill {
             animation: none;
           }
         }
-        :global(.reduce-motion) .vp-conic,
-        :global(.reduce-motion) .vp-orb,
-        :global(.reduce-motion) .vp-beam,
-        :global(.reduce-motion) .vp-tag__dot,
+        :global(.reduce-motion) .vp-status__dot,
         :global(.reduce-motion) .vp-progress__fill {
           animation: none;
         }
