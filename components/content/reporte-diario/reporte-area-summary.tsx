@@ -2,6 +2,13 @@
 
 import { cn } from "@/lib/utils"
 import { INCIDENCIA_LABELS, ALLOWED_PUESTOS } from "./constants"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
 
 interface AreaDetailRow {
     key: string
@@ -73,18 +80,16 @@ export default function ReporteAreaSummary({
                 })}
             </div>
 
-            {selectedArea ? (
-                <div className="mb-4 rounded-2xl border border-border bg-background p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-foreground">Detalle de {selectedArea}</p>
-                        <button
-                            type="button"
-                            onClick={() => onSelectArea("")}
-                            className="rounded-md border border-border bg-muted px-3 py-1 text-xs text-muted-foreground transition hover:border-foreground/50 hover:text-foreground"
-                        >
-                            Limpiar
-                        </button>
-                    </div>
+            <Dialog open={Boolean(selectedArea)} onOpenChange={(v) => { if (!v) onSelectArea("") }}>
+                <DialogContent className="sm:max-w-4xl bg-card">
+                    <DialogHeader>
+                        <DialogTitle>Detalle de {selectedArea}</DialogTitle>
+                        <DialogDescription>
+                            {detailRows.length > 0
+                                ? `${detailRows.length} empleado${detailRows.length === 1 ? "" : "s"} con incidencia en el día seleccionado.`
+                                : "Sin incidencias registradas para esta área en el día seleccionado."}
+                        </DialogDescription>
+                    </DialogHeader>
 
                     {detailRows.length > 0 ? (
                         <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
@@ -102,9 +107,9 @@ export default function ReporteAreaSummary({
                                     {detailRows.map((row, i) => (
                                         <tr key={row.key} className={i % 2 !== 0 ? "bg-muted/20" : ""}>
                                             <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{row.numero_empleado}</td>
-                                            <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
+                                            <td className="px-4 py-2.5 font-medium text-foreground">{row.nombre}</td>
                                             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.puesto ?? "—"}</td>
-                                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.turno ?? "—"}</td>
+                                            <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{row.turno ?? "—"}</td>
                                             <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">
                                                 {INCIDENCIA_LABELS[row.tipo_incidencia] ?? row.tipo_incidencia}
                                             </td>
@@ -118,8 +123,8 @@ export default function ReporteAreaSummary({
                             Sin incidencias registradas para esta área en el día seleccionado.
                         </div>
                     )}
-                </div>
-            ) : null}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
