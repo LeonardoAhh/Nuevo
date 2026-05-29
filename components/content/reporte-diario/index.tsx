@@ -19,7 +19,6 @@ import {
     AlertCircle,
     Loader2,
     X,
-    Info,
     Download,
     Save,
     Database,
@@ -798,46 +797,6 @@ export default function ReporteDiarioContent() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-5">
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => fileInputRef.current?.click()}
-                        onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click() }}
-                        className={cn(
-                            "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-12 text-sm text-muted-foreground transition active:scale-[0.99]",
-                            isDragging
-                                ? "border-primary bg-primary/5"
-                                : "border-border bg-card hover:border-primary hover:bg-muted/30",
-                        )}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                    >
-                        {loading ? (
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        ) : (
-                            <CloudUpload className="w-8 h-8 text-muted-foreground/60" />
-                        )}
-                        <span className="text-base font-medium text-foreground">
-                            {loading ? "Procesando..." : fileName || "Cargar reporte diario"}
-                        </span>
-                        <span className="text-xs text-muted-foreground/60">
-                            {isDragging ? "Suelta el archivo aquí" : "Haz clic o arrastra un archivo JSON"}
-                        </span>
-                    </div>
-
-                    {rows.length === 0 && (
-                        <div className="flex justify-center">
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
-                                <Info className="w-4 h-4 shrink-0 text-warning" />
-                                <span>
-                                    <strong className="font-medium text-warning-foreground">Tip:</strong>
-                                    {" "}Carga un reporte y guárdalo para tener historial mes a mes.
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
                     {savedSummaries.length > 0 && (
                         <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                             <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
