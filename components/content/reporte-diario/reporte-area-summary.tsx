@@ -81,7 +81,7 @@ export default function ReporteAreaSummary({
             </div>
 
             <Dialog open={Boolean(selectedArea)} onOpenChange={(v) => { if (!v) onSelectArea("") }}>
-                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card">
+                <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-card">
                     <DialogHeader>
                         <DialogTitle>Detalle de {selectedArea}</DialogTitle>
                         <DialogDescription>
@@ -107,9 +107,9 @@ export default function ReporteAreaSummary({
                                     {detailRows.map((row, i) => (
                                         <tr key={row.key} className={i % 2 !== 0 ? "bg-muted/20" : ""}>
                                             <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{row.numero_empleado}</td>
-                                            <td className="px-4 py-2.5 font-medium text-foreground whitespace-nowrap">{row.nombre}</td>
+                                            <td className="px-4 py-2.5 font-medium text-foreground">{row.nombre}</td>
                                             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.puesto ?? "—"}</td>
-                                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.turno ?? "—"}</td>
+                                            <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap">{row.turno ?? "—"}</td>
                                             <td className="px-4 py-2.5 text-foreground/80 whitespace-nowrap">
                                                 {INCIDENCIA_LABELS[row.tipo_incidencia] ?? row.tipo_incidencia}
                                             </td>
