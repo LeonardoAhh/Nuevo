@@ -81,7 +81,7 @@ export default function ReporteAreaSummary({
             </div>
 
             <Dialog open={Boolean(selectedArea)} onOpenChange={(v) => { if (!v) onSelectArea("") }}>
-                <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-card">
+                <DialogContent className="sm:max-w-4xl bg-card">
                     <DialogHeader>
                         <DialogTitle>Detalle de {selectedArea}</DialogTitle>
                         <DialogDescription>
