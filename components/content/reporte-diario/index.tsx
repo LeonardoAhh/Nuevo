@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils"
 import {
     CloudUpload,
     Calendar,
-    FilePlus,
     AlertCircle,
     Loader2,
     X,
@@ -293,6 +292,11 @@ export default function ReporteDiarioContent() {
         return { totalIncidencias, tasaAsistencia }
     }, [])
 
+    const heroKpis = useMemo(
+        () => computeKpis(selectedRows, dayHeaders),
+        [computeKpis, selectedRows, dayHeaders],
+    )
+
     const handleSaveToDb = useCallback(async () => {
         if (!currentMonth || rows.length === 0) return
         const monthRows = rows.filter((r) => r.mes === currentMonth)
@@ -406,201 +410,50 @@ export default function ReporteDiarioContent() {
 
     const labelCls = "block text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1.5"
 
+    const hasData = rows.length > 0 && Boolean(currentMonth)
+
     return (
         <div className="flex flex-col gap-5 max-w-full mx-auto pb-12">
 
-            {/* ── Quick access: Retardos & Ausentismo ─────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Link
-                    href="/retardos"
-                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-                            <Clock className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
-                            <p className="text-xs text-muted-foreground">Control de checadas, retardos y tiempo extra</p>
-                        </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
-                </Link>
-                <Link
-                    href="/reporte-diario/ausentismo"
-                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-destructive/10">
-                            <UserX className="w-4 h-4 text-destructive" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Ranking de ausentismo</p>
-                            <p className="text-xs text-muted-foreground">Faltas, incidencias y cronología por empleado</p>
-                        </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
-                </Link>
-            </div>
-
-            {/* ── Toolbar ──────────────────────────────────────────────── */}
-            <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col gap-4">
-                <label
-                    className={cn(
-                        "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-6 text-sm text-muted-foreground transition active:scale-95",
-                        isDragging
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-muted/40 hover:border-primary hover:bg-background",
-                    )}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                >
-                    {loading ? (
-                        <Loader2 className="w-7 h-7 text-primary animate-spin" />
-                    ) : (
-                        <CloudUpload className="w-7 h-7 text-muted-foreground/60" />
-                    )}
-                    <span>{loading ? "Procesando..." : fileName || "Cargar reporte"}</span>
-                    <span className="text-xs text-muted-foreground/60">
-                        {isDragging ? "Suelta el archivo aquí" : "Haz clic o arrastra para seleccionar"}
-                    </span>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/json"
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
-                </label>
-
-                {rows.length > 0 && currentMonth && (
-                    <div className="flex justify-center">
-                        <button
-                            type="button"
-                            onClick={handleSaveToDb}
-                            disabled={dbSaving}
-                            className={cn(
-                                "inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition",
-                                "border-primary bg-primary/10 text-primary hover:bg-primary/20",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                            )}
-                        >
-                            {dbSaving ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Save className="w-4 h-4" />
-                            )}
-                            Guardar reporte de {formatMes(currentMonth)}
-                        </button>
-                    </div>
-                )}
-
-                {rows.length === 0 && (
-                    <div className="flex justify-center">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
-                            <Info className="w-4 h-4 shrink-0 text-warning" />
-                            <span>
-                                <strong className="font-medium text-warning-foreground">
-                                    Tip:
-                                </strong>
-                                {" "}Carga un reporte y guárdalo para tener historial mes a mes.
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="flex flex-col gap-1.5">
-                        <span className={labelCls}>Mes</span>
-                        <Select
-                            value={currentMonth}
-                            onValueChange={setSelectedMes}
-                            disabled={!months.length}
-                        >
-                            <SelectTrigger className="rounded-lg">
-                                <SelectValue placeholder="Seleccionar mes" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {months.map((m) => (
-                                    <SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                        <span className={labelCls}>Departamento</span>
-                        <Select
-                            value={departamentoFilter || "__all__"}
-                            onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)}
-                            disabled={!availableDepartments.length}
-                        >
-                            <SelectTrigger className="rounded-lg">
-                                <SelectValue placeholder="Todos" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__all__">Todos</SelectItem>
-                                {availableDepartments.map((d) => (
-                                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                        <span className={labelCls}>Turno</span>
-                        <Select
-                            value={turnoFilter || "__all__"}
-                            onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)}
-                            disabled={!availableTurnos.length}
-                        >
-                            <SelectTrigger className="rounded-lg">
-                                <SelectValue placeholder="Todos" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__all__">Todos</SelectItem>
-                                {availableTurnos.map((t) => (
-                                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                        <span className={labelCls}>Empleado</span>
-                        <Select
-                            value={selectedEmployee || "__none__"}
-                            onValueChange={(v) => {
-                                if (v === "__none__") {
-                                    setSelectedEmployee("")
-                                    setSearch("")
-                                } else {
-                                    setSelectedEmployee(v)
-                                    setSearch("")
-                                    setEmpDetailOpen(true)
-                                }
-                            }}
-                            disabled={!selectedRows.length}
-                        >
-                            <SelectTrigger className="rounded-lg">
-                                <SelectValue placeholder="Seleccionar empleado" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                                <SelectItem value="__none__">Todos</SelectItem>
-                                {selectedRows
-                                    .slice()
-                                    .sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10))
-                                    .map((r) => (
-                                        <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
-                                            {r.numero_empleado} — {r.nombre}
-                                        </SelectItem>
-                                    ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+            {/* ── Header ───────────────────────────────────────────────── */}
+            <header className="flex flex-col gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+                <div>
+                    <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Reporte Diario</h1>
+                    <p className="mt-0.5 text-sm text-muted-foreground">Asistencia e incidencias · planta Querétaro</p>
                 </div>
-            </div>
+                {hasData && (
+                    <div className="flex items-center gap-5 sm:gap-6">
+                        <div className="text-right">
+                            <p className="text-2xl font-bold leading-none tracking-tight text-success sm:text-3xl">
+                                {heroKpis.tasaAsistencia}%
+                            </p>
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Tasa de asistencia</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-2xl font-bold leading-none tracking-tight text-warning sm:text-3xl">
+                                {heroKpis.totalIncidencias}
+                            </p>
+                            <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Incidencias</p>
+                        </div>
+                        <span className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                            {formatMes(currentMonth)}
+                        </span>
+                    </div>
+                )}
+            </header>
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                onChange={handleFileChange}
+                className="hidden"
+            />
+
+            {hasData ? (
+                <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[2fr_1fr]">
+                    {/* ── Columna izquierda · insight ─────────────────────── */}
+                    <div className="flex min-w-0 flex-col gap-5">
 
             {/* ── KPI Dashboard ─────────────────────────────────────────── */}
             {currentMonth && rows.length > 0 && (
@@ -638,29 +491,187 @@ export default function ReporteDiarioContent() {
                             currentMonth={currentMonth}
                             onSelectDay={setSelectedDay}
                         />
+                    </CardContent>
+                </Card>
+            )}
 
-                        {/* Day detail panel */}
-                        <div className="mt-5 rounded-xl border border-border bg-muted/20">
-                            <div className="flex items-center justify-between gap-2.5 border-b border-border px-5 py-3.5">
-                                <div className="flex items-center gap-2.5">
-                                    <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    <p className="text-sm font-semibold text-foreground">
-                                        {selectedDay ? `Incidencias — día ${parseInt(selectedDay, 10)}` : "Detalles del día"}
-                                    </p>
+            {/* ── Comparación ─────────────────────────────────────────── */}
+            {savedSummaries.length >= 2 && (
+                <ReporteComparison summaries={savedSummaries} />
+            )}
+                    </div>
+
+                    {/* ── Columna derecha · controles + detalle (sticky) ──── */}
+                    <div className="flex flex-col gap-5 lg:sticky lg:top-4">
+                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                            <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-semibold text-foreground">Controles</p>
+                                    <span className="hidden lg:inline-flex items-center rounded-md border border-dashed border-primary/50 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                        Panel fijo
+                                    </span>
                                 </div>
-                                {selectedDay && (
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-3 p-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={labelCls}>Mes</span>
+                                    <Select
+                                        value={currentMonth}
+                                        onValueChange={setSelectedMes}
+                                        disabled={!months.length}
+                                    >
+                                        <SelectTrigger className="rounded-lg">
+                                            <SelectValue placeholder="Seleccionar mes" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {months.map((m) => (
+                                                <SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={labelCls}>Departamento</span>
+                                    <Select
+                                        value={departamentoFilter || "__all__"}
+                                        onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)}
+                                        disabled={!availableDepartments.length}
+                                    >
+                                        <SelectTrigger className="rounded-lg">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all__">Todos</SelectItem>
+                                            {availableDepartments.map((d) => (
+                                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={labelCls}>Turno</span>
+                                    <Select
+                                        value={turnoFilter || "__all__"}
+                                        onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)}
+                                        disabled={!availableTurnos.length}
+                                    >
+                                        <SelectTrigger className="rounded-lg">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all__">Todos</SelectItem>
+                                            {availableTurnos.map((t) => (
+                                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={labelCls}>Empleado</span>
+                                    <Select
+                                        value={selectedEmployee || "__none__"}
+                                        onValueChange={(v) => {
+                                            if (v === "__none__") {
+                                                setSelectedEmployee("")
+                                                setSearch("")
+                                            } else {
+                                                setSelectedEmployee(v)
+                                                setSearch("")
+                                                setEmpDetailOpen(true)
+                                            }
+                                        }}
+                                        disabled={!selectedRows.length}
+                                    >
+                                        <SelectTrigger className="rounded-lg">
+                                            <SelectValue placeholder="Seleccionar empleado" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-60">
+                                            <SelectItem value="__none__">Todos</SelectItem>
+                                            {selectedRows
+                                                .slice()
+                                                .sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10))
+                                                .map((r) => (
+                                                    <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
+                                                        {r.numero_empleado} — {r.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div
+                                    className={cn(
+                                        "mt-1 flex flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition",
+                                        isDragging
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border bg-muted/40 hover:border-primary hover:bg-background",
+                                    )}
+                                    onDrop={handleDrop}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                >
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                    ) : (
+                                        <CloudUpload className="w-5 h-5 text-muted-foreground/60" />
+                                    )}
                                     <button
                                         type="button"
-                                        onClick={handleExportPdf}
-                                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground hover:border-foreground/40"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="font-medium text-foreground transition hover:text-primary"
                                     >
-                                        <Download className="w-3.5 h-3.5" />
-                                        Exportar PDF
+                                        {loading ? "Procesando..." : "Reemplazar reporte"}
                                     </button>
-                                )}
-                            </div>
+                                    <span className="text-muted-foreground/60">
+                                        {isDragging ? "Suelta el archivo aquí" : "o arrastra un archivo JSON"}
+                                    </span>
+                                </div>
 
-                            <div className="px-3 py-4 sm:px-5">
+                                <button
+                                    type="button"
+                                    onClick={handleSaveToDb}
+                                    disabled={dbSaving}
+                                    className={cn(
+                                        "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition",
+                                        "border-primary bg-primary/10 text-primary hover:bg-primary/20",
+                                        "disabled:opacity-50 disabled:cursor-not-allowed",
+                                    )}
+                                >
+                                    {dbSaving ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
+                                    Guardar {formatMes(currentMonth)}
+                                </button>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                            <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                                <div className="flex items-center justify-between gap-2.5">
+                                    <div className="flex items-center gap-2.5">
+                                        <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {selectedDay ? `Incidencias — día ${parseInt(selectedDay, 10)}` : "Detalle del día"}
+                                        </p>
+                                    </div>
+                                    {selectedDay && (
+                                        <button
+                                            type="button"
+                                            onClick={handleExportPdf}
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground hover:border-foreground/40"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            PDF
+                                        </button>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="px-3 py-4 sm:px-5">
                                 {!selectedDay ? (
                                     <p className="text-sm text-muted-foreground text-center py-8">
                                         Selecciona un día en el calendario.
@@ -682,79 +693,151 @@ export default function ReporteDiarioContent() {
                                         />
                                     </>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        {savedSummaries.length > 0 && (
+                            <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                                <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="w-4 h-4 text-muted-foreground" />
+                                        <p className="text-sm font-semibold text-foreground">
+                                            Reportes guardados
+                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                ({savedSummaries.length})
+                                            </span>
+                                        </p>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex flex-col gap-2 p-3">
+                                    {savedSummaries.map((s) => (
+                                        <div
+                                            key={s.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => handleLoadFromDb(s.mes)}
+                                            onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
+                                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
+                                        >
+                                            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                                {formatMes(s.mes)}
+                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-foreground">
+                                                    <span className="font-semibold">{s.total_incidencias}</span> inc.
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
+                                                    disabled={dbSaving}
+                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-5">
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click() }}
+                        className={cn(
+                            "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-12 text-sm text-muted-foreground transition active:scale-[0.99]",
+                            isDragging
+                                ? "border-primary bg-primary/5"
+                                : "border-border bg-card hover:border-primary hover:bg-muted/30",
+                        )}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                    >
+                        {loading ? (
+                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        ) : (
+                            <CloudUpload className="w-8 h-8 text-muted-foreground/60" />
+                        )}
+                        <span className="text-base font-medium text-foreground">
+                            {loading ? "Procesando..." : fileName || "Cargar reporte diario"}
+                        </span>
+                        <span className="text-xs text-muted-foreground/60">
+                            {isDragging ? "Suelta el archivo aquí" : "Haz clic o arrastra un archivo JSON"}
+                        </span>
+                    </div>
+
+                    {rows.length === 0 && (
+                        <div className="flex justify-center">
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
+                                <Info className="w-4 h-4 shrink-0 text-warning" />
+                                <span>
+                                    <strong className="font-medium text-warning-foreground">Tip:</strong>
+                                    {" "}Carga un reporte y guárdalo para tener historial mes a mes.
+                                </span>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    )}
 
-            {/* ── Saved Reports ──────────────────────────────────────────── */}
-            {savedSummaries.length > 0 && (
-                <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                    <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
-                        <div className="flex items-center gap-2">
-                            <Database className="w-4 h-4 text-muted-foreground" />
-                            <p className="text-sm font-semibold text-foreground">
-                                Reportes guardados
-                                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                    ({savedSummaries.length})
-                                </span>
-                            </p>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                            {savedSummaries.map((s) => (
-                                <div
-                                    key={s.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => handleLoadFromDb(s.mes)}
-                                    onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
-                                    className="text-left rounded-2xl border border-border p-4 bg-background shadow-sm transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
-                                >
-                                    <div className="flex items-center justify-between mb-3">
-                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                                            {formatMes(s.mes)}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
-                                            disabled={dbSaving}
-                                            className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                    <div className="grid gap-2 text-sm text-foreground">
-                                        {[
-                                            { label: "Empleados", value: s.total_empleados },
-                                            { label: "Incidencias", value: s.total_incidencias },
-                                        ].map(({ label, value }) => (
-                                            <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                <span>{label}</span>
-                                                <span className="font-semibold">{value}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                    {savedSummaries.length > 0 && (
+                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+                            <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
+                                <div className="flex items-center gap-2">
+                                    <Database className="w-4 h-4 text-muted-foreground" />
+                                    <p className="text-sm font-semibold text-foreground">
+                                        Reportes guardados
+                                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                            ({savedSummaries.length})
+                                        </span>
+                                    </p>
                                 </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* ── Comparison ──────────────────────────────────────────── */}
-            {savedSummaries.length >= 2 && (
-                <ReporteComparison summaries={savedSummaries} />
-            )}
-
-            {/* ── Empty state ──────────────────────────────────────────── */}
-            {!fileName && rows.length === 0 && !loading && (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
-                    <FilePlus className="mb-3 w-8 h-8 text-muted-foreground/30" />
-                    <p className="text-sm font-medium text-muted-foreground">Carga un archivo JSON para comenzar.</p>
-                    <p className="mt-1 text-xs text-muted-foreground/50">El archivo debe seguir el formato de reporte diario.</p>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                                    {savedSummaries.map((s) => (
+                                        <div
+                                            key={s.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => handleLoadFromDb(s.mes)}
+                                            onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
+                                            className="text-left rounded-2xl border border-border p-4 bg-background shadow-sm transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
+                                        >
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                                    {formatMes(s.mes)}
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
+                                                    disabled={dbSaving}
+                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                            <div className="grid gap-2 text-sm text-foreground">
+                                                {[
+                                                    { label: "Empleados", value: s.total_empleados },
+                                                    { label: "Incidencias", value: s.total_incidencias },
+                                                ].map(({ label, value }) => (
+                                                    <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                                        <span>{label}</span>
+                                                        <span className="font-semibold">{value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
 
@@ -784,6 +867,40 @@ export default function ReporteDiarioContent() {
                     </ul>
                 </div>
             )}
+
+            {/* ── Accesos rápidos ──────────────────────────────────────── */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Link
+                    href="/retardos"
+                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
+                            <Clock className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
+                            <p className="text-xs text-muted-foreground">Control de checadas, retardos y tiempo extra</p>
+                        </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+                </Link>
+                <Link
+                    href="/reporte-diario/ausentismo"
+                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-destructive/10">
+                            <UserX className="w-4 h-4 text-destructive" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">Ranking de ausentismo</p>
+                            <p className="text-xs text-muted-foreground">Faltas, incidencias y cronología por empleado</p>
+                        </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+                </Link>
+            </div>
 
             {/* ── Employee Detail Modal ────────────────────────────────── */}
             <ReporteEmployeeDetail
