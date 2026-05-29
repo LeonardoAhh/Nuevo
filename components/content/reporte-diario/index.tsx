@@ -424,12 +424,6 @@ export default function ReporteDiarioContent() {
                 {hasData && (
                     <div className="flex items-center gap-5 sm:gap-6">
                         <div className="text-right">
-                            <p className="text-2xl font-bold leading-none tracking-tight text-success sm:text-3xl">
-                                {heroKpis.tasaAsistencia}%
-                            </p>
-                            <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Tasa de asistencia</p>
-                        </div>
-                        <div className="text-right">
                             <p className="text-2xl font-bold leading-none tracking-tight text-warning sm:text-3xl">
                                 {heroKpis.totalIncidencias}
                             </p>
