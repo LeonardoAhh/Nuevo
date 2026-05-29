@@ -2,6 +2,13 @@
 
 import { cn } from "@/lib/utils"
 import { INCIDENCIA_LABELS, ALLOWED_PUESTOS } from "./constants"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
 
 interface AreaDetailRow {
     key: string
@@ -73,18 +80,16 @@ export default function ReporteAreaSummary({
                 })}
             </div>
 
-            {selectedArea ? (
-                <div className="mb-4 rounded-2xl border border-border bg-background p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-foreground">Detalle de {selectedArea}</p>
-                        <button
-                            type="button"
-                            onClick={() => onSelectArea("")}
-                            className="rounded-md border border-border bg-muted px-3 py-1 text-xs text-muted-foreground transition hover:border-foreground/50 hover:text-foreground"
-                        >
-                            Limpiar
-                        </button>
-                    </div>
+            <Dialog open={Boolean(selectedArea)} onOpenChange={(v) => { if (!v) onSelectArea("") }}>
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card">
+                    <DialogHeader>
+                        <DialogTitle>Detalle de {selectedArea}</DialogTitle>
+                        <DialogDescription>
+                            {detailRows.length > 0
+                                ? `${detailRows.length} empleado${detailRows.length === 1 ? "" : "s"} con incidencia en el día seleccionado.`
+                                : "Sin incidencias registradas para esta área en el día seleccionado."}
+                        </DialogDescription>
+                    </DialogHeader>
 
                     {detailRows.length > 0 ? (
                         <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
@@ -118,8 +123,8 @@ export default function ReporteAreaSummary({
                             Sin incidencias registradas para esta área en el día seleccionado.
                         </div>
                     )}
-                </div>
-            ) : null}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
