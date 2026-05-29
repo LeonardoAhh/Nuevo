@@ -647,7 +647,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">% Cumplimiento</Label>
-                    {CUMPLIMIENTO_READONLY_STEPS.has(step) ? (
+                    {data.tipo !== "jefe" && CUMPLIMIENTO_READONLY_STEPS.has(step) ? (
                       <Input
                         value={editCumplimiento[step].porcentaje}
                         readOnly

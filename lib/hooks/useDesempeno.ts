@@ -7,6 +7,7 @@ import {
   OBJETIVOS_POR_PUESTO,
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   calcularPonderacion,
   type DesempenoData,
@@ -126,14 +127,14 @@ export function useDesempeno() {
         .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
         .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
 
-      // Map cumplimiento from saved data or use defaults
+      // Map cumplimiento from saved data or use defaults (tipo-aware)
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
         ? (evalData.cumplimiento_responsabilidades as CumplimientoItem[])
-        : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c }))
+        : (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipoPuesto] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c }))
 
       // Override auto-calculated fields with graduated scale values
-      // index 2 = "Cumplir con asistencia" → based on faltas
-      if (cumplimiento[2]) {
+      // index 2 = "Cumplir con asistencia" → based on faltas (only for operativo/administrativo)
+      if (tipoPuesto !== "jefe" && cumplimiento[2]) {
         cumplimiento[2].porcentaje = String(aplicarEscala(totalFaltas))
       }
 
@@ -337,7 +338,7 @@ export function useDesempeno() {
         objetivos: evalRow.objetivos?.length ? evalRow.objetivos : [],
         cumplimiento_responsabilidades: evalRow.cumplimiento_responsabilidades?.length
           ? (evalRow.cumplimiento_responsabilidades as CumplimientoItem[])
-          : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+          : (DEFAULT_CUMPLIMIENTO_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
         competencias: evalRow.competencias?.length
           ? (evalRow.competencias as Competencia[])
           : DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),

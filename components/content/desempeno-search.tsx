@@ -16,6 +16,7 @@ import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   calcularPonderacion,
   type DesempenoData,
@@ -235,7 +236,7 @@ export default function DesempenoSearch() {
       evaluador_puesto: "",
       tipo: "operativo",
       objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
-      cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+      cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
       competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
       compromisos: "",
       fecha_revision: "",

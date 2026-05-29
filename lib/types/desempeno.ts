@@ -100,6 +100,75 @@ export const DEFAULT_CUMPLIMIENTO: CumplimientoItem[] = [
     },
 ];
 
+export const DEFAULT_CUMPLIMIENTO_JEFE: CumplimientoItem[] = [
+    {
+        descripcion: "Comunicar objetivos (Se evidencia con carta de objetivos firmada al inicio del año y mapa de tortuga actualizado)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Revisar / actualizar descriptivos de puesto (anual)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Revisar / actualizar procedimientos e instrucciones de trabajo (anual)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Evaluar el desempeño de sus colaboradores a cargo y dar retroalimentación (semestral)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Establecer planes con sus colaboradores de bajo desempeño y dar seguimiento (semestral)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Realizar juntas periódicas y hacer minuta con compromisos calendarizados. (Bimestral)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Cumplir compromisos derivados de las reuniones periódicas. (Bimestral)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Lograr que el personal a su cargo cumpla los lineamientos de disciplina y los valores de la empresa.",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Cumplir con los programas de capacitación necesarios para su equipo de trabajo.",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Lograr objetivo de clima laboral",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+];
+
+export const DEFAULT_CUMPLIMIENTO_POR_TIPO: Record<DesempenoTipo, CumplimientoItem[]> = {
+    operativo: DEFAULT_CUMPLIMIENTO,
+    administrativo: DEFAULT_CUMPLIMIENTO,
+    jefe: DEFAULT_CUMPLIMIENTO_JEFE,
+};
+
 export const DEFAULT_COMPETENCIAS: Competencia[] = [
     {
         nombre: "Flexibilidad y adaptación",
