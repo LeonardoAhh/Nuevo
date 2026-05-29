@@ -506,7 +506,7 @@ export default function ReporteDiarioContent() {
                                     </span>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex flex-col gap-3 p-4">
+                            <CardContent className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-1">
                                 <div className="flex flex-col gap-1.5">
                                     <span className={labelCls}>Mes</span>
                                     <Select
@@ -598,7 +598,7 @@ export default function ReporteDiarioContent() {
 
                                 <div
                                     className={cn(
-                                        "mt-1 flex flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition",
+                                        "mt-1 flex flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition sm:col-span-2 lg:col-span-1",
                                         isDragging
                                             ? "border-primary bg-primary/5"
                                             : "border-border bg-muted/40 hover:border-primary hover:bg-background",
@@ -629,7 +629,7 @@ export default function ReporteDiarioContent() {
                                     onClick={handleSaveToDb}
                                     disabled={dbSaving}
                                     className={cn(
-                                        "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition",
+                                        "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition sm:col-span-2 lg:col-span-1",
                                         "border-primary bg-primary/10 text-primary hover:bg-primary/20",
                                         "disabled:opacity-50 disabled:cursor-not-allowed",
                                     )}
