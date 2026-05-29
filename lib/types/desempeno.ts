@@ -104,37 +104,37 @@ export const DEFAULT_CUMPLIMIENTO_JEFE: CumplimientoItem[] = [
     {
         descripcion: "Comunicar objetivos (Se evidencia con carta de objetivos firmada al inicio del año y mapa de tortuga actualizado)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "SGI",
         comentarios: "",
     },
     {
         descripcion: "Revisar / actualizar descriptivos de puesto (anual)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
     {
         descripcion: "Revisar / actualizar procedimientos e instrucciones de trabajo (anual)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "SGI",
         comentarios: "",
     },
     {
         descripcion: "Evaluar el desempeño de sus colaboradores a cargo y dar retroalimentación (semestral)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
     {
         descripcion: "Establecer planes con sus colaboradores de bajo desempeño y dar seguimiento (semestral)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
     {
         descripcion: "Realizar juntas periódicas y hacer minuta con compromisos calendarizados. (Bimestral)",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
     {
@@ -152,13 +152,13 @@ export const DEFAULT_CUMPLIMIENTO_JEFE: CumplimientoItem[] = [
     {
         descripcion: "Cumplir con los programas de capacitación necesarios para su equipo de trabajo.",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
     {
         descripcion: "Lograr objetivo de clima laboral",
         porcentaje: "NA",
-        evalua: "JEFE",
+        evalua: "RH",
         comentarios: "",
     },
 ];
