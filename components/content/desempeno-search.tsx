@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen, X, Clock } from "lucide-react"
+import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen, X, Clock, Lock, CalendarX2 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
@@ -111,6 +111,36 @@ function ActionButton({
       <TooltipTrigger asChild>{wrapped}</TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
+  )
+}
+
+// ─── Aviso monocromo (cohesivo B&N, responsivo) ───────────────────────────────
+
+function NoticeCard({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      role="alert"
+      className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-foreground/15 bg-card p-4 pl-5 shadow-sm sm:gap-4"
+    >
+      {/* Barra de acento lateral */}
+      <span className="absolute inset-y-0 left-0 w-1.5 bg-foreground" aria-hidden />
+      {/* Chip circular con ícono */}
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm">
+        {icon}
+      </span>
+      <div className="min-w-0 space-y-1 pt-0.5">
+        <p className="text-sm font-semibold leading-tight text-foreground sm:text-base">{title}</p>
+        <p className="text-sm leading-snug text-muted-foreground">{children}</p>
+      </div>
+    </div>
   )
 }
 
@@ -584,21 +614,21 @@ export default function DesempenoSearch() {
         )}
 
         {bloqueado && (
-          <Alert className="flex items-center gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
-            <AlertDescription>
-              La calificación es menor a <strong>80%.</strong> No puedes guardar, imprimir o descargar el PDF hasta que captures los compromisos de mejora.
-            </AlertDescription>
-          </Alert>
+          <NoticeCard
+            icon={<Lock className="h-5 w-5" />}
+            title="Calificación menor a 80%"
+          >
+            No puedes <strong className="font-semibold text-foreground">guardar</strong>, <strong className="font-semibold text-foreground">imprimir</strong> ni <strong className="font-semibold text-foreground">descargar el PDF</strong> hasta capturar los compromisos de mejora.
+          </NoticeCard>
         )}
 
         {noElegible && (
-          <Alert className="flex items-center gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Empleado no elegible para evaluación semestral.</strong>{" "}
-              {elegibilidad.motivo} Cambia el periodo o espera al siguiente semestre.
-            </AlertDescription>
-          </Alert>
+          <NoticeCard
+            icon={<CalendarX2 className="h-5 w-5" />}
+            title="Empleado no elegible para evaluación semestral"
+          >
+            {elegibilidad.motivo} Cambia el periodo o espera al siguiente semestre.
+          </NoticeCard>
         )}
 
         <DesempenoForm data={previewData} onUpdate={data ? setData : undefined} />
