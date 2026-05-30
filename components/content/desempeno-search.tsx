@@ -203,7 +203,7 @@ export default function DesempenoSearch() {
   }, [periodoModo])
 
   const handleSearch = () => {
-    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentosScope)
+    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentosScope, periodoSeleccionado)
   }
 
   if (loading) {

@@ -14,7 +14,7 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { getTipoDesempenoByPuesto, normalizeDepartamento } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo } from "@/lib/catalogo"
 
 export interface EvaluacionHistorial {
   id: string
@@ -39,7 +39,7 @@ export function useDesempeno() {
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
 
-  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null) => {
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null) => {
     setLoading(true)
     setError(null)
 
@@ -122,10 +122,38 @@ export function useDesempeno() {
       const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
       const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
 
-      // Count total faltas injustificadas
-      const totalFaltas = incidencias
-        .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
-        .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+      const faltasDeMes = (mes: string): number =>
+        incidencias
+          .filter((i: Record<string, unknown>) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
+          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+
+      // "Cumplir con asistencia": se evalúa por mes del periodo y se promedian
+      // los % de los meses CON datos (≥1 incidencia registrada).
+      //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
+      //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
+      // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
+      const targetPeriodo = evalData?.periodo || periodoSeleccionado
+      const mesesPeriodo = mesesDePeriodo(targetPeriodo)
+
+      let asistenciaPorcentaje: number
+      if (mesesPeriodo.length > 0) {
+        const mesesConDatos = mesesPeriodo.filter((mes) =>
+          incidencias.some((i: Record<string, unknown>) => i.mes === mes),
+        )
+        if (mesesConDatos.length > 0) {
+          const promedio =
+            mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
+            mesesConDatos.length
+          asistenciaPorcentaje = Math.round(promedio)
+        } else {
+          asistenciaPorcentaje = 100
+        }
+      } else {
+        const totalFaltas = incidencias
+          .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
+          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+        asistenciaPorcentaje = aplicarEscala(totalFaltas)
+      }
 
       // Map cumplimiento from saved data or use defaults (tipo-aware)
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
@@ -135,7 +163,7 @@ export function useDesempeno() {
       // Override auto-calculated fields with graduated scale values
       // index 2 = "Cumplir con asistencia" → based on faltas (only for operativo/administrativo)
       if (tipoPuesto !== "jefe" && cumplimiento[2]) {
-        cumplimiento[2].porcentaje = String(aplicarEscala(totalFaltas))
+        cumplimiento[2].porcentaje = String(asistenciaPorcentaje)
       }
 
       // Map competencias from saved data or use defaults
