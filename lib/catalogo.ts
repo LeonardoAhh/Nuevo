@@ -396,6 +396,50 @@ export const PERIODOS_DESEMPENO = {
 
 export type DesempenoPeriodo = (typeof PERIODOS_DESEMPENO)[keyof typeof PERIODOS_DESEMPENO][number]
 
+// Mapa abreviatura de mes (ES) → número 1-12.
+const MES_ABREV_A_NUM: Record<string, number> = {
+  ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6,
+  JUL: 7, AGO: 8, SEP: 9, OCT: 10, NOV: 11, DIC: 12,
+}
+
+/**
+ * Convierte un label de periodo de desempeño a la lista de meses `YYYY-MM`
+ * que abarca, en orden ascendente.
+ *
+ * El año del label corresponde al mes FINAL. Si el mes inicial es mayor que
+ * el final, el inicio cae en el año anterior (p.ej. "DIC-MAY 2026" →
+ * 2025-12 … 2026-05).
+ *
+ * - Mensual ("ENE-FEB 2026") → 2 meses.
+ * - Semestral ("DIC-MAY 2026") → 6 meses.
+ *
+ * Devuelve `[]` si el label no tiene el formato esperado.
+ */
+export function mesesDePeriodo(periodo: string | null | undefined): string[] {
+  if (!periodo) return []
+  const m = periodo.trim().match(/^([A-ZÁÉÍÓÚ]{3})-([A-ZÁÉÍÓÚ]{3})\s+(\d{4})$/i)
+  if (!m) return []
+
+  const startNum = MES_ABREV_A_NUM[m[1].toUpperCase()]
+  const endNum = MES_ABREV_A_NUM[m[2].toUpperCase()]
+  const endYear = Number(m[3])
+  if (!startNum || !endNum || !Number.isFinite(endYear)) return []
+
+  const startYear = startNum <= endNum ? endYear : endYear - 1
+
+  const meses: string[] = []
+  let y = startYear
+  let mm = startNum
+  // Límite de seguridad: máx 24 meses para evitar loop infinito ante datos raros.
+  for (let i = 0; i < 24; i++) {
+    meses.push(`${y}-${String(mm).padStart(2, "0")}`)
+    if (y === endYear && mm === endNum) break
+    mm += 1
+    if (mm > 12) { mm = 1; y += 1 }
+  }
+  return meses
+}
+
 export const SECCIONES_PONDERACION_DESEMPENO = {
   operativo: [
     { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de objetivos productivos y operativos." },
