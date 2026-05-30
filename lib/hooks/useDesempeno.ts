@@ -260,13 +260,30 @@ export function useDesempeno() {
   const fetchHistorial = useCallback(async () => {
     setHistorialLoading(true)
     try {
-      const { data: evals, error: err } = await supabase
-        .from("evaluaciones_desempeno")
-        .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
-        .order("created_at", { ascending: false })
-        .limit(200)
+      // Pagina el query hasta traer TODAS las evaluaciones (sin cap fijo).
+      interface EvalRow {
+        id: string
+        numero_empleado: string
+        evaluador_nombre: string | null
+        tipo: string
+        periodo: string | null
+        calificacion_final: number
+        created_at: string
+      }
+      const PAGE = 1000
+      const evals: EvalRow[] = []
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: err } = await supabase
+          .from("evaluaciones_desempeno")
+          .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1)
 
-      if (err) throw err
+        if (err) throw err
+        if (!page || page.length === 0) break
+        evals.push(...(page as EvalRow[]))
+        if (page.length < PAGE) break
+      }
 
       // Fetch employee names for each unique numero_empleado
       const numeros = [...new Set((evals ?? []).map((e) => e.numero_empleado))]

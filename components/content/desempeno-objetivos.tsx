@@ -12,9 +12,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
-import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto } from "@/lib/catalogo"
+import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
-import { PaginationBar } from "@/components/ui/pagination-bar"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import DesempenoPrint from "./desempeno-print"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
@@ -36,12 +37,21 @@ function calificacionColor(cal: number): string {
   return "text-destructive"
 }
 
+interface EmpleadoAgrupado {
+  numero: string
+  nombre: string
+  puesto: string
+  departamento: string
+  evals: EvaluacionHistorial[]
+}
+
 export default function DesempenoObjetivos() {
   const departamentos = useMemo(() => Object.entries(CATALOGO_ORGANIZACIONAL), [])
   const [puesto, setPuesto] = useState("")
   const [histSearch, setHistSearch] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const PAGE_SIZE = 20
+  const [selectedNumero, setSelectedNumero] = useState<string | null>(null)
+  const [openDeps, setOpenDeps] = useState<string[]>([])
+  const [pendingPrintId, setPendingPrintId] = useState<string | null>(null)
 
   const { historial, historialLoading, fetchHistorial, cargarEvaluacion, eliminarEvaluacion, data, loading } = useDesempeno()
 
@@ -57,25 +67,72 @@ export default function DesempenoObjetivos() {
   const tieneCompromisos = !!(data?.compromisos?.trim())
   const bloqueado = requiereCompromisos && !tieneCompromisos
 
-  const filteredHistorial = historial.filter((e) => {
-    if (!histSearch) return true
+  // 1 entrada por empleado, con sus evaluaciones agrupadas.
+  const empleadosAgrupados = useMemo(() => {
+    const byNum = new Map<string, EmpleadoAgrupado>()
+    for (const ev of historial) {
+      let e = byNum.get(ev.numero_empleado)
+      if (!e) {
+        e = {
+          numero: ev.numero_empleado,
+          nombre: ev.nombre ?? "—",
+          puesto: ev.puesto ?? "",
+          departamento: getDepartamentoByPuesto(ev.puesto),
+          evals: [],
+        }
+        byNum.set(ev.numero_empleado, e)
+      }
+      e.evals.push(ev)
+    }
+    return [...byNum.values()]
+  }, [historial])
+
+  const empleadosFiltrados = useMemo(() => {
+    if (!histSearch) return empleadosAgrupados
     const q = histSearch.toLowerCase()
-    return (
-      e.numero_empleado.toLowerCase().includes(q) ||
-      (e.nombre ?? "").toLowerCase().includes(q) ||
-      (e.puesto ?? "").toLowerCase().includes(q) ||
-      (e.periodo ?? "").toLowerCase().includes(q)
+    return empleadosAgrupados.filter((e) =>
+      e.numero.toLowerCase().includes(q) ||
+      e.nombre.toLowerCase().includes(q) ||
+      e.puesto.toLowerCase().includes(q) ||
+      e.evals.some((ev) => (ev.periodo ?? "").toLowerCase().includes(q)),
     )
-  })
+  }, [empleadosAgrupados, histSearch])
 
-  const totalPages = Math.max(1, Math.ceil(filteredHistorial.length / PAGE_SIZE))
-  const safePage = Math.min(currentPage, totalPages)
-  const paginatedHistorial = filteredHistorial.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  // Agrupado por departamento, ordenado (SIN DEPARTAMENTO al final).
+  const gruposPorDepto = useMemo(() => {
+    const byDep = new Map<string, EmpleadoAgrupado[]>()
+    for (const e of empleadosFiltrados) {
+      const arr = byDep.get(e.departamento) ?? []
+      arr.push(e)
+      byDep.set(e.departamento, arr)
+    }
+    const entries = [...byDep.entries()].sort((a, b) => {
+      if (a[0] === DEPARTAMENTO_SIN_ASIGNAR) return 1
+      if (b[0] === DEPARTAMENTO_SIN_ASIGNAR) return -1
+      return a[0].localeCompare(b[0])
+    })
+    for (const [, arr] of entries) arr.sort((x, y) => x.nombre.localeCompare(y.nombre))
+    return entries
+  }, [empleadosFiltrados])
 
-  useEffect(() => { setCurrentPage(1) }, [histSearch])
+  const empleadoSel = useMemo(
+    () => empleadosAgrupados.find((e) => e.numero === selectedNumero) ?? null,
+    [empleadosAgrupados, selectedNumero],
+  )
 
-  const handleVerEvaluacion = (evalItem: EvaluacionHistorial) => {
-    cargarEvaluacion(evalItem.id)
+  // Imprimir: carga la evaluación y dispara print cuando ya está en el DOM.
+  useEffect(() => {
+    if (!pendingPrintId || loading || !data) return
+    const t = setTimeout(() => {
+      window.print()
+      setPendingPrintId(null)
+    }, 150)
+    return () => clearTimeout(t)
+  }, [pendingPrintId, loading, data])
+
+  const handlePrint = (evalId: string) => {
+    setPendingPrintId(evalId)
+    cargarEvaluacion(evalId)
   }
 
   return (
@@ -217,67 +274,58 @@ export default function DesempenoObjetivos() {
                     <Skeleton key={i} className="h-10 w-full" />
                   ))}
                 </div>
-              ) : filteredHistorial.length === 0 ? (
+              ) : gruposPorDepto.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground">
                   {histSearch ? "Sin resultados." : "No hay evaluaciones guardadas."}
                 </div>
               ) : (
-                <>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16">#</TableHead>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead className="hidden md:table-cell">Puesto</TableHead>
-                        <TableHead>Periodo</TableHead>
-                        <TableHead className="text-center">Calif.</TableHead>
-                        <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                        <TableHead className="w-10" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedHistorial.map((ev) => (
-                        <TableRow
-                          key={ev.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleVerEvaluacion(ev)}
-                        >
-                          <TableCell className="font-mono text-xs">{ev.numero_empleado}</TableCell>
-                          <TableCell className="font-medium truncate max-w-[200px]">{ev.nombre ?? "—"}</TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[160px]">{ev.puesto ?? "—"}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">{ev.periodo ?? "—"}</Badge>
-                          </TableCell>
-                          <TableCell className={`text-center font-bold ${calificacionColor(ev.calificacion_final)}`}>
-                            {ev.calificacion_final}%
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{formatFecha(ev.created_at)}</TableCell>
-                          <TableCell>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={(e) => { e.stopPropagation(); eliminarEvaluacion(ev.id) }}
-                                  aria-label="Eliminar evaluación"
+                <Accordion
+                  type="multiple"
+                  value={histSearch ? gruposPorDepto.map(([dep]) => dep) : openDeps}
+                  onValueChange={histSearch ? undefined : setOpenDeps}
+                  className="w-full"
+                >
+                  {gruposPorDepto.map(([departamento, empleados]) => (
+                    <AccordionItem key={departamento} value={departamento}>
+                      <AccordionTrigger className="text-sm">
+                        <span className="flex items-center gap-2">
+                          <span className="font-semibold">{departamento}</span>
+                          <Badge variant="secondary" className="text-xs">{empleados.length}</Badge>
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-16">#</TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead className="hidden md:table-cell">Puesto</TableHead>
+                                <TableHead className="text-center w-20">Evals</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {empleados.map((e) => (
+                                <TableRow
+                                  key={e.numero}
+                                  className="cursor-pointer hover:bg-muted/50"
+                                  onClick={() => setSelectedNumero(e.numero)}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Eliminar</TooltipContent>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                {filteredHistorial.length > PAGE_SIZE && (
-                  <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                )}
-                </>
+                                  <TableCell className="font-mono text-xs">{e.numero}</TableCell>
+                                  <TableCell className="font-medium truncate max-w-[200px]">{e.nombre}</TableCell>
+                                  <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[160px]">{e.puesto || "—"}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Badge variant="outline" className="text-xs">{e.evals.length}</Badge>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
               )}
 
               {loading && (
@@ -325,6 +373,68 @@ export default function DesempenoObjetivos() {
           </CardContent>
         </Card>
       )}
+      {/* Detalle de evaluaciones del empleado — modal (PC) / sheet (móvil) */}
+      {empleadoSel && (
+        <ResponsiveShell
+          open={!!empleadoSel}
+          onClose={() => setSelectedNumero(null)}
+          title={empleadoSel.nombre}
+          description="Evaluaciones guardadas"
+          maxWidth="sm:max-w-lg"
+        >
+          <ModalToolbar
+            title={empleadoSel.nombre}
+            subtitle={`${empleadoSel.numero} · ${empleadoSel.puesto || "—"}`}
+            saving={false}
+            onClose={() => setSelectedNumero(null)}
+          />
+          <div className="overflow-y-auto p-4 space-y-2">
+            {empleadoSel.evals.map((ev) => (
+              <div key={ev.id} className="flex items-center gap-3 rounded-lg border p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">{ev.periodo ?? "—"}</Badge>
+                    <span className={`text-sm font-bold ${calificacionColor(ev.calificacion_final)}`}>{ev.calificacion_final}%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{formatFecha(ev.created_at)}</p>
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      disabled={loading}
+                      onClick={() => handlePrint(ev.id)}
+                      aria-label="Imprimir evaluación"
+                    >
+                      {loading && pendingPrintId === ev.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <Printer className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Imprimir</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => eliminarEvaluacion(ev.id)}
+                      aria-label="Eliminar evaluación"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Eliminar</TooltipContent>
+                </Tooltip>
+              </div>
+            ))}
+          </div>
+        </ResponsiveShell>
+      )}
+
       {/* Hidden print area */}
       {data && (
         <div className="print-area hidden print:block">
