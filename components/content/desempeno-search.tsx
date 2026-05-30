@@ -200,6 +200,9 @@ export default function DesempenoSearch() {
   const [showSugg, setShowSugg] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
   const [recientes, setRecientes] = useState<Array<{ numero: string; nombre: string }>>([])
+  // Gate de impresión: solo se puede imprimir una evaluación ya guardada y sin ediciones posteriores.
+  const savedSnapshotRef = useRef<string | null>(null)
+  const [guardado, setGuardado] = useState(false)
 
   useEffect(() => {
     if (!isEvaluador) return
@@ -290,6 +293,25 @@ export default function DesempenoSearch() {
       setActiveIdx(-1)
     }
   }
+
+  // Se "ensucia" al editar o cargar otro empleado → deshabilita imprimir.
+  useEffect(() => {
+    if (!data) {
+      savedSnapshotRef.current = null
+      setGuardado(false)
+      return
+    }
+    setGuardado(savedSnapshotRef.current === JSON.stringify(data))
+  }, [data])
+
+  // Tras guardar con éxito, fija el snapshot como "limpio".
+  useEffect(() => {
+    if (saveSuccess && data) {
+      savedSnapshotRef.current = JSON.stringify(data)
+      setGuardado(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveSuccess])
 
   if (loading) {
     return (
@@ -405,10 +427,12 @@ export default function DesempenoSearch() {
                           ? "Empleado no elegible para este periodo semestral (< 2 meses)"
                           : bloqueado
                           ? "Captura compromisos primero (calificación < 80%)"
+                          : !guardado
+                          ? "Guarda la evaluación primero para poder imprimir"
                           : "Imprimir evaluación"
                       }
                       onClick={() => window.print()}
-                      disabled={bloqueado || noElegible}
+                      disabled={!guardado || bloqueado || noElegible}
                       variant="default"
                     />
                   </>
