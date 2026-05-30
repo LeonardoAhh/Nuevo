@@ -195,6 +195,20 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
                 <DropdownMenuItem
                   asChild
                   className={
+                    pathname === "/guia-evaluador"
+                      ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
+                      : ""
+                  }
+                >
+                  <Link href="/guia-evaluador" className="flex items-center gap-2 cursor-pointer">
+                    <BookOpen size={16} />
+                    <span>Guía Evaluador</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  asChild
+                  className={
                     pathname === "/settings"
                       ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
                       : ""
