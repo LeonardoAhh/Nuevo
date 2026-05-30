@@ -377,6 +377,38 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
   return "operativo"
 }
 
+// Normaliza un puesto para comparar (UPPER, sin acentos, espacios colapsados).
+function normalizePuestoKey(puesto: string): string {
+  return puesto
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+// Mapa puesto normalizado → departamento, derivado de CATALOGO_ORGANIZACIONAL.
+const PUESTO_A_DEPARTAMENTO: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const [departamento, { puestos }] of Object.entries(CATALOGO_ORGANIZACIONAL)) {
+    for (const p of puestos) {
+      map[normalizePuestoKey(p)] = departamento
+    }
+  }
+  return map
+})()
+
+export const DEPARTAMENTO_SIN_ASIGNAR = "SIN DEPARTAMENTO"
+
+/**
+ * Devuelve el departamento de un puesto según `CATALOGO_ORGANIZACIONAL`.
+ * Si el puesto no está en el catálogo, devuelve `DEPARTAMENTO_SIN_ASIGNAR`.
+ */
+export function getDepartamentoByPuesto(puesto: string | null | undefined): string {
+  if (!puesto) return DEPARTAMENTO_SIN_ASIGNAR
+  return PUESTO_A_DEPARTAMENTO[normalizePuestoKey(puesto)] ?? DEPARTAMENTO_SIN_ASIGNAR
+}
+
 export const PERIODOS_DESEMPENO = {
   semestrales: ["DIC-MAY 2026", "JUN-NOV 2026"] as const,
   mensuales: [
