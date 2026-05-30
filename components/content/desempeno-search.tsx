@@ -114,31 +114,51 @@ function ActionButton({
   )
 }
 
-// ─── Aviso monocromo (cohesivo B&N, responsivo) ───────────────────────────────
+// ─── Aviso con severidad (color semántico por tema, responsivo) ───────────────
 
 function NoticeCard({
+  tone,
   icon,
   title,
   children,
 }: {
+  tone: "danger" | "warning"
   icon: React.ReactNode
   title: string
   children: React.ReactNode
 }) {
+  // Color semántico via tokens del tema (se adapta a claro/oscuro).
+  const v = tone === "danger" ? "--destructive" : "--warning"
   return (
     <div
       role="alert"
-      className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-foreground/15 bg-card p-4 pl-5 shadow-sm sm:gap-4"
+      className="relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 pl-5 shadow-sm sm:gap-4"
+      style={{
+        backgroundColor: `hsl(var(${v}) / 0.08)`,
+        borderColor: `hsl(var(${v}) / 0.30)`,
+      }}
     >
       {/* Barra de acento lateral */}
-      <span className="absolute inset-y-0 left-0 w-1.5 bg-foreground" aria-hidden />
+      <span
+        className="absolute inset-y-0 left-0 w-1.5"
+        style={{ backgroundColor: `hsl(var(${v}))` }}
+        aria-hidden
+      />
       {/* Chip circular con ícono */}
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm"
+        style={{ backgroundColor: `hsl(var(${v}))`, color: `hsl(var(${v}-foreground))` }}
+      >
         {icon}
       </span>
       <div className="min-w-0 space-y-1 pt-0.5">
-        <p className="text-sm font-semibold leading-tight text-foreground sm:text-base">{title}</p>
-        <p className="text-sm leading-snug text-muted-foreground">{children}</p>
+        <p
+          className="text-sm font-semibold leading-tight sm:text-base"
+          style={{ color: `hsl(var(${v}))` }}
+        >
+          {title}
+        </p>
+        <p className="text-sm leading-snug text-foreground/80">{children}</p>
       </div>
     </div>
   )
@@ -615,6 +635,7 @@ export default function DesempenoSearch() {
 
         {bloqueado && (
           <NoticeCard
+            tone="danger"
             icon={<Lock className="h-5 w-5" />}
             title="Calificación menor a 80%"
           >
@@ -624,6 +645,7 @@ export default function DesempenoSearch() {
 
         {noElegible && (
           <NoticeCard
+            tone="warning"
             icon={<CalendarX2 className="h-5 w-5" />}
             title="Empleado no elegible para evaluación semestral"
           >
