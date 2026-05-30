@@ -100,6 +100,75 @@ export const DEFAULT_CUMPLIMIENTO: CumplimientoItem[] = [
     },
 ];
 
+export const DEFAULT_CUMPLIMIENTO_JEFE: CumplimientoItem[] = [
+    {
+        descripcion: "Comunicar objetivos (Se evidencia con carta de objetivos firmada al inicio del año y mapa de tortuga actualizado)",
+        porcentaje: "NA",
+        evalua: "SGI",
+        comentarios: "",
+    },
+    {
+        descripcion: "Revisar / actualizar descriptivos de puesto (anual)",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+    {
+        descripcion: "Revisar / actualizar procedimientos e instrucciones de trabajo (anual)",
+        porcentaje: "NA",
+        evalua: "SGI",
+        comentarios: "",
+    },
+    {
+        descripcion: "Evaluar el desempeño de sus colaboradores a cargo y dar retroalimentación (semestral)",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+    {
+        descripcion: "Establecer planes con sus colaboradores de bajo desempeño y dar seguimiento (semestral)",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+    {
+        descripcion: "Realizar juntas periódicas y hacer minuta con compromisos calendarizados. (Bimestral)",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+    {
+        descripcion: "Cumplir compromisos derivados de las reuniones periódicas. (Bimestral)",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Lograr que el personal a su cargo cumpla los lineamientos de disciplina y los valores de la empresa.",
+        porcentaje: "NA",
+        evalua: "JEFE",
+        comentarios: "",
+    },
+    {
+        descripcion: "Cumplir con los programas de capacitación necesarios para su equipo de trabajo.",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+    {
+        descripcion: "Lograr objetivo de clima laboral",
+        porcentaje: "NA",
+        evalua: "RH",
+        comentarios: "",
+    },
+];
+
+export const DEFAULT_CUMPLIMIENTO_POR_TIPO: Record<DesempenoTipo, CumplimientoItem[]> = {
+    operativo: DEFAULT_CUMPLIMIENTO,
+    administrativo: DEFAULT_CUMPLIMIENTO,
+    jefe: DEFAULT_CUMPLIMIENTO_JEFE,
+};
+
 export const DEFAULT_COMPETENCIAS: Competencia[] = [
     {
         nombre: "Flexibilidad y adaptación",
@@ -2782,7 +2851,10 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "TÉCNICO ESPECIALISTA DE MANTENIMIENTO B": _OBJETIVOS_TECNICO_ESPECIALISTA_MANTENIMIENTO,
     /*ALMACÉN*/
     "JEFE DE ALMACÉN": _OBJETIVOS_JEFE_ALMACEN,
-    "AUXILIAR ADMINISTRATIVO DE ALMACÉN": _OBJETIVOS_AUXILIAR_ADMINISTRATIVO_ALMACEN,
+    "AUXILIAR ADMINISTRATIVO DE ALMACÉN A": _OBJETIVOS_AUXILIAR_ADMINISTRATIVO_ALMACEN,
+    "AUXILIAR ADMINISTRATIVO DE ALMACÉN B": _OBJETIVOS_AUXILIAR_ADMINISTRATIVO_ALMACEN,
+    "AUXILIAR ADMINISTRATIVO DE ALMACÉN C": _OBJETIVOS_AUXILIAR_ADMINISTRATIVO_ALMACEN,
+    "AUXILIAR ADMINISTRATIVO DE ALMACÉN D": _OBJETIVOS_AUXILIAR_ADMINISTRATIVO_ALMACEN,
     "ALMACENISTA DE MATERIA PRIMA": _OBJETIVOS_ALMACENISTA_MATERIA_PRIMA,
     "AUXILIAR DE ALMACÉN A": _OBJETIVOS_AUXILIAR_ALMACEN,
     "AUXILIAR DE ALMACÉN B": _OBJETIVOS_AUXILIAR_ALMACEN,

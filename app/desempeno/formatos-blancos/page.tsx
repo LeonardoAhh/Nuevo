@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import DesempenoPrint from "@/components/content/desempeno-print"
 import {
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   type DesempenoData,
 } from "@/lib/types/desempeno"
@@ -23,7 +24,7 @@ const BLANK_OPERATIVO: DesempenoData = {
   evaluador_nombre: "", evaluador_puesto: "", periodo: "",
   tipo: "operativo",
   objetivos: Array.from({ length: 5 }, (_, i) => emptyObj(i + 1)),
-  cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map(c => ({ ...c })),
+  cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["operativo"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
   competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
   compromisos: "", fecha_revision: "", observaciones: "",
   calificacion_final: 100, incidencias: [],
@@ -34,7 +35,18 @@ const BLANK_ADMIN: DesempenoData = {
   evaluador_nombre: "", evaluador_puesto: "", periodo: "",
   tipo: "administrativo",
   objetivos: Array.from({ length: 7 }, (_, i) => emptyObj(i + 1)),
-  cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map(c => ({ ...c })),
+  cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["administrativo"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
+  competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
+  compromisos: "", fecha_revision: "", observaciones: "",
+  calificacion_final: 100, incidencias: [],
+}
+
+const BLANK_JEFE: DesempenoData = {
+  numero_empleado: "", nombre: "", puesto: "",
+  evaluador_nombre: "", evaluador_puesto: "", periodo: "",
+  tipo: "jefe",
+  objetivos: Array.from({ length: 7 }, (_, i) => emptyObj(i + 1)),
+  cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["jefe"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
   competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
   compromisos: "", fecha_revision: "", observaciones: "",
   calificacion_final: 100, incidencias: [],
@@ -77,6 +89,14 @@ export default function FormatosBlancos() {
       {/* Formato 2 — Administrativo */}
       <div className="print-area">
         <DesempenoPrint data={BLANK_ADMIN} />
+      </div>
+
+      {/* Separador de página entre formatos */}
+      <div style={{ pageBreakBefore: "always" }} />
+
+      {/* Formato 3 — Jefe */}
+      <div className="print-area">
+        <DesempenoPrint data={BLANK_JEFE} />
       </div>
 
       <style>{`

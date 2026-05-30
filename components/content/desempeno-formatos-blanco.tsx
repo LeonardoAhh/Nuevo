@@ -8,6 +8,7 @@ import DesempenoPrint from "./desempeno-print"
 import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   type DesempenoData,
   type DesempenoTipo,
@@ -15,7 +16,8 @@ import {
 
 const FORMATOS: { tipo: DesempenoTipo; label: string }[] = [
   { tipo: "operativo", label: "Personal Operativo" },
-  { tipo: "administrativo", label: "Personal Administrativo / Jefes" },
+  { tipo: "administrativo", label: "Personal Administrativo" },
+  { tipo: "jefe", label: "Jefes" },
 ]
 
 function buildBlankData(tipo: DesempenoTipo): DesempenoData {
@@ -34,7 +36,7 @@ function buildBlankData(tipo: DesempenoTipo): DesempenoData {
       porcentaje: "NA",
       comentarios: "",
     })),
-    cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({
+    cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipo] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({
       ...c,
       porcentaje: "",
       comentarios: "",

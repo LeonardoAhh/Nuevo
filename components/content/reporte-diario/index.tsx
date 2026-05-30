@@ -10,6 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import {
     CloudUpload,
@@ -17,14 +19,15 @@ import {
     AlertCircle,
     Loader2,
     X,
-    Info,
     Download,
     Save,
     Database,
     Trash2,
     Clock,
-    ArrowRight,
     UserX,
+    Building2,
+    SunMedium,
+    User,
 } from "lucide-react"
 
 import { INCIDENT_TABS, INCIDENCIA_LABELS, AREA_STAFF, ALLOWED_PUESTOS } from "./constants"
@@ -416,25 +419,228 @@ export default function ReporteDiarioContent() {
         <div className="flex flex-col gap-5 max-w-full mx-auto pb-12">
 
             {/* ── Header ───────────────────────────────────────────────── */}
+            <TooltipProvider delayDuration={200}>
             <header className="flex flex-col gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-                <div>
-                    <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Reporte Diario</h1>
-                    <p className="mt-0.5 text-sm text-muted-foreground">Asistencia e incidencias · planta Querétaro</p>
-                </div>
-                {hasData && (
-                    <div className="flex items-center gap-5 sm:gap-6">
-                        <div className="text-right">
-                            <p className="text-2xl font-bold leading-none tracking-tight text-warning sm:text-3xl">
-                                {heroKpis.totalIncidencias}
-                            </p>
-                            <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Incidencias</p>
-                        </div>
-                        <span className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
-                            {formatMes(currentMonth)}
-                        </span>
+                <div className="flex items-center gap-3">
+                    <div>
+                        <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Reporte Diario</h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">Asistencia e incidencias · planta Querétaro</p>
                     </div>
-                )}
+
+                    <div className="flex items-center gap-1 ml-2">
+                        {/* Upload JSON */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition hover:text-primary hover:bg-primary/10"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom"><p className="text-xs">Cargar JSON</p></TooltipContent>
+                        </Tooltip>
+
+                        {/* Retardos */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Link
+                                    href="/retardos"
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition hover:text-primary hover:bg-primary/10"
+                                >
+                                    <Clock className="w-4 h-4" />
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom"><p className="text-xs">Retardos y marcajes</p></TooltipContent>
+                        </Tooltip>
+
+                        {/* Ausentismo */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Link
+                                    href="/reporte-diario/ausentismo"
+                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition hover:text-destructive hover:bg-destructive/10"
+                                >
+                                    <UserX className="w-4 h-4" />
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom"><p className="text-xs">Ranking de ausentismo</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                    {/* ── Filter controls (visible when data loaded) ── */}
+                    {hasData && (
+                        <>
+                            {/* Mes */}
+                            <Popover>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
+                                                    "text-muted-foreground hover:text-primary hover:bg-primary/10",
+                                                )}
+                                            >
+                                                <Calendar className="w-4 h-4" />
+                                            </button>
+                                        </PopoverTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p className="text-xs">Mes</p></TooltipContent>
+                                </Tooltip>
+                                <PopoverContent align="end" className="w-48 p-2">
+                                    <span className={labelCls}>Mes</span>
+                                    <Select value={currentMonth} onValueChange={setSelectedMes} disabled={!months.length}>
+                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Seleccionar mes" /></SelectTrigger>
+                                        <SelectContent>
+                                            {months.map((m) => (<SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
+                                </PopoverContent>
+                            </Popover>
+
+                            {/* Departamento */}
+                            <Popover>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
+                                                    departamentoFilter ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-primary/10",
+                                                )}
+                                            >
+                                                <Building2 className="w-4 h-4" />
+                                            </button>
+                                        </PopoverTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p className="text-xs">Departamento</p></TooltipContent>
+                                </Tooltip>
+                                <PopoverContent align="end" className="w-56 p-2">
+                                    <span className={labelCls}>Departamento</span>
+                                    <Select value={departamentoFilter || "__all__"} onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)} disabled={!availableDepartments.length}>
+                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all__">Todos</SelectItem>
+                                            {availableDepartments.map((d) => (<SelectItem key={d} value={d}>{d}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
+                                </PopoverContent>
+                            </Popover>
+
+                            {/* Turno */}
+                            <Popover>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
+                                                    turnoFilter ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-primary/10",
+                                                )}
+                                            >
+                                                <SunMedium className="w-4 h-4" />
+                                            </button>
+                                        </PopoverTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p className="text-xs">Turno</p></TooltipContent>
+                                </Tooltip>
+                                <PopoverContent align="end" className="w-48 p-2">
+                                    <span className={labelCls}>Turno</span>
+                                    <Select value={turnoFilter || "__all__"} onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)} disabled={!availableTurnos.length}>
+                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__all__">Todos</SelectItem>
+                                            {availableTurnos.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
+                                </PopoverContent>
+                            </Popover>
+
+                            {/* Empleado */}
+                            <Popover>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
+                                                    selectedEmployee ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-primary/10",
+                                                )}
+                                            >
+                                                <User className="w-4 h-4" />
+                                            </button>
+                                        </PopoverTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p className="text-xs">Empleado</p></TooltipContent>
+                                </Tooltip>
+                                <PopoverContent align="end" className="w-64 p-2">
+                                    <span className={labelCls}>Empleado</span>
+                                    <Select
+                                        value={selectedEmployee || "__none__"}
+                                        onValueChange={(v) => {
+                                            if (v === "__none__") { setSelectedEmployee(""); setSearch("") }
+                                            else { setSelectedEmployee(v); setSearch(""); setEmpDetailOpen(true) }
+                                        }}
+                                        disabled={!selectedRows.length}
+                                    >
+                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Seleccionar empleado" /></SelectTrigger>
+                                        <SelectContent className="max-h-60">
+                                            <SelectItem value="__none__">Todos</SelectItem>
+                                            {selectedRows.slice().sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10)).map((r) => (
+                                                <SelectItem key={r.numero_empleado} value={r.numero_empleado}>{r.numero_empleado} — {r.nombre}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </PopoverContent>
+                            </Popover>
+
+                            {/* Save */}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveToDb}
+                                        disabled={dbSaving}
+                                        className={cn(
+                                            "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
+                                            "text-primary hover:bg-primary/10",
+                                            "disabled:opacity-50 disabled:cursor-not-allowed",
+                                        )}
+                                    >
+                                        {dbSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom"><p className="text-xs">Guardar {formatMes(currentMonth)}</p></TooltipContent>
+                            </Tooltip>
+
+                            <div className="h-5 w-px bg-border mx-1" />
+                        </>
+                    )}
+
+                    {hasData && (
+                        <div className="flex items-center gap-5 sm:gap-6">
+                            <div className="text-right">
+                                <p className="text-2xl font-bold leading-none tracking-tight text-warning sm:text-3xl">
+                                    {heroKpis.totalIncidencias}
+                                </p>
+                                <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Incidencias</p>
+                            </div>
+                            <span className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                                {formatMes(currentMonth)}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </header>
+            </TooltipProvider>
 
             <input
                 ref={fileInputRef}
@@ -495,155 +701,8 @@ export default function ReporteDiarioContent() {
             )}
                     </div>
 
-                    {/* ── Columna derecha · controles + detalle (sticky) ──── */}
+                    {/* ── Columna derecha · detalle (sticky) ──── */}
                     <div className="flex flex-col gap-5 lg:sticky lg:top-4">
-                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                            <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-foreground">Controles</p>
-                                    <span className="hidden lg:inline-flex items-center rounded-md border border-dashed border-primary/50 px-2 py-0.5 text-[10px] font-medium text-primary">
-                                        Panel fijo
-                                    </span>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-1">
-                                <div className="flex flex-col gap-1.5">
-                                    <span className={labelCls}>Mes</span>
-                                    <Select
-                                        value={currentMonth}
-                                        onValueChange={setSelectedMes}
-                                        disabled={!months.length}
-                                    >
-                                        <SelectTrigger className="rounded-lg">
-                                            <SelectValue placeholder="Seleccionar mes" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {months.map((m) => (
-                                                <SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <span className={labelCls}>Departamento</span>
-                                    <Select
-                                        value={departamentoFilter || "__all__"}
-                                        onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)}
-                                        disabled={!availableDepartments.length}
-                                    >
-                                        <SelectTrigger className="rounded-lg">
-                                            <SelectValue placeholder="Todos" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all__">Todos</SelectItem>
-                                            {availableDepartments.map((d) => (
-                                                <SelectItem key={d} value={d}>{d}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <span className={labelCls}>Turno</span>
-                                    <Select
-                                        value={turnoFilter || "__all__"}
-                                        onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)}
-                                        disabled={!availableTurnos.length}
-                                    >
-                                        <SelectTrigger className="rounded-lg">
-                                            <SelectValue placeholder="Todos" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all__">Todos</SelectItem>
-                                            {availableTurnos.map((t) => (
-                                                <SelectItem key={t} value={t}>{t}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <span className={labelCls}>Empleado</span>
-                                    <Select
-                                        value={selectedEmployee || "__none__"}
-                                        onValueChange={(v) => {
-                                            if (v === "__none__") {
-                                                setSelectedEmployee("")
-                                                setSearch("")
-                                            } else {
-                                                setSelectedEmployee(v)
-                                                setSearch("")
-                                                setEmpDetailOpen(true)
-                                            }
-                                        }}
-                                        disabled={!selectedRows.length}
-                                    >
-                                        <SelectTrigger className="rounded-lg">
-                                            <SelectValue placeholder="Seleccionar empleado" />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-60">
-                                            <SelectItem value="__none__">Todos</SelectItem>
-                                            {selectedRows
-                                                .slice()
-                                                .sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10))
-                                                .map((r) => (
-                                                    <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
-                                                        {r.numero_empleado} — {r.nombre}
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div
-                                    className={cn(
-                                        "mt-1 flex flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-4 text-center text-xs text-muted-foreground transition sm:col-span-2 lg:col-span-1",
-                                        isDragging
-                                            ? "border-primary bg-primary/5"
-                                            : "border-border bg-muted/40 hover:border-primary hover:bg-background",
-                                    )}
-                                    onDrop={handleDrop}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                >
-                                    {loading ? (
-                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    ) : (
-                                        <CloudUpload className="w-5 h-5 text-muted-foreground/60" />
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="font-medium text-foreground transition hover:text-primary"
-                                    >
-                                        {loading ? "Procesando..." : "Reemplazar reporte"}
-                                    </button>
-                                    <span className="text-muted-foreground/60">
-                                        {isDragging ? "Suelta el archivo aquí" : "o arrastra un archivo JSON"}
-                                    </span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={handleSaveToDb}
-                                    disabled={dbSaving}
-                                    className={cn(
-                                        "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition sm:col-span-2 lg:col-span-1",
-                                        "border-primary bg-primary/10 text-primary hover:bg-primary/20",
-                                        "disabled:opacity-50 disabled:cursor-not-allowed",
-                                    )}
-                                >
-                                    {dbSaving ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <Save className="w-4 h-4" />
-                                    )}
-                                    Guardar {formatMes(currentMonth)}
-                                </button>
-                            </CardContent>
-                        </Card>
-
                         <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                             <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
                                 <div className="flex items-center justify-between gap-2.5">
@@ -738,46 +797,6 @@ export default function ReporteDiarioContent() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-5">
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => fileInputRef.current?.click()}
-                        onKeyDown={(e) => { if (e.key === "Enter") fileInputRef.current?.click() }}
-                        className={cn(
-                            "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-10 py-12 text-sm text-muted-foreground transition active:scale-[0.99]",
-                            isDragging
-                                ? "border-primary bg-primary/5"
-                                : "border-border bg-card hover:border-primary hover:bg-muted/30",
-                        )}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                    >
-                        {loading ? (
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        ) : (
-                            <CloudUpload className="w-8 h-8 text-muted-foreground/60" />
-                        )}
-                        <span className="text-base font-medium text-foreground">
-                            {loading ? "Procesando..." : fileName || "Cargar reporte diario"}
-                        </span>
-                        <span className="text-xs text-muted-foreground/60">
-                            {isDragging ? "Suelta el archivo aquí" : "Haz clic o arrastra un archivo JSON"}
-                        </span>
-                    </div>
-
-                    {rows.length === 0 && (
-                        <div className="flex justify-center">
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-dashed border-warning text-sm text-muted-foreground">
-                                <Info className="w-4 h-4 shrink-0 text-warning" />
-                                <span>
-                                    <strong className="font-medium text-warning-foreground">Tip:</strong>
-                                    {" "}Carga un reporte y guárdalo para tener historial mes a mes.
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
                     {savedSummaries.length > 0 && (
                         <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                             <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
@@ -861,40 +880,6 @@ export default function ReporteDiarioContent() {
                     </ul>
                 </div>
             )}
-
-            {/* ── Accesos rápidos ──────────────────────────────────────── */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Link
-                    href="/retardos"
-                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-                            <Clock className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Retardos y marcajes</p>
-                            <p className="text-xs text-muted-foreground">Control de checadas, retardos y tiempo extra</p>
-                        </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
-                </Link>
-                <Link
-                    href="/reporte-diario/ausentismo"
-                    className="flex items-center justify-between rounded-xl border border-border bg-card shadow-sm p-4 transition hover:border-primary/40 hover:bg-muted/30 group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-destructive/10">
-                            <UserX className="w-4 h-4 text-destructive" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Ranking de ausentismo</p>
-                            <p className="text-xs text-muted-foreground">Faltas, incidencias y cronología por empleado</p>
-                        </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
-                </Link>
-            </div>
 
             {/* ── Employee Detail Modal ────────────────────────────────── */}
             <ReporteEmployeeDetail

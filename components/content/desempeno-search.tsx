@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen } from "lucide-react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen, X, Clock } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   calcularPonderacion,
   type DesempenoData,
@@ -185,12 +186,20 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, guardar } =
+  const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
   const { totalEvals } = usePendingEvals(departamentosScope)
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Typeahead + recientes
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [suggestions, setSuggestions] = useState<Array<{ numero: string; nombre: string; puesto: string }>>([])
+  const [suggLoading, setSuggLoading] = useState(false)
+  const [showSugg, setShowSugg] = useState(false)
+  const [activeIdx, setActiveIdx] = useState(-1)
+  const [recientes, setRecientes] = useState<Array<{ numero: string; nombre: string }>>([])
 
   useEffect(() => {
     if (!isEvaluador) return
@@ -201,8 +210,85 @@ export default function DesempenoSearch() {
     setPeriodoSeleccionado(PERIODOS_DESEMPENO[periodoModo][0])
   }, [periodoModo])
 
-  const handleSearch = () => {
-    if (numeroBuscado) buscarEmpleado(numeroBuscado, departamentosScope)
+  // Carga búsquedas recientes desde localStorage.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("desempeno_recientes")
+      if (raw) setRecientes(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+
+  // Atajo "/" para enfocar el buscador.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/") return
+      const el = document.activeElement as HTMLElement | null
+      const tag = el?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || el?.isContentEditable) return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
+  // Debounce de sugerencias (≥2 caracteres).
+  useEffect(() => {
+    const term = numeroBuscado.trim()
+    if (term.length < 2) {
+      setSuggestions([])
+      setSuggLoading(false)
+      return
+    }
+    setSuggLoading(true)
+    const t = setTimeout(async () => {
+      const res = await buscarSugerencias(term)
+      setSuggestions(res)
+      setActiveIdx(-1)
+      setSuggLoading(false)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [numeroBuscado, buscarSugerencias])
+
+  const addReciente = useCallback((item: { numero: string; nombre: string }) => {
+    setRecientes((prev) => {
+      const next = [item, ...prev.filter((r) => r.numero !== item.numero)].slice(0, 5)
+      try { localStorage.setItem("desempeno_recientes", JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
+
+  const doBuscar = useCallback((valor: string, nombre?: string) => {
+    const v = valor.trim()
+    if (!v) return
+    setShowSugg(false)
+    setActiveIdx(-1)
+    buscarEmpleado(v, departamentosScope, periodoSeleccionado)
+    addReciente({ numero: v, nombre: nombre ?? "" })
+  }, [buscarEmpleado, departamentosScope, periodoSeleccionado, addReciente])
+
+  const handleSearch = () => doBuscar(numeroBuscado)
+
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setShowSugg(true)
+      setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setActiveIdx((i) => Math.max(i - 1, -1))
+    } else if (e.key === "Enter") {
+      const s = showSugg && activeIdx >= 0 ? suggestions[activeIdx] : undefined
+      if (s) {
+        setNumeroBuscado(s.numero)
+        doBuscar(s.numero, s.nombre)
+      } else {
+        doBuscar(numeroBuscado)
+      }
+    } else if (e.key === "Escape") {
+      setShowSugg(false)
+      setActiveIdx(-1)
+    }
   }
 
   if (loading) {
@@ -235,7 +321,7 @@ export default function DesempenoSearch() {
       evaluador_puesto: "",
       tipo: "operativo",
       objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
-      cumplimiento_responsabilidades: DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+      cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
       competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
       compromisos: "",
       fecha_revision: "",
@@ -336,15 +422,79 @@ export default function DesempenoSearch() {
               <div>
                 {/* Campo de búsqueda */}
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <Input
+                    ref={inputRef}
                     value={numeroBuscado}
-                    onChange={(e) => setNumeroBuscado(e.target.value)}
-                    placeholder="Ingresa el número de empleado"
-                    className="pl-10"
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    onChange={(e) => { setNumeroBuscado(e.target.value); setShowSugg(true) }}
+                    onFocus={() => setShowSugg(true)}
+                    onBlur={() => setTimeout(() => setShowSugg(false), 120)}
+                    onKeyDown={onInputKeyDown}
+                    placeholder="Buscar por número o nombre…  ( / )"
+                    className="pl-10 pr-9"
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={showSugg}
+                    aria-autocomplete="list"
                   />
+                  {numeroBuscado && (
+                    <button
+                      type="button"
+                      onClick={() => { setNumeroBuscado(""); setSuggestions([]); inputRef.current?.focus() }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label="Limpiar búsqueda"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+
+                  {/* Dropdown de sugerencias */}
+                  {showSugg && numeroBuscado.trim().length >= 2 && (
+                    <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md overflow-hidden">
+                      {suggLoading ? (
+                        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando…
+                        </div>
+                      ) : suggestions.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">Sin coincidencias</div>
+                      ) : (
+                        suggestions.map((s, idx) => (
+                          <button
+                            key={s.numero}
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); setNumeroBuscado(s.numero); doBuscar(s.numero, s.nombre) }}
+                            onMouseEnter={() => setActiveIdx(idx)}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${idx === activeIdx ? "bg-accent" : "hover:bg-accent"}`}
+                          >
+                            <span className="font-mono text-xs text-muted-foreground shrink-0">{s.numero}</span>
+                            <span className="font-medium truncate">{s.nombre || "—"}</span>
+                            {s.puesto && <span className="ml-auto text-xs text-muted-foreground truncate max-w-[40%]">{s.puesto}</span>}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Búsquedas recientes */}
+                {!numeroBuscado && recientes.length > 0 && (
+                  <div className="mb-4 -mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Recientes:
+                    </span>
+                    {recientes.map((r) => (
+                      <button
+                        key={r.numero}
+                        type="button"
+                        onClick={() => { setNumeroBuscado(r.numero); doBuscar(r.numero, r.nombre) }}
+                        className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs hover:bg-accent"
+                        title={`${r.numero}${r.nombre ? " · " + r.nombre : ""}`}
+                      >
+                        {r.nombre || r.numero}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Periodo */}
                 <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
@@ -390,7 +540,7 @@ export default function DesempenoSearch() {
               <div className="flex items-end justify-end">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button onClick={handleSearch} size="icon" aria-label="Buscar empleado">
+                    <Button onClick={handleSearch} size="icon" aria-label="Buscar empleado" disabled={!numeroBuscado.trim()}>
                       <Search className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>

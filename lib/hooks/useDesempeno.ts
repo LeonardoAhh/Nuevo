@@ -7,13 +7,14 @@ import {
   OBJETIVOS_POR_PUESTO,
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
   calcularPonderacion,
   type DesempenoData,
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { getTipoDesempenoByPuesto, normalizeDepartamento } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo } from "@/lib/catalogo"
 
 export interface EvaluacionHistorial {
   id: string
@@ -38,7 +39,47 @@ export function useDesempeno() {
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
 
-  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null) => {
+  // Sugerencias para typeahead: busca por número o nombre (ILIKE) en
+  // employees y nuevo_ingreso. Devuelve hasta 8 resultados, sin duplicar números.
+  const buscarSugerencias = useCallback(
+    async (q: string): Promise<Array<{ numero: string; nombre: string; puesto: string }>> => {
+      const term = q.trim()
+      if (term.length < 2) return []
+      const like = `%${term.replace(/[%_]/g, "")}%`
+
+      const { data: emps } = await supabase
+        .from("employees")
+        .select("numero, nombre, puesto")
+        .or(`numero.ilike.${like},nombre.ilike.${like}`)
+        .limit(8)
+
+      const results: Array<{ numero: string; nombre: string; puesto: string }> = []
+      const seen = new Set<string>()
+      for (const e of emps ?? []) {
+        if (!e.numero || seen.has(e.numero)) continue
+        seen.add(e.numero)
+        results.push({ numero: e.numero, nombre: e.nombre ?? "", puesto: e.puesto ?? "" })
+      }
+
+      if (results.length < 8) {
+        const { data: nis } = await supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto")
+          .or(`numero.ilike.${like},nombre.ilike.${like}`)
+          .limit(8 - results.length)
+        for (const n of nis ?? []) {
+          if (!n.numero || seen.has(n.numero)) continue
+          seen.add(n.numero)
+          results.push({ numero: n.numero, nombre: n.nombre ?? "", puesto: n.puesto ?? "" })
+        }
+      }
+
+      return results
+    },
+    [],
+  )
+
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null) => {
     setLoading(true)
     setError(null)
 
@@ -121,20 +162,48 @@ export function useDesempeno() {
       const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
       const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
 
-      // Count total faltas injustificadas
-      const totalFaltas = incidencias
-        .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
-        .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+      const faltasDeMes = (mes: string): number =>
+        incidencias
+          .filter((i: Record<string, unknown>) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
+          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
 
-      // Map cumplimiento from saved data or use defaults
+      // "Cumplir con asistencia": se evalúa por mes del periodo y se promedian
+      // los % de los meses CON datos (≥1 incidencia registrada).
+      //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
+      //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
+      // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
+      const targetPeriodo = evalData?.periodo || periodoSeleccionado
+      const mesesPeriodo = mesesDePeriodo(targetPeriodo)
+
+      let asistenciaPorcentaje: number
+      if (mesesPeriodo.length > 0) {
+        const mesesConDatos = mesesPeriodo.filter((mes) =>
+          incidencias.some((i: Record<string, unknown>) => i.mes === mes),
+        )
+        if (mesesConDatos.length > 0) {
+          const promedio =
+            mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
+            mesesConDatos.length
+          asistenciaPorcentaje = Math.round(promedio)
+        } else {
+          asistenciaPorcentaje = 100
+        }
+      } else {
+        const totalFaltas = incidencias
+          .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
+          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
+        asistenciaPorcentaje = aplicarEscala(totalFaltas)
+      }
+
+      // Map cumplimiento from saved data or use defaults (tipo-aware)
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
         ? (evalData.cumplimiento_responsabilidades as CumplimientoItem[])
-        : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c }))
+        : (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipoPuesto] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c }))
 
       // Override auto-calculated fields with graduated scale values
-      // index 2 = "Cumplir con asistencia" → based on faltas
-      if (cumplimiento[2]) {
-        cumplimiento[2].porcentaje = String(aplicarEscala(totalFaltas))
+      // index 2 = "Cumplir con asistencia" → based on faltas (only for operativo/administrativo)
+      if (tipoPuesto !== "jefe" && cumplimiento[2]) {
+        cumplimiento[2].porcentaje = String(asistenciaPorcentaje)
       }
 
       // Map competencias from saved data or use defaults
@@ -231,13 +300,30 @@ export function useDesempeno() {
   const fetchHistorial = useCallback(async () => {
     setHistorialLoading(true)
     try {
-      const { data: evals, error: err } = await supabase
-        .from("evaluaciones_desempeno")
-        .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
-        .order("created_at", { ascending: false })
-        .limit(200)
+      // Pagina el query hasta traer TODAS las evaluaciones (sin cap fijo).
+      interface EvalRow {
+        id: string
+        numero_empleado: string
+        evaluador_nombre: string | null
+        tipo: string
+        periodo: string | null
+        calificacion_final: number
+        created_at: string
+      }
+      const PAGE = 1000
+      const evals: EvalRow[] = []
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: err } = await supabase
+          .from("evaluaciones_desempeno")
+          .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1)
 
-      if (err) throw err
+        if (err) throw err
+        if (!page || page.length === 0) break
+        evals.push(...(page as EvalRow[]))
+        if (page.length < PAGE) break
+      }
 
       // Fetch employee names for each unique numero_empleado
       const numeros = [...new Set((evals ?? []).map((e) => e.numero_empleado))]
@@ -337,7 +423,7 @@ export function useDesempeno() {
         objetivos: evalRow.objetivos?.length ? evalRow.objetivos : [],
         cumplimiento_responsabilidades: evalRow.cumplimiento_responsabilidades?.length
           ? (evalRow.cumplimiento_responsabilidades as CumplimientoItem[])
-          : DEFAULT_CUMPLIMIENTO.map((c) => ({ ...c })),
+          : (DEFAULT_CUMPLIMIENTO_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
         competencias: evalRow.competencias?.length
           ? (evalRow.competencias as Competencia[])
           : DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
@@ -386,7 +472,7 @@ export function useDesempeno() {
 
   return {
     data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
-    buscarEmpleado, guardar,
+    buscarEmpleado, buscarSugerencias, guardar,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
   }
