@@ -39,6 +39,46 @@ export function useDesempeno() {
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
 
+  // Sugerencias para typeahead: busca por número o nombre (ILIKE) en
+  // employees y nuevo_ingreso. Devuelve hasta 8 resultados, sin duplicar números.
+  const buscarSugerencias = useCallback(
+    async (q: string): Promise<Array<{ numero: string; nombre: string; puesto: string }>> => {
+      const term = q.trim()
+      if (term.length < 2) return []
+      const like = `%${term.replace(/[%_]/g, "")}%`
+
+      const { data: emps } = await supabase
+        .from("employees")
+        .select("numero, nombre, puesto")
+        .or(`numero.ilike.${like},nombre.ilike.${like}`)
+        .limit(8)
+
+      const results: Array<{ numero: string; nombre: string; puesto: string }> = []
+      const seen = new Set<string>()
+      for (const e of emps ?? []) {
+        if (!e.numero || seen.has(e.numero)) continue
+        seen.add(e.numero)
+        results.push({ numero: e.numero, nombre: e.nombre ?? "", puesto: e.puesto ?? "" })
+      }
+
+      if (results.length < 8) {
+        const { data: nis } = await supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto")
+          .or(`numero.ilike.${like},nombre.ilike.${like}`)
+          .limit(8 - results.length)
+        for (const n of nis ?? []) {
+          if (!n.numero || seen.has(n.numero)) continue
+          seen.add(n.numero)
+          results.push({ numero: n.numero, nombre: n.nombre ?? "", puesto: n.puesto ?? "" })
+        }
+      }
+
+      return results
+    },
+    [],
+  )
+
   const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null) => {
     setLoading(true)
     setError(null)
@@ -432,7 +472,7 @@ export function useDesempeno() {
 
   return {
     data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
-    buscarEmpleado, guardar,
+    buscarEmpleado, buscarSugerencias, guardar,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
   }
