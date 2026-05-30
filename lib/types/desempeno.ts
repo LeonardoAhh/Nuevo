@@ -2763,6 +2763,90 @@ const _OBJETIVOS_LIDER_PROYECTOS: Objetivo[] = [
     },
 ];
 
+
+const _OBJETIVOS_AUXILIAR_CALIDAD: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Igual o menor a 3 reclamaciones atribuibles a calidad",
+        resultado: "3",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Realizar y mantener 5´S al 100% en su área de trabajo",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Portar el 100% de su equipo de EPP y uniformidad diariamente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Cumplimiento 100% con sus auditorías  LPA",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "No presentar hallazgos en auditorías de clientes o sistema de gestión",
+        resultado: "0",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "0 paros de líneas atribuibles a calidad",
+        resultado: "0",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "100% de liberación de producto terminado en linea de producción",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "100% de cumplimiento al procedimiento de control de producto no conforme",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
+const _OBJETIVOS_RESIDENTE_CALIDAD: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Igual o menor a 3 reclamaciones atribuibles a contención NOK de residente",
+        resultado: "3",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Realizar y mantener 5´S al 100% en su área de trabajo",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Portar el 100% de su equipo de EPP y uniformidad diariamente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+];
+
 export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     /*GERENCIAS*/
     "GERENTE DE PLANTA": _OBJETIVOS_GERENTE_PLANTA,
@@ -2771,7 +2855,8 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     /*PRODUCCIÓN */
     "JEFE DE PROCESO": _OBJETIVOS_JEFE_PROCESO,
     "JEFE DE PRODUCCIÓN": _OBJETIVOS_JEFE_PRODUCCION,
-    "ASISTENTE DE PRODUCCIÓN": _OBJETIVOS_ASISTENTE_PRODUCCION,
+    "ASISTENTE DE PRODUCCIÓN A": _OBJETIVOS_ASISTENTE_PRODUCCION,
+    "ASISTENTE DE PRODUCCIÓN B": _OBJETIVOS_ASISTENTE_PRODUCCION,
     "OPERADOR DE MÁQUINA A": _OBJETIVOS_OPERADOR_MAQUINA,
     "OPERADOR DE MÁQUINA B": _OBJETIVOS_OPERADOR_MAQUINA,
     "OPERADOR DE MÁQUINA C": _OBJETIVOS_OPERADOR_MAQUINA,
@@ -2820,6 +2905,7 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "METRÓLOGO C": _OBJETIVOS_METROLOGO,
     "METRÓLOGO D": _OBJETIVOS_METROLOGO,
     "AUXILIAR DE METROLOGÍA": _OBJETIVOS_AUXILIAR_METROLOGIA,
+    "AUXILIAR DE CALIDAD": _OBJETIVOS_AUXILIAR_CALIDAD,
     "SUPERVISOR DE ACABADOS - GP12 A": _OBJETIVOS_SUPERVISOR_ACABADOS,
     "SUPERVISOR DE ACABADOS - GP12 B": _OBJETIVOS_SUPERVISOR_ACABADOS,
     "SUPERVISOR DE ACABADOS - GP12 C": _OBJETIVOS_SUPERVISOR_ACABADOS,
@@ -2828,6 +2914,10 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "OPERADOR DE ACABADOS - GP12 B": _OBJETIVOS_OPERADOR_ACABADOS,
     "OPERADOR DE ACABADOS - GP12 C": _OBJETIVOS_OPERADOR_ACABADOS,
     "OPERADOR DE ACABADOS - GP12 D": _OBJETIVOS_OPERADOR_ACABADOS,
+    "RESIDENTE DE CALIDAD A": _OBJETIVOS_RESIDENTE_CALIDAD,
+    "RESIDENTE DE CALIDAD B": _OBJETIVOS_RESIDENTE_CALIDAD,
+    "RESIDENTE DE CALIDAD C": _OBJETIVOS_RESIDENTE_CALIDAD,
+    "RESIDENTE DE CALIDAD D": _OBJETIVOS_RESIDENTE_CALIDAD,
     /*TALLER DE MOLDES*/
     "JEFE DE TALLER DE MOLDES": _OBJETIVOS_JEFE_TALLER_MOLDES,
     "TÉCNICO DE MOLDES A": _OBJETIVOS_TECNICO_MOLDES,
@@ -2844,7 +2934,9 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "TÉCNICO DE MANTENIMIENTO C": _OBJETIVOS_TECNICO_MANTENIMIENTO,
     "TÉCNICO DE MANTENIMIENTO D": _OBJETIVOS_TECNICO_MANTENIMIENTO,
     "TÉCNICO DE MANTENIMIENTO E": _OBJETIVOS_TECNICO_MANTENIMIENTO,
-    "AUXILIAR DE MANTENIMIENTO": _OBJETIVOS_AUXILIAR_MANTENIMIENTO,
+    "AUXILIAR DE MANTENIMIENTO A": _OBJETIVOS_AUXILIAR_MANTENIMIENTO,
+    "AUXILIAR DE MANTENIMIENTO B": _OBJETIVOS_AUXILIAR_MANTENIMIENTO,
+    "AUXILIAR DE MANTENIMIENTO C": _OBJETIVOS_AUXILIAR_MANTENIMIENTO,
     "TECNICO DE MANTENIMIENTO DE EDIFICIOS A": _OBJETIVOS_TECNICO_EDIFICIOS,
     "TECNICO DE MANTENIMIENTO DE EDIFICIOS B": _OBJETIVOS_TECNICO_EDIFICIOS,
     "TÉCNICO ESPECIALISTA DE MANTENIMIENTO A": _OBJETIVOS_TECNICO_ESPECIALISTA_MANTENIMIENTO,
@@ -2888,7 +2980,10 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "SUPERVISOR DE LOGISTICA": _OBJETIVOS_SUPERVISOR_LOGISTICA,
     /* PROYECTOS */
     "AUXILIAR DE PROYECTOS": _OBJETIVOS_AUXILIAR_PROYECTOS,
-    "INGENIERO DE PROYECTOS": _OBJETIVOS_INGENIERO_PROYECTOS,
+    "INGENIERO DE PROYECTOS A": _OBJETIVOS_INGENIERO_PROYECTOS,
+    "INGENIERO DE PROYECTOS B": _OBJETIVOS_INGENIERO_PROYECTOS,
+    "INGENIERO DE PROYECTOS C": _OBJETIVOS_INGENIERO_PROYECTOS,
+    "INGENIERO DE PROYECTOS D": _OBJETIVOS_INGENIERO_PROYECTOS,
     "LIDER DE PROYECTOS A": _OBJETIVOS_LIDER_PROYECTOS,
     "LIDER DE PROYECTOS B": _OBJETIVOS_LIDER_PROYECTOS,
     "LÍDER DE PROYECTOS C": _OBJETIVOS_LIDER_PROYECTOS,
