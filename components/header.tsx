@@ -206,6 +206,18 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
                   </Link>
                 </DropdownMenuItem>
 
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/guia-evaluador"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <BookOpen size={16} />
+                    <span>Guía del Evaluador</span>
+                  </Link>
+                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   asChild
                   className={
