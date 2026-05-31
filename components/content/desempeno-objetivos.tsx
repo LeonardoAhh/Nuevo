@@ -17,6 +17,7 @@ import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import DesempenoPrint from "./desempeno-print"
+import CumplimientoDepartamental from "./cumplimiento-departamental"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
   if (OBJETIVOS_POR_PUESTO[puesto]) {
@@ -338,6 +339,9 @@ export default function DesempenoObjetivos() {
           </Card>
         </div>
       </div>
+
+      {/* Department compliance tracking */}
+      <CumplimientoDepartamental />
 
       {/* Print area for selected evaluation */}
       {data && !puesto && (
