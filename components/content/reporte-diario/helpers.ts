@@ -69,7 +69,12 @@ export function parseReporteJSON(raw: unknown[]): { rows: ReporteRow[]; errors: 
             return
         }
 
-        const row = item as Record<string, unknown>
+        // Normaliza llaves: recorta espacios al inicio/fin (ej. Excel exporta
+        // "mes " o "área " con espacios) para que el mapeo sea tolerante.
+        const rawRow = item as Record<string, unknown>
+        const row: Record<string, unknown> = {}
+        for (const [k, v] of Object.entries(rawRow)) row[k.trim()] = v
+
         const mes = normalizeString(row.mes)
         const numero_empleado = normalizeString(row.numero_empleado)
         const nombre = normalizeString(row.nombre)
