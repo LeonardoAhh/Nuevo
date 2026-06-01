@@ -78,7 +78,11 @@ export function parseIncidenciasJSON(
   const records: IncidenciaInsert[] = []
   const errors: string[] = []
 
-  raw.forEach((item, idx) => {
+  raw.forEach((rawItem, idx) => {
+    // Normaliza llaves: recorta espacios (ej. Excel exporta "mes " con espacio).
+    const item: IncidenciaMensual = { numero_empleado: '', mes: '' }
+    for (const [k, v] of Object.entries(rawItem)) item[k.trim()] = v
+
     if (!item.numero_empleado) {
       errors.push(`Fila ${idx + 1}: falta numero_empleado`)
       return
