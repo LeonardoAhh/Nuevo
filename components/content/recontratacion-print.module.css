@@ -1,12 +1,9 @@
 /* ===================================================
    FORMATO: AUTORIZACIÓN DE CONTINUIDAD DE CONTRATO (RG-REC-048)
-   Plantilla de impresión monocromática.
-
-   Diseño cohesivo con desempeno-print.module.css:
-   tokens locales en escala de grises (sin colores ni
-   fuentes hardcodeadas fuera de la paleta de impresión),
-   tipografía heredada del documento y unidades relativas.
+   Propuesta de rediseño cohesivo, responsivo, carta, B&N.
+   Mantiene lógica y datos intactos.
 =================================================== */
+
 .printRoot {
     /* ── Escala de grises (monocromática) ── */
     --print-text: #000000;
@@ -17,19 +14,19 @@
     --print-band-text: #ffffff;
     --print-cell-fill: #d9d9d9;
 
-    /* ── Escala tipográfica ── */
-    --fs-xs: 0.55rem;
-    --fs-sm: 0.62rem;
-    --fs-base: 0.7rem;
-    --fs-md: 0.8rem;
-    --fs-lg: 1rem;
-    --fs-title: 1.15rem;
+    /* ── Escala tipográfica (ligeramente aumentada para mejor legibilidad) ── */
+    --fs-xs: 0.6rem; /* ~9.6px */
+    --fs-sm: 0.65rem; /* ~10.4px */
+    --fs-base: 0.75rem; /* 12px */
+    --fs-md: 0.85rem; /* ~13.6px */
+    --fs-lg: 1rem; /* 16px */
+    --fs-title: 1.2rem; /* 19.2px */
 
-    /* ── Espaciado ── */
-    --sp-1: 0.25rem;
-    --sp-2: 0.5rem;
-    --sp-3: 0.75rem;
-    --sp-4: 1rem;
+    /* ── Espaciado más compacto pero holgado ── */
+    --sp-1: 0.2rem;
+    --sp-2: 0.4rem;
+    --sp-3: 0.6rem;
+    --sp-4: 0.8rem;
 
     /* Hoja tamaño carta (Letter): 8.5in × 11in */
     width: 100%;
@@ -40,16 +37,14 @@
     color: var(--print-text);
     font-family: inherit;
     font-size: var(--fs-base);
-    line-height: 1.3;
+    line-height: 1.35;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
 }
 
-/* Contenedor interno con padding = márgenes del documento.
-   El CSS global de impresión fuerza padding:0 en .print-area, por eso
-   los márgenes se aplican aquí (no se ven afectados). */
+/* Contenedor interno — márgenes uniformes de 0.5in */
 .sheet {
-    padding: 10mm 12mm;
+    padding: 0.5in;
 }
 
 /* ── Encabezado: logo + título ── */
@@ -59,10 +54,12 @@
     gap: var(--sp-3);
     align-items: center;
     margin-bottom: var(--sp-3);
+    border-bottom: 2px solid var(--print-border); /* línea separadora sutil */
+    padding-bottom: var(--sp-2);
 }
 
 .logo {
-    max-height: 46px;
+    max-height: 44px;
     width: auto;
 }
 
@@ -71,23 +68,31 @@
     text-align: center;
     font-size: var(--fs-title);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     color: var(--print-text);
     /* compensa el ancho del logo para centrar ópticamente */
-    padding-right: 46px;
+    padding-right: 44px;
 }
 
-/* ── Banda de sección (barra gris) ── */
+/* ── Banda de sección (título gris) ── */
 .band {
     background: var(--print-band-bg);
     color: var(--print-band-text);
     font-weight: 700;
     font-size: var(--fs-md);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-align: center;
     padding: var(--sp-1) var(--sp-2);
     margin-top: var(--sp-3);
+    margin-bottom: 0; /* sin separación extra debajo */
+    border-bottom: 1px solid var(--print-border); /* cierre visual de la banda */
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.band:first-of-type {
+    margin-top: 0;
 }
 
 .bandLeft {
@@ -99,20 +104,23 @@
     display: grid;
     grid-template-columns: auto 1fr auto 1fr;
     border: 1px solid var(--print-border);
-    border-bottom: none;
+    border-top: none; /* la banda ya pone el borde superior */
     margin-top: 0;
 }
 
 .infoLabel,
 .infoValue {
     border-bottom: 1px solid var(--print-border);
-    padding: var(--sp-1) var(--sp-2);
+    padding: var(--sp-2) var(--sp-2);
     font-size: var(--fs-base);
-    min-height: 1.4rem;
+    min-height: 1.6rem;
+    display: flex;
+    align-items: center; /* centrado vertical del texto */
 }
 
 .infoLabel {
     font-weight: 700;
+    background: var(--print-cell-fill);
     border-right: 1px solid var(--print-border);
     white-space: nowrap;
 }
@@ -125,9 +133,10 @@
     border-right: none;
 }
 
-/* Celda que ocupa el ancho completo (fecha de término) */
+/* Celda que ocupa el ancho completo (por ej. fecha de término) */
 .infoSpanValue {
     grid-column: 2 / 5;
+    border-right: none; /* evita doble borde a la derecha */
 }
 
 /* ── Tablas ── */
@@ -150,7 +159,8 @@
     font-weight: 700;
     font-size: var(--fs-xs);
     text-transform: uppercase;
-    background: var(--print-bg);
+    background: var(--print-cell-fill);
+    white-space: nowrap;
 }
 
 .table tbody td {
@@ -172,7 +182,7 @@
     display: grid;
     grid-template-columns: 1fr auto;
     border: 1px solid var(--print-border);
-    border-top: none;
+    border-top: none; /* la banda superior cierra visualmente */
     font-size: var(--fs-base);
 }
 
@@ -204,25 +214,35 @@
 
 .authComment {
     margin-top: var(--sp-3);
-    min-height: 1.6rem;
+    min-height: 1.8rem;
+    border-bottom: 1px dashed var(--print-border); /* línea de guía para escribir */
 }
 
 /* ── Firmas ── */
 .signatureGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--sp-4);
-    margin-top: var(--sp-4);
+    border: 1px solid var(--print-border);
+    border-top: none;
+    margin-top: 0;
     text-align: center;
+}
+
+.signatureGrid > div {
+    padding: var(--sp-3) var(--sp-3) var(--sp-4);
+    border-right: 1px solid var(--print-border);
+}
+
+.signatureGrid > div:last-child {
+    border-right: none;
 }
 
 .signatureName {
     border-top: 1px solid var(--print-border);
-    padding-top: var(--sp-1);
+    padding-top: var(--sp-2);
     font-weight: 700;
     font-size: var(--fs-base);
-    /* deja espacio para la firma física arriba de la línea */
-    margin-top: 2.4rem;
+    margin-top: 2.2rem; /* espacio para firma física */
 }
 
 .signatureRole {
@@ -230,6 +250,7 @@
     font-weight: 600;
     text-transform: uppercase;
     color: var(--print-text-secondary);
+    margin-top: var(--sp-1);
 }
 
 /* ── Pie de página ── */
@@ -240,16 +261,13 @@
     color: var(--print-text-secondary);
     margin-top: var(--sp-4);
     border-top: 1px solid var(--print-border);
-    padding-top: var(--sp-1);
+    padding-top: var(--sp-2);
 }
 
 /* ===================================================
-   IMPRESIÓN — ajuste a tamaño carta (Letter)
+   IMPRESIÓN
 =================================================== */
 @media print {
-    /* El global .print-area fuerza width:100% !important; fijamos el ancho
-       Letter con mayor especificidad (.printRoot.printRoot) para que el
-       documento ocupe la hoja completa sin desbordarse. */
     .printRoot.printRoot {
         width: 8.5in !important;
         max-width: 8.5in !important;
@@ -257,19 +275,26 @@
         margin: 0 auto !important;
     }
 
-    /* Monocromo real */
     .printRoot,
     .printRoot * {
         color: var(--print-text) !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
+
     .band {
         background: var(--print-band-bg) !important;
         color: var(--print-band-text) !important;
     }
 
-    /* Evitar cortes de página a media tabla / firmas */
+    .infoLabel {
+        background: var(--print-cell-fill) !important;
+    }
+
+    .table th {
+        background: var(--print-cell-fill) !important;
+    }
+
     .infoGrid,
     .table,
     .table tr,
@@ -280,14 +305,23 @@
         break-inside: avoid;
     }
 
-    /* Una banda nunca debe quedar sola al final de la hoja */
     .band {
         page-break-after: avoid;
         break-after: avoid;
     }
 }
 
-/* Tamaño de página: carta vertical (refuerza el @page global). */
 @page {
     size: Letter portrait;
+}
+
+/* ===================================================
+   VISTA PREVIA EN PANTALLA
+=================================================== */
+@media screen {
+    .printRoot {
+        margin: 16px auto;
+        box-shadow: 0 0 0 1px hsl(0, 0%, 80%);
+        background: white;
+    }
 }
