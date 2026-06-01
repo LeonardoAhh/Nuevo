@@ -5,6 +5,7 @@ import {
   Search, X, AlertCircle, Printer, FileCheck2, CalendarClock,
   CheckCircle2, AlertTriangle, ShieldQuestion, Loader2,
   Filter, Users, Clock, TrendingUp, BarChart3,
+  ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,6 +63,7 @@ const RECO_META: Record<
 
 const URGENCY_THRESHOLDS = { critical: 7, warning: 15 } as const
 const SKELETON_COUNT = 6
+const PAGE_SIZE = 10
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lógica de negocio (separada de la UI)
@@ -595,6 +597,7 @@ export default function RecontratacionContent() {
   const [records, setRecords] = useState<NuevoIngreso[]>([])
   const [search, setSearch] = useState("")
   const [filterDept, setFilterDept] = useState("all")
+  const [page, setPage] = useState(1)
 
   const [detalleState, dispatchDetalle] = useReducer(detalleReducer, { status: "closed" })
 
@@ -614,6 +617,8 @@ export default function RecontratacionContent() {
     const q = search.toLowerCase().trim()
     return records
       .filter(r => {
+        // Ocultar los que ya tienen contrato indeterminado (no requieren recontratación)
+        if (r.tipo_contrato === "Indeterminado") return false
         const matchSearch =
           !q ||
           r.nombre.toLowerCase().includes(q) ||
@@ -625,6 +630,18 @@ export default function RecontratacionContent() {
       })
       .sort(sortByTermino)
   }, [records, search, filterDept])
+
+  // Paginación: 10 por página
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paged = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  )
+
+  // Reset a la primera página al cambiar filtros/búsqueda
+  useEffect(() => { setPage(1) }, [search, filterDept])
+  // Clamp si la página actual queda fuera de rango (ej. al reducir resultados)
+  useEffect(() => { if (page > pageCount) setPage(pageCount) }, [page, pageCount])
 
   const abrirDetalle = useCallback(
     async (record: NuevoIngreso) => {
@@ -763,16 +780,52 @@ export default function RecontratacionContent() {
               )}
             </div>
           ) : (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filtered.map(r => (
-                <EmpleadoRow
-                  key={r.id}
-                  record={r}
-                  onRevisar={abrirDetalle}
-                  onImprimir={imprimir}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {paged.map(r => (
+                  <EmpleadoRow
+                    key={r.id}
+                    record={r}
+                    onRevisar={abrirDetalle}
+                    onImprimir={imprimir}
+                  />
+                ))}
+              </ul>
+
+              {/* Paginación */}
+              {pageCount > 1 && (
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="text-xs text-muted-foreground">
+                    {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 text-xs"
+                      disabled={page <= 1}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      Anterior
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2 tabular-nums">
+                      {page} / {pageCount}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 text-xs"
+                      disabled={page >= pageCount}
+                      onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                    >
+                      Siguiente
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
