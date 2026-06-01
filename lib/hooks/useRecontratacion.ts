@@ -9,6 +9,10 @@ import {
   mesesIncidencias,
   periodosMensuales,
 } from '@/lib/recontratacion'
+import {
+  JEFES_DE_AREA_POR_DEPARTAMENTO,
+  normalizeDepartamento,
+} from '@/lib/catalogo'
 import type {
   RecontratacionPrintData,
   IncidenciaMesRow,
@@ -19,13 +23,30 @@ import type {
 const APROBATORIA = 70
 
 /**
- * Detecta el jefe directo de un empleado desde el roster (tabla `employees`),
- * usando su número. Cae a `jefe_area` del registro de nuevo ingreso o "#N/D".
+ * Jefe de área por departamento, con la llave normalizada (sin acentos, minúsculas)
+ * para tolerar variaciones de escritura del departamento del empleado.
+ */
+const JEFE_POR_DEPTO_NORM: Record<string, string> = Object.fromEntries(
+  Object.entries(JEFES_DE_AREA_POR_DEPARTAMENTO)
+    .map(([dept, jefes]) => [normalizeDepartamento(dept), (jefes[0] ?? '').trim()])
+    .filter(([, jefe]) => !!jefe),
+)
+
+/**
+ * Detecta el jefe directo de un empleado. Fuente de verdad: catalogo
+ * (`JEFES_DE_AREA_POR_DEPARTAMENTO` por departamento) — así actualizar el
+ * catálogo refleja el cambio en todos los formatos sin tocar la base.
+ * Si el departamento no está en catalogo, cae a `employees.jefe_directo`
+ * (por número), luego a `jefe_area` del registro, y por último "#N/D".
  */
 export async function detectarJefeDirecto(
   numero: string | null,
   jefeAreaFallback: string | null,
+  departamento: string | null,
 ): Promise<string> {
+  const fromCatalogo = JEFE_POR_DEPTO_NORM[normalizeDepartamento(departamento)]
+  if (fromCatalogo) return fromCatalogo
+
   if (numero) {
     try {
       const { data } = await supabase
@@ -94,7 +115,7 @@ export async function buildRecontratacionData(
     observaciones: '',
   }))
 
-  const jefeDirecto = await detectarJefeDirecto(record.numero, record.jefe_area)
+  const jefeDirecto = await detectarJefeDirecto(record.numero, record.jefe_area, record.departamento)
 
   return {
     nombre: record.nombre,
