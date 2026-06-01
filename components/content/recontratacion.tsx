@@ -62,8 +62,8 @@ const RECO_META: Record<
 }
 
 const URGENCY_THRESHOLDS = { critical: 7, warning: 15 } as const
-const SKELETON_COUNT = 6
-const PAGE_SIZE = 10
+const SKELETON_COUNT = 12
+const PAGE_SIZE = 12
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lógica de negocio (separada de la UI)

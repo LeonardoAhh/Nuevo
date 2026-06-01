@@ -177,11 +177,6 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
         </div>
       </div>
 
-      {/* ── Pie ────────────────────────────────────────────── */}
-      <div className={styles.footerText}>
-        <span>RG-REC-048</span>
-        <span>REV.00</span>
-      </div>
      </div>
     </div>
   )
