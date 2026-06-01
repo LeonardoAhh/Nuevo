@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronsUpDown,
   BookOpen,
+  FileCheck2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -25,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme, type Theme } from "@/components/theme-context"
-import { useUser, useProfile } from "@/lib/hooks"
+import { useUser, useProfile, useRole } from "@/lib/hooks"
 import { notify } from "@/lib/notify"
 import NotificationBell from "@/components/notification-bell"
 import SignOutOverlay from "@/components/signout-overlay"
@@ -46,6 +47,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/promociones": "Promociones",
   "/desempeno": "Evaluación Desempeño",
   "/desempeno/cumplimiento": "Cumplimiento Evaluaciones",
+  "/recontratacion": "Recontratación",
   "/examenes": "Exámenes",
   "/whatsapp": "WhatsApp Bot",
   "/cursos": "Cursos",
@@ -69,6 +71,7 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
+  const { isEvaluador, loading: roleLoading } = useRole()
   const [signingOut, setSigningOut] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -205,6 +208,22 @@ export default function Header({ title, isMobileView, showMobileSidebar, onOpenS
                     <span>Configuración</span>
                   </Link>
                 </DropdownMenuItem>
+
+                {!roleLoading && !isEvaluador && (
+                  <DropdownMenuItem
+                    asChild
+                    className={
+                      pathname === "/recontratacion"
+                        ? "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary"
+                        : ""
+                    }
+                  >
+                    <Link href="/recontratacion" className="flex items-center gap-2 cursor-pointer">
+                      <FileCheck2 size={16} />
+                      <span>Recontratación</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem
                   asChild
