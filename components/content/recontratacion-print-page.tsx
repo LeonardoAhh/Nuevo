@@ -74,7 +74,7 @@ export default function RecontratacionPrintPage() {
         boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
       }}>
         <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", color: "#888", textTransform: "uppercase", marginRight: "auto" }}>
-          RG-REC-048 · Vista previa de impresión
+            Formato continuidad de contrato.
         </span>
         <button
           onClick={() => window.print()}
