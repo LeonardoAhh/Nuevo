@@ -44,6 +44,25 @@ const MESES = [
   'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
 ]
 
+const MESES_ABREV = [
+  'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+  'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC',
+]
+
+/**
+ * Etiqueta de periodo en formato mes-mes, ej. "FEB - MAR 2026".
+ * Si el periodo cruza año, muestra ambos años: "DIC 2026 - ENE 2027".
+ */
+export function formatPeriodoMesMes(desdeISO: string, hastaISO: string): string {
+  if (!desdeISO || !hastaISO) return ''
+  const desde = parseISO(desdeISO)
+  const hasta = parseISO(hastaISO)
+  const mesDesde = MESES_ABREV[desde.m - 1] ?? String(desde.m)
+  const mesHasta = MESES_ABREV[hasta.m - 1] ?? String(hasta.m)
+  if (desde.y === hasta.y) return `${mesDesde} - ${mesHasta} ${hasta.y}`
+  return `${mesDesde} ${desde.y} - ${mesHasta} ${hasta.y}`
+}
+
 /** Parsea YYYY-MM-DD a partes numéricas sin zona horaria. */
 function parseISO(iso: string): { y: number; m: number; d: number } {
   const [y, m, d] = iso.split('-').map(Number)
@@ -95,7 +114,7 @@ export function periodosMensuales(fechaIngresoISO: string | null, count = 3): Pe
   return Array.from({ length: count }, (_, i) => {
     const desdeISO = addMonths(fechaIngresoISO, i)
     const hastaISO = addMonths(fechaIngresoISO, i + 1)
-    return { desdeISO, hastaISO, label: `${formatDMY(desdeISO)} → ${formatDMY(hastaISO)}` }
+    return { desdeISO, hastaISO, label: formatPeriodoMesMes(desdeISO, hastaISO) }
   })
 }
 
