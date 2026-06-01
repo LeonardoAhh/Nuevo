@@ -42,9 +42,9 @@ export interface RecontratacionPrintData {
   evaluaciones: EvaluacionRow[]
 }
 
-/** Muestra un valor numérico o vacío (0 → vacío para no saturar la hoja). */
+/** Muestra el conteo de incidencias; sin dato → "0" para no dejar la celda vacía. */
 function num(v: number | undefined): string {
-  return v && v !== 0 ? String(v) : ""
+  return v && v !== 0 ? String(v) : "0"
 }
 
 export default function RecontratacionPrint({ data }: { data: RecontratacionPrintData }) {
@@ -100,9 +100,9 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
             <tr>
               <td className={styles.colMes}>—</td>
               {INCIDENCIA_COLUMNS.map((c) => (
-                <td key={c.header} />
+                <td key={c.header}>0</td>
               ))}
-              <td className={styles.colComentarios} />
+              <td className={styles.colComentarios}>N/A</td>
             </tr>
           ) : (
             data.incidencias.map((row) => (
@@ -111,7 +111,7 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
                 {INCIDENCIA_COLUMNS.map((c) => (
                   <td key={c.header}>{num(row.valores[c.categoria])}</td>
                 ))}
-                <td className={styles.colComentarios}>{row.comentarios || ""}</td>
+                <td className={styles.colComentarios}>{row.comentarios || "N/A"}</td>
               </tr>
             ))
           )}
@@ -131,15 +131,20 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
           </tr>
         </thead>
         <tbody>
-          {data.evaluaciones.map((ev, i) => (
-            <tr key={i}>
-              <td>{i + 1}</td>
-              <td>{ev.periodo.label || ""}</td>
-              <td>{ev.calificacion != null ? ev.calificacion : ""}</td>
-              <td>{ev.planSeguimiento}</td>
-              <td className={styles.colComentarios}>{ev.observaciones || ""}</td>
-            </tr>
-          ))}
+          {data.evaluaciones.map((ev, i) => {
+            const sinCalif = ev.calificacion == null
+            return (
+              <tr key={i}>
+                <td>{i + 1}</td>
+                <td>{ev.periodo.label || ""}</td>
+                <td>{sinCalif ? 0 : ev.calificacion}</td>
+                <td>{ev.planSeguimiento}</td>
+                <td className={styles.colComentarios}>
+                  {sinCalif ? "El área no entregó" : ev.observaciones || ""}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
 
