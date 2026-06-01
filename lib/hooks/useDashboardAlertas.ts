@@ -67,6 +67,7 @@ function clasificarEval(
     const porVencer: EvalItem[] = []
 
     for (const r of registros) {
+        if (r.tipo_contrato === "Indeterminado") continue
         const fecha = r[fechaKey] as string | null
         const cal = r[calKey] as number | null
         if (!fecha || cal != null) continue

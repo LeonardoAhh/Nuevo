@@ -140,7 +140,7 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
                 <td>{sinCalif ? 0 : ev.calificacion}</td>
                 <td>{ev.planSeguimiento}</td>
                 <td className={styles.colComentarios}>
-                  {sinCalif ? "El área no entregó" : ev.observaciones || ""}
+                  {sinCalif ? "EL ÁREA NO ENTREGO" : ev.observaciones || ""}
                 </td>
               </tr>
             )
