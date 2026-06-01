@@ -77,7 +77,7 @@ export default function RecontratacionPrintPage() {
           .no-print { display: none !important; }
         }
         @media screen {
-          .print-area { max-width: 210mm; margin: 0 auto; padding: 8mm; box-shadow: 0 0 0 1px hsl(var(--border)); }
+          .print-area { max-width: 8.5in; margin: 16px auto; box-shadow: 0 0 0 1px hsl(var(--border)); }
         }
       `}</style>
     </>

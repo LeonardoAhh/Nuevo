@@ -233,7 +233,7 @@ export default function RecontratacionContent() {
 
       {/* Detalle / preview */}
       <Dialog open={detalleOpen} onOpenChange={setDetalleOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-card">
+        <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {detalle?.nombre || "Detalle"}

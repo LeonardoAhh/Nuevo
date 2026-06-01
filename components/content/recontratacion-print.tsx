@@ -50,6 +50,7 @@ function num(v: number | undefined): string {
 export default function RecontratacionPrint({ data }: { data: RecontratacionPrintData }) {
   return (
     <div className={`print-area ${styles.printRoot}`}>
+     <div className={styles.sheet}>
       {/* ── Encabezado ─────────────────────────────────────── */}
       <div className={styles.headerRow}>
         <img src="/logo-vino-plastic.png" alt="Logo" className={styles.logo} />
@@ -181,6 +182,7 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
         <span>RG-REC-048</span>
         <span>REV.00</span>
       </div>
+     </div>
     </div>
   )
 }
