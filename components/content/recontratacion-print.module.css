@@ -31,10 +31,11 @@
     --sp-3: 0.75rem;
     --sp-4: 1rem;
 
+    /* Hoja tamaño carta (Letter): 8.5in × 11in */
     width: 100%;
-    max-width: 210mm;
+    max-width: 8.5in;
     margin: 0 auto;
-    padding: 8mm;
+    padding: 0;
     background: var(--print-bg);
     color: var(--print-text);
     font-family: inherit;
@@ -42,6 +43,13 @@
     line-height: 1.3;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+}
+
+/* Contenedor interno con padding = márgenes del documento.
+   El CSS global de impresión fuerza padding:0 en .print-area, por eso
+   los márgenes se aplican aquí (no se ven afectados). */
+.sheet {
+    padding: 10mm 12mm;
 }
 
 /* ── Encabezado: logo + título ── */
@@ -235,8 +243,21 @@
     padding-top: var(--sp-1);
 }
 
-/* Forzar monocromo real al imprimir */
+/* ===================================================
+   IMPRESIÓN — ajuste a tamaño carta (Letter)
+=================================================== */
 @media print {
+    /* El global .print-area fuerza width:100% !important; fijamos el ancho
+       Letter con mayor especificidad (.printRoot.printRoot) para que el
+       documento ocupe la hoja completa sin desbordarse. */
+    .printRoot.printRoot {
+        width: 8.5in !important;
+        max-width: 8.5in !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+    }
+
+    /* Monocromo real */
     .printRoot,
     .printRoot * {
         color: var(--print-text) !important;
@@ -247,4 +268,26 @@
         background: var(--print-band-bg) !important;
         color: var(--print-band-text) !important;
     }
+
+    /* Evitar cortes de página a media tabla / firmas */
+    .infoGrid,
+    .table,
+    .table tr,
+    .planRow,
+    .authBlock,
+    .signatureGrid {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Una banda nunca debe quedar sola al final de la hoja */
+    .band {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+}
+
+/* Tamaño de página: carta vertical (refuerza el @page global). */
+@page {
+    size: Letter portrait;
 }
