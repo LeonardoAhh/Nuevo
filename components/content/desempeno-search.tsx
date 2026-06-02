@@ -236,7 +236,7 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
+  const { data, setData, origen, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
   const { totalEvals } = usePendingEvals(departamentosScope)
@@ -259,8 +259,15 @@ export default function DesempenoSearch() {
     if (!guiaYaVista()) setGuiaOpen(true)
   }, [isEvaluador])
 
+  // Al cambiar de modo, conserva el periodo si sigue siendo válido para ese
+  // modo; si no (p.ej. venías de semestral), cae al primero del modo nuevo.
+  // No clobberea el periodo auto-seleccionado al cargar un empleado.
   useEffect(() => {
-    setPeriodoSeleccionado(PERIODOS_DESEMPENO[periodoModo][0])
+    setPeriodoSeleccionado((prev) =>
+      (PERIODOS_DESEMPENO[periodoModo] as readonly string[]).includes(prev)
+        ? prev
+        : PERIODOS_DESEMPENO[periodoModo][0],
+    )
   }, [periodoModo])
 
   // Carga búsquedas recientes desde localStorage.
@@ -311,12 +318,18 @@ export default function DesempenoSearch() {
     })
   }, [])
 
-  const doBuscar = useCallback((valor: string, nombre?: string) => {
+  const doBuscar = useCallback(async (valor: string, nombre?: string) => {
     const v = valor.trim()
     if (!v) return
     setShowSugg(false)
     setActiveIdx(-1)
-    buscarEmpleado(v, departamentosScope, periodoSeleccionado)
+    const res = await buscarEmpleado(v, departamentosScope, periodoSeleccionado)
+    if (res) {
+      // Auto-selecciona el modo/periodo correcto según el origen del empleado:
+      // planta → Semestral, nuevo ingreso → Mensual (con auto-avance de semestre).
+      setPeriodoModo(res.modo)
+      setPeriodoSeleccionado(res.periodo as DesempenoPeriodo)
+    }
     addReciente({ numero: v, nombre: nombre ?? "" })
   }, [buscarEmpleado, departamentosScope, periodoSeleccionado, addReciente])
 
@@ -383,6 +396,15 @@ export default function DesempenoSearch() {
     ? esElegibleParaPeriodo(fechaIngreso, periodoEvaluacion)
     : { elegible: true, motivo: "", cutoff: null, reglaAplica: false }
   const noElegible = elegibilidad.reglaAplica && !elegibilidad.elegible
+
+  // Guardrail de periodo según origen del empleado:
+  //  - planta en modo Mensual → ERROR (bloquea guardar/imprimir).
+  //  - nuevo ingreso en modo Semestral → aviso suave (no bloquea).
+  const mismatchBloqueo = origen === "planta" && periodoModo === "mensuales"
+  const mismatchSuave = origen === "nuevo_ingreso" && periodoModo === "semestrales"
+  const periodoSemestralVigente = PERIODOS_DESEMPENO.semestrales.find(
+    (p) => p === periodoSeleccionado,
+  ) ?? PERIODOS_DESEMPENO.semestrales[0]
 
   const previewData: DesempenoData = {
     ...(data ?? {
@@ -458,14 +480,16 @@ export default function DesempenoSearch() {
                       }
                       label="Guardar"
                       tooltip={
-                        noElegible
+                        mismatchBloqueo
+                          ? "Empleado de planta: evalúalo en modo Semestral, no Mensual"
+                          : noElegible
                           ? "Empleado no elegible para este periodo semestral (< 2 meses)"
                           : bloqueado
                           ? "Captura compromisos primero (calificación < 80%)"
                           : "Guardar evaluación"
                       }
                       onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
-                      disabled={saving || bloqueado || noElegible}
+                      disabled={saving || bloqueado || noElegible || mismatchBloqueo}
                       variant="outline"
                     />
 
@@ -473,7 +497,9 @@ export default function DesempenoSearch() {
                       icon={<Printer className="h-3.5 w-3.5" />}
                       label="Imprimir"
                       tooltip={
-                        noElegible
+                        mismatchBloqueo
+                          ? "Empleado de planta: evalúalo en modo Semestral, no Mensual"
+                          : noElegible
                           ? "Empleado no elegible para este periodo semestral (< 2 meses)"
                           : bloqueado
                           ? "Captura compromisos primero (calificación < 80%)"
@@ -482,7 +508,7 @@ export default function DesempenoSearch() {
                           : "Imprimir evaluación"
                       }
                       onClick={() => window.print()}
-                      disabled={!guardado || bloqueado || noElegible}
+                      disabled={!guardado || bloqueado || noElegible || mismatchBloqueo}
                       variant="default"
                     />
                   </>
@@ -650,6 +676,26 @@ export default function DesempenoSearch() {
             title="Empleado no elegible para evaluación semestral"
           >
             {elegibilidad.motivo} Cambia el periodo o espera al siguiente semestre.
+          </NoticeCard>
+        )}
+
+        {mismatchBloqueo && (
+          <NoticeCard
+            tone="danger"
+            icon={<CalendarX2 className="h-5 w-5" />}
+            title="Periodo equivocado: este empleado es de planta"
+          >
+            El personal de planta se evalúa <strong className="font-semibold text-foreground">SEMESTRAL</strong> ({periodoSemestralVigente}), no mensual. Cambia el modo a <strong className="font-semibold text-foreground">Semestral</strong> para poder guardar.
+          </NoticeCard>
+        )}
+
+        {mismatchSuave && (
+          <NoticeCard
+            tone="warning"
+            icon={<AlertCircle className="h-5 w-5" />}
+            title="¿Seguro? Este empleado es de nuevo ingreso"
+          >
+            Los nuevos ingresos normalmente se evalúan en modo <strong className="font-semibold text-foreground">Mensual</strong> (onboarding). Verifica el periodo antes de guardar.
           </NoticeCard>
         )}
 
