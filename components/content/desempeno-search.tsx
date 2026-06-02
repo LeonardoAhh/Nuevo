@@ -236,7 +236,7 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, origen, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
+  const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
   const { totalEvals } = usePendingEvals(departamentosScope)
@@ -398,13 +398,13 @@ export default function DesempenoSearch() {
   const noElegible = elegibilidad.reglaAplica && !elegibilidad.elegible
 
   // Guardrail de periodo según origen del empleado:
-  //  - planta en modo Mensual → ERROR (bloquea guardar/imprimir).
+  //  - planta YA elegible para el semestre activo en modo Mensual → ERROR
+  //    (bloquea guardar/imprimir). Planta recién ingresado (no elegible) NO se
+  //    bloquea: se evalúa mensual como onboarding hasta cumplir antigüedad.
   //  - nuevo ingreso en modo Semestral → aviso suave (no bloquea).
-  const mismatchBloqueo = origen === "planta" && periodoModo === "mensuales"
+  const mismatchBloqueo = requiereSemestral && periodoModo === "mensuales"
   const mismatchSuave = origen === "nuevo_ingreso" && periodoModo === "semestrales"
-  const periodoSemestralVigente = PERIODOS_DESEMPENO.semestrales.find(
-    (p) => p === periodoSeleccionado,
-  ) ?? PERIODOS_DESEMPENO.semestrales[0]
+  const periodoSemestralObjetivo = semestreObjetivo ?? PERIODOS_DESEMPENO.semestrales[0]
 
   const previewData: DesempenoData = {
     ...(data ?? {
@@ -685,7 +685,7 @@ export default function DesempenoSearch() {
             icon={<CalendarX2 className="h-5 w-5" />}
             title="Periodo equivocado: este empleado es de planta"
           >
-            El personal de planta se evalúa <strong className="font-semibold text-foreground">SEMESTRAL</strong> ({periodoSemestralVigente}), no mensual. Cambia el modo a <strong className="font-semibold text-foreground">Semestral</strong> para poder guardar.
+            El personal de planta se evalúa <strong className="font-semibold text-foreground">SEMESTRAL</strong> ({periodoSemestralObjetivo}), no mensual. Cambia el modo a <strong className="font-semibold text-foreground">Semestral</strong> para poder guardar.
           </NoticeCard>
         )}
 
