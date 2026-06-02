@@ -15,6 +15,7 @@ import {
   type Competencia,
 } from "@/lib/types/desempeno"
 import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, PERIODOS_DESEMPENO } from "@/lib/catalogo"
+import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type OrigenEmpleado = "planta" | "nuevo_ingreso"
@@ -25,6 +26,10 @@ export interface BusquedaResultado {
   origen: OrigenEmpleado
   modo: PeriodoModo
   periodo: string
+  /** true si es planta Y elegible para el semestre activo → debe evaluarse semestral. */
+  requiereSemestral: boolean
+  /** Semestre activo (primer semestral sin evaluación) usado para el guardrail. */
+  semestreObjetivo: string
 }
 
 /** Fila de `evaluaciones_desempeno` (campos usados al cargar una evaluación). */
@@ -58,6 +63,8 @@ export interface EvaluacionHistorial {
 export function useDesempeno() {
   const [data, setData] = useState<DesempenoData | null>(null)
   const [origen, setOrigen] = useState<OrigenEmpleado | null>(null)
+  const [requiereSemestral, setRequiereSemestral] = useState(false)
+  const [semestreObjetivo, setSemestreObjetivo] = useState<string | null>(null)
   const [fechaIngreso, setFechaIngreso] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -174,23 +181,29 @@ export function useDesempeno() {
       const evals = (evalsRaw ?? []) as EvalRowFull[]
       const periodosConEval = new Set(evals.map((e) => e.periodo).filter(Boolean) as string[])
 
-      // Modo según origen: planta → semestral, nuevo ingreso → mensual.
-      // Auto-avance de semestre: el periodo resuelto es el primer semestre SIN
-      // evaluación guardada (si ya hizo DIC-MAY, salta a JUN-NOV). Si todos
-      // están hechos, usa el último.
-      const modo: PeriodoModo = origenEmpleado === "planta" ? "semestrales" : "mensuales"
-      let periodoResuelto: string
-      if (modo === "semestrales") {
-        periodoResuelto =
-          PERIODOS_DESEMPENO.semestrales.find((p) => !periodosConEval.has(p)) ??
-          PERIODOS_DESEMPENO.semestrales[PERIODOS_DESEMPENO.semestrales.length - 1]
-      } else {
-        const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[]
-        periodoResuelto =
-          periodoSeleccionado && mensuales.includes(periodoSeleccionado)
-            ? periodoSeleccionado
-            : PERIODOS_DESEMPENO.mensuales[0]
-      }
+      // Semestre activo = primer semestral SIN evaluación guardada (auto-avance:
+      // si ya hizo DIC-MAY, pasa a JUN-NOV). Si todos están hechos, usa el último.
+      const semestreActivo =
+        PERIODOS_DESEMPENO.semestrales.find((p) => !periodosConEval.has(p)) ??
+        PERIODOS_DESEMPENO.semestrales[PERIODOS_DESEMPENO.semestrales.length - 1]
+
+      // Un empleado de planta solo se evalúa SEMESTRAL si ya cumple la antigüedad
+      // mínima para el semestre activo. Si es planta pero recién ingresado (aún
+      // no elegible), se evalúa MENSUAL (onboarding) hasta que califique; en ese
+      // caso NO se bloquea el modo mensual.
+      const elegibleSemestreActivo =
+        origenEmpleado === "planta" &&
+        esElegibleParaPeriodo(empleadoData.fechaIngreso, semestreActivo).elegible
+      const requiereSemestralEmp = origenEmpleado === "planta" && elegibleSemestreActivo
+
+      const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[]
+      const mensualResuelto =
+        periodoSeleccionado && mensuales.includes(periodoSeleccionado)
+          ? periodoSeleccionado
+          : PERIODOS_DESEMPENO.mensuales[0]
+
+      const modo: PeriodoModo = requiereSemestralEmp ? "semestrales" : "mensuales"
+      const periodoResuelto: string = requiereSemestralEmp ? semestreActivo : mensualResuelto
 
       // Carga la evaluación que corresponde al periodo resuelto (no la última
       // sin más): así guardar un periodo nuevo NO sobrescribe al anterior.
@@ -294,7 +307,15 @@ export function useDesempeno() {
 
       setData(result)
       setOrigen(origenEmpleado)
-      return { origen: origenEmpleado, modo, periodo: periodoResuelto } satisfies BusquedaResultado
+      setRequiereSemestral(requiereSemestralEmp)
+      setSemestreObjetivo(semestreActivo)
+      return {
+        origen: origenEmpleado,
+        modo,
+        periodo: periodoResuelto,
+        requiereSemestral: requiereSemestralEmp,
+        semestreObjetivo: semestreActivo,
+      } satisfies BusquedaResultado
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
       notify.error("Empleado no encontrado")
@@ -520,6 +541,8 @@ export function useDesempeno() {
         lastEvalId.current = null
         setData(null)
         setOrigen(null)
+        setRequiereSemestral(false)
+        setSemestreObjetivo(null)
       }
       setHistorial((prev) => prev.filter((e) => e.id !== evalId))
       notify.success("Evaluación eliminada")
@@ -531,7 +554,7 @@ export function useDesempeno() {
   }, [])
 
   return {
-    data, setData, origen, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
+    data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
     buscarEmpleado, buscarSugerencias, guardar,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
