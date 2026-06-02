@@ -14,7 +14,34 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, PERIODOS_DESEMPENO } from "@/lib/catalogo"
+
+/** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
+export type OrigenEmpleado = "planta" | "nuevo_ingreso"
+export type PeriodoModo = "semestrales" | "mensuales"
+
+/** Resultado de `buscarEmpleado`: origen + modo/periodo recomendado para el selector. */
+export interface BusquedaResultado {
+  origen: OrigenEmpleado
+  modo: PeriodoModo
+  periodo: string
+}
+
+/** Fila de `evaluaciones_desempeno` (campos usados al cargar una evaluación). */
+interface EvalRowFull {
+  id: string
+  periodo: string | null
+  evaluador_nombre: string | null
+  evaluador_puesto: string | null
+  tipo: string | null
+  objetivos: DesempenoData["objetivos"] | null
+  cumplimiento_responsabilidades: CumplimientoItem[] | null
+  competencias: Competencia[] | null
+  compromisos: string | null
+  fecha_revision: string | null
+  observaciones: string | null
+  calificacion_final: number | null
+}
 
 export interface EvaluacionHistorial {
   id: string
@@ -30,6 +57,7 @@ export interface EvaluacionHistorial {
 
 export function useDesempeno() {
   const [data, setData] = useState<DesempenoData | null>(null)
+  const [origen, setOrigen] = useState<OrigenEmpleado | null>(null)
   const [fechaIngreso, setFechaIngreso] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -92,8 +120,10 @@ export function useDesempeno() {
         .maybeSingle()
 
       let empleadoData: { numero: string; nombre: string; puesto: string; departamento: string | null; fechaIngreso: string | null } | null = null
+      let origenEmpleado: OrigenEmpleado | null = null
 
       if (emp) {
+        origenEmpleado = "planta"
         empleadoData = {
           numero: emp.numero!,
           nombre: emp.nombre,
@@ -108,6 +138,7 @@ export function useDesempeno() {
           .eq("numero", numero)
           .maybeSingle()
         if (ni) {
+          origenEmpleado = "nuevo_ingreso"
           empleadoData = {
             numero: ni.numero!,
             nombre: ni.nombre,
@@ -118,7 +149,7 @@ export function useDesempeno() {
         }
       }
 
-      if (!empleadoData) throw new Error("Empleado no encontrado")
+      if (!empleadoData || !origenEmpleado) throw new Error("Empleado no encontrado")
 
       // Scope por departamento: el evaluador solo puede abrir empleados de las áreas asignadas
       if (restrictDepartamentos && restrictDepartamentos.length > 0) {
@@ -132,13 +163,38 @@ export function useDesempeno() {
 
       setFechaIngreso(empleadoData.fechaIngreso)
 
-      const { data: evalData } = await supabase
+      // Trae TODAS las evaluaciones del empleado (más reciente primero) para
+      // poder resolver el periodo correcto y cargar la fila de ESE periodo.
+      const { data: evalsRaw } = await supabase
         .from("evaluaciones_desempeno")
         .select("*")
         .eq("numero_empleado", numero)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
+
+      const evals = (evalsRaw ?? []) as EvalRowFull[]
+      const periodosConEval = new Set(evals.map((e) => e.periodo).filter(Boolean) as string[])
+
+      // Modo según origen: planta → semestral, nuevo ingreso → mensual.
+      // Auto-avance de semestre: el periodo resuelto es el primer semestre SIN
+      // evaluación guardada (si ya hizo DIC-MAY, salta a JUN-NOV). Si todos
+      // están hechos, usa el último.
+      const modo: PeriodoModo = origenEmpleado === "planta" ? "semestrales" : "mensuales"
+      let periodoResuelto: string
+      if (modo === "semestrales") {
+        periodoResuelto =
+          PERIODOS_DESEMPENO.semestrales.find((p) => !periodosConEval.has(p)) ??
+          PERIODOS_DESEMPENO.semestrales[PERIODOS_DESEMPENO.semestrales.length - 1]
+      } else {
+        const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[]
+        periodoResuelto =
+          periodoSeleccionado && mensuales.includes(periodoSeleccionado)
+            ? periodoSeleccionado
+            : PERIODOS_DESEMPENO.mensuales[0]
+      }
+
+      // Carga la evaluación que corresponde al periodo resuelto (no la última
+      // sin más): así guardar un periodo nuevo NO sobrescribe al anterior.
+      const evalData = evals.find((e) => e.periodo === periodoResuelto) ?? null
 
       lastEvalId.current = evalData?.id ?? null
 
@@ -172,7 +228,7 @@ export function useDesempeno() {
       //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
       //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
       // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
-      const targetPeriodo = evalData?.periodo || periodoSeleccionado
+      const targetPeriodo = evalData?.periodo || periodoResuelto
       const mesesPeriodo = mesesDePeriodo(targetPeriodo)
 
       let asistenciaPorcentaje: number
@@ -237,9 +293,12 @@ export function useDesempeno() {
       }
 
       setData(result)
+      setOrigen(origenEmpleado)
+      return { origen: origenEmpleado, modo, periodo: periodoResuelto } satisfies BusquedaResultado
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
       notify.error("Empleado no encontrado")
+      return null
     } finally {
       setLoading(false)
     }
@@ -460,6 +519,7 @@ export function useDesempeno() {
       if (lastEvalId.current === evalId) {
         lastEvalId.current = null
         setData(null)
+        setOrigen(null)
       }
       setHistorial((prev) => prev.filter((e) => e.id !== evalId))
       notify.success("Evaluación eliminada")
@@ -471,7 +531,7 @@ export function useDesempeno() {
   }, [])
 
   return {
-    data, setData, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
+    data, setData, origen, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
     buscarEmpleado, buscarSugerencias, guardar,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
