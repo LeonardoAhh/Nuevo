@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
-  Search, CheckCircle2, AlertCircle, Clock, AlertTriangle,
-  XCircle, CalendarCheck, Info, UserPlus, X, CalendarDays, FileUp, Upload,
+  Search, CheckCircle2, AlertCircle, Clock,
+  Info, UserPlus, X, CalendarDays, FileUp, Upload,
 } from "lucide-react"
+import { EvalBadge, ContratoTerminoBadge, EVAL_STATUS_META } from "@/components/content/shared/eval-badges"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,8 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PaginationBar } from "@/components/ui/pagination-bar"
-import { useNuevoIngreso, formatDate, daysFromToday, evalStatus, useRole } from "@/lib/hooks"
-import type { NuevoIngreso, NuevoIngresoUpdate, EvalStatus } from "@/lib/hooks"
+import { useNuevoIngreso, formatDate, daysFromToday, useRole } from "@/lib/hooks"
+import type { NuevoIngreso, NuevoIngresoUpdate } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
@@ -23,60 +24,6 @@ import { IncidenciasModal } from "@/components/content/incidencias-modal"
 import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
 import { BulkUpdateEmpleados } from "@/components/content/bulk-update-empleados"
 import { supabase } from "@/lib/supabase/client"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers de UI
-// ─────────────────────────────────────────────────────────────────────────────
-
-const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.ElementType; classes: string }> = {
-  completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-success' },
-  proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-warning' },
-  hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-warning' },
-  vencida: { label: 'Vencida', icon: XCircle, classes: 'text-destructive' },
-  pendiente: { label: 'Pendiente', icon: Clock, classes: 'text-muted-foreground' },
-}
-
-function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion: number | null }) {
-  const status = evalStatus(fecha, calificacion)
-  const { icon: Icon, classes } = EVAL_STATUS_META[status]
-  const diff = daysFromToday(fecha)
-
-  return (
-    <div className={`flex flex-col items-center gap-0.5 ${classes}`}>
-      <Icon className="h-4 w-4" />
-      <span className="text-xs font-medium">{formatDate(fecha)}</span>
-      {calificacion != null && (
-        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${calificacion >= 70 ? 'bg-success/10 text-success'
-          : 'bg-destructive/10 text-destructive'
-          }`}>{calificacion}</span>
-      )}
-      {calificacion == null && diff !== null && diff >= 0 && (
-        <span className="text-xs opacity-70">{diff === 0 ? 'hoy' : `en ${diff}d`}</span>
-      )}
-      {calificacion == null && diff !== null && diff < 0 && (
-        <span className="text-xs opacity-70">{Math.abs(diff)}d atrás</span>
-      )}
-    </div>
-  )
-}
-
-function ContratoTerminoBadge({ fecha, indeterminado }: { fecha: string | null; indeterminado?: boolean }) {
-  const diff = daysFromToday(fecha)
-  if (diff === null) return <span className="text-xs text-muted-foreground">—</span>
-  const urgent = diff <= 10
-  const past = diff < 0
-  return (
-    <div className={`text-xs font-medium ${past && !indeterminado ? 'text-destructive' : urgent && !indeterminado ? 'text-warning' : 'text-muted-foreground'}`}>
-      <div>{formatDate(fecha)}</div>
-      {!indeterminado && (
-        <div className="opacity-70">
-          {past ? `Vencido hace ${Math.abs(diff)}d` : diff === 0 ? 'Hoy' : `En ${diff} días`}
-        </div>
-      )}
-    </div>
-  )
-}
-
 
 
 export default function NuevoIngresoContent() {

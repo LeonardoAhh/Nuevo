@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { Lock, Printer, X, Loader2, FileX2 } from "lucide-react"
 import RecontratacionPrint, { type RecontratacionPrintData } from "@/components/content/recontratacion-print"
 import { useRecontratacion } from "@/lib/hooks/useRecontratacion"
 import { useRole } from "@/lib/hooks"
@@ -34,23 +35,10 @@ export default function RecontratacionPrintPage() {
 
   if (!roleLoading && isEvaluador) {
     return (
-      <div className="no-print" style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f5f5f5"
-      }}>
-        <div style={{
-          background: "#fff",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          padding: "2rem 3rem",
-          textAlign: "center",
-          maxWidth: "400px"
-        }}>
-          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔒</div>
-          <p style={{ fontSize: "0.875rem", color: "#555", margin: 0 }}>
+      <div className="no-print min-h-screen flex items-center justify-center bg-muted/40 p-4">
+        <div className="bg-card border border-border rounded-lg px-8 py-8 text-center max-w-sm shadow-sm">
+          <Lock className="h-8 w-8 mx-auto mb-3 text-muted-foreground" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground m-0">
             No tienes permiso para acceder a este formato.
           </p>
         </div>
@@ -61,104 +49,44 @@ export default function RecontratacionPrintPage() {
   return (
     <>
       {/* Barra de herramientas — solo pantalla */}
-      <div className="no-print" style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        padding: "0.6rem 1rem",
-        background: "#1a1a1a",
-        borderBottom: "1px solid #333",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
-      }}>
-        <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.1em", color: "#888", textTransform: "uppercase", marginRight: "auto" }}>
-            Formato continuidad de contrato.
+      <div className="no-print sticky top-0 z-50 flex items-center gap-2 px-4 py-2.5 bg-foreground border-b border-border shadow-sm">
+        <span className="text-[0.7rem] font-bold tracking-[0.1em] uppercase text-background/60 mr-auto">
+          Formato continuidad de contrato.
         </span>
         <button
           onClick={() => window.print()}
           disabled={status !== "ready"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            background: status === "ready" ? "#ffffff" : "#555",
-            color: status === "ready" ? "#1a1a1a" : "#999",
-            border: "none",
-            borderRadius: "4px",
-            padding: "0.4rem 1rem",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.05em",
-            cursor: status === "ready" ? "pointer" : "not-allowed",
-            textTransform: "uppercase",
-            transition: "opacity 0.2s"
-          }}
+          className="flex items-center gap-1.5 bg-background text-foreground border-0 rounded px-4 py-1.5 text-xs font-bold tracking-[0.05em] uppercase cursor-pointer transition-opacity hover:opacity-90 disabled:bg-muted-foreground/40 disabled:text-muted-foreground disabled:cursor-not-allowed"
         >
-          ⎙ Imprimir
+          <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+          Imprimir
         </button>
         <button
           onClick={() => window.close()}
-          style={{
-            background: "transparent",
-            color: "#aaa",
-            border: "1px solid #444",
-            borderRadius: "4px",
-            padding: "0.4rem 0.9rem",
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            letterSpacing: "0.05em",
-            cursor: "pointer",
-            textTransform: "uppercase"
-          }}
+          className="flex items-center gap-1.5 bg-transparent text-background/70 border border-background/20 rounded px-3.5 py-1.5 text-xs font-semibold tracking-[0.05em] uppercase cursor-pointer hover:bg-background/10 transition-colors"
         >
-          ✕ Cerrar
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+          Cerrar
         </button>
       </div>
 
       {/* Estados de carga / no encontrado */}
       {status === "loading" && (
-        <div className="no-print" style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "60vh",
-          gap: "1rem",
-          color: "#666"
-        }}>
-          <div style={{
-            width: "32px", height: "32px",
-            border: "3px solid #e0e0e0",
-            borderTopColor: "#1a1a1a",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite"
-          }} />
-          <p style={{ fontSize: "0.8rem", margin: 0 }}>Cargando formato…</p>
+        <div className="no-print flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+          <p className="text-sm m-0">Cargando formato…</p>
         </div>
       )}
 
       {status === "notfound" && (
-        <div className="no-print" style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "60vh"
-        }}>
-          <div style={{
-            background: "#fff",
-            border: "1px solid #e0e0e0",
-            borderRadius: "8px",
-            padding: "2rem 3rem",
-            textAlign: "center",
-            maxWidth: "420px"
-          }}>
-            <p style={{ fontSize: "0.85rem", color: "#333", fontWeight: 600, margin: "0 0 0.25rem" }}>
+        <div className="no-print flex items-center justify-center min-h-[60vh] p-4">
+          <div className="bg-card border border-border rounded-lg px-8 py-8 text-center max-w-md shadow-sm">
+            <FileX2 className="h-8 w-8 mx-auto mb-3 text-muted-foreground" aria-hidden="true" />
+            <p className="text-sm font-semibold text-foreground mb-1">
               Registro no encontrado
             </p>
-            <p style={{ fontSize: "0.75rem", color: "#888", margin: 0 }}>
-              Número: <strong>{numero || "—"}</strong>
+            <p className="text-xs text-muted-foreground m-0">
+              Número: <strong className="text-foreground">{numero || "—"}</strong>
             </p>
           </div>
         </div>
@@ -172,15 +100,10 @@ export default function RecontratacionPrintPage() {
       )}
 
       <style>{`
-        /* ── Spinner ── */
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
         /* ── Pantalla: simula hoja sobre fondo gris ── */
         @media screen {
           body {
-            background: #e8e8e8;
+            background: hsl(var(--muted));
             margin: 0;
           }
           .print-area-wrapper {
