@@ -102,7 +102,8 @@
 /* ── Ficha de datos del trabajador ── */
 .infoGrid {
     display: grid;
-    grid-template-columns: auto 1fr auto 1fr;
+    /* 6 columnas para acomodar turno, ingreso y término en una línea */
+    grid-template-columns: auto 1fr auto 1fr auto 1fr;
     border: 1px solid var(--print-border);
     border-top: none; /* la banda ya pone el borde superior */
     margin-top: 0;
@@ -133,10 +134,22 @@
     border-right: none;
 }
 
+/* Para las primeras dos filas, hacer que el segundo valor ocupe 3 columnas */
+.infoGrid > .infoValue:nth-child(2),
+.infoGrid > .infoValue:nth-child(6) {
+    grid-column: span 3;
+}
+
 /* Celda que ocupa el ancho completo (por ej. fecha de término) */
 .infoSpanValue {
-    grid-column: 2 / 5;
+    grid-column: 2 / 7;
     border-right: none; /* evita doble borde a la derecha */
+}
+
+/* Celda que ocupa 3 columnas (para la última fila con turno, ingreso, término) */
+.infoSpan3 {
+    grid-column: span 1;
+    border-right: none;
 }
 
 /* ── Tablas ── */

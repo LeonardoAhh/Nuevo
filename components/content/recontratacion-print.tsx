@@ -46,6 +46,10 @@ interface RecontratacionPrintProps {
   data: RecontratacionPrintData
   /** Si false, no muestra "EL ÁREA NO ENTREGO" para evaluaciones sin calificación */
   mostrarObservacionAreaNoEntrego?: boolean
+  /** Estado del RG-REC-048: "SI" | "NO" | "" */
+  rgEstado?: string
+  /** Autorización de contrato indeterminado: "SI" | "NO" | "" */
+  autorizacionContrato?: string
 }
 
 /** Muestra el conteo de incidencias; sin dato → "0" para no dejar la celda vacía. */
@@ -53,7 +57,12 @@ function num(v: number | undefined): string {
   return v && v !== 0 ? String(v) : "0"
 }
 
-export default function RecontratacionPrint({ data, mostrarObservacionAreaNoEntrego = true }: RecontratacionPrintProps) {
+export default function RecontratacionPrint({ 
+  data, 
+  mostrarObservacionAreaNoEntrego = true,
+  rgEstado = "",
+  autorizacionContrato = ""
+}: RecontratacionPrintProps) {
   return (
     <div className={`print-area ${styles.printRoot}`}>
      <div className={styles.sheet}>
@@ -66,25 +75,25 @@ export default function RecontratacionPrint({ data, mostrarObservacionAreaNoEntr
       {/* ── Datos del trabajador ───────────────────────────── */}
       <div className={styles.band}>DATOS DEL TRABAJADOR</div>
       <div className={styles.infoGrid}>
+        {/* Fila 1: Nombre y Número */}
         <div className={styles.infoLabel}>NOMBRE DEL TRABAJADOR:</div>
         <div className={styles.infoValue}>{data.nombre || ""}</div>
         <div className={styles.infoLabel}>NO.</div>
         <div className={styles.infoValue}>{data.numero || ""}</div>
 
+        {/* Fila 2: Puesto y Departamento */}
         <div className={styles.infoLabel}>PUESTO:</div>
         <div className={styles.infoValue}>{data.puesto || ""}</div>
         <div className={styles.infoLabel}>DEPARTAMENTO:</div>
         <div className={styles.infoValue}>{data.departamento || ""}</div>
 
+        {/* Fila 3: Turno, Fecha de Ingreso y Fecha de Término (todo en una línea con 6 columnas) */}
         <div className={styles.infoLabel}>TURNO:</div>
         <div className={styles.infoValue}>{data.turno || ""}</div>
         <div className={styles.infoLabel}>FECHA DE INGRESO:</div>
         <div className={styles.infoValue}>{formatDMY(data.fechaIngresoISO)}</div>
-
         <div className={styles.infoLabel}>FECHA DE TERMINO DE CONTRATO:</div>
-        <div className={`${styles.infoValue} ${styles.infoSpanValue}`}>
-          {formatDMY(data.terminoContratoISO)}
-        </div>
+        <div className={styles.infoValue}>{formatDMY(data.terminoContratoISO)}</div>
       </div>
 
       {/* ── 1. Incidencias (solo ventana de 90 días) ───────── */}
@@ -158,7 +167,7 @@ export default function RecontratacionPrint({ data, mostrarObservacionAreaNoEntr
       <div className={`${styles.band} ${styles.bandLeft}`}>4. PLAN DE FORMACIÓN</div>
       <div className={styles.planRow}>
         <div>RG-REC-048 REQUISITADO CORRECTAMENTE Y ENTREGADO A RECURSOS HUMANOS</div>
-        <div className={styles.planChoice}>SI / NO</div>
+        <div className={styles.planChoice}>{rgEstado || "SI / NO"}</div>
       </div>
 
       {/* ── Autorización de contrato indeterminado ─────────── */}
@@ -166,7 +175,7 @@ export default function RecontratacionPrint({ data, mostrarObservacionAreaNoEntr
       <div className={styles.authBlock}>
         <div className={styles.authQuestion}>
           CON BASE EN LOS RESULTADOS DE LOS 3 PERIODOS DE EVALUACIÓN, ¿SE AUTORIZA CONTRATO
-          INDETERMINADO?&nbsp;&nbsp;&nbsp;SI / NO
+          INDETERMINADO?&nbsp;&nbsp;&nbsp;{autorizacionContrato || "SI / NO"}
         </div>
         <div className={styles.authComment}>COMENTARIOS:</div>
       </div>

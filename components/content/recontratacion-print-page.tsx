@@ -7,6 +7,7 @@ import { useRecontratacion } from "@/lib/hooks/useRecontratacion"
 import { useRole } from "@/lib/hooks"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 export default function RecontratacionPrintPage() {
   const params = useSearchParams()
@@ -16,6 +17,8 @@ export default function RecontratacionPrintPage() {
   const [data, setData] = useState<RecontratacionPrintData | null>(null)
   const [status, setStatus] = useState<"loading" | "ready" | "notfound">("loading")
   const [mostrarObservacion, setMostrarObservacion] = useState(true)
+  const [rgEstado, setRgEstado] = useState<string>("")
+  const [autorizacionContrato, setAutorizacionContrato] = useState<string>("")
 
   useEffect(() => {
     if (roleLoading || isEvaluador) return
@@ -51,27 +54,83 @@ export default function RecontratacionPrintPage() {
 
   return (
     <>
+      {/* Panel de configuración antes de imprimir — solo pantalla */}
+      {status === "ready" && (
+        <div className="no-print bg-card border-b border-border px-4 py-4">
+          <div className="max-w-4xl mx-auto space-y-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Configurar formato antes de imprimir:</h3>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* RG-REC-048 */}
+              <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
+                <Label className="text-xs font-medium text-foreground">
+                  RG-REC-048 requisitado y entregado:
+                </Label>
+                <RadioGroup value={rgEstado} onValueChange={setRgEstado} className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="SI" id="rg-si" />
+                    <Label htmlFor="rg-si" className="text-sm cursor-pointer">SI</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="NO" id="rg-no" />
+                    <Label htmlFor="rg-no" className="text-sm cursor-pointer">NO</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="" id="rg-ninguno" />
+                    <Label htmlFor="rg-ninguno" className="text-sm cursor-pointer text-muted-foreground">
+                      Dejar en blanco
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Autorización de contrato */}
+              <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
+                <Label className="text-xs font-medium text-foreground">
+                  ¿Autoriza contrato indeterminado?
+                </Label>
+                <RadioGroup value={autorizacionContrato} onValueChange={setAutorizacionContrato} className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="SI" id="auth-si" />
+                    <Label htmlFor="auth-si" className="text-sm cursor-pointer">SI</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="NO" id="auth-no" />
+                    <Label htmlFor="auth-no" className="text-sm cursor-pointer">NO</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="" id="auth-ninguno" />
+                    <Label htmlFor="auth-ninguno" className="text-sm cursor-pointer text-muted-foreground">
+                      Dejar en blanco
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+
+            {/* Checkbox para observación */}
+            <div className="flex items-center space-x-2 pt-2 border-t border-border">
+              <Checkbox 
+                id="mostrar-observacion-panel" 
+                checked={mostrarObservacion} 
+                onCheckedChange={(checked) => setMostrarObservacion(checked === true)}
+              />
+              <Label 
+                htmlFor="mostrar-observacion-panel" 
+                className="text-sm cursor-pointer"
+              >
+                Mostrar "El área no entregó" en evaluaciones sin calificación
+              </Label>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Barra de herramientas — solo pantalla */}
       <div className="no-print sticky top-0 z-50 flex items-center gap-2 px-4 py-2.5 bg-foreground border-b border-border shadow-sm">
         <span className="text-[0.7rem] font-bold tracking-[0.1em] uppercase text-background/60 mr-auto">
           Formato continuidad de contrato.
         </span>
-        
-        {/* Checkbox para controlar la observación */}
-        <div className="flex items-center space-x-2 mr-2">
-          <Checkbox 
-            id="mostrar-observacion" 
-            checked={mostrarObservacion} 
-            onCheckedChange={(checked) => setMostrarObservacion(checked === true)}
-            className="border-background/40 data-[state=checked]:bg-background data-[state=checked]:text-foreground"
-          />
-          <Label 
-            htmlFor="mostrar-observacion" 
-            className="text-xs text-background cursor-pointer leading-tight whitespace-nowrap"
-          >
-            Mostrar "El área no entregó"
-          </Label>
-        </div>
 
         <button
           onClick={() => window.print()}
@@ -115,7 +174,12 @@ export default function RecontratacionPrintPage() {
       {/* Documento imprimible */}
       {data && (
         <div className="print-area-wrapper">
-          <RecontratacionPrint data={data} mostrarObservacionAreaNoEntrego={mostrarObservacion} />
+          <RecontratacionPrint 
+            data={data} 
+            mostrarObservacionAreaNoEntrego={mostrarObservacion}
+            rgEstado={rgEstado}
+            autorizacionContrato={autorizacionContrato}
+          />
         </div>
       )}
 
