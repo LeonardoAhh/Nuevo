@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
 import {
@@ -73,6 +73,12 @@ export function useDesempeno() {
   const [historial, setHistorial] = useState<EvaluacionHistorial[]>([])
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
+  const dataRef = useRef<DesempenoData | null>(null)
+
+  // Mantén dataRef sincronizado con data
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
 
   // Sugerencias para typeahead: busca por número o nombre (ILIKE) en
   // employees y nuevo_ingreso. Devuelve hasta 8 resultados, sin duplicar números.
@@ -287,7 +293,7 @@ export function useDesempeno() {
         evaluador_nombre: evalData?.evaluador_nombre || "",
         evaluador_puesto: evalData?.evaluador_puesto || "",
         tipo: (evalData?.tipo as DesempenoData["tipo"]) || tipoPuesto,
-        periodo: evalData?.periodo || "",
+        periodo: periodoResuelto,  // ← Usa periodoResuelto en lugar de evalData?.periodo || ""
         objetivos: evalData?.objetivos?.length
           ? evalData.objetivos
           : objetivosFallback.map((obj) => ({ ...obj })),
@@ -553,9 +559,56 @@ export function useDesempeno() {
     }
   }, [])
 
+  const recalcularAsistencia = useCallback((nuevoPeriodo: string) => {
+    const currentData = dataRef.current
+    if (!currentData) return
+
+    const mesesPeriodo = mesesDePeriodo(nuevoPeriodo)
+    const incidencias = currentData.incidencias ?? []
+
+    // Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
+    const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
+    const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
+
+    const faltasDeMes = (mes: string): number =>
+      incidencias
+        .filter((i) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
+        .reduce((sum, i) => sum + (i.valor ?? 0), 0)
+
+    let asistenciaPorcentaje: number
+    if (mesesPeriodo.length > 0) {
+      const mesesConDatos = mesesPeriodo.filter((mes) =>
+        incidencias.some((i) => i.mes === mes),
+      )
+      if (mesesConDatos.length > 0) {
+        const promedio =
+          mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
+          mesesConDatos.length
+        asistenciaPorcentaje = Math.round(promedio)
+      } else {
+        asistenciaPorcentaje = 100
+      }
+    } else {
+      const totalFaltas = incidencias
+        .filter((i) => i.categoria === 'FALTA INJUSTIFICADA')
+        .reduce((sum, i) => sum + (i.valor ?? 0), 0)
+      asistenciaPorcentaje = aplicarEscala(totalFaltas)
+    }
+
+    const tipoPuesto = getTipoDesempenoByPuesto(currentData.puesto)
+    const cumplimiento = [...(currentData.cumplimiento_responsabilidades ?? [])]
+
+    // Actualiza el porcentaje de asistencia (índice 2) solo para operativo/administrativo
+    if (tipoPuesto !== "jefe" && cumplimiento[2]) {
+      cumplimiento[2] = { ...cumplimiento[2], porcentaje: String(asistenciaPorcentaje) }
+    }
+
+    setData({ ...currentData, periodo: nuevoPeriodo, cumplimiento_responsabilidades: cumplimiento })
+  }, [])
+
   return {
     data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
-    buscarEmpleado, buscarSugerencias, guardar,
+    buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia,
     historial, historialLoading, fetchHistorial,
     cargarEvaluacion, eliminarEvaluacion,
   }

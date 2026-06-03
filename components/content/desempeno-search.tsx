@@ -236,7 +236,7 @@ export default function DesempenoSearch() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar } =
+  const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
   const { totalEvals } = usePendingEvals(departamentosScope)
@@ -277,6 +277,13 @@ export default function DesempenoSearch() {
       if (raw) setRecientes(JSON.parse(raw))
     } catch { /* ignore */ }
   }, [])
+
+  // Recalcula la asistencia cuando cambia el periodo seleccionado
+  useEffect(() => {
+    if (data && recalcularAsistencia) {
+      recalcularAsistencia(periodoSeleccionado)
+    }
+  }, [periodoSeleccionado, recalcularAsistencia])
 
   // Atajo "/" para enfocar el buscador.
   useEffect(() => {
