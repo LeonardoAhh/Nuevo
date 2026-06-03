@@ -42,12 +42,18 @@ export interface RecontratacionPrintData {
   evaluaciones: EvaluacionRow[]
 }
 
+interface RecontratacionPrintProps {
+  data: RecontratacionPrintData
+  /** Si false, no muestra "EL ÁREA NO ENTREGO" para evaluaciones sin calificación */
+  mostrarObservacionAreaNoEntrego?: boolean
+}
+
 /** Muestra el conteo de incidencias; sin dato → "0" para no dejar la celda vacía. */
 function num(v: number | undefined): string {
   return v && v !== 0 ? String(v) : "0"
 }
 
-export default function RecontratacionPrint({ data }: { data: RecontratacionPrintData }) {
+export default function RecontratacionPrint({ data, mostrarObservacionAreaNoEntrego = true }: RecontratacionPrintProps) {
   return (
     <div className={`print-area ${styles.printRoot}`}>
      <div className={styles.sheet}>
@@ -140,7 +146,7 @@ export default function RecontratacionPrint({ data }: { data: RecontratacionPrin
                 <td>{sinCalif ? 0 : ev.calificacion}</td>
                 <td>{ev.planSeguimiento}</td>
                 <td className={styles.colComentarios}>
-                  {sinCalif ? "EL ÁREA NO ENTREGO" : ev.observaciones || ""}
+                  {sinCalif && mostrarObservacionAreaNoEntrego ? "EL ÁREA NO ENTREGO" : ev.observaciones || ""}
                 </td>
               </tr>
             )

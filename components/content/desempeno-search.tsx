@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen, X, Clock, Lock, CalendarX2 } from "lucide-react"
 import Link from "next/link"
@@ -232,7 +232,7 @@ function ActionDivider() {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function DesempenoSearch() {
+function DesempenoSearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [numeroBuscado, setNumeroBuscado] = useState("")
@@ -768,5 +768,20 @@ export default function DesempenoSearch() {
         />
       </div>
     </TooltipProvider>
+  )
+}
+
+
+// ─── Export con Suspense boundary ─────────────────────────────────────────────
+
+export default function DesempenoSearch() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="text-sm text-muted-foreground">Cargando...</div>
+      </div>
+    }>
+      <DesempenoSearchContent />
+    </Suspense>
   )
 }

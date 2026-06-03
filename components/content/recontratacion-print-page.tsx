@@ -5,6 +5,8 @@ import { Lock, Printer, X, Loader2, FileX2 } from "lucide-react"
 import RecontratacionPrint, { type RecontratacionPrintData } from "@/components/content/recontratacion-print"
 import { useRecontratacion } from "@/lib/hooks/useRecontratacion"
 import { useRole } from "@/lib/hooks"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 export default function RecontratacionPrintPage() {
   const params = useSearchParams()
@@ -13,6 +15,7 @@ export default function RecontratacionPrintPage() {
   const { isEvaluador, loading: roleLoading } = useRole()
   const [data, setData] = useState<RecontratacionPrintData | null>(null)
   const [status, setStatus] = useState<"loading" | "ready" | "notfound">("loading")
+  const [mostrarObservacion, setMostrarObservacion] = useState(true)
 
   useEffect(() => {
     if (roleLoading || isEvaluador) return
@@ -53,6 +56,23 @@ export default function RecontratacionPrintPage() {
         <span className="text-[0.7rem] font-bold tracking-[0.1em] uppercase text-background/60 mr-auto">
           Formato continuidad de contrato.
         </span>
+        
+        {/* Checkbox para controlar la observación */}
+        <div className="flex items-center space-x-2 mr-2">
+          <Checkbox 
+            id="mostrar-observacion" 
+            checked={mostrarObservacion} 
+            onCheckedChange={(checked) => setMostrarObservacion(checked === true)}
+            className="border-background/40 data-[state=checked]:bg-background data-[state=checked]:text-foreground"
+          />
+          <Label 
+            htmlFor="mostrar-observacion" 
+            className="text-xs text-background cursor-pointer leading-tight whitespace-nowrap"
+          >
+            Mostrar "El área no entregó"
+          </Label>
+        </div>
+
         <button
           onClick={() => window.print()}
           disabled={status !== "ready"}
@@ -95,7 +115,7 @@ export default function RecontratacionPrintPage() {
       {/* Documento imprimible */}
       {data && (
         <div className="print-area-wrapper">
-          <RecontratacionPrint data={data} />
+          <RecontratacionPrint data={data} mostrarObservacionAreaNoEntrego={mostrarObservacion} />
         </div>
       )}
 
