@@ -474,6 +474,8 @@ export function useDesempeno() {
       let nombre = ""
       let puesto = ""
       let fechaIngresoEmp: string | null = null
+      let origenEmpleado: OrigenEmpleado = "planta"
+      
       const { data: emp } = await supabase
         .from("employees")
         .select("nombre, puesto, fecha_ingreso")
@@ -483,6 +485,7 @@ export function useDesempeno() {
         nombre = emp.nombre
         puesto = emp.puesto || ""
         fechaIngresoEmp = emp.fecha_ingreso ?? null
+        origenEmpleado = "planta"
       } else {
         const { data: ni } = await supabase
           .from("nuevo_ingreso")
@@ -493,10 +496,19 @@ export function useDesempeno() {
           nombre = ni.nombre
           puesto = ni.puesto || ""
           fechaIngresoEmp = ni.fecha_ingreso ?? null
+          origenEmpleado = "nuevo_ingreso"
         }
       }
 
       setFechaIngreso(fechaIngresoEmp)
+      setOrigen(origenEmpleado)
+
+      // Fetch incidencias para recalcular asistencia si es necesario
+      const { data: incidenciaData } = await supabase
+        .from("incidencias")
+        .select("categoria, valor, notas, mes")
+        .eq("numero_empleado", evalRow.numero_empleado)
+        .order("mes", { ascending: false })
 
       const result: DesempenoData = {
         numero_empleado: evalRow.numero_empleado,
@@ -517,12 +529,23 @@ export function useDesempeno() {
         fecha_revision: evalRow.fecha_revision || "",
         observaciones: evalRow.observaciones || "",
         calificacion_final: evalRow.calificacion_final || 0,
+        incidencias: (incidenciaData ?? []).map((item: Record<string, unknown>) => ({
+          categoria: (item.categoria as string) ?? "",
+          valor: (item.valor as number) ?? null,
+          notas: (item.notas as string) ?? null,
+          mes: (item.mes as string) ?? null,
+        })),
       }
 
       setData(result)
+      
+      // Retornar información del periodo para que el componente pueda actualizar el selector
+      const periodoStr = evalRow.periodo || ""
+      return { periodo: periodoStr, origen: origenEmpleado }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
       notify.error("Evaluación no encontrada")
+      return null
     } finally {
       setLoading(false)
     }

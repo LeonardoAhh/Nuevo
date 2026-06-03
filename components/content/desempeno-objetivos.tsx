@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Printer, Search, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, Printer, Search, Loader2, Trash2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -398,6 +398,21 @@ export default function DesempenoObjetivos() {
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatFecha(ev.created_at)}</p>
                 </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={`/desempeno?evalId=${ev.id}`}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        aria-label="Editar evaluación"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Editar</TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

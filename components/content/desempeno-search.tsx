@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Search, Printer, AlertCircle, Save, Loader2, Sparkles, ClipboardList, FolderOpen, X, Clock, Lock, CalendarX2 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -231,17 +233,20 @@ function ActionDivider() {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function DesempenoSearch() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [numeroBuscado, setNumeroBuscado] = useState("")
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales")
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(
     PERIODOS_DESEMPENO.semestrales[0]
   )
-  const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia } =
+  const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia, cargarEvaluacion } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
   const { totalEvals } = usePendingEvals(departamentosScope)
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [modoEdicion, setModoEdicion] = useState(false)
 
   // Typeahead + recientes
   const inputRef = useRef<HTMLInputElement>(null)
@@ -253,6 +258,31 @@ export default function DesempenoSearch() {
   // Gate de impresión: solo se puede imprimir una evaluación ya guardada y sin ediciones posteriores.
   const savedSnapshotRef = useRef<string | null>(null)
   const [guardado, setGuardado] = useState(false)
+
+  // Cargar evaluación desde URL si existe evalId
+  useEffect(() => {
+    const evalId = searchParams.get('evalId')
+    if (evalId && cargarEvaluacion) {
+      setModoEdicion(true)
+      cargarEvaluacion(evalId).then((result) => {
+        if (result?.periodo) {
+          // Determinar si es mensual o semestral según el periodo cargado
+          const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[]
+          const semestrales = PERIODOS_DESEMPENO.semestrales as readonly string[]
+          
+          if (mensuales.includes(result.periodo)) {
+            setPeriodoModo("mensuales")
+            setPeriodoSeleccionado(result.periodo as DesempenoPeriodo)
+          } else if (semestrales.includes(result.periodo)) {
+            setPeriodoModo("semestrales")
+            setPeriodoSeleccionado(result.periodo as DesempenoPeriodo)
+          }
+        }
+        // Limpiar URL después de cargar
+        router.replace('/desempeno', { scroll: false })
+      })
+    }
+  }, [searchParams, cargarEvaluacion, router])
 
   useEffect(() => {
     if (!isEvaluador) return
@@ -330,6 +360,7 @@ export default function DesempenoSearch() {
     if (!v) return
     setShowSugg(false)
     setActiveIdx(-1)
+    setModoEdicion(false) // Salir del modo edición al buscar nuevo empleado
     const res = await buscarEmpleado(v, departamentosScope, periodoSeleccionado)
     if (res) {
       // Auto-selecciona el modo/periodo correcto según el origen del empleado:
@@ -441,7 +472,14 @@ export default function DesempenoSearch() {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-base">Buscar empleado</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">Buscar empleado</CardTitle>
+                {modoEdicion && data && (
+                  <Badge variant="default" className="text-xs">
+                    Editando
+                  </Badge>
+                )}
+              </div>
 
               {/* ── Barra de acciones ────────────────────────────────────── */}
               <div className="flex items-center gap-1">
