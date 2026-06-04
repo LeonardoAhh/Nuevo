@@ -20,13 +20,15 @@ export interface EmpleadoCumplimiento {
   estatus: EstatusEntrega
   /** id de evaluaciones_desempeno si existe (auto) */
   evaluacionId: string | null
-  /** id de desempeno_entregas si existe (manual) */
+  /** id de desempeno_entregas si existe (manual o físico) */
   entregaId: string | null
   fechaEntrega: string | null
   notas: string | null
   calificacionFinal: number | null
   /** Motivo de no elegibilidad cuando estatus = "no_aplica". */
   motivoNoAplica: string | null
+  /** Indica que el formato impreso fue recibido físicamente. */
+  fisicoEntregado: boolean
 }
 
 export interface DeptCumplimiento {
@@ -67,6 +69,7 @@ interface EntregaRow {
   entregada: boolean
   fecha_entrega: string | null
   notas: string | null
+  fisico_entregado: boolean
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -98,7 +101,7 @@ export function useCumplimientoDesempeno(periodo: string) {
           .eq("periodo", periodo),
         supabase
           .from("desempeno_entregas")
-          .select("id, numero_empleado, entregada, fecha_entrega, notas")
+          .select("id, numero_empleado, entregada, fecha_entrega, notas, fisico_entregado")
           .eq("periodo", periodo),
       ])
 
@@ -155,6 +158,7 @@ export function useCumplimientoDesempeno(periodo: string) {
           notas: entregaRow?.notas ?? null,
           calificacionFinal: evalRow?.calificacion_final ?? null,
           motivoNoAplica,
+          fisicoEntregado: entregaRow?.fisico_entregado ?? false,
         })
       }
 
@@ -266,6 +270,30 @@ export function useCumplimientoDesempeno(periodo: string) {
     [periodo, cargar],
   )
 
+  const marcarFisico = useCallback(
+    async (numero: string, fisico: boolean) => {
+      if (!periodo) return
+      setSaving(true)
+      try {
+        const { error: upErr } = await supabase
+          .from("desempeno_entregas")
+          .upsert(
+            { numero_empleado: numero, periodo, fisico_entregado: fisico },
+            { onConflict: "numero_empleado,periodo" },
+          )
+        if (upErr) throw upErr
+        notify.success(fisico ? "Físico marcado como entregado" : "Marca de físico quitada")
+        await cargar()
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Error al actualizar entrega física"
+        notify.error(msg)
+      } finally {
+        setSaving(false)
+      }
+    },
+    [periodo, cargar],
+  )
+
   return {
     loading,
     saving,
@@ -274,5 +302,6 @@ export function useCumplimientoDesempeno(periodo: string) {
     resumen,
     cargar,
     marcarEntrega,
+    marcarFisico,
   }
 }
