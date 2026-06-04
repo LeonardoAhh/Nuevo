@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useCumplimientoDesempeno } from "@/lib/hooks/useCumplimientoDesempeno"
-import type { EmpleadoCumplimiento } from "@/lib/hooks/useCumplimientoDesempeno"
+import type { EmpleadoCumplimiento, DeptCumplimiento } from "@/lib/hooks/useCumplimientoDesempeno"
 import { useRole } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
@@ -67,8 +67,10 @@ const expandV = {
 
 // ─── Deadline config ─────────────────────────────────────────────────────────
 
-/** Ventana de entrega para cada periodo semestral. */
-const VENTANAS_ENTREGA: Record<string, { inicio: { mes: number; dia: number }; fin: { mes: number; dia: number }; anio: number }> = {
+const VENTANAS_ENTREGA: Record<
+  string,
+  { inicio: { mes: number; dia: number }; fin: { mes: number; dia: number }; anio: number }
+> = {
   "DIC-MAY 2026": { inicio: { mes: 6, dia: 1 }, fin: { mes: 6, dia: 15 }, anio: 2026 },
   "JUN-NOV 2026": { inicio: { mes: 1, dia: 1 }, fin: { mes: 1, dia: 15 }, anio: 2027 },
 }
@@ -115,116 +117,289 @@ function calcularDeadline(periodo: DesempenoPeriodo): DeadlineInfo | null {
   return { status, diasRestantes, diasTotales, fechaInicio, fechaFin, progreso }
 }
 
-// ─── Deadline hero ────────────────────────────────────────────────────────────
+// ─── Deadline hero — Diseño B ─────────────────────────────────────────────────
 
-const FORMATO_FECHA = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric" })
+const FORMATO_FECHA = new Intl.DateTimeFormat("es-MX", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+})
 
-function DeadlineHero({ periodo }: { periodo: DesempenoPeriodo }) {
+type StatusConfig = {
+  icon: React.ElementType
+  // Tokens semánticos de bg/border/text del contenedor principal
+  containerBg: string
+  containerBorder: string
+  // Color del número grande y etiqueta
+  accentText: string
+  // Color del divisor
+  dividerBorder: string
+  // Progress bar token
+  progressBar: string
+  // Badge bg/text
+  badgeBg: string
+  badgeText: string
+  label: string
+  desc: (d: DeadlineInfo) => string
+}
+
+const DEADLINE_CONFIG: Record<DeadlineStatus, StatusConfig> = {
+  en_plazo: {
+    icon: CalendarCheck2,
+    containerBg: "bg-[hsl(var(--success)/0.08)]",
+    containerBorder: "border-[hsl(var(--success)/0.25)]",
+    accentText: "text-[hsl(var(--success))]",
+    dividerBorder: "border-[hsl(var(--success)/0.2)]",
+    progressBar: "[&>div]:bg-[hsl(var(--success))]",
+    badgeBg: "bg-[hsl(var(--success)/0.12)]",
+    badgeText: "text-[hsl(var(--success))]",
+    label: "Dentro del plazo",
+    desc: (d) => `Ventana: `,
+  },
+  por_vencer: {
+    icon: CalendarClock,
+    containerBg: "bg-[hsl(var(--warning)/0.08)]",
+    containerBorder: "border-[hsl(var(--warning)/0.25)]",
+    accentText: "text-[hsl(var(--warning))]",
+    dividerBorder: "border-[hsl(var(--warning)/0.2)]",
+    progressBar: "[&>div]:bg-[hsl(var(--warning))]",
+    badgeBg: "bg-[hsl(var(--warning)/0.12)]",
+    badgeText: "text-[hsl(var(--warning))]",
+    label: "¡Por vencer!",
+    desc: (d) => `Ventana: `,
+  },
+  vencido: {
+    icon: CalendarX2,
+    containerBg: "bg-[hsl(var(--destructive)/0.07)]",
+    containerBorder: "border-[hsl(var(--destructive)/0.25)]",
+    accentText: "text-[hsl(var(--destructive))]",
+    dividerBorder: "border-[hsl(var(--destructive)/0.2)]",
+    progressBar: "[&>div]:bg-[hsl(var(--destructive))]",
+    badgeBg: "bg-[hsl(var(--destructive)/0.12)]",
+    badgeText: "text-[hsl(var(--destructive))]",
+    label: "Plazo vencido",
+    desc: () => `Ventana: `,
+  },
+  fuera_ventana: {
+    icon: CalendarRange,
+    containerBg: "bg-[hsl(var(--info)/0.08)]",
+    containerBorder: "border-[hsl(var(--info)/0.25)]",
+    accentText: "text-[hsl(var(--info))]",
+    dividerBorder: "border-[hsl(var(--info)/0.2)]",
+    progressBar: "[&>div]:bg-[hsl(var(--info))]",
+    badgeBg: "bg-[hsl(var(--info)/0.12)]",
+    badgeText: "text-[hsl(var(--info))]",
+    label: "Próximo periodo",
+    desc: () => `Ventana: `,
+  },
+}
+
+function DeadlineHero({
+  periodo,
+  totalPendientes,
+  totalEntregadas,
+}: {
+  periodo: DesempenoPeriodo
+  totalPendientes: number
+  totalEntregadas: number
+}) {
   const info = useMemo(() => calcularDeadline(periodo), [periodo])
-
   if (!info) return null
 
-  const config = {
-    en_plazo: {
-      icon: CalendarCheck2,
-      tokenBg: "bg-[hsl(var(--success)/0.12)]",
-      tokenBorder: "border-[hsl(var(--success)/0.3)]",
-      tokenText: "text-[hsl(var(--success))]",
-      tokenProgress: "[&>div]:bg-[hsl(var(--success))]",
-      label: "Dentro del plazo",
-      desc: (d: DeadlineInfo) => `Quedan ${d.diasRestantes} día${d.diasRestantes !== 1 ? "s" : ""} para entregar`,
-    },
-    por_vencer: {
-      icon: CalendarClock,
-      tokenBg: "bg-[hsl(var(--warning)/0.12)]",
-      tokenBorder: "border-[hsl(var(--warning)/0.3)]",
-      tokenText: "text-[hsl(var(--warning))]",
-      tokenProgress: "[&>div]:bg-[hsl(var(--warning))]",
-      label: "¡Por vencer!",
-      desc: (d: DeadlineInfo) => `Solo ${d.diasRestantes} día${d.diasRestantes !== 1 ? "s" : ""} restante${d.diasRestantes !== 1 ? "s" : ""}`,
-    },
-    vencido: {
-      icon: CalendarX2,
-      tokenBg: "bg-[hsl(var(--destructive)/0.1)]",
-      tokenBorder: "border-[hsl(var(--destructive)/0.3)]",
-      tokenText: "text-[hsl(var(--destructive))]",
-      tokenProgress: "[&>div]:bg-[hsl(var(--destructive))]",
-      label: "Plazo vencido",
-      desc: () => "El periodo de entrega ha cerrado",
-    },
-    fuera_ventana: {
-      icon: CalendarRange,
-      tokenBg: "bg-[hsl(var(--info)/0.1)]",
-      tokenBorder: "border-[hsl(var(--info)/0.3)]",
-      tokenText: "text-[hsl(var(--info))]",
-      tokenProgress: "[&>div]:bg-[hsl(var(--info))]",
-      label: "Próximo periodo de entrega",
-      desc: (d: DeadlineInfo) => `Inicia en ${d.diasRestantes} día${d.diasRestantes !== 1 ? "s" : ""}`,
-    },
-  } as const
-
-  const c = config[info.status]
+  const c = DEADLINE_CONFIG[info.status]
   const Icon = c.icon
-
-  const showCounter = info.status === "en_plazo" || info.status === "por_vencer"
-  const showFuera = info.status === "fuera_ventana"
+  const showDias = info.status === "en_plazo" || info.status === "por_vencer"
+  const diasNum = showDias
+    ? info.diasRestantes
+    : info.status === "fuera_ventana"
+      ? info.diasRestantes
+      : 0
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className={`rounded-xl border px-5 py-4 ${c.tokenBg} ${c.tokenBorder}`}
+      className={`rounded-xl border px-5 py-5 ${c.containerBg} ${c.containerBorder}`}
     >
+      {/* ── Layout principal ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-5">
 
-        {/* Contador grande */}
-        <div className={`flex items-end gap-3 shrink-0 border-b sm:border-b-0 sm:border-r pb-4 sm:pb-0 sm:pr-5 ${c.tokenBorder}`}>
-          <div className="flex flex-col items-center leading-none">
-            <span className={`text-7xl font-black tabular-nums tracking-tight ${c.tokenText}`}>
-              {showCounter
-                ? info.diasRestantes
-                : showFuera
-                  ? info.diasRestantes
-                  : "0"}
+        {/* Contador de días */}
+        <div
+          className={`flex flex-col items-center justify-center shrink-0 border-b sm:border-b-0 sm:border-r pb-4 sm:pb-0 sm:pr-5 ${c.dividerBorder} min-w-[80px]`}
+        >
+          <span className={`text-7xl font-black tabular-nums leading-none ${c.accentText}`}>
+            {diasNum}
+          </span>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <Icon className={`h-4 w-4 ${c.accentText} opacity-70`} />
+            <span className={`text-xs font-semibold uppercase tracking-widest ${c.accentText} opacity-80`}>
+              {info.status === "vencido" ? "cerrado" : "días"}
             </span>
-            <span className={`text-xs font-semibold uppercase tracking-widest mt-1 ${c.tokenText} opacity-80`}>
-              {showCounter || showFuera ? "días" : "plazo cerrado"}
-            </span>
-          </div>
-          <div className="mb-1.5">
-            <Icon className={`h-7 w-7 ${c.tokenText} opacity-70`} />
           </div>
         </div>
 
-        {/* Info + barra */}
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
+        {/* Etiqueta + barra de progreso */}
+        <div className="flex-1 min-w-0 flex flex-col gap-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className={`text-base font-bold ${c.tokenText}`}>{c.label}</p>
-            <Badge className={`${c.tokenBg} ${c.tokenText} border-0 text-[10px] font-semibold`}>
+            <p className={`text-lg font-bold leading-none ${c.accentText}`}>{c.label}</p>
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide ${c.badgeBg} ${c.badgeText}`}
+            >
               {periodo}
-            </Badge>
+            </span>
           </div>
-          <p className="text-[12px] text-muted-foreground">
-            {showFuera ? "El periodo de entrega aún no ha comenzado · " : "Ventana de entrega · "}
-            <span className="font-medium">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Ventana de entrega ·{" "}
+            <span className="font-semibold text-foreground">
               {FORMATO_FECHA.format(info.fechaInicio)} – {FORMATO_FECHA.format(info.fechaFin)}
             </span>
           </p>
-          <div className="flex flex-col gap-1 mt-0.5">
+          <div className="flex flex-col gap-1">
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>Día 1</span>
               <span>Día 15</span>
             </div>
             <Progress
-              value={showFuera ? 0 : info.progreso}
-              className={`h-2.5 ${c.tokenProgress}`}
+              value={info.status === "fuera_ventana" ? 0 : info.progreso}
+              className={`h-2 ${c.progressBar}`}
             />
+          </div>
+        </div>
+
+        {/* Totales globales — clave para directivos */}
+        <div
+          className={`flex sm:flex-col gap-5 sm:gap-3 border-t sm:border-t-0 sm:border-l pt-4 sm:pt-0 sm:pl-5 ${c.dividerBorder} shrink-0`}
+        >
+          <div className="flex flex-col items-center sm:items-end gap-0.5">
+            <span className="text-4xl font-black tabular-nums text-destructive leading-none">
+              {totalPendientes}
+            </span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+              Pendientes
+            </span>
+          </div>
+          <div className="flex flex-col items-center sm:items-end gap-0.5">
+            <span className="text-4xl font-black tabular-nums text-[hsl(var(--success))] leading-none">
+              {totalEntregadas}
+            </span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Evaluados
+            </span>
           </div>
         </div>
 
       </div>
     </motion.div>
+  )
+}
+
+// ─── Dept cards — Diseño B (borde izquierdo semáforo) ────────────────────────
+
+/** Retorna clases de borde izquierdo y porcentaje según avance. */
+function getSemaforo(pct: number): {
+  border: string
+  text: string
+  progressBar: string
+  pendText: string
+} {
+  if (pct >= 80)
+    return {
+      border: "border-l-[hsl(var(--success))]",
+      text: "text-[hsl(var(--success))]",
+      progressBar: "[&>div]:bg-[hsl(var(--success))]",
+      pendText: "text-[hsl(var(--success))]",
+    }
+  if (pct >= 40)
+    return {
+      border: "border-l-[hsl(var(--warning))]",
+      text: "text-[hsl(var(--warning))]",
+      progressBar: "[&>div]:bg-[hsl(var(--warning))]",
+      pendText: "text-[hsl(var(--warning))]",
+    }
+  return {
+    border: "border-l-[hsl(var(--destructive))]",
+    text: "text-[hsl(var(--destructive))]",
+    progressBar: "[&>div]:bg-[hsl(var(--destructive))]",
+    pendText: "text-[hsl(var(--destructive))]",
+  }
+}
+
+interface DeptCardsProps {
+  groups: DeptCumplimiento[]
+  loading: boolean
+}
+
+function DeptCards({ groups, loading }: DeptCardsProps) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-6 gap-3">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  const elegibles = groups.filter((g) => g.total > 0)
+  if (elegibles.length === 0) return null
+
+  return (
+    <div className="grid grid-cols-6 gap-3">
+      {elegibles.map((g) => {
+        const s = getSemaforo(g.porcentaje)
+        return (
+          <motion.div
+            key={g.departamento}
+            variants={cardV}
+            initial="hidden"
+            animate="show"
+            // borde izquierdo de 3px semáforo, resto 0.5px normal
+            className={`
+              rounded-lg bg-card
+              border border-border/60
+
+              p-4 flex flex-col justify-between gap-3
+            `}
+          >
+            {/* Nombre del departamento */}
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground truncate leading-snug">
+              {g.departamento}
+            </p>
+
+            {/* Porcentaje + pendientes */}
+            <div className="flex items-baseline justify-between gap-1">
+              <span className={`text-4xl font-black tabular-nums leading-none ${s.text}`}>
+                {g.porcentaje}%
+              </span>
+              {g.pendientes > 0 && (
+                <span className={`text-xs font-bold shrink-0 ${s.pendText}`}>
+                  {g.pendientes} pend.
+                </span>
+              )}
+            </div>
+
+            {/* Barra + conteo */}
+            <div className="space-y-1.5">
+              <Progress
+                value={g.porcentaje}
+                className={`h-1.5 bg-muted ${s.progressBar}`}
+                role="progressbar"
+                aria-valuenow={g.porcentaje}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Avance ${g.departamento}`}
+              />
+              <p className="text-[11px] text-muted-foreground font-medium">
+                <span className="text-foreground font-semibold">{g.entregadas}</span>
+                <span>/{g.total} evaluadas</span>
+              </p>
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -389,7 +564,7 @@ export default function DesempenoCumplimientoContent() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0">
             <CardTitle className="text-lg font-bold uppercase tracking-wide">
-                Cumplimiento de Evaluaciones
+              Cumplimiento de Evaluaciones
             </CardTitle>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -410,10 +585,17 @@ export default function DesempenoCumplimientoContent() {
       <CardContent className="pt-0 pb-6 px-4 sm:px-5 space-y-4">
         {isReadOnly && <ReadOnlyBanner />}
 
-        {/* Deadline hero */}
-        <DeadlineHero periodo={periodo} />
+        {/* Hero: deadline + totales globales */}
+        <DeadlineHero
+          periodo={periodo}
+          totalPendientes={resumen.pendientes}
+          totalEntregadas={resumen.entregadas}
+        />
 
-        {/* Period selector + filters */}
+        {/* Grid de tarjetas por departamento con semáforo */}
+        <DeptCards groups={deptGroups} loading={loading} />
+
+        {/* Selector de periodo + filtros */}
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <Select value={periodo} onValueChange={(v) => setPeriodo(v as DesempenoPeriodo)}>
             <SelectTrigger className="w-full sm:w-[200px]">
@@ -438,7 +620,10 @@ export default function DesempenoCumplimientoContent() {
             />
           </div>
 
-          <Select value={filterEstatus} onValueChange={(v) => setFilterEstatus(v as typeof filterEstatus)}>
+          <Select
+            value={filterEstatus}
+            onValueChange={(v) => setFilterEstatus(v as typeof filterEstatus)}
+          >
             <SelectTrigger className="w-full sm:w-[160px]">
               <Filter className="h-3.5 w-3.5 mr-1" />
               <SelectValue placeholder="Estatus" />
@@ -452,7 +637,7 @@ export default function DesempenoCumplimientoContent() {
           </Select>
         </div>
 
-        {/* Global KPI */}
+        {/* KPI global */}
         <Alert className="flex items-center gap-3 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0">
           <AlertDescription className="flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -461,7 +646,7 @@ export default function DesempenoCumplimientoContent() {
                 <div className="text-xs text-muted-foreground">
                   <div>
                     <span className="font-semibold text-foreground">{resumen.entregadas}</span> de{" "}
-                    <span className="font-semibold text-foreground">{resumen.total}</span> entregadas
+                    <span className="font-semibold text-foreground">{resumen.total}</span> evaluadas
                   </div>
                   <div>{resumen.pendientes} pendientes</div>
                 </div>
@@ -471,7 +656,7 @@ export default function DesempenoCumplimientoContent() {
           </AlertDescription>
         </Alert>
 
-        {/* Departments */}
+        {/* Lista de departamentos expandibles */}
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -488,6 +673,7 @@ export default function DesempenoCumplimientoContent() {
             {filteredGroups.map((g) => {
               const isExpanded = expandedDept[g.departamento] ?? false
               const ChevronIcon = isExpanded ? ChevronDown : ChevronRight
+              const s = getSemaforo(g.porcentaje)
               return (
                 <motion.div
                   key={g.departamento}
@@ -508,13 +694,18 @@ export default function DesempenoCumplimientoContent() {
                         {g.departamento}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {g.entregadas}/{g.total} entregadas · {g.pendientes} pendientes
+                        {g.entregadas}/{g.total} evaluadas · {g.pendientes} pendientes
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-sm font-bold tabular-nums">{g.porcentaje}%</span>
+                      <span className={`text-sm font-bold tabular-nums ${s.text}`}>
+                        {g.porcentaje}%
+                      </span>
                       <div className="w-16 sm:w-20">
-                        <Progress value={g.porcentaje} className="h-1.5" />
+                        <Progress
+                          value={g.porcentaje}
+                          className={`h-1.5 bg-muted ${s.progressBar}`}
+                        />
                       </div>
                     </div>
                   </button>
