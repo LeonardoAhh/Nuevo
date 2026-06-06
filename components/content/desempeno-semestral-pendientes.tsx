@@ -29,7 +29,7 @@ const itemV = {
 function EstadoBadge({ item }: { item: SemestralEmployee }) {
   if (item.estado === "completado") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--success)/0.15)] px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--success))]">
+      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success">
         <CheckCircle2 size={11} /> Completado · {item.calificacion}%
       </span>
     )
@@ -42,7 +42,7 @@ function EstadoBadge({ item }: { item: SemestralEmployee }) {
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--warning)/0.15)] px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--warning))]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning">
       <Clock3 size={11} /> Pendiente
     </span>
   )
@@ -63,7 +63,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
 
   return (
     <div className="space-y-4">
-      <Alert className="flex items-center justify-between gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-[hsl(var(--alert-info,var(--info)))] text-foreground border-border/60">
+      <Alert className="flex items-center justify-between gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-info/10 text-foreground border-border/60">
         <AlertDescription className="text-xs">
           Avance semestral · <strong>{periodo}</strong>
           {!loading && (

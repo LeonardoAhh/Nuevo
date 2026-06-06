@@ -489,7 +489,7 @@ export default function DesempenoPendientes({ onClose, filterDepartamentos, peri
 
         {/* Info banner — solo en vista mensual */}
         {vista === "mensual" && (
-          <Alert className="[&>svg~*]:pl-0 [&>svg]:static [&>svg]:translate-y-0 bg-[hsl(var(--alert-warning))] text-[hsl(var(--alert-warning-foreground))] border-[hsl(var(--alert-warning-border))]">
+          <Alert className="[&>svg~*]:pl-0 [&>svg]:static [&>svg]:translate-y-0 bg-warning/10 text-warning border-warning/30">
             <AlertDescription className="text-xs">
               Desglose por departamento de evaluaciones pendientes de nuevo ingreso
             </AlertDescription>

@@ -59,6 +59,7 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
         "turno",
         "fecha_ingreso",
         "termino_contrato",
+        "tipo_contrato",
         "rg_rec_048",
         "fecha_vencimiento_rg",
         "eval_1_fecha",
@@ -85,6 +86,7 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
         turno: string | null
         fecha_ingreso: string | null
         termino_contrato: string | null
+        tipo_contrato: string | null
         rg_rec_048: "Pendiente" | "Entregado"
         fecha_vencimiento_rg: string | null
         eval_1_fecha: string | null
@@ -109,6 +111,9 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
       let evalCount = 0
 
       for (const r of registrosScope) {
+        // Empleados con contrato indeterminado ya no requieren evaluaciones de nuevo ingreso
+        if (r.tipo_contrato === "Indeterminado") continue
+
         const evalDefs: [string | null, number | null, EvalPeriodo][] = [
           [r.eval_1_fecha, r.eval_1_calificacion, "1er Mes"],
           [r.eval_2_fecha, r.eval_2_calificacion, "2° Mes"],
