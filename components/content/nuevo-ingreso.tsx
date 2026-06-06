@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock,
-  Info, UserPlus, X, Upload,
+  Info, UserPlus, X, FileUp, Upload,
 } from "lucide-react"
 import { EvalBadge, ContratoTerminoBadge, EVAL_STATUS_META } from "@/components/content/shared/eval-badges"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,8 @@ import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
 import { BulkUpdateEmpleados } from "@/components/content/bulk-update-empleados"
+import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
+import { supabase } from "@/lib/supabase/client"
 
 
 export default function NuevoIngresoContent() {
@@ -41,7 +43,28 @@ export default function NuevoIngresoContent() {
   const [nuevoOpen, setNuevoOpen] = useState(false)
   const [createSuccess, setCreateSuccess] = useState(false)
 
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false)
+
+  // Map numero → nombre for bulk import preview (from both nuevo_ingreso + employees)
+  const [capEmployeeNames, setCapEmployeeNames] = useState<Record<string, string>>({})
+  const capFetched = useRef(false)
+  useEffect(() => {
+    if (capFetched.current) return
+    capFetched.current = true
+    supabase.from("employees").select("numero, nombre").not("numero", "is", null).then(({ data }) => {
+      if (!data) return
+      const map: Record<string, string> = {}
+      data.forEach((e: { numero: string | null; nombre: string }) => { if (e.numero) map[e.numero] = e.nombre })
+      setCapEmployeeNames(map)
+    })
+  }, [])
+
+  const employeeNames = useMemo(() => {
+    const map: Record<string, string> = { ...capEmployeeNames }
+    records.forEach(r => { if (r.numero) map[r.numero] = r.nombre })
+    return map
+  }, [records, capEmployeeNames])
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
@@ -155,6 +178,9 @@ export default function NuevoIngresoContent() {
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button size="icon" variant="outline" onClick={() => setBulkUpdateOpen(true)} aria-label="Actualización Masiva" title="Actualización Masiva">
                   <Upload className="h-4 w-4" />
+                </Button>
+                <Button size="icon" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
+                  <FileUp className="h-4 w-4" />
                 </Button>
                 <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
                   <UserPlus className="h-4 w-4" />
@@ -453,6 +479,12 @@ export default function NuevoIngresoContent() {
         onClose={() => { setEditOpen(false); setEditRecord(null) }}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      <IncidenciasBulkImport
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        employeeNames={employeeNames}
       />
 
       <BulkUpdateEmpleados
