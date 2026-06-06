@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Search, CheckCircle2, AlertCircle, Clock,
-  Info, UserPlus, X, CalendarDays, FileUp, Upload,
+  Info, UserPlus, X, Upload,
 } from "lucide-react"
 import { EvalBadge, ContratoTerminoBadge, EVAL_STATUS_META } from "@/components/content/shared/eval-badges"
 import { Button } from "@/components/ui/button"
@@ -20,10 +20,7 @@ import type { NuevoIngreso, NuevoIngresoUpdate } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
-import { IncidenciasModal } from "@/components/content/incidencias-modal"
-import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
 import { BulkUpdateEmpleados } from "@/components/content/bulk-update-empleados"
-import { supabase } from "@/lib/supabase/client"
 
 
 export default function NuevoIngresoContent() {
@@ -44,37 +41,7 @@ export default function NuevoIngresoContent() {
   const [nuevoOpen, setNuevoOpen] = useState(false)
   const [createSuccess, setCreateSuccess] = useState(false)
 
-  // Incidencias modal
-  const [incidenciasOpen, setIncidenciasOpen] = useState(false)
-  const [incidenciasEmpleado, setIncidenciasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
-  const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false)
-
-  const handleOpenIncidencias = (r: NuevoIngreso) => {
-    if (!r.numero) return
-    setIncidenciasEmpleado({ numero: r.numero, nombre: r.nombre })
-    setIncidenciasOpen(true)
-  }
-
-  // Map numero → nombre for bulk import preview (from both nuevo_ingreso + employees)
-  const [capEmployeeNames, setCapEmployeeNames] = useState<Record<string, string>>({})
-  const capFetched = useRef(false)
-  useEffect(() => {
-    if (capFetched.current) return
-    capFetched.current = true
-    supabase.from("employees").select("numero, nombre").not("numero", "is", null).then(({ data }) => {
-      if (!data) return
-      const map: Record<string, string> = {}
-      data.forEach((e: { numero: string | null; nombre: string }) => { if (e.numero) map[e.numero] = e.nombre })
-      setCapEmployeeNames(map)
-    })
-  }, [])
-
-  const employeeNames = useMemo(() => {
-    const map: Record<string, string> = { ...capEmployeeNames }
-    records.forEach(r => { if (r.numero) map[r.numero] = r.nombre })
-    return map
-  }, [records, capEmployeeNames])
 
   const load = useCallback(async () => {
     setRecords(await fetchAll())
@@ -188,9 +155,6 @@ export default function NuevoIngresoContent() {
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button size="icon" variant="outline" onClick={() => setBulkUpdateOpen(true)} aria-label="Actualización Masiva" title="Actualización Masiva">
                   <Upload className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
-                  <FileUp className="h-4 w-4" />
                 </Button>
                 <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
                   <UserPlus className="h-4 w-4" />
@@ -343,17 +307,6 @@ export default function NuevoIngresoContent() {
                             <span className="text-[11px] opacity-80">{formatDate(r.fecha_vencimiento_rg)}</span>
                           )}
                         </div>
-                        {/* Incidencias button */}
-                        {r.numero && (
-                          <button
-                            type="button"
-                            aria-label={`Incidencias de ${r.nombre}`}
-                            onClick={(e) => { e.stopPropagation(); handleOpenIncidencias(r) }}
-                            className="shrink-0 p-1.5 rounded-md bg-info/10 text-info hover:bg-info/20 transition-colors"
-                          >
-                            <CalendarDays className="h-4 w-4" />
-                          </button>
-                        )}
                       </div>
                       <div className="flex gap-2">
                         <div className="flex-1 flex flex-col items-center gap-0.5">
@@ -388,7 +341,6 @@ export default function NuevoIngresoContent() {
                       <TableHead className="hidden md:table-cell">Término</TableHead>
                       <TableHead className="hidden md:table-cell">Contrato</TableHead>
                       <TableHead className="text-center">RG-REC-048</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -457,19 +409,6 @@ export default function NuevoIngresoContent() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {r.numero && (
-                              <button
-                                type="button"
-                                aria-label={`Incidencias de ${r.nombre}`}
-                                onClick={(e) => { e.stopPropagation(); handleOpenIncidencias(r) }}
-                                className="p-1.5 rounded-md bg-info/10 text-info hover:bg-info/20 transition-colors"
-                                title="Incidencias"
-                              >
-                                <CalendarDays className="h-4 w-4" />
-                              </button>
-                            )}
-                          </TableCell>
                         </TableRow>
                       )
                     })}
@@ -507,17 +446,6 @@ export default function NuevoIngresoContent() {
         onCreate={handleCreate}
       />
 
-      {/* Dialog de edición */}
-      {/* Incidencias modal */}
-      {incidenciasEmpleado && (
-        <IncidenciasModal
-          open={incidenciasOpen}
-          onClose={() => { setIncidenciasOpen(false); setIncidenciasEmpleado(null) }}
-          numeroEmpleado={incidenciasEmpleado.numero}
-          nombreEmpleado={incidenciasEmpleado.nombre}
-        />
-      )}
-
       <EditEmployeeDialog
         record={editRecord}
         open={editOpen}
@@ -525,13 +453,6 @@ export default function NuevoIngresoContent() {
         onClose={() => { setEditOpen(false); setEditRecord(null) }}
         onSave={handleSave}
         onDelete={handleDelete}
-      />
-
-      {/* Bulk import incidencias */}
-      <IncidenciasBulkImport
-        open={bulkImportOpen}
-        onClose={() => setBulkImportOpen(false)}
-        employeeNames={employeeNames}
       />
 
       <BulkUpdateEmpleados
