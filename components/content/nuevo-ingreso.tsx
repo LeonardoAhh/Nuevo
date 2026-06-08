@@ -22,6 +22,7 @@ import { EditEmployeeDialog } from "@/components/content/edit-employee-dialog"
 import { CreateEmployeeDialog } from "@/components/content/create-employee-dialog"
 import { BulkUpdateEmpleados } from "@/components/content/bulk-update-empleados"
 import { IncidenciasBulkImport } from "@/components/content/incidencias-bulk-import"
+import { IngresosWhatsappModal } from "@/components/content/ingresos-whatsapp-modal"
 import { supabase } from "@/lib/supabase/client"
 
 
@@ -45,6 +46,7 @@ export default function NuevoIngresoContent() {
 
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false)
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false)
 
   // Map numero → nombre for bulk import preview (from both nuevo_ingreso + employees)
   const [capEmployeeNames, setCapEmployeeNames] = useState<Record<string, string>>({})
@@ -176,6 +178,11 @@ export default function NuevoIngresoContent() {
             </div>
             {!isReadOnly && (
               <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="icon" variant="outline" onClick={() => setWhatsappModalOpen(true)} aria-label="Compartir Pendientes" title="Compartir Pendientes por WhatsApp">
+                  <div className="flex relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square-share h-4 w-4"><path d="M21 12v3a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-6 6"/></svg>
+                  </div>
+                </Button>
                 <Button size="icon" variant="outline" onClick={() => setBulkUpdateOpen(true)} aria-label="Actualización Masiva" title="Actualización Masiva">
                   <Upload className="h-4 w-4" />
                 </Button>
@@ -491,6 +498,11 @@ export default function NuevoIngresoContent() {
         open={bulkUpdateOpen}
         onClose={() => setBulkUpdateOpen(false)}
         onUpdated={load}
+      />
+
+      <IngresosWhatsappModal 
+        open={whatsappModalOpen}
+        onClose={() => setWhatsappModalOpen(false)}
       />
     </>
   )
