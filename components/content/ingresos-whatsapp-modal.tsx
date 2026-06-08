@@ -68,7 +68,7 @@ const TEMPLATES: Record<TemplateType, { title: string; footer: string }> = {
   },
   urgent: {
     title: "*URGENTE: Evaluaciones Vencidas / Pendientes*",
-    footer: "_Por favor atender esto el dia de hoy sin falta._",
+    footer: "_Por favor atender esto el día de hoy sin falta._",
   },
 }
 
@@ -134,10 +134,10 @@ function downloadAsTxt(content: string, filename: string): void {
 function formatEvalStatus(diasDiff: number): string {
   if (diasDiff < 0) {
     const n = Math.abs(diasDiff)
-    return `Vencida hace ${n} ${n === 1 ? "dia" : "dias"}`
+    return `Vencida hace ${n} ${n === 1 ? "día" : "días"}`
   }
   if (diasDiff === 0) return "Vence hoy"
-  return `Pendiente (vence en ${diasDiff} ${diasDiff === 1 ? "dia" : "dias"})`
+  return `Pendiente (vence en ${diasDiff} ${diasDiff === 1 ? "día" : "días"})`
 }
 
 // ─── Message Builders ─────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ function buildWhatsAppMessage({
   }
 
   lines.push(t.footer)
-  lines.push("_Capacitacion_")
+  lines.push("_Capacitación_")
 
   return lines.join("\n")
 }
