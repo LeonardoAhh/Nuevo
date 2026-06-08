@@ -128,10 +128,11 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
           pendingEvals.push({ periodo, fecha, diasDiff: diff })
         }
 
-        if (pendingEvals.length === 0) continue
-        evalCount += pendingEvals.length
-
         const rgDiff = r.fecha_vencimiento_rg ? daysFromToday(r.fecha_vencimiento_rg) : null
+        const isRgPending = r.rg_rec_048 === "Pendiente"
+
+        if (pendingEvals.length === 0 && !isRgPending) continue
+        evalCount += pendingEvals.length
 
         employeeMap.set(r.id, {
           dbId: r.id,

@@ -88,6 +88,8 @@ export interface Employee {
   turno?: string
   departamento?: string
   evals: EvalItem[]
+  rg_rec_048?: "Pendiente" | "Entregado"
+  rg_dias_diff?: number | null
 }
 
 export interface DeptGroup {
@@ -104,12 +106,16 @@ function getPeriodoLabel(fechaIso: string): string {
   return `${MESES_ES[prevMonth - 1]} - ${MESES_ES[month - 1]}`
 }
 
-/** Cuenta cuántas evaluaciones tienen diasDiff < 0 (vencidas) en una lista de empleados. */
-function countVencidas(employees: Employee[]): number {
-  return employees.reduce(
-    (acc, emp) => acc + emp.evals.filter((e) => e.diasDiff < 0).length,
-    0
-  )
+/** Cuenta cuántas evaluaciones/documentos tienen diasDiff < 0 (vencidas) en una lista de empleados. */
+function countVencidas(employees: Employee[], topic: "evals" | "rg"): number {
+  if (topic === "evals") {
+    return employees.reduce(
+      (acc, emp) => acc + emp.evals.filter((e) => e.diasDiff < 0).length,
+      0
+    )
+  } else {
+    return employees.filter(emp => emp.rg_rec_048 === "Pendiente" && typeof emp.rg_dias_diff === 'number' && emp.rg_dias_diff < 0).length
+  }
 }
 
 /** Descarga un string como archivo .txt */
@@ -148,6 +154,7 @@ interface BuildMessageOptions {
   filterDept: string
   filterTurno: string
   template: TemplateType
+  topic: "evals" | "rg"
 }
 
 /**
@@ -159,13 +166,15 @@ function buildWhatsAppMessage({
   filterDept,
   filterTurno,
   template,
+  topic,
 }: BuildMessageOptions): string {
   if (employees.length === 0) {
     return "No hay evaluaciones pendientes para los filtros seleccionados."
   }
 
   const t = TEMPLATES[template]
-  const lines: string[] = [t.title, ""]
+  const titleText = topic === "rg" ? t.title.replace(/Evaluaciones/g, "Documentos RG-REC-048") : t.title
+  const lines: string[] = [titleText, ""]
 
   if (filterDept !== "all") lines.push(`*Departamento:* ${filterDept}`)
   if (filterTurno !== "all") lines.push(`*Turno:* ${filterTurno}`)
@@ -187,9 +196,13 @@ function buildWhatsAppMessage({
       const numStr = emp.numero ? ` (#${emp.numero})` : ""
       lines.push(`*${emp.nombre}*${numStr}`)
 
-      for (const ev of emp.evals) {
-        const periodLabel = getPeriodoLabel(ev.fecha)
-        lines.push(`  - ${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}`)
+      if (topic === "evals") {
+        for (const ev of emp.evals) {
+          const periodLabel = getPeriodoLabel(ev.fecha)
+          lines.push(`  - ${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}`)
+        }
+      } else if (topic === "rg" && emp.rg_rec_048 === "Pendiente") {
+        lines.push(`  - RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff || 0)}`)
       }
 
       lines.push("")
@@ -211,13 +224,15 @@ function buildEmailMessage({
   filterDept,
   filterTurno,
   template,
+  topic,
 }: BuildMessageOptions): string {
   if (employees.length === 0) {
     return "<p>No hay evaluaciones pendientes para los filtros seleccionados.</p>"
   }
 
   const t = TEMPLATES[template]
-  const titleHtml = t.title.replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+  const titleText = topic === "rg" ? t.title.replace(/Evaluaciones/g, "Documentación RG-REC-048") : t.title
+  const titleHtml = titleText.replace(/\*(.*?)\*/g, "<strong>$1</strong>")
   const footerHtml = t.footer.replace(/_(.*?)_/g, "<em>$1</em>")
 
   let html = `<div style="font-family: sans-serif; color: #333; line-height: 1.5;">`
@@ -247,10 +262,16 @@ function buildEmailMessage({
       html += `<li style="margin-bottom: 12px;">`
       html += `<strong style="font-size: 14px;">${emp.nombre}</strong><span style="color: #666; font-size: 13px;">${numStr}</span>`
       html += `<ul style="margin-top: 4px; margin-bottom: 0; padding-left: 20px; color: #444; font-size: 14px;">`
-      for (const ev of emp.evals) {
-        const periodLabel = getPeriodoLabel(ev.fecha)
-        html += `<li style="margin-bottom: 2px;">${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}</li>`
+      
+      if (topic === "evals") {
+        for (const ev of emp.evals) {
+          const periodLabel = getPeriodoLabel(ev.fecha)
+          html += `<li style="margin-bottom: 2px;">${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}</li>`
+        }
+      } else if (topic === "rg" && emp.rg_rec_048 === "Pendiente") {
+        html += `<li style="margin-bottom: 2px;">RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff || 0)}</li>`
       }
+      
       html += `</ul></li>`
     }
     html += `</ul>`
@@ -391,14 +412,18 @@ interface EmployeeRowProps {
   employee: Employee
   selected: boolean
   onToggle: (id: string) => void
+  topic: "evals" | "rg"
 }
 
 const EmployeeRow = memo(function EmployeeRow({
   employee,
   selected,
   onToggle,
+  topic,
 }: EmployeeRowProps) {
-  const hasVencida = employee.evals.some((e) => e.diasDiff < 0)
+  const hasVencida = topic === "evals" 
+    ? employee.evals.some((e) => e.diasDiff < 0)
+    : (typeof employee.rg_dias_diff === 'number' && employee.rg_dias_diff < 0)
 
   return (
     <label
@@ -446,6 +471,7 @@ interface EmployeeSelectionPanelProps {
   selectedIds: Set<string>
   onToggle: (id: string) => void
   onToggleAll: () => void
+  topic: "evals" | "rg"
 }
 
 const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
@@ -453,6 +479,7 @@ const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
   selectedIds,
   onToggle,
   onToggleAll,
+  topic,
 }: EmployeeSelectionPanelProps) {
   const allSelected = employees.every((e) => selectedIds.has(e.dbId))
   const someSelected = employees.some((e) => selectedIds.has(e.dbId))
@@ -489,6 +516,7 @@ const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
             employee={emp}
             selected={selectedIds.has(emp.dbId)}
             onToggle={onToggle}
+            topic={topic}
           />
         ))}
       </div>
@@ -580,6 +608,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   const [urgencySort, setUrgencySort] = useState(false)
   const [template, setTemplate] = useState<TemplateType>("formal")
   const [format, setFormat] = useState<"whatsapp" | "email">("whatsapp")
+  const [topic, setTopic] = useState<"evals" | "rg">("evals")
 
   // ── Feature: Modo selección individual ─────────────────────────────────────
   const [selectionMode, setSelectionMode] = useState(false)
@@ -602,6 +631,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
       setUrgencySort(false)
       setTemplate("formal")
       setFormat("whatsapp")
+      setTopic("evals")
       setCopied(false)
       setSelectionMode(false)
       setSelectedIds(new Set())
@@ -632,9 +662,12 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     for (const group of deptGroups) {
       if (filterDept !== "all" && group.departamento !== filterDept) continue
 
-      let matched = group.items.filter(
-        (emp) => filterTurno === "all" || emp.turno === filterTurno
-      )
+      let matched = group.items.filter((emp) => {
+        if (filterTurno !== "all" && emp.turno !== filterTurno) return false
+        if (topic === "evals" && emp.evals.length === 0) return false
+        if (topic === "rg" && emp.rg_rec_048 !== "Pendiente") return false
+        return true
+      })
 
       if (q) {
         matched = matched.filter(
@@ -649,8 +682,8 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
 
     if (urgencySort) {
       result.sort((a, b) => {
-        const aVencida = a.evals.some((e) => e.diasDiff < 0)
-        const bVencida = b.evals.some((e) => e.diasDiff < 0)
+        const aVencida = topic === "evals" ? a.evals.some((e) => e.diasDiff < 0) : (typeof a.rg_dias_diff === 'number' && a.rg_dias_diff < 0)
+        const bVencida = topic === "evals" ? b.evals.some((e) => e.diasDiff < 0) : (typeof b.rg_dias_diff === 'number' && b.rg_dias_diff < 0)
         if (aVencida && !bVencida) return -1
         if (!aVencida && bVencida) return 1
         return 0
@@ -658,7 +691,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     }
 
     return result
-  }, [deptGroups, filterDept, filterTurno, searchQuery, urgencySort])
+  }, [deptGroups, filterDept, filterTurno, searchQuery, urgencySort, topic])
 
   // Sincronizar selectedIds cuando cambia filteredEmployees:
   // al activar el modo selección pre-seleccionamos todos los visibles
@@ -675,8 +708,8 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   }, [selectionMode, filteredEmployees, selectedIds])
 
   const vencidasCount = useMemo(
-    () => countVencidas(activeEmployees),
-    [activeEmployees]
+    () => countVencidas(activeEmployees, topic),
+    [activeEmployees, topic]
   )
 
   // ── Texto generado ────────────────────────────────────────────────────────
@@ -687,8 +720,9 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         filterDept,
         filterTurno,
         template,
+        topic,
       }),
-    [activeEmployees, filterDept, filterTurno, template]
+    [activeEmployees, filterDept, filterTurno, template, topic]
   )
 
   const summaryHtml = useMemo(
@@ -698,8 +732,9 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         filterDept,
         filterTurno,
         template,
+        topic,
       }),
-    [activeEmployees, filterDept, filterTurno, template]
+    [activeEmployees, filterDept, filterTurno, template, topic]
   )
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -809,10 +844,31 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
 
       <div className="p-4 sm:p-6 space-y-5 flex flex-col min-h-0 flex-1">
         
+        {/* Selector de Tema */}
+        <div className="bg-muted p-1 rounded-lg">
+          <Tabs value={topic} onValueChange={(v) => setTopic(v as "evals" | "rg")} className="w-full">
+            <TabsList className="w-full grid grid-cols-2 bg-transparent h-auto p-0">
+              <TabsTrigger 
+                value="evals" 
+                className="rounded-md py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                Evaluaciones
+              </TabsTrigger>
+              <TabsTrigger 
+                value="rg" 
+                className="rounded-md py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                RG-REC-048
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Selector de Formato */}
         <Tabs value={format} onValueChange={(v) => setFormat(v as "whatsapp" | "email")} className="w-full">
-          <TabsList className="w-full sm:w-auto grid grid-cols-2">
-            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-            <TabsTrigger value="email">Correo Electrónico</TabsTrigger>
+          <TabsList className="w-full sm:w-auto flex h-9">
+            <TabsTrigger value="whatsapp" className="flex-1 sm:flex-none">WhatsApp</TabsTrigger>
+            <TabsTrigger value="email" className="flex-1 sm:flex-none">Correo Electrónico</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -949,6 +1005,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
                   selectedIds={selectedIds}
                   onToggle={handleToggleEmployee}
                   onToggleAll={handleToggleAll}
+                  topic={topic}
                 />
               )}
             </div>
