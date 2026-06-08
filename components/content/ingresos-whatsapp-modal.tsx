@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { notify } from "@/lib/notify"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
@@ -201,6 +202,67 @@ function buildWhatsAppMessage({
   return lines.join("\n")
 }
 
+/**
+ * Construye el mensaje de Correo a partir de la lista de empleados filtrada.
+ * Retorna un string con formato HTML enriquecido.
+ */
+function buildEmailMessage({
+  employees,
+  filterDept,
+  filterTurno,
+  template,
+}: BuildMessageOptions): string {
+  if (employees.length === 0) {
+    return "<p>No hay evaluaciones pendientes para los filtros seleccionados.</p>"
+  }
+
+  const t = TEMPLATES[template]
+  const titleHtml = t.title.replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+  const footerHtml = t.footer.replace(/_(.*?)_/g, "<em>$1</em>")
+
+  let html = `<div style="font-family: sans-serif; color: #333; line-height: 1.5;">`
+  html += `<p style="font-size: 16px; margin-bottom: 16px;">${titleHtml}</p>`
+
+  if (filterDept !== "all" || filterTurno !== "all") {
+    html += `<p style="margin-bottom: 16px; font-size: 14px; color: #555;">`
+    if (filterDept !== "all") html += `<strong>Departamento:</strong> ${filterDept}<br>`
+    if (filterTurno !== "all") html += `<strong>Turno:</strong> ${filterTurno}`
+    html += `</p>`
+  }
+
+  const byDept = employees.reduce<Record<string, Employee[]>>((acc, emp) => {
+    const dept = emp.departamento ?? "Sin departamento"
+    ;(acc[dept] ??= []).push(emp)
+    return acc
+  }, {})
+
+  for (const [dept, emps] of Object.entries(byDept)) {
+    if (filterDept === "all") {
+      html += `<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 15px; color: #111;">${dept}</h3>`
+    }
+
+    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px;">`
+    for (const emp of emps) {
+      const numStr = emp.numero ? ` (#${emp.numero})` : ""
+      html += `<li style="margin-bottom: 12px;">`
+      html += `<strong style="font-size: 14px;">${emp.nombre}</strong><span style="color: #666; font-size: 13px;">${numStr}</span>`
+      html += `<ul style="margin-top: 4px; margin-bottom: 0; padding-left: 20px; color: #444; font-size: 14px;">`
+      for (const ev of emp.evals) {
+        const periodLabel = getPeriodoLabel(ev.fecha)
+        html += `<li style="margin-bottom: 2px;">${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}</li>`
+      }
+      html += `</ul></li>`
+    }
+    html += `</ul>`
+  }
+
+  html += `<p style="margin-top: 20px; font-size: 14px;">${footerHtml}<br>`
+  html += `<em>Capacitación</em></p>`
+  html += `</div>`
+
+  return html
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 interface FilterFieldProps {
@@ -260,6 +322,7 @@ interface StatsBarProps {
   vencidasCount: number
   charCount: number
   isOverLimit: boolean
+  format: "whatsapp" | "email"
 }
 
 const StatsBar = memo(function StatsBar({
@@ -267,6 +330,7 @@ const StatsBar = memo(function StatsBar({
   vencidasCount,
   charCount,
   isOverLimit,
+  format,
 }: StatsBarProps) {
   return (
     <div
@@ -284,14 +348,16 @@ const StatsBar = memo(function StatsBar({
 
       <div className="flex items-center gap-2 flex-wrap">
         {/* Contador de caracteres */}
-        <Badge
-          variant={isOverLimit ? "destructive" : "secondary"}
-          className="text-[10px] font-mono flex items-center gap-1"
-          title="Limite de caracteres de WhatsApp (~65,000)"
-        >
-          {isOverLimit && <AlertCircle className="h-3 w-3" aria-hidden="true" />}
-          {charCount.toLocaleString("es-MX")} / {WA_CHAR_LIMIT.toLocaleString("es-MX")}
-        </Badge>
+        {format === "whatsapp" && (
+          <Badge
+            variant={isOverLimit ? "destructive" : "secondary"}
+            className="text-[10px] font-mono flex items-center gap-1"
+            title="Limite de caracteres de WhatsApp (~65,000)"
+          >
+            {isOverLimit && <AlertCircle className="h-3 w-3" aria-hidden="true" />}
+            {charCount.toLocaleString("es-MX")} / {WA_CHAR_LIMIT.toLocaleString("es-MX")}
+          </Badge>
+        )}
 
         {/* Empleados incluidos */}
         <Badge
@@ -435,6 +501,8 @@ const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
 interface PreviewAreaProps {
   loading: boolean
   text: string
+  htmlContent?: string
+  format: "whatsapp" | "email"
   employeeCount: number
   vencidasCount: number
 }
@@ -442,11 +510,13 @@ interface PreviewAreaProps {
 const PreviewArea = memo(function PreviewArea({
   loading,
   text,
+  htmlContent,
+  format,
   employeeCount,
   vencidasCount,
 }: PreviewAreaProps) {
-  const chars = text.length
-  const isOverLimit = chars > WA_CHAR_LIMIT
+  const chars = format === "whatsapp" ? text.length : (htmlContent || "").length
+  const isOverLimit = format === "whatsapp" && chars > WA_CHAR_LIMIT
 
   return (
     <section
@@ -458,6 +528,7 @@ const PreviewArea = memo(function PreviewArea({
         vencidasCount={vencidasCount}
         charCount={chars}
         isOverLimit={isOverLimit}
+        format={format}
       />
 
       <div
@@ -465,7 +536,12 @@ const PreviewArea = memo(function PreviewArea({
         aria-live="polite"
         aria-atomic="true"
         aria-label="Contenido del mensaje generado"
-        className="p-4 overflow-y-auto whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground scrollbar-thin max-h-[clamp(35vh,40vh,300px)]"
+        className={cn(
+          "p-4 overflow-y-auto scrollbar-thin max-h-[clamp(35vh,40vh,300px)]",
+          format === "whatsapp" 
+            ? "whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground" 
+            : "bg-background rounded-b-md border-t"
+        )}
       >
         {loading ? (
           <div className="space-y-2" aria-label="Cargando evaluaciones" role="status">
@@ -474,8 +550,10 @@ const PreviewArea = memo(function PreviewArea({
             <Skeleton className="h-4 w-5/6" />
             <Skeleton className="h-4 w-2/3" />
           </div>
-        ) : (
+        ) : format === "whatsapp" ? (
           text
+        ) : (
+          <div dangerouslySetInnerHTML={{ __html: htmlContent || "" }} />
         )}
       </div>
     </section>
@@ -501,6 +579,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   const [searchQuery, setSearchQuery] = useState("")
   const [urgencySort, setUrgencySort] = useState(false)
   const [template, setTemplate] = useState<TemplateType>("formal")
+  const [format, setFormat] = useState<"whatsapp" | "email">("whatsapp")
 
   // ── Feature: Modo selección individual ─────────────────────────────────────
   const [selectionMode, setSelectionMode] = useState(false)
@@ -522,6 +601,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
       setSearchQuery("")
       setUrgencySort(false)
       setTemplate("formal")
+      setFormat("whatsapp")
       setCopied(false)
       setSelectionMode(false)
       setSelectedIds(new Set())
@@ -611,11 +691,40 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     [activeEmployees, filterDept, filterTurno, template]
   )
 
+  const summaryHtml = useMemo(
+    () =>
+      buildEmailMessage({
+        employees: activeEmployees,
+        filterDept,
+        filterTurno,
+        template,
+      }),
+    [activeEmployees, filterDept, filterTurno, template]
+  )
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(summaryText)
+      if (format === "email") {
+        const blobHtml = new Blob([summaryHtml], { type: "text/html" })
+        const plainFallback = summaryHtml
+          .replace(/<br\s*[\/]?>/gi, "\n")
+          .replace(/<\/p>|<\/li>|<\/h[1-6]>/gi, "\n\n")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\n\s*\n/g, "\n\n")
+          .trim()
+        
+        const blobText = new Blob([plainFallback], { type: "text/plain" })
+        const item = new ClipboardItem({
+          "text/html": blobHtml,
+          "text/plain": blobText,
+        })
+        await navigator.clipboard.write([item])
+      } else {
+        await navigator.clipboard.writeText(summaryText)
+      }
+
       setCopied(true)
       notify.success("Texto copiado al portapapeles")
       const timer = setTimeout(() => setCopied(false), COPY_RESET_DELAY_MS)
@@ -624,7 +733,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     } catch {
       notify.error("No se pudo copiar el texto")
     }
-  }, [summaryText])
+  }, [summaryText, summaryHtml, format])
 
   const handleWhatsApp = useCallback(() => {
     if (summaryText.length > WA_CHAR_LIMIT) {
@@ -675,7 +784,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         subtitle="Resumen de evaluaciones de nuevo ingreso"
         saving={false}
         onClose={onClose}
-        secondaryAction={{
+        secondaryAction={format === "whatsapp" ? {
           label: copied ? "Copiado" : "Copiar",
           icon: copied ? (
             <Check className="h-4 w-4" aria-hidden="true" />
@@ -685,14 +794,27 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           onClick: handleCopy,
           variant: "outline",
           iconOnly: true,
-        }}
-        onConfirm={handleWhatsApp}
+        } : undefined}
+        onConfirm={format === "whatsapp" ? handleWhatsApp : handleCopy}
         confirmIcon={
-          <MessageSquareShare className="h-4 w-4" aria-hidden="true" />
+          format === "whatsapp" ? (
+            <MessageSquareShare className="h-4 w-4" aria-hidden="true" />
+          ) : copied ? (
+            <Check className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Copy className="h-4 w-4" aria-hidden="true" />
+          )
         }
       />
 
       <div className="p-4 sm:p-6 space-y-5 flex flex-col min-h-0 flex-1">
+        
+        <Tabs value={format} onValueChange={(v) => setFormat(v as "whatsapp" | "email")} className="w-full">
+          <TabsList className="w-full sm:w-auto grid grid-cols-2">
+            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+            <TabsTrigger value="email">Correo Electrónico</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* ── Busqueda y Plantilla ──────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -837,6 +959,8 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         <PreviewArea
           loading={loading}
           text={summaryText}
+          htmlContent={summaryHtml}
+          format={format}
           employeeCount={activeEmployees.length}
           vencidasCount={vencidasCount}
         />
