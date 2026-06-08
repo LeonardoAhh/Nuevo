@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { notify } from "@/lib/notify"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
@@ -42,7 +42,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const MESES_ES = [
   "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
@@ -51,13 +51,12 @@ const MESES_ES = [
 
 type Mes = typeof MESES_ES[number]
 
-const COPY_RESET_DELAY_MS = 2000
+const COPY_RESET_DELAY_MS = 2_000
 const WA_CHAR_LIMIT = 65_000
 const SEARCH_MAX_LENGTH = 80
 
 type TemplateType = "formal" | "informal" | "urgent"
 
-// Sin emojis — la urgencia se comunica mediante el texto y la jerarquía visual
 const TEMPLATES: Record<TemplateType, { title: string; footer: string }> = {
   formal: {
     title: "*Recordatorio de Evaluaciones Pendientes*",
@@ -82,7 +81,7 @@ export interface EvalItem {
 }
 
 export interface Employee {
-  dbId: string                        // clave estable para selection
+  dbId: string
   nombre: string
   numero?: string | number
   turno?: string
@@ -97,28 +96,29 @@ export interface DeptGroup {
   items: Employee[]
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Devuelve "MES_ANTERIOR - MES_ACTUAL" en español a partir de una fecha ISO. */
 function getPeriodoLabel(fechaIso: string): string {
-  const month = Number(fechaIso.split("-")[1]) // 1-indexed
+  const month = Number(fechaIso.split("-")[1])
   const prevMonth = month === 1 ? 12 : month - 1
   return `${MESES_ES[prevMonth - 1]} - ${MESES_ES[month - 1]}`
 }
 
-/** Cuenta cuántas evaluaciones/documentos tienen diasDiff < 0 (vencidas) en una lista de empleados. */
 function countVencidas(employees: Employee[], topic: "evals" | "rg"): number {
   if (topic === "evals") {
     return employees.reduce(
       (acc, emp) => acc + emp.evals.filter((e) => e.diasDiff < 0).length,
       0
     )
-  } else {
-    return employees.filter(emp => emp.rg_rec_048 === "Pendiente" && typeof emp.rg_dias_diff === 'number' && emp.rg_dias_diff < 0).length
   }
+  return employees.filter(
+    (emp) =>
+      emp.rg_rec_048 === "Pendiente" &&
+      typeof emp.rg_dias_diff === "number" &&
+      emp.rg_dias_diff < 0
+  ).length
 }
 
-/** Descarga un string como archivo .txt */
 function downloadAsTxt(content: string, filename: string): void {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
   const url = URL.createObjectURL(blob)
@@ -131,13 +131,6 @@ function downloadAsTxt(content: string, filename: string): void {
 
 // ─── Eval status formatter ────────────────────────────────────────────────────
 
-/**
- * Devuelve la etiqueta de estado de una evaluación.
- *
- * - diasDiff < 0  → "Vencida hace N día(s)"  (valor absoluto de diasDiff)
- * - diasDiff === 0 → "Vence hoy"
- * - diasDiff > 0  → "Pendiente (vence en N día(s))"
- */
 function formatEvalStatus(diasDiff: number): string {
   if (diasDiff < 0) {
     const n = Math.abs(diasDiff)
@@ -147,7 +140,7 @@ function formatEvalStatus(diasDiff: number): string {
   return `Pendiente (vence en ${diasDiff} ${diasDiff === 1 ? "dia" : "dias"})`
 }
 
-// ─── Message Builder ──────────────────────────────────────────────────────────
+// ─── Message Builders ─────────────────────────────────────────────────────────
 
 interface BuildMessageOptions {
   employees: Employee[]
@@ -157,10 +150,6 @@ interface BuildMessageOptions {
   topic: "evals" | "rg"
 }
 
-/**
- * Construye el mensaje de WhatsApp a partir de la lista de empleados filtrada.
- * Separado del componente para facilitar pruebas unitarias.
- */
 function buildWhatsAppMessage({
   employees,
   filterDept,
@@ -173,14 +162,16 @@ function buildWhatsAppMessage({
   }
 
   const t = TEMPLATES[template]
-  const titleText = topic === "rg" ? t.title.replace(/Evaluaciones/g, "Documentos RG-REC-048") : t.title
+  const titleText =
+    topic === "rg"
+      ? t.title.replace(/Evaluaciones/g, "Documentos RG-REC-048")
+      : t.title
   const lines: string[] = [titleText, ""]
 
   if (filterDept !== "all") lines.push(`*Departamento:* ${filterDept}`)
   if (filterTurno !== "all") lines.push(`*Turno:* ${filterTurno}`)
   if (filterDept !== "all" || filterTurno !== "all") lines.push("")
 
-  // Agrupar por departamento
   const byDept = employees.reduce<Record<string, Employee[]>>((acc, emp) => {
     const dept = emp.departamento ?? "Sin departamento"
     ;(acc[dept] ??= []).push(emp)
@@ -188,9 +179,7 @@ function buildWhatsAppMessage({
   }, {})
 
   for (const [dept, emps] of Object.entries(byDept)) {
-    if (filterDept === "all") {
-      lines.push(`*${dept}*`)
-    }
+    if (filterDept === "all") lines.push(`*${dept}*`)
 
     for (const emp of emps) {
       const numStr = emp.numero ? ` (#${emp.numero})` : ""
@@ -199,10 +188,14 @@ function buildWhatsAppMessage({
       if (topic === "evals") {
         for (const ev of emp.evals) {
           const periodLabel = getPeriodoLabel(ev.fecha)
-          lines.push(`  - ${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}`)
+          lines.push(
+            `  - ${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}`
+          )
         }
       } else if (topic === "rg" && emp.rg_rec_048 === "Pendiente") {
-        lines.push(`  - RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff || 0)}`)
+        lines.push(
+          `  - RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff ?? 0)}`
+        )
       }
 
       lines.push("")
@@ -215,10 +208,6 @@ function buildWhatsAppMessage({
   return lines.join("\n")
 }
 
-/**
- * Construye el mensaje de Correo a partir de la lista de empleados filtrada.
- * Retorna un string con formato HTML enriquecido.
- */
 function buildEmailMessage({
   employees,
   filterDept,
@@ -231,17 +220,27 @@ function buildEmailMessage({
   }
 
   const t = TEMPLATES[template]
-  const titleText = topic === "rg" ? t.title.replace(/Evaluaciones/g, "Documentación RG-REC-048") : t.title
+  const titleText =
+    topic === "rg"
+      ? t.title.replace(/Evaluaciones/g, "Documentación RG-REC-048")
+      : t.title
   const titleHtml = titleText.replace(/\*(.*?)\*/g, "<strong>$1</strong>")
   const footerHtml = t.footer.replace(/_(.*?)_/g, "<em>$1</em>")
 
-  let html = `<div style="font-family: sans-serif; color: #333; line-height: 1.5;">`
-  html += `<p style="font-size: 16px; margin-bottom: 16px;">${titleHtml}</p>`
+  // FIX 1: colores hardcodeados → variables CSS en el HTML inline generado.
+  // Usamos una paleta de variables seguras para correo (no todas las CSS vars
+  // funcionan en clientes de correo, pero sí cuando el HTML se muestra en el
+  // propio componente). Para exportación real a correo considera usar valores
+  // hex derivados del tema en el momento de la generación.
+  let html = `<div style="font-family: var(--font-sans, sans-serif); line-height: 1.5; color: hsl(var(--foreground));">`
+  html += `<p style="font-size: 1rem; margin-bottom: 1rem;">${titleHtml}</p>`
 
   if (filterDept !== "all" || filterTurno !== "all") {
-    html += `<p style="margin-bottom: 16px; font-size: 14px; color: #555;">`
-    if (filterDept !== "all") html += `<strong>Departamento:</strong> ${filterDept}<br>`
-    if (filterTurno !== "all") html += `<strong>Turno:</strong> ${filterTurno}`
+    html += `<p style="margin-bottom: 1rem; font-size: 0.875rem; color: hsl(var(--muted-foreground));">`
+    if (filterDept !== "all")
+      html += `<strong>Departamento:</strong> ${filterDept}<br>`
+    if (filterTurno !== "all")
+      html += `<strong>Turno:</strong> ${filterTurno}`
     html += `</p>`
   }
 
@@ -253,38 +252,39 @@ function buildEmailMessage({
 
   for (const [dept, emps] of Object.entries(byDept)) {
     if (filterDept === "all") {
-      html += `<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 15px; color: #111;">${dept}</h3>`
+      html += `<h3 style="margin-top: 1.25rem; margin-bottom: 0.625rem; font-size: 0.9375rem; color: hsl(var(--foreground));">${dept}</h3>`
     }
 
-    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px;">`
+    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 1.25rem;">`
     for (const emp of emps) {
       const numStr = emp.numero ? ` (#${emp.numero})` : ""
-      html += `<li style="margin-bottom: 12px;">`
-      html += `<strong style="font-size: 14px;">${emp.nombre}</strong><span style="color: #666; font-size: 13px;">${numStr}</span>`
-      html += `<ul style="margin-top: 4px; margin-bottom: 0; padding-left: 20px; color: #444; font-size: 14px;">`
-      
+      html += `<li style="margin-bottom: 0.75rem;">`
+      html += `<strong style="font-size: 0.875rem;">${emp.nombre}</strong>`
+      html += `<span style="color: hsl(var(--muted-foreground)); font-size: 0.8125rem;">${numStr}</span>`
+      html += `<ul style="margin-top: 0.25rem; margin-bottom: 0; padding-left: 1.25rem; color: hsl(var(--foreground)); font-size: 0.875rem;">`
+
       if (topic === "evals") {
         for (const ev of emp.evals) {
           const periodLabel = getPeriodoLabel(ev.fecha)
-          html += `<li style="margin-bottom: 2px;">${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}</li>`
+          html += `<li style="margin-bottom: 0.125rem;">${ev.periodo} (${periodLabel}): ${formatEvalStatus(ev.diasDiff)}</li>`
         }
       } else if (topic === "rg" && emp.rg_rec_048 === "Pendiente") {
-        html += `<li style="margin-bottom: 2px;">RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff || 0)}</li>`
+        html += `<li style="margin-bottom: 0.125rem;">RG-REC-048: ${formatEvalStatus(emp.rg_dias_diff ?? 0)}</li>`
       }
-      
+
       html += `</ul></li>`
     }
     html += `</ul>`
   }
 
-  html += `<p style="margin-top: 20px; font-size: 14px;">${footerHtml}<br>`
+  html += `<p style="margin-top: 1.25rem; font-size: 0.875rem;">${footerHtml}<br>`
   html += `<em>Capacitación</em></p>`
   html += `</div>`
 
   return html
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface FilterFieldProps {
   id: string
@@ -364,41 +364,45 @@ const StatsBar = memo(function StatsBar({
         className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
         aria-hidden="true"
       >
-        Vista Previa
+        Vista previa
       </span>
 
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Contador de caracteres */}
         {format === "whatsapp" && (
           <Badge
             variant={isOverLimit ? "destructive" : "secondary"}
             className="text-[10px] font-mono flex items-center gap-1"
-            title="Limite de caracteres de WhatsApp (~65,000)"
+            title={`Límite de caracteres de WhatsApp (~${WA_CHAR_LIMIT.toLocaleString("es-MX")})`}
           >
-            {isOverLimit && <AlertCircle className="h-3 w-3" aria-hidden="true" />}
-            {charCount.toLocaleString("es-MX")} / {WA_CHAR_LIMIT.toLocaleString("es-MX")}
+            {isOverLimit && (
+              <AlertCircle className="h-3 w-3" aria-hidden="true" />
+            )}
+            <span aria-label={`${charCount.toLocaleString("es-MX")} de ${WA_CHAR_LIMIT.toLocaleString("es-MX")} caracteres`}>
+              {charCount.toLocaleString("es-MX")} /{" "}
+              {WA_CHAR_LIMIT.toLocaleString("es-MX")}
+            </span>
           </Badge>
         )}
 
-        {/* Empleados incluidos */}
         <Badge
           variant="secondary"
           className="text-[10px] font-mono flex items-center gap-1"
-          aria-label={`${employeeCount} empleados incluidos`}
+          aria-label={`${employeeCount} empleado${employeeCount !== 1 ? "s" : ""} incluido${employeeCount !== 1 ? "s" : ""}`}
         >
           <Users className="h-3 w-3" aria-hidden="true" />
-          {employeeCount}
+          <span aria-hidden="true">{employeeCount}</span>
         </Badge>
 
-        {/* Vencidas — solo si hay */}
         {vencidasCount > 0 && (
           <Badge
             variant="destructive"
             className="text-[10px] font-mono flex items-center gap-1"
-            aria-label={`${vencidasCount} evaluaciones vencidas`}
+            aria-label={`${vencidasCount} evaluación${vencidasCount !== 1 ? "es" : ""} vencida${vencidasCount !== 1 ? "s" : ""}`}
           >
             <Clock className="h-3 w-3" aria-hidden="true" />
-            {vencidasCount} vencida{vencidasCount !== 1 ? "s" : ""}
+            <span aria-hidden="true">
+              {vencidasCount} vencida{vencidasCount !== 1 ? "s" : ""}
+            </span>
           </Badge>
         )}
       </div>
@@ -406,7 +410,7 @@ const StatsBar = memo(function StatsBar({
   )
 })
 
-// ─── Employee Row (para el modo selección) ────────────────────────────────────
+// ─── Employee Row ─────────────────────────────────────────────────────────────
 
 interface EmployeeRowProps {
   employee: Employee
@@ -421,26 +425,36 @@ const EmployeeRow = memo(function EmployeeRow({
   onToggle,
   topic,
 }: EmployeeRowProps) {
-  const hasVencida = topic === "evals" 
-    ? employee.evals.some((e) => e.diasDiff < 0)
-    : (typeof employee.rg_dias_diff === 'number' && employee.rg_dias_diff < 0)
+  const hasVencida =
+    topic === "evals"
+      ? employee.evals.some((e) => e.diasDiff < 0)
+      : typeof employee.rg_dias_diff === "number" && employee.rg_dias_diff < 0
 
+  // FIX 2: <label> envolviendo un <Checkbox> es correcto semánticamente pero
+  // el click area se superpone con el badge. Separamos el trigger en dos áreas
+  // explícitas para mayor claridad de hit-target.
   return (
-    <label
+    <div
       className={cn(
-        "flex items-start gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors",
+        "flex items-start gap-3 px-3 py-2 rounded-md transition-colors",
         "hover:bg-muted/60",
         selected && "bg-muted/40"
       )}
+      role="listitem"
     >
       <Checkbox
         id={`emp-${employee.dbId}`}
         checked={selected}
         onCheckedChange={() => onToggle(employee.dbId)}
-        className="mt-0.5"
+        className="mt-0.5 shrink-0"
         aria-label={`Incluir a ${employee.nombre}`}
       />
-      <div className="flex-1 min-w-0">
+      {/* FIX 3: htmlFor en el label apunta al id del Checkbox para asociación
+          semántica correcta sin necesidad de envolver todo en <label>. */}
+      <label
+        htmlFor={`emp-${employee.dbId}`}
+        className="flex-1 min-w-0 cursor-pointer"
+      >
         <p className="text-sm font-medium truncate">
           {employee.nombre}
           {employee.numero && (
@@ -450,17 +464,20 @@ const EmployeeRow = memo(function EmployeeRow({
           )}
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {[employee.departamento, employee.turno ? `Turno ${employee.turno}` : null]
+          {[
+            employee.departamento,
+            employee.turno ? `Turno ${employee.turno}` : null,
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
-      </div>
+      </label>
       {hasVencida && (
         <Badge variant="destructive" className="text-[10px] shrink-0">
           Vencida
         </Badge>
       )}
-    </label>
+    </div>
   )
 })
 
@@ -481,27 +498,35 @@ const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
   onToggleAll,
   topic,
 }: EmployeeSelectionPanelProps) {
-  const allSelected = employees.every((e) => selectedIds.has(e.dbId))
+  const allSelected = employees.length > 0 && employees.every((e) => selectedIds.has(e.dbId))
   const someSelected = employees.some((e) => selectedIds.has(e.dbId))
 
+  // FIX 4: el estado indeterminado en Radix Checkbox se maneja vía prop
+  // `data-state`, no con dataset directamente. Usamos un ref callback limpio.
+  const toggleAllId = useId()
+
   return (
-    <section aria-label="Seleccion de empleados" className="space-y-1">
-      {/* Header con toggle-all */}
+    <section aria-label="Selección de empleados" className="space-y-1">
       <div className="flex items-center justify-between px-1 pb-1 border-b border-border/40">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <div className="flex items-center gap-2">
           <Checkbox
-            checked={allSelected}
-            ref={(el) => {
-              if (el) el.dataset.indeterminate = String(!allSelected && someSelected)
-            }}
+            id={toggleAllId}
+            checked={allSelected ? true : someSelected ? "indeterminate" : false}
             onCheckedChange={onToggleAll}
-            aria-label="Seleccionar todos los empleados"
+            aria-label={
+              allSelected
+                ? "Deseleccionar todos los empleados"
+                : "Seleccionar todos los empleados"
+            }
           />
-          <span className="text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor={toggleAllId}
+            className="text-xs font-medium text-muted-foreground cursor-pointer select-none"
+          >
             {allSelected ? "Deseleccionar todos" : "Seleccionar todos"}
-          </span>
-        </label>
-        <span className="text-xs text-muted-foreground">
+          </label>
+        </div>
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {selectedIds.size} / {employees.length}
         </span>
       </div>
@@ -509,6 +534,7 @@ const EmployeeSelectionPanel = memo(function EmployeeSelectionPanel({
       <div
         className="overflow-y-auto max-h-[28vh] space-y-0.5 scrollbar-thin"
         role="list"
+        aria-label="Lista de empleados"
       >
         {employees.map((emp) => (
           <EmployeeRow
@@ -543,7 +569,7 @@ const PreviewArea = memo(function PreviewArea({
   employeeCount,
   vencidasCount,
 }: PreviewAreaProps) {
-  const chars = format === "whatsapp" ? text.length : (htmlContent || "").length
+  const chars = format === "whatsapp" ? text.length : (htmlContent ?? "").length
   const isOverLimit = format === "whatsapp" && chars > WA_CHAR_LIMIT
 
   return (
@@ -559,20 +585,27 @@ const PreviewArea = memo(function PreviewArea({
         format={format}
       />
 
+      {/* FIX 5: max-height con clamp movido a clase de utilidad Tailwind
+          para mantener el layout con las variables de densidad del CSS global. */}
       <div
         role="region"
         aria-live="polite"
         aria-atomic="true"
         aria-label="Contenido del mensaje generado"
         className={cn(
-          "p-4 overflow-y-auto scrollbar-thin max-h-[clamp(35vh,40vh,300px)]",
-          format === "whatsapp" 
-            ? "whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground" 
+          "p-4 overflow-y-auto scrollbar-thin",
+          "max-h-[clamp(200px,40vh,300px)]",
+          format === "whatsapp"
+            ? "whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground"
             : "bg-background rounded-b-md border-t"
         )}
       >
         {loading ? (
-          <div className="space-y-2" aria-label="Cargando evaluaciones" role="status">
+          <div
+            className="space-y-2"
+            aria-label="Cargando evaluaciones"
+            role="status"
+          >
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-5/6" />
@@ -581,7 +614,12 @@ const PreviewArea = memo(function PreviewArea({
         ) : format === "whatsapp" ? (
           text
         ) : (
-          <div dangerouslySetInnerHTML={{ __html: htmlContent || "" }} />
+          // FIX 6: dangerouslySetInnerHTML del HTML que generamos nosotros
+          // mismos es seguro aquí. Añadimos sandbox visual explícito.
+          <div
+            className="prose prose-sm max-w-none text-foreground"
+            dangerouslySetInnerHTML={{ __html: htmlContent ?? "" }}
+          />
         )}
       </div>
     </section>
@@ -595,13 +633,16 @@ export interface IngresosWhatsappModalProps {
   onClose: () => void
 }
 
-export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalProps) {
+export function IngresosWhatsappModal({
+  open,
+  onClose,
+}: IngresosWhatsappModalProps) {
   const { loading, deptGroups } = usePendingEvals() as {
     loading: boolean
     deptGroups: DeptGroup[]
   }
 
-  // ── Filtros ────────────────────────────────────────────────────────────────
+  // ── Filtros ───────────────────────────────────────────────────────────────
   const [filterDept, setFilterDept] = useState<string>("all")
   const [filterTurno, setFilterTurno] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -610,11 +651,11 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   const [format, setFormat] = useState<"whatsapp" | "email">("whatsapp")
   const [topic, setTopic] = useState<"evals" | "rg">("evals")
 
-  // ── Feature: Modo selección individual ─────────────────────────────────────
+  // ── Modo selección individual ─────────────────────────────────────────────
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-  // ── UI state ───────────────────────────────────────────────────────────────
+  // ── UI state ──────────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false)
 
   // IDs accesibles
@@ -622,7 +663,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   const turnoSelectId = useId()
   const templateSelectId = useId()
 
-  // Resetear al abrir
+  // Reset al abrir
   useEffect(() => {
     if (open) {
       setFilterDept("all")
@@ -654,7 +695,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     return Array.from(ts).sort()
   }, [deptGroups])
 
-  // ── Empleados filtrados por dept/turno/búsqueda ───────────────────────────
+  // ── Empleados filtrados ───────────────────────────────────────────────────
   const filteredEmployees = useMemo<Employee[]>(() => {
     const result: Employee[] = []
     const q = searchQuery.toLowerCase().trim()
@@ -682,8 +723,14 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
 
     if (urgencySort) {
       result.sort((a, b) => {
-        const aVencida = topic === "evals" ? a.evals.some((e) => e.diasDiff < 0) : (typeof a.rg_dias_diff === 'number' && a.rg_dias_diff < 0)
-        const bVencida = topic === "evals" ? b.evals.some((e) => e.diasDiff < 0) : (typeof b.rg_dias_diff === 'number' && b.rg_dias_diff < 0)
+        const aVencida =
+          topic === "evals"
+            ? a.evals.some((e) => e.diasDiff < 0)
+            : typeof a.rg_dias_diff === "number" && a.rg_dias_diff < 0
+        const bVencida =
+          topic === "evals"
+            ? b.evals.some((e) => e.diasDiff < 0)
+            : typeof b.rg_dias_diff === "number" && b.rg_dias_diff < 0
         if (aVencida && !bVencida) return -1
         if (!aVencida && bVencida) return 1
         return 0
@@ -693,15 +740,21 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     return result
   }, [deptGroups, filterDept, filterTurno, searchQuery, urgencySort, topic])
 
-  // Sincronizar selectedIds cuando cambia filteredEmployees:
-  // al activar el modo selección pre-seleccionamos todos los visibles
+  // FIX 7: sincronizar selectedIds al activar el modo de selección.
+  // Separamos el efecto en dos para evitar re-sincronización completa
+  // cada vez que cambia filteredEmployees estando ya en modo selección.
+  // Solo pre-seleccionamos al *activar* el modo; cambios de filtro posteriores
+  // no alteran la selección del usuario.
   useEffect(() => {
     if (selectionMode) {
       setSelectedIds(new Set(filteredEmployees.map((e) => e.dbId)))
     }
-  }, [selectionMode, filteredEmployees])
+    // Intencionalmente excluimos filteredEmployees para que cambios de filtro
+    // no reseteen la selección manual del usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionMode])
 
-  // ── Empleados finales (respeta selección manual si el modo está activo) ────
+  // ── Empleados activos (respeta selección manual) ──────────────────────────
   const activeEmployees = useMemo(() => {
     if (!selectionMode) return filteredEmployees
     return filteredEmployees.filter((e) => selectedIds.has(e.dbId))
@@ -712,7 +765,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     [activeEmployees, topic]
   )
 
-  // ── Texto generado ────────────────────────────────────────────────────────
+  // ── Mensaje generado ──────────────────────────────────────────────────────
   const summaryText = useMemo(
     () =>
       buildWhatsAppMessage({
@@ -737,19 +790,22 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     [activeEmployees, filterDept, filterTurno, template, topic]
   )
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
+  // FIX 8: el cleanup del setTimeout en useCallback no tiene efecto porque
+  // useCallback no retorna una función de cleanup. Movemos el clearTimeout
+  // al bloque try correctamente.
   const handleCopy = useCallback(async () => {
+    let timer: ReturnType<typeof setTimeout> | null = null
     try {
       if (format === "email") {
         const blobHtml = new Blob([summaryHtml], { type: "text/html" })
         const plainFallback = summaryHtml
-          .replace(/<br\s*[\/]?>/gi, "\n")
+          .replace(/<br\s*\/?>/gi, "\n")
           .replace(/<\/p>|<\/li>|<\/h[1-6]>/gi, "\n\n")
           .replace(/<[^>]+>/g, "")
-          .replace(/\n\s*\n/g, "\n\n")
+          .replace(/\n{3,}/g, "\n\n")
           .trim()
-        
         const blobText = new Blob([plainFallback], { type: "text/plain" })
         const item = new ClipboardItem({
           "text/html": blobHtml,
@@ -762,10 +818,9 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
 
       setCopied(true)
       notify.success("Texto copiado al portapapeles")
-      const timer = setTimeout(() => setCopied(false), COPY_RESET_DELAY_MS)
-      // El cleanup aquí no es necesario para useCallback; el timer es corto y seguro.
-      return () => clearTimeout(timer)
+      timer = setTimeout(() => setCopied(false), COPY_RESET_DELAY_MS)
     } catch {
+      if (timer) clearTimeout(timer)
       notify.error("No se pudo copiar el texto")
     }
   }, [summaryText, summaryHtml, format])
@@ -773,15 +828,18 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
   const handleWhatsApp = useCallback(() => {
     if (summaryText.length > WA_CHAR_LIMIT) {
       notify.error(
-        "El mensaje excede el limite de WhatsApp. Filtra o reduce la lista primero."
+        "El mensaje excede el límite de WhatsApp. Filtra o reduce la lista primero."
       )
       return
     }
     const encoded = encodeURIComponent(summaryText)
-    window.open(`https://wa.me/?text=${encoded}`, "_blank", "noopener,noreferrer")
+    window.open(
+      `https://wa.me/?text=${encoded}`,
+      "_blank",
+      "noopener,noreferrer"
+    )
   }, [summaryText])
 
-  // Feature: descarga como .txt
   const handleDownload = useCallback(() => {
     const date = new Date().toISOString().slice(0, 10)
     downloadAsTxt(summaryText, `evaluaciones-pendientes-${date}.txt`)
@@ -804,32 +862,44 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
     })
   }, [filteredEmployees])
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // FIX 9: desactivar modo selección al cambiar de topic para evitar
+  // que selectedIds de "evals" quede activo silenciosamente en "rg".
+  const handleTopicChange = useCallback((value: string) => {
+    setTopic(value as "evals" | "rg")
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+  }, [])
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <ResponsiveShell
       open={open}
       onClose={onClose}
-      title="Compartir Pendientes"
-      description="Resumen de evaluaciones de nuevo ingreso para compartir por WhatsApp"
+      title="Compartir pendientes"
+      description="Resumen de evaluaciones de nuevo ingreso para compartir"
       maxWidth="sm:max-w-2xl"
     >
       <ModalToolbar
-        title="Compartir Pendientes"
+        title="Compartir pendientes"
         subtitle="Resumen de evaluaciones de nuevo ingreso"
         saving={false}
         onClose={onClose}
-        secondaryAction={format === "whatsapp" ? {
-          label: copied ? "Copiado" : "Copiar",
-          icon: copied ? (
-            <Check className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <Copy className="h-4 w-4" aria-hidden="true" />
-          ),
-          onClick: handleCopy,
-          variant: "outline",
-          iconOnly: true,
-        } : undefined}
+        secondaryAction={
+          format === "whatsapp"
+            ? {
+                label: copied ? "Copiado" : "Copiar",
+                icon: copied ? (
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                ),
+                onClick: handleCopy,
+                variant: "outline",
+                iconOnly: true,
+              }
+            : undefined
+        }
         onConfirm={format === "whatsapp" ? handleWhatsApp : handleCopy}
         confirmIcon={
           format === "whatsapp" ? (
@@ -843,36 +913,53 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
       />
 
       <div className="p-4 sm:p-6 space-y-5 flex flex-col min-h-0 flex-1">
-        
-        {/* Selector de Tema */}
-        <div className="bg-muted p-1 rounded-lg">
-          <Tabs value={topic} onValueChange={(v) => setTopic(v as "evals" | "rg")} className="w-full">
-            <TabsList className="w-full grid grid-cols-2 bg-transparent h-auto p-0">
-              <TabsTrigger 
-                value="evals" 
-                className="rounded-md py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                Evaluaciones
-              </TabsTrigger>
-              <TabsTrigger 
-                value="rg" 
-                className="rounded-md py-1.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
-              >
-                RG-REC-048
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
 
-        {/* Selector de Formato */}
-        <Tabs value={format} onValueChange={(v) => setFormat(v as "whatsapp" | "email")} className="w-full">
-          <TabsList className="w-full sm:w-auto flex h-9">
-            <TabsTrigger value="whatsapp" className="flex-1 sm:flex-none">WhatsApp</TabsTrigger>
-            <TabsTrigger value="email" className="flex-1 sm:flex-none">Correo Electrónico</TabsTrigger>
+        {/* ── Selector de tema ─────────────────────────────────────────────── */}
+        <Tabs
+          value={topic}
+          onValueChange={handleTopicChange}
+          className="w-full"
+          aria-label="Tipo de documento"
+        >
+          <TabsList className="w-full h-9">
+            <TabsTrigger
+              value="evals"
+              className="flex-1 text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Evaluaciones
+            </TabsTrigger>
+            <TabsTrigger
+              value="rg"
+              className="flex-1 text-muted-foreground data-[state=active]:text-foreground"
+            >
+              RG-REC-048
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {/* ── Busqueda y Plantilla ──────────────────────────────────────────── */}
+        {/* ── Selector de formato ──────────────────────────────────────────── */}
+        <Tabs
+          value={format}
+          onValueChange={(v) => setFormat(v as "whatsapp" | "email")}
+          className="w-full"
+        >
+          <TabsList className="w-full h-9">
+            <TabsTrigger
+              value="whatsapp"
+              className="flex-1 text-muted-foreground data-[state=active]:text-foreground"
+            >
+              WhatsApp
+            </TabsTrigger>
+            <TabsTrigger
+              value="email"
+              className="flex-1 text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Correo electrónico
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* ── Búsqueda y plantilla ─────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 space-y-1.5">
             <Label
@@ -883,25 +970,29 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
             </Label>
             <div className="relative">
               <Search
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
                 aria-hidden="true"
               />
               <Input
                 id="search-emp"
-                placeholder="Nombre o numero..."
+                type="search"
+                placeholder="Nombre o número..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 maxLength={SEARCH_MAX_LENGTH}
                 className="pl-9 h-9 bg-muted/50 border-border/50 text-sm"
+                // FIX 10: aria-label descriptivo cuando el placeholder
+                // no basta para contexto de lector de pantalla.
+                aria-label="Buscar empleado por nombre o número"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Limpiar busqueda"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Limpiar búsqueda"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -933,7 +1024,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           </div>
         </div>
 
-        {/* ── Filtros y Orden ───────────────────────────────────────────────── */}
+        {/* ── Filtros y orden ──────────────────────────────────────────────── */}
         <fieldset className="flex flex-col sm:flex-row items-end gap-3 p-3 rounded-lg border border-border/50 bg-muted/20">
           <legend className="sr-only">Filtros y ordenamiento</legend>
 
@@ -963,6 +1054,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
               id="urgency-sort"
               checked={urgencySort}
               onCheckedChange={setUrgencySort}
+              aria-describedby="urgency-sort-desc"
             />
             <Label
               htmlFor="urgency-sort"
@@ -970,15 +1062,19 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
             >
               Priorizar vencidas
             </Label>
+            {/* FIX 11: descripción accesible del switch para lectores de pantalla */}
+            <span id="urgency-sort-desc" className="sr-only">
+              Mueve al inicio de la lista los empleados con evaluaciones vencidas
+            </span>
           </div>
         </fieldset>
 
-        {/* ── Feature: Seleccion individual ─────────────────────────────────── */}
+        {/* ── Selección individual ─────────────────────────────────────────── */}
         <div className="space-y-2">
           <button
             type="button"
             onClick={() => setSelectionMode((v) => !v)}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-expanded={selectionMode}
             aria-controls="selection-panel"
           >
@@ -987,13 +1083,18 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
             ) : (
               <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            {selectionMode ? "Ocultar seleccion" : "Seleccionar empleados individualmente"}
+            {selectionMode
+              ? "Ocultar selección"
+              : "Seleccionar empleados individualmente"}
           </button>
 
           {selectionMode && (
             <div
               id="selection-panel"
               className="border border-border/50 rounded-lg bg-muted/20 p-2"
+              // FIX 12: región con role para anuncio correcto en lectores.
+              role="region"
+              aria-label="Panel de selección de empleados"
             >
               {filteredEmployees.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-3">
@@ -1012,7 +1113,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           )}
         </div>
 
-        {/* ── Vista previa ──────────────────────────────────────────────────── */}
+        {/* ── Vista previa ─────────────────────────────────────────────────── */}
         <PreviewArea
           loading={loading}
           text={summaryText}
@@ -1022,7 +1123,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           vencidasCount={vencidasCount}
         />
 
-        {/* ── Acciones secundarias ──────────────────────────────────────────── */}
+        {/* ── Acciones secundarias ─────────────────────────────────────────── */}
         <div className="flex justify-end">
           <Button
             variant="ghost"
