@@ -115,7 +115,7 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
       termino_contrato: addDays(fi, 90),
       tipo_contrato: form.tipo_contrato,
       rg_rec_048: 'Pendiente',
-      fecha_vencimiento_rg: addDays(fi, 91),
+      fecha_vencimiento_rg: form.departamento.trim().toUpperCase() === 'CALIDAD' ? addDays(fi, 7) : addDays(fi, 60),
     }
     await onCreate(data)
   }
