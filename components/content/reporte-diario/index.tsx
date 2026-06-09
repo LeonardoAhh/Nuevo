@@ -170,6 +170,12 @@ export default function ReporteDiarioContent() {
             personal_real: area.personal_autorizado,
         }))
 
+        let dayOfWeek = -1
+        if (currentMonth && selectedDay) {
+            const [year, month] = currentMonth.split("-").map(Number)
+            dayOfWeek = new Date(year, month - 1, parseInt(selectedDay, 10)).getDay()
+        }
+
         return AREA_STAFF.map((area) => {
             const rowsInArea = selectedRows.filter(
                 (row) => row.area === area.area && ALLOWED_PUESTOS.has(row.puesto || ""),
@@ -178,14 +184,33 @@ export default function ReporteDiarioContent() {
             const personal_incidencia = rowsInArea.reduce((count, row) => {
                 return count + (isIncidence(row.days[selectedDay]) ? 1 : 0)
             }, 0)
+            
+            let is_descanso = false
+            if (dayOfWeek !== -1) {
+                if (area.area === "PRODUCCIÓN 1ER. TURNO" && dayOfWeek === 0) {
+                    // Domingo
+                    is_descanso = true
+                } else if (area.area === "PRODUCCIÓN 2o. TURNO" && (dayOfWeek === 1 || dayOfWeek === 2)) {
+                    // Lunes y Martes
+                    is_descanso = true
+                } else if (area.area === "PRODUCCIÓN 3ER. TURNO" && (dayOfWeek === 3 || dayOfWeek === 4)) {
+                    // Miércoles y Jueves
+                    is_descanso = true
+                } else if (area.area === "PRODUCCIÓN 4o. TURNO" && (dayOfWeek === 5 || dayOfWeek === 6)) {
+                    // Viernes y Sábado
+                    is_descanso = true
+                }
+            }
+
             return {
                 ...area,
                 personal_activo,
                 personal_incidencia,
                 personal_real: Math.max(personal_activo - personal_incidencia, 0),
+                is_descanso,
             }
         })
-    }, [selectedRows, selectedDay])
+    }, [selectedRows, selectedDay, currentMonth])
 
     const selectedAreaDetailRows = useMemo(() => {
         if (!selectedDay || !selectedArea) return []

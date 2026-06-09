@@ -12,6 +12,7 @@ export type AreaStaffSummary = AreaStaffDefinition & {
     personal_activo: number
     personal_incidencia: number
     personal_real: number
+    is_descanso?: boolean
 }
 
 export interface ReporteRow {

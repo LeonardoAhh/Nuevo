@@ -25,6 +25,7 @@ interface AreaSummaryItem {
     personal_activo: number
     personal_incidencia: number
     personal_real: number
+    is_descanso?: boolean
 }
 
 interface ReporteAreaSummaryProps {
@@ -45,36 +46,53 @@ export default function ReporteAreaSummary({
             <div className="grid gap-3 mb-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
                 {areas.map((area) => {
                     const active = selectedArea === area.area
+                    const isDescanso = area.is_descanso
+                    
                     return (
                         <button
                             key={area.area}
                             type="button"
-                            onClick={() => onSelectArea(area.area)}
+                            onClick={() => {
+                                if (!isDescanso) onSelectArea(area.area)
+                            }}
+                            disabled={isDescanso}
                             className={cn(
-                                "text-left rounded-2xl border p-4 transition-all",
-                                "bg-background shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                active
+                                "text-left rounded-2xl border p-4 transition-all relative overflow-hidden",
+                                "bg-background shadow-sm",
+                                isDescanso
+                                    ? "opacity-60 cursor-not-allowed border-dashed bg-muted/30"
+                                    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                !isDescanso && active
                                     ? "border-foreground bg-foreground/10"
-                                    : "border-border hover:border-foreground/40 hover:bg-muted/50",
+                                    : !isDescanso && "border-border hover:border-foreground/40 hover:bg-muted/50",
                             )}
                         >
                             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                                 {area.area}
                             </p>
-                            <div className="mt-3 grid gap-2 text-sm text-foreground">
-                                {[
-                                    { label: "Autorizado", value: area.personal_autorizado },
-                                    { label: "Activo", value: area.personal_activo },
-                                    { label: "Incidencias", value: area.personal_incidencia },
-                                    { label: "Personal real", value: area.personal_real },
-                                    { label: "% Asistencia", value: area.personal_activo > 0 ? `${Math.round((area.personal_real / area.personal_activo) * 100)}%` : "—" },
-                                ].map(({ label, value }) => (
-                                    <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                        <span>{label}</span>
-                                        <span className="font-semibold">{value}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            
+                            {isDescanso ? (
+                                <div className="mt-3 flex h-[168px] items-center justify-center rounded-xl bg-muted/40 border border-border/50">
+                                    <span className="text-sm font-medium uppercase tracking-widest text-muted-foreground/70">
+                                        Día de Descanso
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="mt-3 grid gap-2 text-sm text-foreground">
+                                    {[
+                                        { label: "Autorizado", value: area.personal_autorizado },
+                                        { label: "Activo", value: area.personal_activo },
+                                        { label: "Incidencias", value: area.personal_incidencia },
+                                        { label: "Personal real", value: area.personal_real },
+                                        { label: "% Asistencia", value: area.personal_activo > 0 ? `${Math.round((area.personal_real / area.personal_activo) * 100)}%` : "—" },
+                                    ].map(({ label, value }) => (
+                                        <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
+                                            <span>{label}</span>
+                                            <span className="font-semibold">{value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </button>
                     )
                 })}
