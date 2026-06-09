@@ -198,10 +198,12 @@ function DeadlineHero({
   periodo,
   totalPendientes,
   totalEntregadas,
+  totalFisicos,
 }: {
   periodo: DesempenoPeriodo
   totalPendientes: number
   totalEntregadas: number
+  totalFisicos: number
 }) {
   const info = useMemo(() => calcularDeadline(periodo), [periodo])
   if (!info) return null
@@ -282,6 +284,14 @@ function DeadlineHero({
           </div>
           <div className="flex flex-col items-center sm:items-end gap-0.5">
             <span className="text-4xl font-black tabular-nums text-[hsl(var(--success))] leading-none">
+              {totalFisicos}
+            </span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Físicos
+            </span>
+          </div>
+          <div className="flex flex-col items-center sm:items-end gap-0.5 mt-2 sm:mt-0">
+            <span className="text-4xl font-black tabular-nums text-[hsl(var(--info))] leading-none">
               {totalEntregadas}
             </span>
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
@@ -391,9 +401,14 @@ function DeptCards({ groups, loading }: DeptCardsProps) {
                 aria-valuemax={100}
                 aria-label={`Avance ${g.departamento}`}
               />
-              <p className="text-[11px] text-muted-foreground font-medium">
-                <span className="text-foreground font-semibold">{g.entregadas}</span>
-                <span>/{g.total} evaluadas</span>
+              <p className="text-[11px] text-muted-foreground font-medium flex justify-between">
+                <span>
+                  <span className="text-foreground font-semibold">{g.fisicos}</span>
+                  <span>/{g.total} físicos</span>
+                </span>
+                <span className="text-[hsl(var(--info))] font-semibold">
+                  {g.entregadas} evaluados
+                </span>
               </p>
             </div>
           </motion.div>
@@ -590,6 +605,7 @@ export default function DesempenoCumplimientoContent() {
           periodo={periodo}
           totalPendientes={resumen.pendientes}
           totalEntregadas={resumen.entregadas}
+          totalFisicos={resumen.fisicos}
         />
 
         {/* Grid de tarjetas por departamento con semáforo */}
@@ -645,10 +661,13 @@ export default function DesempenoCumplimientoContent() {
                 <span className="text-2xl font-bold tabular-nums">{resumen.porcentaje}%</span>
                 <div className="text-xs text-muted-foreground">
                   <div>
-                    <span className="font-semibold text-foreground">{resumen.entregadas}</span> de{" "}
-                    <span className="font-semibold text-foreground">{resumen.total}</span> evaluadas
+                    <span className="font-semibold text-foreground">{resumen.fisicos}</span> de{" "}
+                    <span className="font-semibold text-foreground">{resumen.total}</span> físicos entregados
                   </div>
-                  <div>{resumen.pendientes} pendientes</div>
+                  <div>
+                    <span className="font-semibold text-foreground">{resumen.entregadas}</span> evaluados ·{" "}
+                    {resumen.pendientes} pendientes
+                  </div>
                 </div>
               </div>
               <Progress value={resumen.porcentaje} className="h-2 flex-1" />
@@ -694,7 +713,7 @@ export default function DesempenoCumplimientoContent() {
                         {g.departamento}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {g.entregadas}/{g.total} evaluadas · {g.pendientes} pendientes
+                        {g.fisicos}/{g.total} físicos · {g.entregadas} evaluados · {g.pendientes} pendientes
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

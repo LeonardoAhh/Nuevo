@@ -38,6 +38,8 @@ export interface DeptCumplimiento {
   entregadas: number
   pendientes: number
   porcentaje: number
+  fisicos: number
+  porcentajeEvaluados: number
 }
 
 export interface ResumenCumplimiento {
@@ -45,6 +47,8 @@ export interface ResumenCumplimiento {
   entregadas: number
   pendientes: number
   porcentaje: number
+  fisicos: number
+  porcentajeEvaluados: number
 }
 
 interface EmployeeRow {
@@ -84,6 +88,8 @@ export function useCumplimientoDesempeno(periodo: string) {
     entregadas: 0,
     pendientes: 0,
     porcentaje: 0,
+    fisicos: 0,
+    porcentajeEvaluados: 0,
   })
 
   const cargar = useCallback(async () => {
@@ -187,8 +193,10 @@ export function useCumplimientoDesempeno(periodo: string) {
           const entregadas = elegibles.filter(
             (i) => i.estatus === "auto" || i.estatus === "manual",
           ).length
-          const pendientes = total - entregadas
-          const porcentaje = total === 0 ? 0 : Math.round((entregadas / total) * 100)
+          const fisicos = elegibles.filter((i) => i.fisicoEntregado).length
+          const pendientes = total - fisicos
+          const porcentaje = total === 0 ? 0 : Math.round((fisicos / total) * 100)
+          const porcentajeEvaluados = total === 0 ? 0 : Math.round((entregadas / total) * 100)
           return {
             departamento,
             empleados: items.sort(compareByNumero),
@@ -196,6 +204,8 @@ export function useCumplimientoDesempeno(periodo: string) {
             entregadas,
             pendientes,
             porcentaje,
+            fisicos,
+            porcentajeEvaluados,
           }
         })
         .sort((a, b) => a.departamento.localeCompare(b.departamento, "es"))
@@ -205,13 +215,16 @@ export function useCumplimientoDesempeno(periodo: string) {
       const entregadasGlobal = elegiblesGlobal.filter(
         (e) => e.estatus === "auto" || e.estatus === "manual",
       ).length
+      const fisicosGlobal = elegiblesGlobal.filter((e) => e.fisicoEntregado).length
 
       setDeptGroups(groups)
       setResumen({
         total: totalGlobal,
         entregadas: entregadasGlobal,
-        pendientes: totalGlobal - entregadasGlobal,
-        porcentaje: totalGlobal === 0 ? 0 : Math.round((entregadasGlobal / totalGlobal) * 100),
+        pendientes: totalGlobal - fisicosGlobal,
+        porcentaje: totalGlobal === 0 ? 0 : Math.round((fisicosGlobal / totalGlobal) * 100),
+        fisicos: fisicosGlobal,
+        porcentajeEvaluados: totalGlobal === 0 ? 0 : Math.round((entregadasGlobal / totalGlobal) * 100),
       })
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al cargar cumplimiento"
