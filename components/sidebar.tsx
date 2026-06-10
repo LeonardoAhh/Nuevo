@@ -5,96 +5,85 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
-  ClipboardCheck,
-  GraduationCap,
-  LayoutDashboard,
-  MessageSquare,
-  Settings,
-  TrendingUp,
-  UserPlus,
-  X,
-  LayoutGrid,
-  BookOpen,
-  Bot,
-  Award,
-  ImageIcon,
-  FileText,
-  CalendarClock,
-  ListChecks,
+  Award, BookOpen, Bot, CalendarClock, ClipboardCheck,
+  FileText, GraduationCap, ImageIcon, LayoutDashboard,
+  LayoutGrid, ListChecks, MessageSquare, Settings,
+  TrendingUp, UserPlus, X,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 import { useRole } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 
-// ─── Nav config ──────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NavItem {
   label: string
-  href: string
-  icon: React.ComponentType<{ size?: number; className?: string; fill?: string; strokeWidth?: number }>
+  href:  string
+  icon:  React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
 }
 
 interface NavSection {
-  sectionLabel: string
-  items: NavItem[]
+  label:   string
+  items:   NavItem[]
   devOnly?: boolean
 }
 
+// ─── Nav config ───────────────────────────────────────────────────────────────
+
 const NAV_SECTIONS: NavSection[] = [
   {
-    sectionLabel: "General",
+    label: "General",
     items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
   },
   {
-    sectionLabel: "Contratos",
+    label: "Contratos",
     items: [{ label: "Nuevo Ingreso", href: "/ingresos", icon: UserPlus }],
   },
   {
-    sectionLabel: "Capacitación",
+    label: "Capacitación",
     items: [
-      { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
-      { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
-      { label: "Promociones", href: "/promociones", icon: TrendingUp },
-      { label: "Cumplimiento", href: "/reportes", icon: FileText },
-      { label: "Reporte Diario", href: "/reporte-diario", icon: CalendarClock },
-      { label: "Evaluación Desempeño", href: "/desempeno", icon: Award },
-      { label: "Cumplimiento Evaluaciones", href: "/desempeno/cumplimiento", icon: ListChecks },
-      { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
-      { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
+      { label: "Capacitación",             href: "/capacitacion",          icon: GraduationCap },
+      { label: "Calificaciones",           href: "/calificaciones",        icon: LayoutGrid    },
+      { label: "Promociones",              href: "/promociones",           icon: TrendingUp    },
+      { label: "Cumplimiento",             href: "/reportes",              icon: FileText      },
+      { label: "Reporte Diario",           href: "/reporte-diario",        icon: CalendarClock },
+      { label: "Evaluación Desempeño",     href: "/desempeno",             icon: Award         },
+      { label: "Cumplimiento Evaluaciones",href: "/desempeno/cumplimiento",icon: ListChecks    },
+      { label: "Exámenes",                 href: "/examenes",              icon: ClipboardCheck},
+      { label: "WhatsApp Bot",             href: "/whatsapp",              icon: MessageSquare },
     ],
   },
   {
-    sectionLabel: "Público",
+    label: "Público",
     items: [
-      { label: "Cursos", href: "/cursos", icon: BookOpen },
-      { label: "Bot WhatsApp", href: "/bot", icon: Bot },
-      { label: "Eventos", href: "/eventos", icon: ImageIcon },
+      { label: "Cursos",        href: "/cursos",  icon: BookOpen  },
+      { label: "Bot WhatsApp",  href: "/bot",     icon: Bot       },
+      { label: "Eventos",       href: "/eventos", icon: ImageIcon },
     ],
   },
 ]
 
-// ─── Animation variants ──────────────────────────────────────────────────────
+// ─── Animation variants ───────────────────────────────────────────────────────
 
-const sidebarVariants: Variants = {
-  hidden: { x: "-100%", opacity: 0 },
+const drawerVariants: Variants = {
+  hidden:  { x: "-100%", opacity: 0 },
   visible: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
-  exit: { x: "-100%", opacity: 0, transition: { duration: 0.2 } },
+  exit:    { x: "-100%", opacity: 0, transition: { duration: 0.2, ease: "easeIn" } },
 }
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, x: -8 },
+  hidden:  { opacity: 0, x: -6 },
   visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: i * 0.03, duration: 0.25, ease: "easeOut" },
+    opacity: 1, x: 0,
+    transition: { delay: i * 0.025, duration: 0.2, ease: "easeOut" },
   }),
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export interface SidebarApi {
-  isMobileView: boolean
+  isMobileView:     boolean
   showMobileSidebar: boolean
   openMobileSidebar: () => void
 }
@@ -102,7 +91,7 @@ export interface SidebarApi {
 export function useSidebar(): SidebarApi & {
   setShowMobileSidebar: (v: boolean) => void
 } {
-  const [isMobileView, setIsMobileView] = useState(false)
+  const [isMobileView,      setIsMobileView]      = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
 
   useLayoutEffect(() => {
@@ -110,16 +99,13 @@ export function useSidebar(): SidebarApi & {
   }, [])
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>
-    const handleResize = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => setIsMobileView(window.innerWidth < 768), 100)
+    let tid: ReturnType<typeof setTimeout>
+    const onResize = () => {
+      clearTimeout(tid)
+      tid = setTimeout(() => setIsMobileView(window.innerWidth < 768), 100)
     }
-    window.addEventListener("resize", handleResize)
-    return () => {
-      clearTimeout(timeoutId)
-      window.removeEventListener("resize", handleResize)
-    }
+    window.addEventListener("resize", onResize)
+    return () => { clearTimeout(tid); window.removeEventListener("resize", onResize) }
   }, [])
 
   const openMobileSidebar = useCallback(() => setShowMobileSidebar(true), [])
@@ -127,11 +113,96 @@ export function useSidebar(): SidebarApi & {
   return { isMobileView, showMobileSidebar, setShowMobileSidebar, openMobileSidebar }
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/"
+  return pathname === href || pathname.startsWith(href + "/")
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+/** Icon-only button used in the collapsed desktop sidebar */
+function IconNavItem({ item, active, index }: { item: NavItem; active: boolean; index: number }) {
+  return (
+    <motion.div custom={index} variants={itemVariants} initial="hidden" animate="visible">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            aria-label={item.label}
+            className={cn(
+              "relative flex h-10 w-full items-center justify-center rounded-md transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              active
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            {active && (
+              <motion.span
+                layoutId="sidebar-indicator"
+                className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary"
+                transition={{ type: "spring", stiffness: 380, damping: 32 }}
+              />
+            )}
+            <item.icon size={20} strokeWidth={active ? 1.75 : 2} />
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="font-medium">
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    </motion.div>
+  )
+}
+
+/** Full-width link used in the mobile drawer */
+function DrawerNavItem({
+  item,
+  active,
+  index,
+  onNavigate,
+}: {
+  item:       NavItem
+  active:     boolean
+  index:      number
+  onNavigate: () => void
+}) {
+  return (
+    <motion.div custom={index} variants={itemVariants} initial="hidden" animate="visible">
+      <Link
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          active
+            ? "bg-primary/10 font-medium text-primary"
+            : "font-normal text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+        )}
+      >
+        {active && (
+          <motion.span
+            layoutId="sidebar-indicator"
+            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary"
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          />
+        )}
+        <item.icon size={18} strokeWidth={active ? 1.75 : 2} className="shrink-0" />
+        {item.label}
+      </Link>
+    </motion.div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 interface SidebarProps {
-  isMobileView: boolean
-  showMobileSidebar: boolean
+  isMobileView:        boolean
+  showMobileSidebar:   boolean
   setShowMobileSidebar: (v: boolean) => void
 }
 
@@ -142,36 +213,37 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname()
   const { canEdit, isEvaluador, loading: roleLoading } = useRole()
+  const closeMobile = () => setShowMobileSidebar(false)
 
-  const isItemVisible = (href: string) =>
-    !isEvaluador || isEvaluadorAllowedRoute(href)
-
+  // Filter sections and items based on role
   const visibleSections = NAV_SECTIONS
     .filter((s) => {
       if (s.devOnly && !canEdit) return false
-      if (isEvaluador) return s.items.some((item) => isItemVisible(item.href))
+      if (isEvaluador) return s.items.some((item) => isEvaluadorAllowedRoute(item.href))
       return true
     })
-    .map((section) => ({
-      ...section,
+    .map((s) => ({
+      ...s,
       items: isEvaluador
-        ? section.items.filter((item) => isItemVisible(item.href))
-        : section.items,
+        ? s.items.filter((item) => isEvaluadorAllowedRoute(item.href))
+        : s.items,
     }))
 
-  const isExpanded = isMobileView
+  // Flat item list for stable stagger indices (no mutable counter in render)
+  const flatItems = visibleSections.flatMap((s) => s.items)
+  const indexOf   = (href: string) => flatItems.findIndex((i) => i.href === href)
 
-  // Flatten items for stagger index
-  let globalIdx = 0
+  const isDesktop = !isMobileView
 
   return (
     <TooltipProvider delayDuration={0}>
-      {/* Mobile backdrop */}
+
+      {/* ── Mobile backdrop ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {isMobileView && showMobileSidebar && (
           <motion.div
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => setShowMobileSidebar(false)}
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={closeMobile}
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -181,193 +253,129 @@ export default function Sidebar({
         )}
       </AnimatePresence>
 
+      {/* ── Sidebar / Drawer ─────────────────────────────────────────────── */}
       <AnimatePresence>
-        {(!isMobileView || showMobileSidebar) && (
+        {(isDesktop || showMobileSidebar) && (
           <motion.aside
             role="navigation"
             aria-label="Menú principal"
-            className={`
-              bg-card border-r flex flex-col
-              max-md:fixed max-md:z-50 max-md:top-0 max-md:left-0 max-md:shadow-lg max-md:w-64
-              max-md:overflow-hidden
-              md:w-[68px]
-            `}
+            className={cn(
+              "flex flex-col border-r bg-card",
+              // Mobile: fixed drawer
+              isMobileView && "fixed left-0 top-0 z-50 w-64 shadow-xl",
+              // Desktop: static icon strip
+              isDesktop && "md:w-[68px]",
+            )}
             style={{
-              height: isMobileView ? "100dvh" : undefined,
-              paddingTop: isMobileView ? "env(safe-area-inset-top, 0px)" : undefined,
-              paddingLeft: isMobileView ? "env(safe-area-inset-left, 0px)" : undefined,
+              height:      isMobileView ? "100dvh"                          : undefined,
+              paddingTop:  isMobileView ? "env(safe-area-inset-top, 0px)"   : undefined,
+              paddingLeft: isMobileView ? "env(safe-area-inset-left, 0px)"  : undefined,
             }}
-            {...(isMobileView ? { variants: sidebarVariants, initial: "hidden", animate: "visible", exit: "exit" } : {})}
+            {...(isMobileView
+              ? { variants: drawerVariants, initial: "hidden", animate: "visible", exit: "exit" }
+              : {}
+            )}
           >
-            {/* Logo */}
-            <div className="h-[50px] shrink-0 border-b flex items-center justify-center px-2">
-              {isExpanded ? (
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-lg font-bold tracking-tight select-none">
+            {/* Logo bar */}
+            <div className="flex h-[50px] shrink-0 items-center border-b px-2">
+              {isMobileView ? (
+                <div className="flex w-full items-center justify-between">
+                  <span className="select-none text-lg font-bold tracking-tight">
                     <span className="text-primary">VIÑO</span>
                     <span className="text-foreground">PLASTIC</span>
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0"
+                  <button
+                    type="button"
+                    onClick={closeMobile}
                     aria-label="Cerrar menú"
-                    onClick={() => setShowMobileSidebar(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <X size={16} />
-                  </Button>
+                  </button>
                 </div>
               ) : (
                 <Link
                   href="/"
-                  className="text-xl font-bold text-primary select-none hover:opacity-80 transition-opacity"
+                  aria-label="Ir al dashboard"
+                  className="mx-auto select-none text-xl font-bold text-primary transition-opacity hover:opacity-75"
                 >
                   V
                 </Link>
               )}
             </div>
 
-            {/* Nav links */}
-            <nav className={`flex-1 min-h-0 overflow-y-auto scrollbar-thin transition-opacity duration-200 ${roleLoading ? "opacity-0" : "opacity-100"}`}>
-              <div className="space-y-1 p-2">
-                {visibleSections.map((section, idx) => {
-                  const sectionItems = section.items
-
-                  if (!isExpanded) {
-                    return (
-                      <div key={section.sectionLabel}>
-                        {idx > 0 && <div className="mx-2 my-2 border-t" />}
-                        <div className="space-y-1">
-                          {sectionItems.map((item) => {
-                            const active = pathname === item.href
-                            const i = globalIdx++
-                            return (
-                              <motion.div
-                                key={item.href}
-                                custom={i}
-                                variants={itemVariants}
-                                initial="hidden"
-                                animate="visible"
-                              >
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className={`relative w-full h-10 transition-colors ${active
-                                        ? "bg-primary/10 text-primary"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                        }`}
-                                      aria-current={active ? "page" : undefined}
-                                      asChild
-                                    >
-                                      <Link href={item.href}>
-                                        {active && (
-                                          <motion.div
-                                            layoutId="sidebar-active-indicator"
-                                            className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-primary"
-                                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                          />
-                                        )}
-                                        <item.icon
-                                          size={20}
-                                          fill={active ? "currentColor" : "none"}
-                                          strokeWidth={active ? 1.5 : 2}
-                                        />
-                                      </Link>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right" className="font-medium">
-                                    {item.label}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </motion.div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <div key={section.sectionLabel}>
-                      {idx > 0 && (
-                        <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          {section.sectionLabel}
+            {/* Nav items */}
+            <nav
+              className={cn(
+                "flex-1 overflow-y-auto scrollbar-thin p-2 transition-opacity duration-200",
+                roleLoading && "pointer-events-none opacity-0",
+              )}
+            >
+              <div className="space-y-1">
+                {visibleSections.map((section, sIdx) => (
+                  <div key={section.label}>
+                    {/* Section divider */}
+                    {sIdx > 0 && (
+                      isMobileView ? (
+                        <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {section.label}
                         </p>
-                      )}
-                      <div className="space-y-0.5">
-                        {sectionItems.map((item) => {
-                          const active = pathname === item.href
-                          const i = globalIdx++
-                          return (
-                            <motion.div
-                              key={item.href}
-                              custom={i}
-                              variants={itemVariants}
-                              initial="hidden"
-                              animate="visible"
-                            >
-                              <Button
-                                variant="ghost"
-                                className={`relative w-full justify-start gap-3 transition-colors ${active
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:text-foreground"
-                                  }`}
-                                aria-current={active ? "page" : undefined}
-                                asChild
-                              >
-                                <Link
-                                  href={item.href}
-                                  onClick={() => setShowMobileSidebar(false)}
-                                >
-                                  {active && (
-                                    <motion.div
-                                      layoutId="sidebar-active-mobile"
-                                      className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-primary"
-                                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                                    />
-                                  )}
-                                  <item.icon
-                                    size={18}
-                                    fill={active ? "currentColor" : "none"}
-                                    strokeWidth={active ? 1.5 : 2}
-                                  />
-                                  <span className="text-sm">{item.label}</span>
-                                </Link>
-                              </Button>
-                            </motion.div>
-                          )
-                        })}
-                      </div>
+                      ) : (
+                        <div className="mx-2 my-1.5 border-t" />
+                      )
+                    )}
+
+                    {/* Items */}
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const active = isActive(pathname, item.href)
+                        const idx    = indexOf(item.href)
+
+                        return isMobileView ? (
+                          <DrawerNavItem
+                            key={item.href}
+                            item={item}
+                            active={active}
+                            index={idx}
+                            onNavigate={closeMobile}
+                          />
+                        ) : (
+                          <IconNavItem
+                            key={item.href}
+                            item={item}
+                            active={active}
+                            index={idx}
+                          />
+                        )
+                      })}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </nav>
 
-            {/* Bottom: Settings (desktop) or safe-area spacer (mobile) */}
-            {!isExpanded ? (
+            {/* Bottom: Settings (desktop) | safe-area spacer (mobile) */}
+            {isDesktop ? (
               <div className="shrink-0 border-t p-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`w-full h-10 ${pathname === "/settings"
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                        }`}
-                      asChild
+                    <Link
+                      href="/settings"
+                      aria-label="Configuración"
+                      aria-current={pathname === "/settings" ? "page" : undefined}
+                      className={cn(
+                        "flex h-10 w-full items-center justify-center rounded-md transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        pathname === "/settings"
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                      )}
                     >
-                      <Link href="/settings">
-                        <Settings
-                          size={20}
-                          fill={pathname === "/settings" ? "currentColor" : "none"}
-                          strokeWidth={pathname === "/settings" ? 1.5 : 2}
-                        />
-                      </Link>
-                    </Button>
+                      <Settings
+                        size={20}
+                        strokeWidth={pathname === "/settings" ? 1.75 : 2}
+                      />
+                    </Link>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="font-medium">
                     Configuración

@@ -4,26 +4,13 @@ import React, { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  Moon,
-  Monitor,
-  Palette,
-  Sun,
-  User,
-  Check,
-  AlertCircle,
-  Upload,
-  RotateCcw,
-  Bell,
-  Loader2,
-  BellOff,
-  Save,
-  X,
+  Moon, Monitor, Palette, Sun, User, Check, AlertCircle,
+  Upload, RotateCcw, Bell, Loader2, BellOff, Save, X,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -44,35 +31,484 @@ const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "green", "teal", "cyan", "slate",
 ]
 
-export default function SettingsContent() {
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search)
-      return params.get("tab") || "profile"
-    }
-    return "profile"
-  })
-  const { theme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
-  const [showSavedMessage, setShowSavedMessage] = useState(false)
+type Tab = "profile" | "appearance" | "notifications"
+
+const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
+  { id: "profile",       label: "Perfil",          icon: User,    description: "Nombre, avatar y datos personales" },
+  { id: "appearance",    label: "Apariencia",       icon: Palette, description: "Tema, colores y densidad" },
+  { id: "notifications", label: "Notificaciones",   icon: Bell,    description: "Alertas y preferencias de push" },
+]
+
+// ─── Shared section header ────────────────────────────────────────────────────
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-6">
+      <h2 className="text-xl font-semibold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>
+        {title}
+      </h2>
+      <p className="text-sm mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+        {description}
+      </p>
+    </div>
+  )
+}
+
+// ─── Divider ──────────────────────────────────────────────────────────────────
+function Divider() {
+  return <div className="h-px w-full" style={{ background: "hsl(var(--border))" }} />
+}
+
+// ─── Row — label + description + control ─────────────────────────────────────
+function SettingRow({
+  label,
+  description,
+  children,
+  htmlFor,
+}: {
+  label: string
+  description?: string
+  children: React.ReactNode
+  htmlFor?: string
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3.5">
+      <div className="min-w-0 flex-1">
+        {htmlFor
+          ? <Label htmlFor={htmlFor} className="text-sm font-medium cursor-pointer">{label}</Label>
+          : <p className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>{label}</p>
+        }
+        {description && (
+          <p className="text-xs mt-0.5 leading-snug" style={{ color: "hsl(var(--muted-foreground))" }}>
+            {description}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  )
+}
+
+// ─── Grouped section box ──────────────────────────────────────────────────────
+function SettingGroup({
+  title,
+  children,
+}: {
+  title?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        background: "hsl(var(--card))",
+        border: "1px solid hsl(var(--border))",
+      }}
+    >
+      {title && (
+        <div
+          className="px-4 py-2.5 border-b"
+          style={{
+            borderColor: "hsl(var(--border))",
+            background: "hsl(var(--muted) / 0.5)",
+          }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest"
+            style={{ color: "hsl(var(--muted-foreground))" }}>
+            {title}
+          </p>
+        </div>
+      )}
+      <div className="px-4 divide-y" style={{ "--tw-divide-opacity": 1 } as React.CSSProperties}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// ─── PROFILE TAB ──────────────────────────────────────────────────────────────
+function ProfileTab({
+  user, profile, profileLoading, userLoading, profileError,
+}: {
+  user: any; profile: any; profileLoading: boolean; userLoading: boolean; profileError: string | null
+}) {
+  const [showSaved, setShowSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { updateProfile, uploadAvatar } = useProfile(user?.id)
 
-  // Hook para usuario autenticado
-  const { user, loading: userLoading } = useUser()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { firstName: "", lastName: "", displayName: "", email: "", language: "en", dateFormat: "mm-dd-yyyy" },
+  })
 
-  // Hooks para API
-  const { profile, loading: profileLoading, error: profileError, updateProfile, uploadAvatar, updateThemePreferences } = useProfile(user?.id)
-  const { preferences: notifPrefs, loading: notifLoading, saving: notifSaving, updatePreference: updateNotifPref, savePreferences: saveNotifPrefs } = useNotificationPreferences(user?.id)
+  React.useEffect(() => {
+    if (profile) {
+      reset({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        displayName: profile.displayName,
+        email: profile.email,
+        language: profile.language || "en",
+        dateFormat: profile.dateFormat || "mm-dd-yyyy",
+      })
+    }
+  }, [profile, reset])
+
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      setSaveError(null)
+      const result = await updateProfile(data)
+      if (result.success) {
+        setShowSaved(true)
+        setTimeout(() => setShowSaved(false), 3000)
+      } else {
+        setSaveError(result.error || "No se pudo guardar el perfil")
+      }
+    } catch {
+      setSaveError("Ocurrió un error inesperado")
+    }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setIsUploadingAvatar(true)
+      setSaveError(null)
+      const result = await uploadAvatar(file)
+      if (result.success) {
+        setShowSaved(true)
+        setTimeout(() => setShowSaved(false), 3000)
+      } else {
+        setSaveError(result.error || "No se pudo subir la imagen")
+      }
+    } catch {
+      setSaveError("Ocurrió un error inesperado")
+    } finally {
+      setIsUploadingAvatar(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  if (userLoading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
+        <span className="ml-2 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Cargando perfil…</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader title="Perfil" description="Tu información personal y foto de perfil." />
+
+      {showSaved && (
+        <Alert className="border-success/30 bg-success/10">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">Perfil actualizado con éxito.</AlertDescription>
+        </Alert>
+      )}
+      {(saveError || profileError) && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{saveError || profileError}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Avatar */}
+      <SettingGroup title="Foto de perfil">
+        <div className="py-4 flex items-center gap-4">
+          <Avatar className="h-16 w-16 shrink-0">
+            <AvatarImage src={profile?.avatar || "/diverse-group-city.png"} alt="Avatar" />
+            <AvatarFallback>
+              {profile ? `${profile.firstName[0]}${profile.lastName[0]}` : "??"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>
+              {profile ? `${profile.firstName} ${profile.lastName}` : "—"}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+              JPG, PNG o GIF · máx. 2 MB · imagen cuadrada recomendada
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 h-7 text-xs gap-1.5"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+            >
+              {isUploadingAvatar
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <Upload className="h-3 w-3" />}
+              {isUploadingAvatar ? "Subiendo…" : "Cambiar foto"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+          </div>
+        </div>
+      </SettingGroup>
+
+      {/* Form */}
+      <form id="profile-form" onSubmit={handleSubmit(onSubmit)}>
+        <SettingGroup title="Datos personales">
+          <div className="py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="first-name" className="text-xs font-medium">Nombre *</Label>
+              <Input
+                id="first-name"
+                {...register("firstName")}
+                className={cn("text-base md:text-sm h-9", errors.firstName && "border-destructive")}
+              />
+              {errors.firstName && (
+                <p className="text-xs text-destructive">{errors.firstName.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="last-name" className="text-xs font-medium">Apellido *</Label>
+              <Input
+                id="last-name"
+                {...register("lastName")}
+                className={cn("text-base md:text-sm h-9", errors.lastName && "border-destructive")}
+              />
+              {errors.lastName && (
+                <p className="text-xs text-destructive">{errors.lastName.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="display-name" className="text-xs font-medium">Nombre visible *</Label>
+              <Input
+                id="display-name"
+                {...register("displayName")}
+                className={cn("text-base md:text-sm h-9", errors.displayName && "border-destructive")}
+              />
+              {errors.displayName && (
+                <p className="text-xs text-destructive">{errors.displayName.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                value={user?.email || ""}
+                readOnly
+                className="cursor-not-allowed opacity-60 h-9"
+              />
+              <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Gestionado por tu proveedor de autenticación.
+              </p>
+            </div>
+          </div>
+        </SettingGroup>
+      </form>
+
+      {/* Footer actions */}
+      <div className="flex items-center justify-between pt-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => reset()}
+          disabled={isSubmitting}
+        >
+          <X className="h-3.5 w-3.5" />
+          Descartar
+        </Button>
+        <Button
+          type="submit"
+          form="profile-form"
+          size="sm"
+          className="gap-1.5 text-xs"
+          disabled={isSubmitting || profileLoading}
+        >
+          {isSubmitting
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <Save className="h-3.5 w-3.5" />}
+          Guardar cambios
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ─── APPEARANCE TAB ───────────────────────────────────────────────────────────
+function AppearanceTab() {
+  const { theme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader title="Apariencia" description="Personaliza cómo se ve la aplicación en tu dispositivo." />
+
+      {/* Theme mode */}
+      <SettingGroup title="Modo de color">
+        <div className="py-3">
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { value: "light" as Theme, label: "Claro",   Icon: Sun,     iconBg: "bg-background border",  iconFg: "text-foreground" },
+                { value: "dark"  as Theme, label: "Oscuro",  Icon: Moon,    iconBg: "bg-foreground border",  iconFg: "text-background" },
+                { value: "system"as Theme, label: "Sistema", Icon: Monitor, iconBg: "bg-muted border",       iconFg: "text-foreground" },
+              ] as const
+            ).map(({ value, label, Icon, iconBg, iconFg }) => {
+              const selected = theme === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setTheme(value)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 py-3 px-2 rounded-lg border transition-all text-center",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    selected
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:bg-accent/40"
+                  )}
+                >
+                  <div className={cn("p-2 rounded-full shadow-sm", iconBg)}>
+                    <Icon className={cn("h-5 w-5", iconFg)} />
+                  </div>
+                  <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground))" }}>{label}</span>
+                  {selected && (
+                    <span className="sr-only">(seleccionado)</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </SettingGroup>
+
+      {/* Accent */}
+      <SettingGroup title="Color de acento">
+        <div className="py-3 space-y-3">
+          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
+            {ALL_ACCENTS.map((name) => {
+              const { primary, label } = ACCENT_COLOR_MAP[name]
+              return (
+                <TooltipProvider key={name}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-pressed={accentColor === name}
+                        aria-label={`Acento ${label}`}
+                        className={cn(
+                          "h-8 w-full rounded-lg border-2 flex items-center justify-center transition-all",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                          accentColor === name
+                            ? "border-foreground scale-110 shadow-md"
+                            : "border-transparent hover:scale-105 hover:shadow-sm",
+                        )}
+                        style={{ backgroundColor: `hsl(${primary})` }}
+                        onClick={() => setAccentColor(name)}
+                      >
+                        {accentColor === name && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{label}</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )
+            })}
+          </div>
+          <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Afecta botones, enlaces y elementos interactivos.
+          </p>
+        </div>
+      </SettingGroup>
+
+      {/* Display settings */}
+      <SettingGroup title="Pantalla">
+        <SettingRow label="Tamaño de fuente" description="Ajusta el tamaño del texto en toda la app.">
+          <Select value={fontSize} onValueChange={(v) => setFontSize(v as "small" | "medium" | "large")}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">Pequeño</SelectItem>
+              <SelectItem value="medium">Mediano</SelectItem>
+              <SelectItem value="large">Grande</SelectItem>
+            </SelectContent>
+          </Select>
+        </SettingRow>
+        <SettingRow label="Densidad" description="Reduce el espaciado para mostrar más contenido.">
+          <Select value={density} onValueChange={(v) => setDensity(v as "comfortable" | "compact")}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="comfortable">Cómoda</SelectItem>
+              <SelectItem value="compact">Compacta</SelectItem>
+            </SelectContent>
+          </Select>
+        </SettingRow>
+        <SettingRow
+          label="Movimiento reducido"
+          description="Minimiza animaciones y transiciones."
+          htmlFor="reduced-motion"
+        >
+          <Switch id="reduced-motion" checked={reducedMotion} onCheckedChange={setReducedMotion} />
+        </SettingRow>
+      </SettingGroup>
+
+      {/* Preview */}
+      <SettingGroup title="Vista previa">
+        <div className="py-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" className="text-xs h-8">Primario</Button>
+            <Button size="sm" variant="outline" className="text-xs h-8">Secundario</Button>
+            <Button size="sm" variant="ghost" className="text-xs h-8">Fantasma</Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch id="preview-sw" />
+            <Label htmlFor="preview-sw" className="text-xs">Interruptor</Label>
+            <Badge className="text-xs">Etiqueta</Badge>
+            <Badge variant="outline" className="text-xs">Contorno</Badge>
+          </div>
+        </div>
+      </SettingGroup>
+
+      {/* Reset */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={resetTheme}
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Restablecer valores
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ─── NOTIFICATIONS TAB ────────────────────────────────────────────────────────
+function NotificationsTab({ userId }: { userId?: string }) {
   const [notifSaved, setNotifSaved] = useState(false)
   const [pushSubscribed, setPushSubscribed] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
+  const { preferences: notifPrefs, loading: notifLoading, saving: notifSaving, updatePreference, savePreferences } = useNotificationPreferences(userId)
 
-  // Verificar estado de suscripción push al abrir el tab
   React.useEffect(() => {
-    if (activeTab !== "notifications") return
     isPushSubscribed().then(setPushSubscribed).catch(() => {})
-  }, [activeTab])
+  }, [])
 
   const handleTogglePush = async () => {
     setPushLoading(true)
@@ -89,619 +525,210 @@ export default function SettingsContent() {
     }
   }
 
-  // Formulario unificado de perfil
-  const {
-    register: registerProfile,
-    handleSubmit: handleSubmitProfile,
-    formState: { errors: profileErrors, isSubmitting: isSubmittingProfile },
-    reset: resetProfile,
-  } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      displayName: "",
-      email: "",
-      language: "en",
-      dateFormat: "mm-dd-yyyy",
-    },
+  const alertItems = [
+    { key: "pushBajas",        label: "Baja registrada",           desc: "Push inmediato al registrar una baja" },
+    { key: "pushBajasWarning", label: "Aviso anticipado de baja",  desc: "3 días, 1 día y el día exacto" },
+    { key: "pushRg",           label: "RG-REC-048 por vencer",     desc: "7 días, 3 días y el día del vencimiento" },
+    { key: "pushContrato",     label: "Término de contrato",       desc: "7 días, 3 días y el día del vencimiento" },
+  ] as const
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader title="Notificaciones" description="Gestiona alertas y permisos de notificación push." />
+
+      {notifSaved && (
+        <Alert className="border-success/30 bg-success/10">
+          <Check className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">Preferencias guardadas.</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Push device toggle */}
+      <SettingGroup title="Este dispositivo">
+        <SettingRow
+          label={pushSubscribed ? "Push activadas" : "Push desactivadas"}
+          description={
+            pushSubscribed
+              ? "Recibirás alertas aunque la app esté cerrada."
+              : "Actívalas para recibir alertas en segundo plano."
+          }
+        >
+          <div className="flex items-center gap-2">
+            {pushSubscribed
+              ? <Badge variant="outline" className="text-xs border-success/40 text-success bg-success/10">Activo</Badge>
+              : <Badge variant="outline" className="text-xs">Inactivo</Badge>
+            }
+            <Button
+              variant={pushSubscribed ? "outline" : "default"}
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              disabled={pushLoading}
+              onClick={handleTogglePush}
+            >
+              {pushLoading
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : pushSubscribed
+                  ? <><BellOff className="h-3.5 w-3.5" />Desactivar</>
+                  : <><Bell className="h-3.5 w-3.5" />Activar</>
+              }
+            </Button>
+          </div>
+        </SettingRow>
+      </SettingGroup>
+
+      {/* Alert preferences */}
+      <SettingGroup title="Alertas de empleados">
+        {alertItems.map(({ key, label, desc }) => (
+          <SettingRow key={key} label={label} description={desc} htmlFor={`notif-${key}`}>
+            <Switch
+              id={`notif-${key}`}
+              checked={notifPrefs[key]}
+              onCheckedChange={(v) => updatePreference(key, v)}
+              disabled={notifLoading}
+            />
+          </SettingRow>
+        ))}
+        <div className="py-3 flex justify-between items-center">
+          <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Solo aplica a roles admin y dev.
+          </p>
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            disabled={notifSaving || notifLoading}
+            onClick={async () => {
+              const result = await savePreferences()
+              if (result?.success) {
+                setNotifSaved(true)
+                setTimeout(() => setNotifSaved(false), 3000)
+              }
+            }}
+          >
+            {notifSaving
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : notifSaved
+                ? <Check className="h-3.5 w-3.5" />
+                : <Save className="h-3.5 w-3.5" />
+            }
+            Guardar
+          </Button>
+        </div>
+      </SettingGroup>
+
+      {/* History */}
+      <NotificationHistory />
+    </div>
+  )
+}
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+export default function SettingsContent() {
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab")
+      return (p as Tab) || "profile"
+    }
+    return "profile"
   })
 
-  // Sincronizar formulario cuando se carga el perfil
-  React.useEffect(() => {
-    if (profile) {
-      resetProfile({
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        displayName: profile.displayName,
-        email: profile.email,
-        language: profile.language || "en",
-        dateFormat: profile.dateFormat || "mm-dd-yyyy",
-      })
-    }
-  }, [profile, resetProfile])
+  const { user, loading: userLoading } = useUser()
+  const { profile, loading: profileLoading, error: profileError } = useProfile(user?.id)
 
-  // Funciones para manejar formularios
-  const onSubmitProfile = async (data: ProfileFormData) => {
-    try {
-      setSaveError(null)
-      const result = await updateProfile(data)
-      if (result.success) {
-        setShowSavedMessage(true)
-        setTimeout(() => setShowSavedMessage(false), 3000)
-      } else {
-        setSaveError(result.error || "Failed to save profile")
-      }
-    } catch (error) {
-      setSaveError("An unexpected error occurred")
-    }
-  }
-
-
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    try {
-      setIsUploadingAvatar(true)
-      setSaveError(null)
-
-      const result = await uploadAvatar(file)
-
-      if (result.success) {
-        setShowSavedMessage(true)
-        setTimeout(() => setShowSavedMessage(false), 3000)
-      } else {
-        setSaveError(result.error || "Failed to upload avatar")
-      }
-    } catch (error) {
-      console.error("Error uploading avatar:", error)
-      setSaveError("An unexpected error occurred")
-    } finally {
-      setIsUploadingAvatar(false)
-      // Limpiar el input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    }
-  }
-
-  // Direct application of theme changes
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme)
-  }
-
-  const handleAccentColorChange = (color: AccentColor) => {
-    setAccentColor(color)
-  }
-
-  // Debounced sync of theme preferences to Supabase
-  React.useEffect(() => {
-    if (!user?.id) return
-    const timer = setTimeout(() => {
-      updateThemePreferences({ theme, accentColor, fontSize, density, reducedMotion })
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [theme, accentColor, fontSize, density, reducedMotion, user?.id])
-
-  // Load theme preferences from Supabase on mount
-  React.useEffect(() => {
-    if (!profile?.themePreferences || Object.keys(profile.themePreferences).length === 0) return
-    const p = profile.themePreferences
-    if (p.theme) setTheme(p.theme as Theme)
-    if (p.accentColor && p.accentColor in ACCENT_COLOR_MAP) setAccentColor(p.accentColor as AccentColor)
-    if (p.fontSize) setFontSize(p.fontSize as "small" | "medium" | "large")
-    if (p.density) setDensity(p.density as "comfortable" | "compact")
-    if (p.reducedMotion !== undefined) setReducedMotion(p.reducedMotion)
-  }, [profile?.id])
-
-  // Si no hay usuario autenticado, mostrar formulario de login
-  if (!user && !userLoading) {
-    return <AuthForm />
-  }
+  if (!user && !userLoading) return <AuthForm />
 
   return (
     <>
-      <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex w-full">
-          <TabsTrigger value="profile" className="flex-1 text-xs sm:text-sm" aria-label="Perfil">
-            <User className="h-4 w-4 xs:mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Perfil</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex-1 text-xs sm:text-sm" aria-label="Apariencia">
-            <Palette className="h-4 w-4 xs:mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Apariencia</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex-1 text-xs sm:text-sm" aria-label="Notificaciones">
-            <Bell className="h-4 w-4 xs:mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Notificaciones</span>
-          </TabsTrigger>
-        </TabsList>
+      <style>{`
+        .settings-nav-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.625rem 0.75rem;
+          border-radius: 0.5rem;
+          transition: background 0.12s ease, color 0.12s ease;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+          border: none;
+          background: transparent;
+        }
+        .settings-nav-item:hover:not(.active) {
+          background: hsl(var(--accent) / 0.6);
+        }
+        .settings-nav-item.active {
+          background: hsl(var(--primary) / 0.1);
+          color: hsl(var(--primary));
+        }
+        .settings-nav-item.active .nav-icon {
+          color: hsl(var(--primary));
+        }
+        .settings-nav-item:not(.active) .nav-icon {
+          color: hsl(var(--muted-foreground));
+        }
+      `}</style>
 
-        {/* Profile Settings */}
-        <TabsContent value="profile" className="space-y-4">
-          {/* Loading State */}
-          {(userLoading || profileLoading) && (
-            <Card>
-              <CardContent className="flex items-center justify-center py-8">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span className="text-sm text-muted-foreground">Cargando perfil...</span>
-                </div>
-              </CardContent>
-            </Card>
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-0">
+
+        {/* ── Sidebar (desktop) / Horizontal strip (mobile) ── */}
+        <nav
+          className={cn(
+            /* Mobile: horizontal scroll strip */
+            "flex flex-row md:flex-col gap-1",
+            "overflow-x-auto md:overflow-x-visible",
+            "pb-1 md:pb-0",
+            /* Desktop */
+            "md:w-52 md:shrink-0",
           )}
-
-          {/* Success/Error Messages */}
-          {showSavedMessage && (
-            <Alert className="border-success/30 bg-success/10">
-              <Check className="h-4 w-4 text-success" />
-              <AlertDescription className="text-success">
-                ¡Perfil actualizado con éxito!
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {(saveError || profileError) && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {saveError || profileError}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {!profileLoading && !userLoading && (
-            <>
-              <Card>
-            <CardHeader>
-              <CardTitle>Información de perfil</CardTitle>
-              <CardDescription>
-                Actualiza tu información personal y tu foto de perfil.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile?.avatar || "/diverse-group-city.png"} alt="Profile" />
-                  <AvatarFallback>
-                    {profile ? `${profile.firstName[0]}${profile.lastName[0]}` : "JK"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    aria-label="Cambiar avatar"
-                    title="Cambiar avatar"
-                  >
-                    {isUploadingAvatar ? (
-                      <Upload className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    JPG, GIF o PNG. Tamaño máximo 2MB. Se recomienda imagen cuadrada.
-                  </p>
-                </div>
-              </div>
-
-              <form id="profile-form" onSubmit={handleSubmitProfile(onSubmitProfile)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">
-                      Nombre *
-                    </Label>
-                    <Input
-                      id="first-name"
-                      {...registerProfile("firstName")}
-                      className={cn(
-                        "text-base md:text-sm",
-                        profileErrors.firstName && "border-destructive"
-                      )}
-                    />
-                    {profileErrors.firstName && (
-                      <p className="text-sm text-destructive">{profileErrors.firstName.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name">
-                      Apellido *
-                    </Label>
-                    <Input
-                      id="last-name"
-                      {...registerProfile("lastName")}
-                      className={cn(
-                        "text-base md:text-sm",
-                        profileErrors.lastName && "border-destructive"
-                      )}
-                    />
-                    {profileErrors.lastName && (
-                      <p className="text-sm text-destructive">{profileErrors.lastName.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="display-name">
-                      Nombre visible *
-                    </Label>
-                    <Input
-                      id="display-name"
-                      {...registerProfile("displayName")}
-                      className={cn(
-                        "text-base md:text-sm",
-                        profileErrors.displayName && "border-destructive"
-                      )}
-                    />
-                    {profileErrors.displayName && (
-                      <p className="text-sm text-destructive">{profileErrors.displayName.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">
-                      Correo electrónico
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={user?.email || ""}
-                      readOnly
-                      className="cursor-not-allowed opacity-70"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      El email se gestiona desde tu proveedor de autenticación.
-                    </p>
-                  </div>
-                </div>
-
-              </form>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button
+          aria-label="Secciones de configuración"
+        >
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id
+            return (
+              <button
+                key={id}
                 type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => resetProfile()}
-                disabled={isSubmittingProfile}
-                aria-label="Cancelar"
-                title="Cancelar"
+                onClick={() => setActiveTab(id)}
+                className={cn("settings-nav-item", active && "active")}
+                aria-current={active ? "page" : undefined}
               >
-                <X className="h-4 w-4" />
-              </Button>
-              <Button
-                type="submit"
-                size="icon"
-                form="profile-form"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isSubmittingProfile || profileLoading}
-                aria-label="Guardar cambios"
-                title="Guardar cambios"
-              >
-                {isSubmittingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              </Button>
-            </CardFooter>
-          </Card>
-            </>
+                <Icon className="nav-icon h-4 w-4 shrink-0" />
+                <span className={cn(
+                  "text-sm whitespace-nowrap",
+                  active ? "font-semibold" : "font-medium",
+                  !active && "text-foreground"
+                )}>
+                  {label}
+                </span>
+                {/* Chevron solo en desktop */}
+                {active && (
+                  <ChevronRight className="ml-auto h-3.5 w-3.5 hidden md:block shrink-0 opacity-60" style={{ color: "hsl(var(--primary))" }} />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Separator desktop */}
+        <div
+          className="hidden md:block w-px self-stretch"
+          style={{ background: "hsl(var(--border))" }}
+        />
+
+        {/* ── Content ── */}
+        <div className="flex-1 min-w-0">
+          {activeTab === "profile" && (
+            <ProfileTab
+              user={user}
+              profile={profile}
+              profileLoading={profileLoading}
+              userLoading={userLoading}
+              profileError={profileError}
+            />
           )}
-        </TabsContent>
-
-
-
-
-        {/* Appearance Settings */}
-        <TabsContent value="appearance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tema</CardTitle>
-              <CardDescription>
-                Personaliza la apariencia de la aplicación.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Modo de color</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  {(
-                    [
-                      { value: "light" as const, label: "Claro", Icon: Sun, iconWrap: "bg-background border", iconClass: "text-foreground" },
-                      { value: "dark" as const, label: "Oscuro", Icon: Moon, iconWrap: "bg-foreground border", iconClass: "text-background" },
-                      { value: "system" as const, label: "Sistema", Icon: Monitor, iconWrap: "bg-muted border", iconClass: "text-foreground" },
-                    ]
-                  ).map(({ value, label, Icon, iconWrap, iconClass }) => {
-                    const selected = theme === value
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => handleThemeChange(value)}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 border rounded-lg transition-colors text-center",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent/50"
-                        )}
-                      >
-                        <div className={cn("shadow-sm p-2 rounded-full", iconWrap)}>
-                          <Icon className={cn("h-6 w-6", iconClass)} />
-                        </div>
-                        <span className="font-medium text-sm">{label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Color de acento</Label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
-                  {ALL_ACCENTS.map((name) => {
-                    const { primary, label } = ACCENT_COLOR_MAP[name]
-                    return (
-                      <TooltipProvider key={name}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              aria-pressed={accentColor === name}
-                              aria-label={`Color de acento ${label}`}
-                              className={cn(
-                                "h-10 w-full rounded-lg border-2 flex items-center justify-center transition-all",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                accentColor === name
-                                  ? "border-foreground scale-105 shadow-sm"
-                                  : "border-transparent hover:scale-105 hover:shadow-sm",
-                              )}
-                              style={{ backgroundColor: `hsl(${primary})` }}
-                              onClick={() => handleAccentColorChange(name)}
-                            >
-                              {accentColor === name && <Check className="h-4 w-4 text-white" />}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{label}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )
-                  })}
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Selecciona un color de acento para personalizar tu tablero.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Tamaño de fuente</Label>
-                <Select value={fontSize} onValueChange={(v) => setFontSize(v as "small" | "medium" | "large")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el tamaño" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="small">Pequeño</SelectItem>
-                    <SelectItem value="medium">Mediano</SelectItem>
-                    <SelectItem value="large">Grande</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Densidad</Label>
-                <Select value={density} onValueChange={(v) => setDensity(v as "comfortable" | "compact")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona la densidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comfortable">Cómoda</SelectItem>
-                    <SelectItem value="compact">Compacta</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">
-                  Reduce el espaciado general de la interfaz.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Movimiento reducido</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Reduce la cantidad de animaciones y efectos de movimiento.
-                  </p>
-                </div>
-                <Switch
-                  checked={reducedMotion}
-                  onCheckedChange={setReducedMotion}
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={resetTheme}
-                aria-label="Restablecer valores por defecto"
-                title="Restablecer valores por defecto"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Vista previa del tema</CardTitle>
-              <CardDescription>
-                Vista previa de cómo se verá el tema seleccionado.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <h3 className="text-lg font-medium mb-2">Componentes UI</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Button className="w-full">Botón primario</Button>
-                      <Button variant="outline" className="w-full">
-                        Botón secundario
-                      </Button>
-                      <Button variant="ghost" className="w-full">
-                        Botón fantasma
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="p-3 bg-card border rounded-md">
-                        <p className="text-sm">Componente tarjeta</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch id="preview-switch" />
-                        <Label htmlFor="preview-switch">
-                          Interruptor
-                        </Label>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge>Predeterminado</Badge>
-                        <Badge variant="outline">Contorno</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notification Preferences */}
-        <TabsContent value="notifications" className="space-y-4">
-          {notifSaved && (
-            <Alert className="border-success/30 bg-success/10">
-              <Check className="h-4 w-4 text-success" />
-              <AlertDescription className="text-success">¡Preferencias de notificación guardadas!</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Fila superior: 2 columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-
-            {/* Col 1 — Push subscription toggle */}
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {pushSubscribed ? <Bell className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
-                  Notificaciones push
-                </CardTitle>
-                <CardDescription>
-                  Recibe alertas en este dispositivo aunque la app esté cerrada.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {pushSubscribed ? "Activadas en este dispositivo" : "Desactivadas en este dispositivo"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {pushSubscribed
-                        ? "Recibirás notificaciones push aunque no tengas la app abierta."
-                        : "Actívalas para recibir alertas aunque no tengas la app abierta."}
-                    </p>
-                  </div>
-                  <Button
-                    variant={pushSubscribed ? "outline" : "default"}
-                    size="icon"
-                    disabled={pushLoading}
-                    onClick={handleTogglePush}
-                    className="ml-4 shrink-0"
-                    aria-label={pushSubscribed ? "Desactivar push" : "Activar push"}
-                    title={pushSubscribed ? "Desactivar push" : "Activar push"}
-                  >
-                    {pushLoading
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : pushSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Col 2 — Alertas de empleados */}
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle>Alertas de empleados</CardTitle>
-                <CardDescription>Solo aplica a usuarios con rol admin o dev.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">Baja registrada</Label>
-                    <p className="text-xs text-muted-foreground">Push inmediato al registrar una baja</p>
-                  </div>
-                  <Switch
-                    checked={notifPrefs.pushBajas}
-                    onCheckedChange={(v) => updateNotifPref("pushBajas", v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">Aviso anticipado de baja</Label>
-                    <p className="text-xs text-muted-foreground">3 días, 1 día y el día exacto</p>
-                  </div>
-                  <Switch
-                    checked={notifPrefs.pushBajasWarning}
-                    onCheckedChange={(v) => updateNotifPref("pushBajasWarning", v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">RG-REC-048 por vencer</Label>
-                    <p className="text-xs text-muted-foreground">7 días, 3 días y el día del vencimiento</p>
-                  </div>
-                  <Switch
-                    checked={notifPrefs.pushRg}
-                    onCheckedChange={(v) => updateNotifPref("pushRg", v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium">Término de contrato</Label>
-                    <p className="text-xs text-muted-foreground">7 días, 3 días y el día del vencimiento</p>
-                  </div>
-                  <Switch
-                    checked={notifPrefs.pushContrato}
-                    onCheckedChange={(v) => updateNotifPref("pushContrato", v)}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button
-                  size="icon"
-                  disabled={notifSaving || notifLoading}
-                  onClick={async () => {
-                    const result = await saveNotifPrefs()
-                    if (result?.success) {
-                      setNotifSaved(true)
-                      setTimeout(() => setNotifSaved(false), 3000)
-                    }
-                  }}
-                  aria-label="Guardar preferencias"
-                  title="Guardar preferencias"
-                >
-                  {notifSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : notifSaved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-
-          {/* Fila inferior: historial a ancho completo */}
-          <NotificationHistory />
-        </TabsContent>
-      </Tabs>
+          {activeTab === "appearance" && <AppearanceTab />}
+          {activeTab === "notifications" && <NotificationsTab userId={user?.id} />}
+        </div>
+      </div>
     </>
   )
 }

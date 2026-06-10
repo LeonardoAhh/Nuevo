@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR, PERIODOS_DESEMPENO } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
+import { PrintInstructionDialog } from "./print-instruction-dialog"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import DesempenoPrint from "./desempeno-print"
@@ -53,6 +54,7 @@ export default function DesempenoObjetivos() {
   const [selectedNumero, setSelectedNumero] = useState<string | null>(null)
   const [openDeps, setOpenDeps] = useState<string[]>([])
   const [pendingPrintId, setPendingPrintId] = useState<string | null>(null)
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
 
   const { historial, historialLoading, fetchHistorial, cargarEvaluacion, eliminarEvaluacion, data, loading } = useDesempeno()
 
@@ -122,11 +124,11 @@ export default function DesempenoObjetivos() {
     [empleadosAgrupados, selectedNumero],
   )
 
-  // Imprimir: carga la evaluación y dispara print cuando ya está en el DOM.
+  // Imprimir: carga la evaluación y prepara el modal de impresión.
   useEffect(() => {
     if (!pendingPrintId || loading || !data) return
     const t = setTimeout(() => {
-      window.print()
+      setShowPrintDialog(true)
       setPendingPrintId(null)
     }, 150)
     return () => clearTimeout(t)
@@ -250,7 +252,7 @@ export default function DesempenoObjetivos() {
                 {data && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => window.print()} disabled={bloqueado} aria-label="Imprimir">
+                      <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => setShowPrintDialog(true)} disabled={bloqueado} aria-label="Imprimir">
                         <Printer className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
@@ -368,7 +370,7 @@ export default function DesempenoObjetivos() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Evaluación cargada</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={bloqueado}>
+              <Button variant="outline" size="sm" onClick={() => setShowPrintDialog(true)} disabled={bloqueado}>
                 <Printer className="h-4 w-4 mr-1.5" />
                 {bloqueado ? "Captura compromisos" : "Imprimir"}
               </Button>
@@ -487,6 +489,12 @@ export default function DesempenoObjetivos() {
           <DesempenoPrint data={data} />
         </div>
       )}
+
+      <PrintInstructionDialog 
+        open={showPrintDialog} 
+        onOpenChange={setShowPrintDialog} 
+        onConfirm={() => window.print()} 
+      />
     </div>
     </TooltipProvider>
   )
