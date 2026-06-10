@@ -58,6 +58,7 @@ export interface EvaluacionHistorial {
   periodo: string | null
   calificacion_final: number
   created_at: string
+  origen?: "planta" | "nuevo_ingreso"
 }
 
 export function useDesempeno() {
@@ -413,7 +414,7 @@ export function useDesempeno() {
 
       // Fetch employee names for each unique numero_empleado
       const numeros = [...new Set((evals ?? []).map((e) => e.numero_empleado))]
-      const empleadoMap: Record<string, { nombre: string; puesto: string }> = {}
+      const empleadoMap: Record<string, { nombre: string; puesto: string; origen: "planta" | "nuevo_ingreso" }> = {}
 
       if (numeros.length > 0) {
         const { data: emps } = await supabase
@@ -421,7 +422,7 @@ export function useDesempeno() {
           .select("numero, nombre, puesto")
           .in("numero", numeros)
         for (const e of emps ?? []) {
-          if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "" }
+          if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "", origen: "planta" }
         }
 
         const missingNumeros = numeros.filter((n) => !empleadoMap[n])
@@ -431,7 +432,7 @@ export function useDesempeno() {
             .select("numero, nombre, puesto")
             .in("numero", missingNumeros)
           for (const e of niEmps ?? []) {
-            if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "" }
+            if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "", origen: "nuevo_ingreso" }
           }
         }
       }
@@ -447,6 +448,7 @@ export function useDesempeno() {
           periodo: e.periodo,
           calificacion_final: e.calificacion_final,
           created_at: e.created_at,
+          origen: empleadoMap[e.numero_empleado]?.origen,
         }))
       )
     } catch (e) {

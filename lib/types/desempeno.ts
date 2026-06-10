@@ -2847,6 +2847,72 @@ const _OBJETIVOS_RESIDENTE_CALIDAD: Objetivo[] = [
     },
 ];
 
+const OBJETIVOS_AUXILIAR_DE_SUPERVISOR: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Realizar paros de máquinas cuando se detecten 5 piezas consecutivas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Evitar paro de máquina porque los productos no cumplen los lineamientos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Asegurar cantidad de producción al 100%",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Llenado del reporte de producción correctamente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Portar el 100% de su equipo de EPP y uniformidad dirariamente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Asegurar el 100% de la capacitacion al personal operativo a pie de maquina, llenando el formato correspondiente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Relevar en maquina el 100% (comidas, sanitarios, falta de personal)",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Asegurar al 100% contar con el material para entregar a linea de produccion",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Evitar al 100% acumulaciones y rechazos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
 export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     /*GERENCIAS*/
     "GERENTE DE PLANTA": _OBJETIVOS_GERENTE_PLANTA,

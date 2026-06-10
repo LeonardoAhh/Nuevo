@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
-import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR } from "@/lib/catalogo"
+import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR, PERIODOS_DESEMPENO } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
@@ -43,6 +43,7 @@ interface EmpleadoAgrupado {
   puesto: string
   departamento: string
   evals: EvaluacionHistorial[]
+  origen?: "planta" | "nuevo_ingreso"
 }
 
 export default function DesempenoObjetivos() {
@@ -79,6 +80,7 @@ export default function DesempenoObjetivos() {
           puesto: ev.puesto ?? "",
           departamento: getDepartamentoByPuesto(ev.puesto),
           evals: [],
+          origen: ev.origen,
         }
         byNum.set(ev.numero_empleado, e)
       }
@@ -301,24 +303,45 @@ export default function DesempenoObjetivos() {
                                 <TableHead className="w-16">#</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead className="hidden md:table-cell">Puesto</TableHead>
+                                <TableHead className="hidden md:table-cell">Último Periodo</TableHead>
                                 <TableHead className="text-center w-20">Evals</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {empleados.map((e) => (
+                              {empleados.map((e) => {
+                                const lastEval = e.evals[0];
+                                const isSemestral = lastEval?.periodo && (PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(lastEval.periodo);
+                                return (
                                 <TableRow
                                   key={e.numero}
                                   className="cursor-pointer hover:bg-muted/50"
                                   onClick={() => setSelectedNumero(e.numero)}
                                 >
                                   <TableCell className="font-mono text-xs">{e.numero}</TableCell>
-                                  <TableCell className="font-medium truncate max-w-[200px]">{e.nombre}</TableCell>
+                                  <TableCell className="font-medium truncate max-w-[200px]">
+                                    <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2">
+                                      <span>{e.nombre}</span>
+                                      {e.origen === "nuevo_ingreso" && (
+                                        <Badge variant="secondary" className="text-[10px] h-4 px-1 w-fit">Nuevo Ingreso</Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
                                   <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[160px]">{e.puesto || "—"}</TableCell>
+                                  <TableCell className="hidden md:table-cell">
+                                    {lastEval ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs text-muted-foreground">{lastEval.periodo}</span>
+                                        <Badge variant={isSemestral ? "default" : "secondary"} className="text-[10px] h-4 px-1">
+                                          {isSemestral ? "Semestral" : "Mensual"}
+                                        </Badge>
+                                      </div>
+                                    ) : "—"}
+                                  </TableCell>
                                   <TableCell className="text-center">
                                     <Badge variant="outline" className="text-xs">{e.evals.length}</Badge>
                                   </TableCell>
                                 </TableRow>
-                              ))}
+                              )})}
                             </TableBody>
                           </Table>
                         </div>
@@ -392,9 +415,17 @@ export default function DesempenoObjetivos() {
             {empleadoSel.evals.map((ev) => (
               <div key={ev.id} className="flex items-center gap-3 rounded-lg border p-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">{ev.periodo ?? "—"}</Badge>
-                    <span className={`text-sm font-bold ${calificacionColor(ev.calificacion_final)}`}>{ev.calificacion_final}%</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{ev.periodo ?? "—"}</Badge>
+                    {ev.periodo && (
+                      <Badge 
+                        variant={(PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(ev.periodo) ? "default" : "secondary"} 
+                        className="text-[10px] h-5 px-1.5"
+                      >
+                        {(PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(ev.periodo) ? "Semestral" : "Mensual"}
+                      </Badge>
+                    )}
+                    <span className={`text-sm font-bold ml-auto ${calificacionColor(ev.calificacion_final)}`}>{ev.calificacion_final}%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatFecha(ev.created_at)}</p>
                 </div>

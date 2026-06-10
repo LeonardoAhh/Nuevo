@@ -365,7 +365,7 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
   const matchList = (tipo: TipoDesempeno) =>
     TIPO_DESEMPENO_POR_PUESTO[tipo].some((keyword) => normalized.includes(keyword))
 
-  if (matchList("jefe") && !normalized.includes("AUXILIAR ADMINISTRATIVO")) {
+  if (matchList("jefe") && !normalized.includes("AUXILIAR ADMINISTRATIVO") && !normalized.includes("AUXILIAR DE SUPERVISOR")) {
     return "jefe"
   }
 
