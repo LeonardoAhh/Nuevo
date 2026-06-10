@@ -334,13 +334,28 @@ export const TIPO_DESEMPENO_POR_PUESTO = {
   administrativo: [
     "ADMINISTRATIVO",
     "AUXILIAR ADMINISTRATIVO",
-    "CAPTURISTA",
     "ANALISTA",
     "ASISTENTE",
     "SECRETARIA",
     "PROGRAMADOR",
     "AUXILIAR DE RECURSOS HUMANOS",
     "AUXILIAR DE CONTABILIDAD",
+    "METRÓLOGO",
+    "AUXILIAR DE METROLOGÍA",
+    "AUXILIAR DE PROYECTOS",
+    "INGENIERO DE PROYECTOS",
+    "AUXILIAR DEL SGI",
+    "PLANEADOR DE PRODUCCIÓN",
+    "INGENIERO DE PROCESO",
+    "INGENIERO DE CALIDAD",
+    "INSPECTOR DE CALIDAD",
+    "INSPECTOR RECIBO",
+    "RESIDENTE DE CALIDAD",
+    "LIDER DE COTIZACIONES",
+    "SUPERVISOR DE LOGISTICA",
+    "LIDER DE PROYECTOS",
+    "LÍDER DE PROYECTOS",
+    "COORDINADOR DE RPS",
   ],
   operativo: [
     "OPERADOR",
@@ -365,7 +380,16 @@ export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
   const matchList = (tipo: TipoDesempeno) =>
     TIPO_DESEMPENO_POR_PUESTO[tipo].some((keyword) => normalized.includes(keyword))
 
-  if (matchList("jefe") && !normalized.includes("AUXILIAR ADMINISTRATIVO") && !normalized.includes("AUXILIAR DE SUPERVISOR")) {
+  if (
+    matchList("jefe") &&
+    !normalized.includes("AUXILIAR ADMINISTRATIVO") &&
+    !normalized.includes("AUXILIAR DE SUPERVISOR") &&
+    !normalized.includes("LIDER DE COTIZACIONES") &&
+    !normalized.includes("SUPERVISOR DE LOGISTICA") &&
+    !normalized.includes("LIDER DE PROYECTOS") &&
+    !normalized.includes("LÍDER DE PROYECTOS") &&
+    !normalized.includes("COORDINADOR DE RPS")
+  ) {
     return "jefe"
   }
 
