@@ -9,6 +9,7 @@ import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 import { ConnectionStatus } from "@/components/connection-status"
 import { InstallPrompt } from "@/components/install-prompt"
 import { UpdateBanner } from "@/components/update-banner"
+import { MaintenanceGuard } from "@/components/maintenance-guard"
 
 // Editorial serif + technical mono shared by the login hero and
 // the post-login transition. Exposed as CSS variables so any
@@ -109,7 +110,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${fontSerif.variable} ${fontMono.variable}`}
       >
         <ViewportFix />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <MaintenanceGuard>
+            {children}
+          </MaintenanceGuard>
+        </ThemeProvider>
         <PWARegister />
         <UpdateBanner />
         <SonnerProvider />

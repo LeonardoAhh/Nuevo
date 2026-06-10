@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Moon, Monitor, Palette, Sun, User, Check, AlertCircle,
   Upload, RotateCcw, Bell, Loader2, BellOff, Save, X,
-  ChevronRight,
+  ChevronRight, Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,7 @@ import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
 import { AuthForm } from "@/components/auth-form"
 import NotificationHistory from "@/components/notification-history"
 import { requestPushPermission, unsubscribeFromPush, isPushSubscribed } from "@/lib/supabase/push"
+import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "blue", "indigo", "purple", "violet",
@@ -31,9 +32,9 @@ const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "green", "teal", "cyan", "slate",
 ]
 
-type Tab = "profile" | "appearance" | "notifications"
+type Tab = "profile" | "appearance" | "notifications" | "developer"
 
-const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
+const NAV_ITEMS_BASE: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
   { id: "profile",       label: "Perfil",          icon: User,    description: "Nombre, avatar y datos personales" },
   { id: "appearance",    label: "Apariencia",       icon: Palette, description: "Tema, colores y densidad" },
   { id: "notifications", label: "Notificaciones",   icon: Bell,    description: "Alertas y preferencias de push" },
@@ -621,6 +622,32 @@ function NotificationsTab({ userId }: { userId?: string }) {
   )
 }
 
+// ─── DEVELOPER TAB ────────────────────────────────────────────────────────────
+function DeveloperTab() {
+  const { isMaintenance, toggleMaintenance, loading } = useMaintenanceMode()
+  
+  return (
+    <div className="space-y-5">
+      <SectionHeader title="Desarrollador" description="Peligro: Opciones avanzadas de control global del sistema." />
+      
+      <SettingGroup title="Control de Sistema">
+        <SettingRow 
+          label="Modo Mantenimiento" 
+          description="Al activar, todos los usuarios en producción serán bloqueados y verán la pantalla de mantenimiento. Tú seguirás teniendo acceso si estás en localhost."
+          htmlFor="maintenance-sw"
+        >
+          <Switch 
+            id="maintenance-sw" 
+            checked={isMaintenance} 
+            onCheckedChange={toggleMaintenance} 
+            disabled={loading}
+          />
+        </SettingRow>
+      </SettingGroup>
+    </div>
+  )
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -635,6 +662,11 @@ export default function SettingsContent() {
   const { profile, loading: profileLoading, error: profileError } = useProfile(user?.id)
 
   if (!user && !userLoading) return <AuthForm />
+
+  const isDev = user?.email === "leo@adm.com"
+  const navItems = isDev 
+    ? [...NAV_ITEMS_BASE, { id: "developer" as Tab, label: "Desarrollador", icon: Wrench, description: "Control y mantenimiento" }]
+    : NAV_ITEMS_BASE
 
   return (
     <>
@@ -681,7 +713,7 @@ export default function SettingsContent() {
           )}
           aria-label="Secciones de configuración"
         >
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+          {navItems.map(({ id, label, icon: Icon }) => {
             const active = activeTab === id
             return (
               <button
@@ -727,6 +759,7 @@ export default function SettingsContent() {
           )}
           {activeTab === "appearance" && <AppearanceTab />}
           {activeTab === "notifications" && <NotificationsTab userId={user?.id} />}
+          {activeTab === "developer" && isDev && <DeveloperTab />}
         </div>
       </div>
     </>

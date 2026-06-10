@@ -89,8 +89,8 @@ const MOCKUP_STYLES = `
 
   @keyframes cdpMoreHover {
     0%, 14%   { opacity: 0; }
-    16%       { opacity: 1; }   /* cursor llega */
-    31%       { opacity: 1; }   /* click */
+    16%       { opacity: 1; }
+    31%       { opacity: 1; }
     33%       { opacity: 0; }
     100%      { opacity: 0; }
   }
@@ -107,9 +107,9 @@ const MOCKUP_STYLES = `
 
   @keyframes cdpChevronRotate {
     0%, 30%   { transform: rotate(0deg); }
-    38%       { transform: rotate(180deg); }  /* expande */
+    38%       { transform: rotate(180deg); }
     88%       { transform: rotate(180deg); }
-    96%       { transform: rotate(0deg); }    /* reset */
+    96%       { transform: rotate(0deg); }
     100%      { transform: rotate(0deg); }
   }
 
@@ -122,9 +122,9 @@ const MOCKUP_STYLES = `
 
   @keyframes cdpOptionsExpand {
     0%, 30%   { max-height: 0; opacity: 0; }
-    40%       { max-height: 120px; opacity: 1; }  /* aparece */
+    40%       { max-height: 120px; opacity: 1; }
     88%       { max-height: 120px; opacity: 1; }
-    96%       { max-height: 0; opacity: 0; }       /* colapsa al reset */
+    96%       { max-height: 0; opacity: 0; }
     100%      { max-height: 0; opacity: 0; }
   }
 
@@ -159,7 +159,7 @@ const MOCKUP_STYLES = `
 
   @keyframes cdpOptionHover {
     0%, 37%   { opacity: 0; }
-    42%       { opacity: 1; }   /* cursor llega */
+    42%       { opacity: 1; }
     53%       { opacity: 1; }
     57%       { opacity: 0; }
     100%      { opacity: 0; }
@@ -181,16 +181,12 @@ const MOCKUP_STYLES = `
   }
 
   @keyframes cdpCheckboxState {
-    /* Marcado al aparecer */
-    0%, 38%   { background-color: hsl(var(--primary));   border-color: hsl(var(--primary));          transform: scale(1); }
-    /* Micro-bounce del click */
+    0%, 38%   { background-color: hsl(var(--primary)); border-color: hsl(var(--primary)); transform: scale(1); }
     49%       { transform: scale(0.78); }
     51%       { transform: scale(1.07); }
-    /* Desmarcado */
     53%, 88%  { background-color: transparent; border-color: hsl(var(--background) / 0.4); transform: scale(1); }
-    /* Reset */
-    96%       { background-color: hsl(var(--primary));   border-color: hsl(var(--primary));          transform: scale(1); }
-    100%      { background-color: hsl(var(--primary));   border-color: hsl(var(--primary));          transform: scale(1); }
+    96%       { background-color: hsl(var(--primary)); border-color: hsl(var(--primary)); transform: scale(1); }
+    100%      { background-color: hsl(var(--primary)); border-color: hsl(var(--primary)); transform: scale(1); }
   }
 
   .cdp-checkmark {
@@ -238,22 +234,17 @@ const MOCKUP_STYLES = `
     filter: drop-shadow(0 1px 3px hsl(var(--foreground) / 0.6));
     pointer-events: none;
     transform-origin: top left;
-    /* Anclado a la esquina inferior-derecha del panel "Más opciones" */
     bottom: 0.3rem;
     right: 1.5rem;
     animation: cdpCursor1 9s linear infinite;
   }
 
   @keyframes cdpCursor1 {
-    /* Oculto fuera de frame */
     0%      { transform: translate(40px, 20px); opacity: 0; }
     10%     { transform: translate(40px, 20px); opacity: 0; }
-    /* Viaja y llega */
     17%     { transform: translate(0px, 0px);   opacity: 1; }
-    /* Click — micro-press */
     27%     { transform: translate(1px, 1px) scale(0.9); opacity: 1; }
     30%     { transform: translate(0px, 0px) scale(1);   opacity: 1; }
-    /* Se aleja */
     38%     { transform: translate(20px, 15px); opacity: 0; }
     100%    { transform: translate(40px, 20px); opacity: 0; }
   }
@@ -267,21 +258,16 @@ const MOCKUP_STYLES = `
     filter: drop-shadow(0 1px 3px hsl(var(--foreground) / 0.6));
     pointer-events: none;
     transform-origin: top left;
-    /* Anclado junto al checkbox */
     top: 0.15rem;
     left: 0.5rem;
     animation: cdpCursor2 9s linear infinite;
   }
 
   @keyframes cdpCursor2 {
-    /* Oculto */
     0%, 35%  { transform: translate(-30px, 30px); opacity: 0; }
-    /* Viaja desde abajo-izquierda */
     44%      { transform: translate(0px, 0px);    opacity: 1; }
-    /* Click */
     49%      { transform: translate(1px, 1px) scale(0.9); opacity: 1; }
     52%      { transform: translate(0px, 0px) scale(1);   opacity: 1; }
-    /* Se aleja y desaparece */
     62%      { transform: translate(-20px, 20px); opacity: 0; }
     100%     { transform: translate(-30px, 30px); opacity: 0; }
   }
@@ -293,12 +279,12 @@ const MOCKUP_STYLES = `
       max-height: 120px !important;
       opacity: 1 !important;
     }
-    .cdp-chevron          { animation: none !important; transform: rotate(180deg) !important; }
-    .cdp-checkbox         { animation: none !important; background-color: transparent !important; border-color: hsl(var(--background) / 0.4) !important; }
-    .cdp-checkmark        { animation: none !important; opacity: 0 !important; }
+    .cdp-chevron            { animation: none !important; transform: rotate(180deg) !important; }
+    .cdp-checkbox           { animation: none !important; background-color: transparent !important; border-color: hsl(var(--background) / 0.4) !important; }
+    .cdp-checkmark          { animation: none !important; opacity: 0 !important; }
     .cdp-cursor-1,
-    .cdp-cursor-2         { animation: none !important; opacity: 0 !important; }
-    .cdp-ripple           { animation: none !important; opacity: 0 !important; }
+    .cdp-cursor-2           { animation: none !important; opacity: 0 !important; }
+    .cdp-ripple             { animation: none !important; opacity: 0 !important; }
     .cdp-more-row::before,
     .cdp-option-row::before { animation: none !important; opacity: 0 !important; }
   }
@@ -322,18 +308,20 @@ function CursorSvg({ className }: { className: string }) {
 
 /* ─────────────────────────────────────────────────────────────────
    Mockup del diálogo de impresión de Chrome
-   Reproduce fielmente las 3 fases capturadas en los screenshots:
-     1. Fila "Más opciones de configuración" colapsada
-     2. Click → sección "Opciones" se expande con checkbox marcado
-     3. Click en checkbox → se desmarca
 ──────────────────────────────────────────────────────────────────── */
 function ChromePrintMockup() {
   return (
-    <div className="cdp-panel" role="img" aria-label="Animación: cómo desmarcar Encabezados y pies de página en el diálogo de impresión de Chrome">
+    <div
+      className="cdp-panel"
+      role="img"
+      aria-label="Animación: cómo desmarcar Encabezados y pies de página en el diálogo de impresión de Chrome"
+    >
       {/* Fila superior (dim) — contexto */}
       <div className="cdp-row">
         <span className="cdp-row-label cdp-row-label-dim">Destino</span>
-        <span className="cdp-row-label cdp-row-label-dim" style={{ opacity: 0.5 }}>Imprimir</span>
+        <span className="cdp-row-label cdp-row-label-dim" style={{ opacity: 0.5 }}>
+          Imprimir
+        </span>
       </div>
       <div className="cdp-divider" />
 
@@ -342,9 +330,7 @@ function ChromePrintMockup() {
         <span className="cdp-row-label" style={{ color: "hsl(var(--background) / 0.75)" }}>
           Más opciones de configuración
         </span>
-        {/* Cursor 1 — apunta a esta fila */}
         <CursorSvg className="cdp-cursor-1" />
-        {/* Chevron */}
         <svg
           className="cdp-chevron"
           viewBox="0 0 24 24"
@@ -359,14 +345,11 @@ function ChromePrintMockup() {
         </svg>
       </div>
 
-      {/* Sección expandida — FASE 2 */}
+      {/* Sección expandida — FASE 2 + 3 */}
       <div className="cdp-options-section">
         <div className="cdp-divider" />
         <p className="cdp-section-header">Opciones</p>
-
-        {/* Fila del checkbox — FASE 3 */}
         <div className="cdp-option-row">
-          {/* Checkbox */}
           <div className="cdp-checkbox">
             <div className="cdp-ripple" />
             <svg
@@ -384,9 +367,7 @@ function ChromePrintMockup() {
               <path d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          {/* Cursor 2 — apunta al checkbox */}
           <CursorSvg className="cdp-cursor-2" />
-          {/* Label — dos líneas como en el screenshot */}
           <span className="cdp-option-label">
             Encabezados y pies de<br />página
           </span>
@@ -426,6 +407,7 @@ export function PrintInstructionDialog({
 
       <DialogContent className="max-w-sm sm:max-w-md">
         <DialogHeader className="items-center text-center gap-3">
+
           {/* Ícono — tokens semánticos de warning */}
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-warning/15">
             <AlertTriangle
@@ -435,21 +417,82 @@ export function PrintInstructionDialog({
             />
           </div>
 
-          <DialogTitle className="text-xl">Antes de imprimir…</DialogTitle>
+          <DialogTitle className="text-xl">
+            Un paso antes de imprimir
+          </DialogTitle>
 
-          <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-            Para que el formato se vea correctamente, abre{" "}
-            <strong className="text-foreground font-semibold">
-              Más opciones de configuración
-            </strong>{" "}
-            y{" "}
-            <strong className="text-foreground font-semibold">desmarca</strong>{" "}
-            la opción{" "}
-            <em className="not-italic font-medium text-foreground">
-              Encabezados y pies de página
-            </em>
-            .
+          {/* ── Descripción con pasos numerados ── */}
+          <DialogDescription asChild>
+            <div className="text-left space-y-3 pt-1">
+
+              <p className="text-sm text-muted-foreground text-center leading-relaxed">
+                El navegador oculta una opción que puede arruinar el formato.
+                Sigue estos pasos antes de continuar:
+              </p>
+
+              <ol className="space-y-2">
+
+                {/* Paso 1 */}
+                <li className="flex items-start gap-3 rounded-md bg-secondary p-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-medium text-primary mt-0.5">
+                    1
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground leading-snug">
+                      Abre "Más opciones de configuración"
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Está al final del panel izquierdo. Haz clic para expandirlo.
+                    </p>
+                  </div>
+                </li>
+
+                {/* Paso 2 */}
+                <li className="flex items-start gap-3 rounded-md bg-secondary p-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-medium text-primary mt-0.5">
+                    2
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground leading-snug">
+                      Busca la sección "Opciones"
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Aparecerá justo debajo, con una casilla de verificación.
+                    </p>
+                  </div>
+                </li>
+
+                {/* Paso 3 — crítico */}
+                <li
+                  className="flex items-start gap-3 rounded-md bg-secondary p-3"
+                  style={{ border: "1px solid hsl(var(--warning) / 0.3)" }}
+                >
+                  <span
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium mt-0.5"
+                    style={{
+                      backgroundColor: "hsl(var(--warning) / 0.15)",
+                      color: "hsl(var(--warning))",
+                    }}
+                  >
+                    3
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-foreground leading-snug">
+                      Desmarca "Encabezados y pies de página"
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      La casilla debe quedar{" "}
+                      <strong className="text-foreground font-medium">vacía</strong>
+                      {" "}— sin palomita. Esto evita que el navegador imprima la URL
+                      y la fecha encima del documento.
+                    </p>
+                  </div>
+                </li>
+
+              </ol>
+            </div>
           </DialogDescription>
+
         </DialogHeader>
 
         {/* Mockup animado */}
