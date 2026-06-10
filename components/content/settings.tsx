@@ -663,7 +663,7 @@ export default function SettingsContent() {
 
   if (!user && !userLoading) return <AuthForm />
 
-  const isDev = user?.email === "leo@adm.com"
+  const isDev = user?.email?.toLowerCase().trim() === "leo@adm.com"
   const navItems = isDev 
     ? [...NAV_ITEMS_BASE, { id: "developer" as Tab, label: "Desarrollador", icon: Wrench, description: "Control y mantenimiento" }]
     : NAV_ITEMS_BASE

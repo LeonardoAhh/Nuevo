@@ -33,7 +33,12 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const [isLocal, setIsLocal] = useState(true)
 
   useEffect(() => {
-    setIsLocal(isLocalHost(window.location.hostname))
+    setIsLocal(
+      process.env.NODE_ENV === "development" ||
+      window.location.hostname === "localhost" || 
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.includes("192.168.")
+    )
   }, [])
 
   // Mientras carga el estado de mantenimiento, renderiza la app

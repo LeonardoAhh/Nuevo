@@ -36,9 +36,11 @@ export function useMaintenanceMode() {
 
     fetchState()
 
-    // Suscribirse a cambios en tiempo real
+    // Suscribirse a cambios en tiempo real con un nombre de canal verdaderamente único
+    // para evitar colisiones cuando React Strict Mode monta/desmonta el efecto rápidamente.
+    const channelName = `maintenance_mode_${Math.random().toString(36).substring(2)}`
     const channel = supabase
-      .channel('public:system_settings')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'system_settings', filter: 'id=eq.maintenance_mode' },
