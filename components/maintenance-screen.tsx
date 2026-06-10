@@ -152,7 +152,7 @@ export function MaintenanceScreen() {
 
         {/* Nota de contacto — útil para usuarios internos */}
         <p className="font-mono text-[11px] text-muted-foreground/60">
-          Si el problema persiste, contacta a soporte interno.
+          Si el problema persiste, contacta a Recursos Humanos
         </p>
       </motion.div>
     </div>
