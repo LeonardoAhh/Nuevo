@@ -1,26 +1,40 @@
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 
-const swPath = path.join(__dirname, '../public/sw.js');
+const swPath  = path.join(__dirname, '../public/sw.js');
+const tmpPath = swPath + '.tmp';
+
+// ── Validar que el archivo existe antes de intentar leerlo ──────────
+if (!fs.existsSync(swPath)) {
+  console.error(`❌ No se encontró sw.js en: ${swPath}`);
+  process.exit(1);
+}
+
+// ── Una sola instancia de fecha para consistencia total ─────────────
+const now = new Date().toISOString();
 
 try {
   let swContent = fs.readFileSync(swPath, 'utf8');
 
-  // Buscar si ya existe un timestamp previo
-  const timestampRegex = /^\/\/ TIMESTAMP: .*\n/m;
-  const newTimestamp = `// TIMESTAMP: ${new Date().toISOString()}\n`;
+  // Cubre line endings de Windows (\r\n) y Unix (\n)
+  const timestampRegex = /^\/\/ TIMESTAMP: .+\r?\n/m;
+  const newTimestamp   = `// TIMESTAMP: ${now}\n`;
 
-  if (timestampRegex.test(swContent)) {
-    // Si existe, lo reemplazamos
-    swContent = swContent.replace(timestampRegex, newTimestamp);
-  } else {
-    // Si no existe, lo agregamos al inicio del archivo
-    swContent = newTimestamp + swContent;
-  }
+  swContent = timestampRegex.test(swContent)
+    ? swContent.replace(timestampRegex, newTimestamp)   // reemplaza existente
+    : newTimestamp + swContent;                         // inserta al inicio
 
-  fs.writeFileSync(swPath, swContent, 'utf8');
-  console.log(`✅ [Service Worker] Inyectado nuevo timestamp para forzar actualización: ${new Date().toISOString()}`);
+  // Escritura atómica: escribe en .tmp y luego renombra
+  // Si writeFileSync falla, el sw.js original queda intacto
+  fs.writeFileSync(tmpPath, swContent, 'utf8');
+  fs.renameSync(tmpPath, swPath);
+
+  console.log(`✅ [Service Worker] Timestamp inyectado: ${now}`);
 } catch (error) {
-  console.error("❌ Error al actualizar sw.js:", error);
+  // Limpiar el .tmp si quedó huérfano
+  if (fs.existsSync(tmpPath)) {
+    try { fs.unlinkSync(tmpPath); } catch { /* ignorar error secundario */ }
+  }
+  console.error('❌ Error al actualizar sw.js:', error);
   process.exit(1);
 }
