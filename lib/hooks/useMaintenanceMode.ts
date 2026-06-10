@@ -20,7 +20,7 @@ export function useMaintenanceMode() {
           .maybeSingle()
         
         if (error) {
-          console.error("Supabase error:", error)
+          console.error("Supabase error [maintenance_mode]:", error.message || error.toString(), error)
           return
         }
 

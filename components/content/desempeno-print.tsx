@@ -17,17 +17,8 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
   const pond = calcularPonderacion(data)
   const tieneCompromisos = !!(data.compromisos || data.fecha_revision || data.observaciones)
 
-  // Solo forzar salto de página si la calificación es baja y hay compromisos que documentar.
-  // En cualquier otro caso los compromisos y firmas fluyen naturalmente después
-  // de la calificación final en la misma página.
   const forzarSaltoCompromisos = !blankMode && pond.calificacionFinal < 80 && tieneCompromisos
 
-  // ── Modo compacto automático ─────────────────────────────────────────
-  // Cuenta el total de filas de datos entre las tres tablas.
-  // Operativo típico: 5 obj + 5 resp + 4 comp = 14 filas → todo cabe en 1 página.
-  // Administrativo típico: 10 obj + 10 resp + 4 comp = 24 filas → necesita 2 páginas.
-  // Umbral ≤ 22: activa --compact que reduce sp-3 y sp-4 para eliminar
-  // el espacio muerto sin comprimir el texto.
   const totalFilas =
     objetivos.length +
     data.cumplimiento_responsabilidades.length +
@@ -61,11 +52,6 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       {/* ── PARTE 1: Objetivos (40%) ───────────────────────── */}
-      {/*
-        sectionBlock--breakable porque puede tener 10+ filas que no caben
-        en una sola página; se permite el corte interno pero el encabezado
-        nunca queda solo al pie.
-      */}
       <div className={`${styles.sectionBlock} ${styles["sectionBlock--breakable"]}`}>
         <div className={styles.sectionHeader}>Cumplimiento de Objetivos 40%</div>
         <table className={`${styles.table} ${styles.tableObjetivos}`}>
@@ -126,10 +112,6 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       {/* ── PARTE 3: Competencias Blandas (30%) ───────────── */}
-      {/*
-        sectionBlock sin --breakable: la tabla de competencias es corta
-        (4 filas) y debe caber completa con su encabezado.
-      */}
       <div className={styles.sectionBlock}>
         <div className={styles.sectionHeader}>Competencias Blandas 30%</div>
         <table className={`${styles.table} ${styles.tableCompetencias}`}>
@@ -158,28 +140,20 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
         </div>
       </div>
 
-      {/* ── Bloque final: calificación + compromisos + firmas ─
-          finalBlock evita que este bloque salte a página nueva
-          cuando hay espacio suficiente en la página actual.
-          Solo se fuerza salto explícito cuando la calificación
-          es baja y hay compromisos que documentar formalmente.
-      ─────────────────────────────────────────────────────── */}
+      {/* ── Bloque final ──────────────────────────────────── */}
       <div className={forzarSaltoCompromisos ? styles.pageBreakSection : styles.finalBlock}>
 
-        {/* Advertencia calificación baja */}
         {!blankMode && pond.calificacionFinal < 80 && tieneCompromisos && (
           <div className={styles.warningBox}>
             En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
           </div>
         )}
 
-        {/* Calificación total */}
         <div className={styles.calificacionBox}>
           <span>CALIFICACIÓN TOTAL DEL PERIODO:</span>
           <strong>{pond.calificacionFinal}%</strong>
         </div>
 
-        {/* Compromisos / Acuerdos */}
         {(tieneCompromisos || blankMode) && (
           <div className={styles.notesSection}>
             <div>
@@ -197,7 +171,6 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
           </div>
         )}
 
-        {/* Firmas */}
         <div className={styles.signatureGrid}>
           <div>
             <p className={styles.signatureName}>{data.evaluador_nombre || "—"}</p>
@@ -215,7 +188,8 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
       </div>
 
       {/* ── Pie de página ──────────────────────────────────── */}
-      <div className={styles.footerText}>
+      {/* footer-print es la clase global que el hook usa para fixed en impresión */}
+      <div className={`${styles.footerText} footer-print`}>
         <span>{data.tipo === "operativo" ? "RG-ADM-063" : "RG-ADM-062"}</span>
         <span>REV.03</span>
       </div>
