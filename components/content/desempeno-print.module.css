@@ -1,5 +1,5 @@
 /* ===================================================
-   TOKENS DE TEMA PARA IMPRESIÓN
+   TOKENS DE TEMA PARA IMPRESIÓN — TAMAÑO CARTA (LETTER)
 =================================================== */
 .printRoot {
     --print-text: #1a1a1a;
@@ -27,7 +27,8 @@
     --sp-4: 1rem;
 
     width: 100%;
-    max-width: 210mm;
+    /* Carta = 8.5in ≈ 216mm */
+    max-width: 216mm;
     margin: 0 auto;
     padding: 6mm;
     background: var(--print-bg);
@@ -46,9 +47,31 @@
     padding: 5mm;
 }
 
+/* ── Tabla envolvente: permite repetir el pie (tfoot)
+      al final de CADA página impresa ─────────────────── */
+.pageTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pageTable > tbody > tr > td,
+.pageTable > tfoot > tr > td {
+    padding: 0;
+    border: none;
+    vertical-align: top;
+}
+
+/* El tfoot se repite en cada página al imprimir */
+.pageTable > tfoot {
+    display: table-footer-group;
+}
+
 .pageBreakSection {
     page-break-before: always;
     break-before: page;
+    /* Respiro al iniciar página nueva (el margin se descarta
+       en los saltos de página; el padding NO) */
+    padding-top: var(--sp-3);
 }
 
 .headerRow {
@@ -60,11 +83,11 @@
 }
 
 .headerLeft h1 {
-    font-size: var(--fs-xs);
+    font-size: var(--fs-lg);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: var(--sp-1);
+    margin: 0 0 var(--sp-1);
     color: var(--print-text);
 }
 
@@ -115,6 +138,10 @@
     border: 1px solid var(--print-border);
 }
 
+.infoGridBottom div {
+    border-top: none;
+}
+
 .sectionBlock {
     margin-top: var(--sp-3);
     page-break-inside: avoid;
@@ -130,8 +157,7 @@
     font-weight: 600;
     font-size: var(--fs-base);
     padding: var(--sp-1) var(--sp-2);
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--print-text);
@@ -149,6 +175,21 @@
     page-break-inside: avoid;
     break-inside: avoid;
     line-height: 1.25;
+}
+
+/* En secciones breakable la tabla se corta por fila */
+.sectionBlock--breakable .table {
+    page-break-inside: auto;
+    break-inside: auto;
+}
+
+.table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.table thead {
+    display: table-header-group;
 }
 
 .table th,
@@ -214,13 +255,19 @@
     border-top: none;
     font-size: var(--fs-xs);
     font-weight: 600;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    /* Pegado a su tabla: nunca queda huérfano en otra página */
+    page-break-before: avoid;
+    break-before: avoid;
 }
 
 .finalBlock {
     page-break-inside: avoid;
     break-inside: avoid;
-    page-break-before: avoid;
-    break-before: avoid;
+    /* Respiro cuando el bloque cae al inicio de una página nueva.
+       Se usa padding (los márgenes se descartan en los saltos) */
+    padding-top: var(--sp-3);
 }
 
 .calificacionBox {
@@ -228,12 +275,14 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--sp-2) var(--sp-3);
-    margin-top: var(--sp-3);
+    margin-top: var(--sp-1);
     background: var(--print-bg-accent);
     color: var(--print-bg);
     font-size: var(--fs-lg);
     font-weight: 700;
     letter-spacing: 0.02em;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 .warningBox {
@@ -242,7 +291,10 @@
     padding: var(--sp-1) var(--sp-2);
     font-size: var(--fs-base);
     font-weight: 600;
-    margin-top: var(--sp-2);
+    margin-top: 0;
+    margin-bottom: var(--sp-2);
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 .notesSection {
@@ -256,6 +308,10 @@
     padding: var(--sp-1) var(--sp-2);
     border: 1px solid var(--print-border);
     font-size: var(--fs-base);
+}
+
+.notesSection div + div {
+    border-top: none;
 }
 
 .notesSection p {
@@ -285,27 +341,30 @@
     margin-bottom: var(--sp-1);
 }
 
-/* En pantalla fluye normalmente */
+/* Pie con el registro (RG-ADM-062 / RG-ADM-063).
+   Vive dentro del <tfoot> de .pageTable, por lo que
+   se repite al final de CADA página impresa. */
 .footerText {
     display: flex;
     justify-content: space-between;
-    padding: 0 2mm;
+    padding: var(--sp-2) 2mm 0;
     font-size: var(--fs-xs);
     color: var(--print-text-footer);
-    margin-top: var(--sp-3);
 }
 
 /* ===================================================
    OVERRIDES DE IMPRESIÓN
-   Nota: .print-area ya NO se maneja aquí.
-   El hook use-print lo controla via inline style
-   para evitar la página vacía extra.
 =================================================== */
 @media print {
-    /* En impresión el pie se oculta del flujo normal
-       porque el hook lo vuelve fixed via .footer-print */
     .footerText {
-        display: none !important;
+        display: flex !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Refuerzo: repetición del pie en cada página */
+    .pageTable > tfoot {
+        display: table-footer-group !important;
     }
 
     .table th {
