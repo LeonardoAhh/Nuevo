@@ -16,7 +16,6 @@ import {
 import { useTheme, type Theme } from "@/components/theme-context"
 import { useUser, useProfile, useRole } from "@/lib/hooks"
 import { notify } from "@/lib/notify"
-import NotificationBell from "@/components/notification-bell"
 import SignOutOverlay from "@/components/signout-overlay"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -124,6 +123,15 @@ export default function Header({
           {/* Right actions */}
           <div className="flex items-center gap-0.5">
 
+            {/* Refresh */}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="text-xs font-medium text-muted-foreground px-3 py-1.5 rounded-md hover:bg-muted/60 hover:text-foreground transition-colors"
+            >
+              Actualizar
+            </button>
+
             {/* Theme cycle */}
             <button
               type="button"
@@ -144,9 +152,6 @@ export default function Header({
                 </motion.span>
               </AnimatePresence>
             </button>
-
-            {/* Notifications */}
-            <NotificationBell />
 
             {/* User menu */}
             <div className="ml-2 flex items-center gap-3 pl-2 sm:border-l sm:ml-4 sm:pl-4">
