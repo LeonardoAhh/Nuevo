@@ -45,6 +45,7 @@ import {
     User,
     ChevronRight,
     ChevronLeft,
+    FileJson,
 } from "lucide-react"
 
 import { INCIDENT_TABS, INCIDENCIA_LABELS, AREA_STAFF, ALLOWED_PUESTOS } from "./constants"
@@ -74,10 +75,17 @@ export default function ReporteDiarioContent() {
     const [selectedArea, setSelectedArea] = useState("")
     const [errors, setErrors] = useState<string[]>([])
     const [fileName, setFileName] = useState("")
-    const [loading, setLoading] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [saveSuccess, setSaveSuccess] = useState(false)
+
+    const [processStep, setProcessStep] = useState<"reading" | "validating" | "generating" | null>(null)
+    const [previewData, setPreviewData] = useState<{
+        rows: ReporteRow[];
+        mes: string;
+        fileName: string;
+        jsonRaw: unknown;
+    } | null>(null)
 
     const {
         loading: dbLoading,
@@ -90,6 +98,24 @@ export default function ReporteDiarioContent() {
 
     const [savedSummaries, setSavedSummaries] = useState<ReporteDiarioSummary[]>([])
     const [loadingDb, setLoadingDb] = useState(true)
+
+    // Recuperar último reporte parseado si se recarga la página por accidente
+    useEffect(() => {
+        const cached = sessionStorage.getItem("reporteDiarioCache")
+        if (cached) {
+            try {
+                const json = JSON.parse(cached)
+                const { rows: parsed, errors: errs } = parseReporteJSON(json)
+                if (errs.length === 0 && parsed.length > 0) {
+                    setRows(parsed)
+                    setSelectedMes(parsed[0]?.mes ?? "")
+                    setFileName("Autoguardado: Recuperado de sesión")
+                }
+            } catch (err) {
+                // Si falla el parseo, solo ignoramos la caché
+            }
+        }
+    }, [])
 
     useEffect(() => {
         fetchSummaries().then((data) => {
@@ -312,22 +338,66 @@ export default function ReporteDiarioContent() {
     )
 
     const processFile = useCallback(async (file: File) => {
-        setFileName(file.name)
+        if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+            toast.error("Formato de archivo inválido. Por favor, asegúrate de subir el archivo correcto.")
+            return
+        }
+
         setErrors([])
-        setLoading(true)
+        setProcessStep("reading")
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
+
         try {
+            await delay(400) // Simulación de lectura
             const text = await file.text()
+            
+            setProcessStep("validating")
+            await delay(600) // Simulación de validación
+
             const json = JSON.parse(text)
             const { rows: parsed, errors: errs } = parseReporteJSON(json)
-            if (errs.length > 0) { setRows([]); setErrors(errs); return }
-            setRows(parsed)
-            setSelectedMes(parsed[0]?.mes ?? "")
+            
+            if (errs.length > 0) { 
+                setProcessStep(null)
+                setErrors(errs)
+                toast.error("Se encontraron inconsistencias al revisar el archivo de datos")
+                return 
+            }
+            
+            setPreviewData({
+                rows: parsed,
+                mes: parsed[0]?.mes ?? "",
+                fileName: file.name,
+                jsonRaw: json
+            })
+            setProcessStep(null)
         } catch (err) {
-            setRows([])
-            setErrors([`Error leyendo JSON: ${err instanceof Error ? err.message : String(err)}`])
-        } finally {
-            setLoading(false)
+            setProcessStep(null)
+            const msg = `Error al revisar el archivo: ${err instanceof Error ? err.message : String(err)}`
+            setErrors([msg])
+            toast.error("El archivo está corrupto o no tiene la estructura esperada")
         }
+    }, [])
+
+    const confirmLoad = useCallback(async () => {
+        if (!previewData) return
+        setProcessStep("generating")
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
+        await delay(500)
+
+        setRows(previewData.rows)
+        setSelectedMes(previewData.mes)
+        setFileName(previewData.fileName)
+        sessionStorage.setItem("reporteDiarioCache", JSON.stringify(previewData.jsonRaw))
+        
+        setProcessStep(null)
+        setPreviewData(null)
+        toast.success(`Información del mes de ${formatMes(previewData.mes)} cargada con éxito`)
+    }, [previewData])
+
+    const cancelLoad = useCallback(() => {
+        setPreviewData(null)
+        setProcessStep(null)
     }, [])
 
     const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,12 +416,23 @@ export default function ReporteDiarioContent() {
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault()
-        setIsDragging(true)
-    }, [])
+        if (!isDragging) setIsDragging(true)
+    }, [isDragging])
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault()
-        setIsDragging(false)
+        // Solo quitamos isDragging si salimos del documento principal
+        if (e.relatedTarget === null || (e.relatedTarget as HTMLElement).nodeName === "HTML") {
+            setIsDragging(false)
+        }
+    }, [])
+
+    const handleClearFile = useCallback(() => {
+        setRows([])
+        setFileName("")
+        setErrors([])
+        sessionStorage.removeItem("reporteDiarioCache")
+        toast.info("Vista de datos limpiada")
     }, [])
 
     const computeKpis = useCallback((reportRows: ReporteRow[], dayH: string[]) => {
@@ -501,14 +582,24 @@ export default function ReporteDiarioContent() {
             {/* ── Header ───────────────────────────────────────────────── */}
             <TooltipProvider delayDuration={200}>
             <header className="flex flex-col gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                     <div>
                         <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">Reporte Diario</h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">Asistencia e incidencias · planta Querétaro</p>
                     </div>
 
+                    {fileName && hasData && (
+                        <div className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 bg-muted/40 border border-border rounded-full text-xs font-medium text-muted-foreground transition-all hover:bg-muted/60">
+                            <FileJson className="w-3.5 h-3.5 text-primary" />
+                            <span className="truncate max-w-[200px]">{fileName}</span>
+                            <button onClick={handleClearFile} className="ml-1 text-muted-foreground hover:text-destructive transition" title="Limpiar archivo actual">
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-1 ml-2">
-                        {/* Upload JSON */}
+                        {/* Upload Data */}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
@@ -516,10 +607,10 @@ export default function ReporteDiarioContent() {
                                     onClick={() => fileInputRef.current?.click()}
                                     className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition hover:text-primary hover:bg-primary/10"
                                 >
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+                                    {processStep ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
                                 </button>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom"><p className="text-xs">Cargar JSON</p></TooltipContent>
+                            <TooltipContent side="bottom"><p className="text-xs">Cargar archivo de reporte</p></TooltipContent>
                         </Tooltip>
 
                         {/* Retardos */}
@@ -898,7 +989,23 @@ export default function ReporteDiarioContent() {
                             </CardContent>
                         </Card>
                 </div>
-            ) : null}
+            ) : (
+                <div 
+                    className="flex flex-col items-center justify-center py-24 px-4 border-2 border-dashed border-border rounded-2xl bg-muted/10 transition-all hover:bg-muted/30 cursor-pointer group"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    <div className="w-16 h-16 bg-background border border-border shadow-sm rounded-full flex items-center justify-center mb-5 group-hover:scale-110 group-hover:border-primary/50 transition-all duration-300">
+                        <CloudUpload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">Sube tu reporte diario</h3>
+                    <p className="text-sm text-muted-foreground mt-2 max-w-sm text-center">
+                        Arrastra y suelta tu archivo <span className="font-medium text-foreground">de datos</span> aquí, o haz clic para seleccionarlo desde tus carpetas.
+                    </p>
+                </div>
+            )}
 
             {/* ── Errors ───────────────────────────────────────────────── */}
             {errors.length > 0 && (
@@ -935,6 +1042,81 @@ export default function ReporteDiarioContent() {
                 dayHeaders={dayHeaders}
                 currentMonth={currentMonth}
             />
+
+            {/* ── Preview Modal ────────────────────────────────── */}
+            <Dialog open={!!previewData} onOpenChange={(open) => !open && cancelLoad()}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Revisión rápida del archivo</DialogTitle>
+                    </DialogHeader>
+                    {previewData && (
+                        <div className="flex flex-col gap-4 py-4">
+                            <div className="flex items-center gap-3 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center shrink-0">
+                                    <FileJson className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-foreground truncate max-w-[250px]">{previewData.fileName}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        Se encontraron <span className="font-semibold text-foreground">{previewData.rows.length}</span> registros de asistencia para el mes de <span className="font-semibold text-foreground capitalize">{formatMes(previewData.mes)}</span>.
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-sm text-foreground text-center">¿Deseas aplicar esta información en tu tablero?</p>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-end gap-3 mt-2">
+                        <button
+                            type="button"
+                            onClick={cancelLoad}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmLoad}
+                            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 shadow-sm"
+                        >
+                            <Check className="w-4 h-4" />
+                            Sí, cargar datos
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Processing Overlay ────────────────────────────────── */}
+            <AnimatePresence>
+                {processStep && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-md"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9, y: 10 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 10 }}
+                            className="flex flex-col items-center bg-card p-10 rounded-3xl shadow-2xl border border-border/50"
+                        >
+                            <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
+                                <Loader2 className="w-10 h-10 animate-spin" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-foreground">
+                                {processStep === "reading" && "Leyendo archivo..."}
+                                {processStep === "validating" && "Revisando incidencias..."}
+                                {processStep === "generating" && "Construyendo tu tablero..."}
+                            </h2>
+                            <p className="text-muted-foreground mt-2 text-center max-w-xs">
+                                {processStep === "reading" && "Por favor, espera un momento."}
+                                {processStep === "validating" && "Asegurando que la información sea correcta."}
+                                {processStep === "generating" && "Solo tomará un segundo más."}
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ── Save Overlay ────────────────────────────────── */}
             <AnimatePresence>
@@ -991,6 +1173,34 @@ export default function ReporteDiarioContent() {
                             >
                                 {saveSuccess ? "La información se ha sincronizado." : "Por favor, espera un momento."}
                             </motion.p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Global Drag Overlay ────────────────────────────────── */}
+            <AnimatePresence>
+                {isDragging && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md border-[8px] border-dashed border-primary/40 m-4 rounded-[2.5rem]"
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.8, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.8, y: 20 }}
+                            className="flex flex-col items-center pointer-events-none"
+                        >
+                            <div className="w-28 h-28 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6 shadow-2xl">
+                                <FileJson className="w-14 h-14" />
+                            </div>
+                            <h2 className="text-3xl font-bold text-foreground">Suelta tu archivo aquí</h2>
+                            <p className="text-muted-foreground mt-3 text-lg">El reporte se generará automáticamente</p>
                         </motion.div>
                     </motion.div>
                 )}
