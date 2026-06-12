@@ -7,6 +7,7 @@ import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
 import { useRole } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
+import { WhatsNewWizard } from "@/components/whats-new-wizard"
 
 interface DashboardProps {
   content?: ReactNode
@@ -61,6 +62,8 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
           {content}
         </main>
       </div>
+
+      <WhatsNewWizard />
     </div>
   )
 }
