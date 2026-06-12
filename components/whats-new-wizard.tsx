@@ -214,7 +214,7 @@ const SLIDES: Slide[] = [
         {[
           { icon: <FileWarning size={18} />, label: "Actas y Seguimiento", color: "red" },
           { icon: <TrendingDown size={18} />, label: "Seguimiento Compromisos", color: "orange" },
-          { icon: <GraduationCap size={18} />, label: "Nuevo SQL para rol Dev", color: "purple" },
+          { icon: <GraduationCap size={18} />, label: "Asignación de Permisos", color: "purple" },
         ].map(({ icon, label, color }) => (
           <div key={label} className={`wn-feature-card wn-feature-card--${color}`}>
             <div className={`wn-feature-card__icon wn-feature-card__icon--${color}`}>{icon}</div>
@@ -244,10 +244,10 @@ const SLIDES: Slide[] = [
   },
   {
     id: "sql",
-    badge: "Supabase · SQL Editor",
-    title: "SQL: Asignar rol Dev",
+    badge: "Gestión de Accesos",
+    title: "Nuevos Roles y Permisos",
     description:
-      "Ejecuta este UPDATE en el SQL Editor de Supabase para dar acceso completo a un usuario. El rol dev puede crear, editar y eliminar; admin es solo lectura.",
+      "Ahora se pueden otorgar permisos completos (rol 'dev') a usuarios específicos para gestionar todas las evaluaciones y reportes del sistema.",
     icon: <GraduationCap size={22} />,
     mockup: <MockupSQL />,
   },
