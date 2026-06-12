@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   ArrowRight, X, CheckCircle2, FileWarning,
   TrendingDown, GraduationCap, Sparkles, ChevronLeft,
+  Briefcase, LayoutDashboard, LogOut, Award, FileText, Settings, ChevronRight
 } from "lucide-react"
 import { useRole } from "@/lib/hooks"
 
 // ─── Version key ─────────────────────────────────────────────────────────────
 // Bump this string to re-show the wizard after a new deployment.
-const WIZARD_KEY = "whats_new_v4_promociones_sync"
+const WIZARD_KEY = "whats_new_v5_sidebar_flyout"
 
 // ─── Slide data ───────────────────────────────────────────────────────────────
 
@@ -25,161 +26,59 @@ interface Slide {
 
 // ─── Mockups (idénticos en estructura, mejorados visualmente) ─────────────────
 
-function MockupActas() {
+function MockupSidebar() {
   return (
-    <div className="wn-mockup">
-      <div className="wn-mockup__bar">
-        <span className="wn-mockup__dot" style={{ background: "#ff5f57" }} />
-        <span className="wn-mockup__dot" style={{ background: "#febc2e" }} />
-        <span className="wn-mockup__dot" style={{ background: "#28c840" }} />
-        <span className="wn-mockup__url">Capacitación → Historial</span>
+    <div className="wn-mockup" style={{ display: "flex", flexDirection: "row", background: "hsl(var(--background))" }}>
+      <div style={{ width: "64px", borderRight: "1px solid hsl(var(--border))", display: "flex", flexDirection: "column", gap: "1rem", padding: "1rem 0", alignItems: "center" }}>
+        <div style={{ width: "32px", height: "32px", background: "hsl(var(--primary)/0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--primary))" }}>
+          <Briefcase size={16} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "1rem" }}>
+          <div style={{ width: "32px", height: "32px", background: "hsl(var(--primary)/0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--primary))" }}>
+            <GraduationCap size={16} />
+          </div>
+          <div style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--muted-foreground))" }}>
+            <Award size={16} />
+          </div>
+          <div style={{ width: "32px", height: "32px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--muted-foreground))" }}>
+            <FileText size={16} />
+          </div>
+        </div>
       </div>
-      <div className="wn-mockup__body">
-        <div className="wn-row">
-          <span className="wn-row__num">042</span>
-          <span className="wn-row__name">González Cruz Adrián</span>
-          <span className="wn-row__dept">Producción</span>
-          <div className="wn-row__actions">
-            <span className="wn-btn wn-btn--red wn-pulse" title="Actas y Seguimiento">
-              <FileWarning size={12} />
-            </span>
-            <span className="wn-btn" title="Incidencias">📅</span>
-            <span className="wn-btn" title="Cursos">📖</span>
-            <span className="wn-btn" title="Editar">✏️</span>
+      <div style={{ flex: 1, padding: "2rem 1rem", position: "relative" }}>
+        <div style={{ position: "absolute", top: "4rem", left: "-0.5rem", width: "160px", background: "hsl(var(--background)/0.8)", backdropFilter: "blur(12px)", border: "1px solid hsl(var(--border)/0.5)", borderRadius: "12px", padding: "0.5rem", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}>
+          <p style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", padding: "0.25rem 0.5rem", color: "hsl(var(--muted-foreground))", marginBottom: "0.25rem" }}>Capacitación</p>
+          <div style={{ fontSize: "12px", padding: "0.5rem", background: "hsl(var(--accent)/0.5)", borderRadius: "6px", marginBottom: "0.25rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span>Presentaciones</span>
+            <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "hsl(var(--primary))" }} />
           </div>
-        </div>
-        <div className="wn-row wn-row--muted">
-          <span className="wn-row__num">039</span>
-          <span className="wn-row__name">Ramírez Pérez Juan</span>
-          <span className="wn-row__dept">Calidad</span>
-          <div className="wn-row__actions">
-            <span className="wn-btn wn-btn--red" title="Actas y Seguimiento">
-              <FileWarning size={12} />
-            </span>
-            <span className="wn-btn">📅</span>
-            <span className="wn-btn">📖</span>
-            <span className="wn-btn">✏️</span>
-          </div>
-        </div>
-
-        <div className="wn-modal-peek">
-          <div className="wn-modal-peek__header">
-            <div className="wn-modal-peek__icon">
-              <FileWarning size={14} />
-            </div>
-            <div>
-              <p className="wn-modal-peek__title">Actas y Seguimiento</p>
-              <p className="wn-modal-peek__sub">González Cruz Adrián</p>
-            </div>
-          </div>
-          <div className="wn-chip wn-chip--red">🗂 ACTA ADMINISTRATIVA · 10/06/2026</div>
-          <div className="wn-chip wn-chip--yellow">📋 PLAN DE SEGUIMIENTO · Revisión: 25/06/2026</div>
-          <div className="wn-modal-peek__footer">
-            <span className="wn-badge wn-badge--green">✓ Cerrado</span>
-            <span className="wn-badge wn-badge--red">⚠ Activo</span>
-            <span className="wn-btn-primary">+ Nuevo registro</span>
-          </div>
+          <div style={{ fontSize: "12px", padding: "0.5rem", borderRadius: "6px" }}>Categorías</div>
+          <div style={{ fontSize: "12px", padding: "0.5rem", borderRadius: "6px" }}>Exámenes</div>
         </div>
       </div>
     </div>
   )
 }
 
-function MockupSeguimiento() {
+function MockupHeader() {
   return (
-    <div className="wn-mockup">
-      <div className="wn-mockup__bar">
-        <span className="wn-mockup__dot" style={{ background: "#ff5f57" }} />
-        <span className="wn-mockup__dot" style={{ background: "#febc2e" }} />
-        <span className="wn-mockup__dot" style={{ background: "#28c840" }} />
-        <span className="wn-mockup__url">/desempeno/seguimiento</span>
-      </div>
-      <div className="wn-mockup__body">
-        <div className="wn-stats">
-          <div className="wn-stat">
-            <span className="wn-stat__val">12</span>
-            <span className="wn-stat__lbl">Total</span>
-          </div>
-          <div className="wn-stat wn-stat--red">
-            <span className="wn-stat__val">4</span>
-            <span className="wn-stat__lbl">Reprobados</span>
-          </div>
-          <div className="wn-stat wn-stat--red">
-            <span className="wn-stat__val">2</span>
-            <span className="wn-stat__lbl">Vencidos</span>
-          </div>
-          <div className="wn-stat wn-stat--yellow">
-            <span className="wn-stat__val">3</span>
-            <span className="wn-stat__lbl">Próximos</span>
-          </div>
-        </div>
-
-        <div className="wn-eval-card wn-eval-card--red">
-          <div className="wn-eval-card__top">
-            <div>
-              <p className="wn-eval-card__name">López Torres María</p>
-              <p className="wn-eval-card__meta">Operativa · N.N. 018</p>
+    <div className="wn-mockup" style={{ background: "hsl(var(--background))", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "1rem", borderBottom: "1px solid hsl(var(--border))" }}>
+        <div style={{ position: "relative" }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "hsl(var(--primary)/0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--primary))", fontWeight: "bold", fontSize: "12px" }}>U</div>
+          <div style={{ position: "absolute", top: "40px", right: "0", width: "180px", background: "hsl(var(--background)/0.8)", backdropFilter: "blur(12px)", border: "1px solid hsl(var(--border)/0.5)", borderRadius: "12px", padding: "0.25rem", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem" }}>
+              <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "hsl(var(--primary)/0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "hsl(var(--primary))", fontWeight: "bold", fontSize: "10px" }}>U</div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "12px", fontWeight: "bold" }}>Usuario</span>
+                <span style={{ fontSize: "10px", color: "hsl(var(--muted-foreground))" }}>user@viño.com</span>
+              </div>
             </div>
-            <span className="wn-score wn-score--red">62</span>
-          </div>
-          <div className="wn-pills">
-            <span className="wn-pill">Operativo</span>
-            <span className="wn-pill">DIC-MAY 2026</span>
-            <span className="wn-pill wn-pill--red">⚠ Vencido · 01/06/2026</span>
-          </div>
-          <div className="wn-compromisos">
-            Mejorar puntualidad en entrega de reportes diarios y asistir a capacitación mensual…
-          </div>
-        </div>
-
-        <div className="wn-eval-card">
-          <div className="wn-eval-card__top">
-            <div>
-              <p className="wn-eval-card__name">Herrera Vega Carlos</p>
-              <p className="wn-eval-card__meta">Administrativo · N.N. 031</p>
+            <div style={{ height: "1px", background: "hsl(var(--border))", margin: "0.25rem 0" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem", color: "hsl(var(--destructive))", fontSize: "12px" }}>
+              <LogOut size={14} />
+              <span>Cerrar sesión</span>
             </div>
-            <span className="wn-score wn-score--green">85</span>
-          </div>
-          <div className="wn-pills">
-            <span className="wn-pill">Administrativo</span>
-            <span className="wn-pill">DIC-MAY 2026</span>
-            <span className="wn-pill wn-pill--muted">📅 Rev. 30/07/2026</span>
-          </div>
-          <div className="wn-compromisos">
-            Fortalecer habilidades de comunicación con equipo y cumplir objetivos del Q3…
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MockupPromociones() {
-  return (
-    <div className="wn-mockup">
-      <div className="wn-mockup__bar">
-        <span className="wn-mockup__dot" style={{ background: "#ff5f57" }} />
-        <span className="wn-mockup__dot" style={{ background: "#febc2e" }} />
-        <span className="wn-mockup__dot" style={{ background: "#28c840" }} />
-        <span className="wn-mockup__url">/promociones</span>
-      </div>
-      <div className="wn-mockup__body" style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem" }}>
-        <div className="wn-eval-card" style={{ border: "1px solid hsl(var(--border))" }}>
-          <div className="wn-eval-card__top">
-            <div>
-              <p className="wn-eval-card__name">Sincronización Automática</p>
-              <p className="wn-eval-card__meta">Conectado a Evaluaciones</p>
-            </div>
-            <div style={{ background: "hsl(var(--success)/0.1)", color: "hsl(var(--success))", padding: "0.5rem", borderRadius: "50%" }}>
-              <CheckCircle2 size={20} />
-            </div>
-          </div>
-          <div className="wn-pills" style={{ marginTop: "1rem" }}>
-            <span className="wn-pill wn-pill--green">Semestrales</span>
-            <span className="wn-pill wn-pill--green">Mensuales</span>
-          </div>
-          <div className="wn-compromisos">
-            Ahora las promociones toman en cuenta automáticamente la calificación más reciente del empleado.
           </div>
         </div>
       </div>
@@ -213,17 +112,16 @@ const SLIDES: Slide[] = [
   {
     id: "welcome",
     badge: "¿Qué hay de nuevo?",
-    title: "4 nuevas funciones implementadas",
-    description:
-      "Lanzamos nuevas herramientas para facilitar la gestión de actas, seguimiento de compromisos y una conexión más directa con las promociones.",
+    title: "Nueva Barra de Navegación",
+    description: "Hemos rediseñado por completo la barra lateral para ofrecerte una experiencia más limpia, rápida y libre de distracciones con menús flotantes.",
     icon: <Sparkles size={22} />,
     mockup: (
       <div className="wn-welcome-grid">
         {[
-          { icon: <FileWarning size={18} />, label: "Actas y Seguimiento", color: "red" },
-          { icon: <TrendingDown size={18} />, label: "Seguimiento Compromisos", color: "orange" },
-          { icon: <GraduationCap size={18} />, label: "Promociones Sincronizadas", color: "green" },
-          { icon: <Sparkles size={18} />, label: "Mejoras continuas", color: "purple" },
+          { icon: <LayoutDashboard size={18} />, label: "Diseño minimalista", color: "purple" },
+          { icon: <ChevronRight size={18} />, label: "Menús Fly-out", color: "green" },
+          { icon: <Briefcase size={18} />, label: "Selector Empresarial", color: "orange" },
+          { icon: <Settings size={18} />, label: "Header despejado", color: "red" },
         ].map(({ icon, label, color }) => (
           <div key={label} className={`wn-feature-card wn-feature-card--${color}`}>
             <div className={`wn-feature-card__icon wn-feature-card__icon--${color}`}>{icon}</div>
@@ -234,31 +132,20 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    id: "actas",
-    badge: "Capacitación → Historial",
-    title: "Modal: Actas y Planes de Seguimiento",
-    description:
-      "Nuevo botón 🗂 por empleado en la tab Historial. Registra actas administrativas o planes de seguimiento con fecha de revisión, estatus y descripción.",
-    icon: <FileWarning size={22} />,
-    mockup: <MockupActas />,
+    id: "sidebar",
+    badge: "Sidebar",
+    title: "Menús Flotantes (Fly-outs)",
+    description: "Agrupamos las opciones principales en una barra lateral de solo íconos. Al pasar el cursor o hacer clic, el submenú se despliega hacia la derecha en una elegante tarjeta, sin empujar tu contenido.",
+    icon: <LayoutDashboard size={22} />,
+    mockup: <MockupSidebar />,
   },
   {
-    id: "seguimiento",
-    badge: "Menú de usuario → Seguimiento",
-    title: "Nueva sección: Seguimiento de Compromisos",
-    description:
-      "Accesible desde tu menú de perfil. Lista todas las evaluaciones con compromisos — reprobados (&lt; 80) aparecen primero. Filtros por período, estado de revisión y alertas de vencimiento.",
-    icon: <TrendingDown size={22} />,
-    mockup: <MockupSeguimiento />,
-  },
-  {
-    id: "promociones",
-    badge: "Módulo Promociones",
-    title: "Promociones conectadas a Desempeño",
-    description:
-      "El módulo de promociones ahora lee directamente las evaluaciones mensuales y semestrales que ya capturaste. Así evitas trabajar doble y la información siempre está al día.",
-    icon: <GraduationCap size={22} />,
-    mockup: <MockupPromociones />,
+    id: "header",
+    badge: "Navegación",
+    title: "Un perfil más limpio",
+    description: "Hemos movido todas las opciones de navegación que saturaban tu perfil directamente a la nueva barra lateral. Ahora, el menú de perfil en la esquina superior derecha está dedicado exclusivamente a tu cuenta y a cerrar sesión.",
+    icon: <Settings size={22} />,
+    mockup: <MockupHeader />,
   },
   {
     id: "motivation",

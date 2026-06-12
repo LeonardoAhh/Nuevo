@@ -89,41 +89,7 @@ export default function Header({
     setTimeout(() => { window.location.href = "/login" }, 900)
   }
 
-  // Nav items shown in dropdown — excludes theme (lives in header icon) and
-  // settings (shown at bottom of sidebar on desktop, "Más" sheet on mobile).
-  const dropdownLinks = [
-    {
-      href:    "/settings",
-      label:   "Configuración",
-      icon:    Settings,
-      show:    true,
-    },
-    {
-      href:    "/recontratacion",
-      label:   "Recontratación",
-      icon:    FileCheck2,
-      show:    !roleLoading && !isEvaluador,
-    },
-    {
-      href:    "/ingresos-semanales",
-      label:   "Ingresos Semanales",
-      icon:    CalendarRange,
-      show:    !roleLoading && !isEvaluador,
-    },
-    {
-      href:    "/desempeno/seguimiento",
-      label:   "Seguimiento Compromisos",
-      icon:    FileWarning,
-      show:    !roleLoading && !isEvaluador,
-    },
-    {
-      href:    "/guia-evaluador",
-      label:   "Guía Evaluador",
-      icon:    BookOpen,
-      show:    true,
-    },
-  ].filter((l) => l.show)
-
+  // Nav items moved to the sidebar
   return (
     <>
       {mounted && <SignOutOverlay show={signingOut} />}
@@ -158,12 +124,12 @@ export default function Header({
           {/* Right actions */}
           <div className="flex items-center gap-0.5">
 
-            {/* Theme cycle — desktop only; mobile sees it in the dropdown */}
+            {/* Theme cycle */}
             <button
               type="button"
               onClick={cycleTheme}
               aria-label={`Tema: ${THEME_LABEL[theme]}`}
-              className="hidden sm:flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
@@ -183,101 +149,28 @@ export default function Header({
             <NotificationBell />
 
             {/* User menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                {/* Pill trigger: avatar + name on sm+ */}
-                <button
-                  type="button"
-                  className="ml-1 flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Menú de usuario"
-                >
-                  <Avatar className="h-7 w-7 shrink-0">
-                    <AvatarImage src={profile?.avatar || undefined} />
-                    <AvatarFallback className="text-[10px] font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-[110px] truncate text-sm font-medium sm:block">
-                    {displayName}
-                  </span>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
-
-                {/* Identity block — not interactive */}
-                <DropdownMenuLabel asChild>
-                  <div className="flex cursor-default select-none items-center gap-3 px-2 py-2">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={profile?.avatar || undefined} />
-                      <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-semibold">{displayName}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {user?.email ?? ""}
-                      </span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-
-                <DropdownMenuSeparator />
-
-                {dropdownLinks.map(({ href, label, icon: Icon }) => (
-                  <DropdownMenuItem key={href} asChild>
-                    <Link
-                      href={href}
-                      className="flex cursor-pointer items-center gap-2"
-                      aria-current={pathname === href ? "page" : undefined}
-                    >
-                      <Icon
-                        size={15}
-                        className={pathname === href ? "text-primary" : "text-muted-foreground"}
-                      />
-                      <span className={pathname === href ? "font-medium text-primary" : ""}>
-                        {label}
-                      </span>
-                      {pathname === href && (
-                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-
-                {/* Theme toggle — mobile only (desktop has the icon in the header) */}
-                <DropdownMenuItem
-                  className="flex cursor-pointer items-center gap-2 sm:hidden"
-                  onSelect={(e) => { e.preventDefault(); cycleTheme() }}
-                  aria-label={`Tema: ${THEME_LABEL[theme]}`}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={theme}
-                      initial={{ opacity: 0, rotate: -30, scale: 0.8 }}
-                      animate={{ opacity: 1, rotate: 0,   scale: 1   }}
-                      exit={{   opacity: 0, rotate:  30,  scale: 0.8 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="inline-flex text-muted-foreground"
-                    >
-                      <ThemeIcon size={15} />
-                    </motion.span>
-                  </AnimatePresence>
-                  <span>Tema</span>
-                  <span className="ml-auto text-xs text-muted-foreground">{THEME_LABEL[theme]}</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onSelect={handleLogout}
-                  className="flex cursor-pointer items-center gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                >
-                  <LogOut size={15} />
-                  <span>Cerrar sesión</span>
-                </DropdownMenuItem>
-
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="ml-2 flex items-center gap-3 pl-2 sm:border-l sm:ml-4 sm:pl-4">
+              <div className="hidden items-center gap-2 sm:flex">
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarImage src={profile?.avatar || undefined} />
+                  <AvatarFallback className="text-[10px] font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="max-w-[110px] truncate text-sm font-medium">
+                  {displayName}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
 
           </div>
         </div>
