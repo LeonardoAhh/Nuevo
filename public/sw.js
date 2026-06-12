@@ -1,4 +1,4 @@
-// TIMESTAMP: 2026-06-12T15:10:01.159Z
+// TIMESTAMP: 2026-06-12T22:02:47.606Z
 const CACHE_NAME = "vinoplastic-v5"
 const STATIC_CACHE = "vinoplastic-static-v5"
 const API_CACHE = "vinoplastic-api-v5"
@@ -14,7 +14,6 @@ self.addEventListener("install", (event) => {
     caches
       .open(STATIC_CACHE)
       .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
   )
 })
 
@@ -230,6 +229,11 @@ self.addEventListener("notificationclose", (event) => {
 
 // ─── Mensajes desde la app (ej: sincronizar badge al leer todas) ──────────────
 self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting()
+    return
+  }
+
   if (event.data?.type === "CLEAR_BADGE") {
     event.waitUntil(
       openBadgeDB().then((db) => db.set("badge_count", 0))

@@ -9,16 +9,54 @@ export function UpdateBanner() {
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return
-    const handleControllerChange = () => setHasUpdate(true)
+
+    let registration: ServiceWorkerRegistration | undefined;
+
+    const onUpdateFound = () => {
+      const installingWorker = registration?.installing
+      if (installingWorker) {
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+            setHasUpdate(true)
+          }
+        }
+      }
+    }
+
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) return
+      registration = reg
+
+      if (reg.waiting) {
+        setHasUpdate(true)
+      }
+
+      reg.addEventListener("updatefound", onUpdateFound)
+    })
+
+    const handleControllerChange = () => {
+      window.location.reload()
+    }
+
     navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange)
+
     return () => {
+      if (registration) {
+        registration.removeEventListener("updatefound", onUpdateFound)
+      }
       navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange)
     }
   }, [])
 
   const handleUpdate = () => {
     setIsReloading(true)
-    setTimeout(() => window.location.reload(), 400)
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: "SKIP_WAITING" })
+      } else {
+        setTimeout(() => window.location.reload(), 400)
+      }
+    })
   }
 
   return (
