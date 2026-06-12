@@ -89,6 +89,13 @@ export function usePromociones() {
           .range(from, to)
       )
 
+      // ── 8. Evaluaciones de desempeño reales ────────────────────────────────
+      const evalsDesempeno = await fetchAllRows((from, to) =>
+        supabase
+          .from("evaluaciones_desempeno")
+          .select("numero_empleado, periodo, calificacion_final, created_at")
+          .range(from, to)
+      )
 
       // ── Construir índices ─────────────────────────────────────────────────
 
@@ -151,6 +158,18 @@ export function usePromociones() {
         })
       }
 
+      // numero_empleado → EvaluacionDesempeño[]
+      const evalsMap = new Map<string, EvaluacionDesempeño[]>()
+      for (const ev of evalsDesempeno ?? []) {
+        if (!ev.numero_empleado) continue
+        if (!evalsMap.has(ev.numero_empleado)) evalsMap.set(ev.numero_empleado, [])
+        evalsMap.get(ev.numero_empleado)!.push({
+          fecha: String(ev.created_at).split("T")[0],
+          calificacion: Number(ev.calificacion_final),
+          periodo: ev.periodo ? String(ev.periodo) : undefined,
+        })
+      }
+
       // ── Construir lista final ─────────────────────────────────────────────
 
       const result: EmpleadoPromocion[] = employeesData.map((emp) => {
@@ -184,16 +203,8 @@ export function usePromociones() {
           }
         })
 
-        // Evaluación de desempeño desde datos_promocion
-        const evaluaciones: EvaluacionDesempeño[] = []
-        const desempeño = datos?.desempeño_actual != null ? Number(datos.desempeño_actual) : 0
-        if (desempeño > 0) {
-          evaluaciones.push({
-            fecha:        String(datos?.fecha_inicio_puesto ?? new Date().toISOString().split("T")[0]),
-            calificacion: desempeño,
-            periodo:      datos?.periodo_evaluacion ? String(datos.periodo_evaluacion) : undefined,
-          })
-        }
+        // Evaluaciones de desempeño desde evaluaciones_desempeno (Exclusivo)
+        const evaluaciones = emp.numero ? [...(evalsMap.get(String(emp.numero)) ?? [])] : []
 
         return {
           id:               emp.id,

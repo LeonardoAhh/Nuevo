@@ -51,14 +51,12 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Evaluación Desempeño",     href: "/desempeno",             icon: Award         },
       { label: "Cumplimiento Evaluaciones",href: "/desempeno/cumplimiento",icon: ListChecks    },
       { label: "Exámenes",                 href: "/examenes",              icon: ClipboardCheck},
-      { label: "WhatsApp Bot",             href: "/whatsapp",              icon: MessageSquare },
     ],
   },
   {
     label: "Público",
     items: [
       { label: "Cursos",        href: "/cursos",  icon: BookOpen  },
-      { label: "Bot WhatsApp",  href: "/bot",     icon: Bot       },
       { label: "Eventos",       href: "/eventos", icon: ImageIcon },
     ],
   },

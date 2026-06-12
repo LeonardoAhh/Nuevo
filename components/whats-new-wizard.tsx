@@ -10,7 +10,7 @@ import { useRole } from "@/lib/hooks"
 
 // ─── Version key ─────────────────────────────────────────────────────────────
 // Bump this string to re-show the wizard after a new deployment.
-const WIZARD_KEY = "whats_new_v1_actas_seguimiento"
+const WIZARD_KEY = "whats_new_v4_promociones_sync"
 
 // ─── Slide data ───────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ interface Slide {
   mockup: React.ReactNode
 }
 
-// ─── Mockup: Actas y Seguimiento button in table ──────────────────────────────
+// ─── Mockups (idénticos en estructura, mejorados visualmente) ─────────────────
 
 function MockupActas() {
   return (
@@ -35,7 +35,6 @@ function MockupActas() {
         <span className="wn-mockup__url">Capacitación → Historial</span>
       </div>
       <div className="wn-mockup__body">
-        {/* Fake table row */}
         <div className="wn-row">
           <span className="wn-row__num">042</span>
           <span className="wn-row__name">González Cruz Adrián</span>
@@ -63,7 +62,6 @@ function MockupActas() {
           </div>
         </div>
 
-        {/* Fake modal peek */}
         <div className="wn-modal-peek">
           <div className="wn-modal-peek__header">
             <div className="wn-modal-peek__icon">
@@ -87,8 +85,6 @@ function MockupActas() {
   )
 }
 
-// ─── Mockup: Seguimiento de Compromisos page ──────────────────────────────────
-
 function MockupSeguimiento() {
   return (
     <div className="wn-mockup">
@@ -99,7 +95,6 @@ function MockupSeguimiento() {
         <span className="wn-mockup__url">/desempeno/seguimiento</span>
       </div>
       <div className="wn-mockup__body">
-        {/* Stats row */}
         <div className="wn-stats">
           <div className="wn-stat">
             <span className="wn-stat__val">12</span>
@@ -119,7 +114,6 @@ function MockupSeguimiento() {
           </div>
         </div>
 
-        {/* Cards */}
         <div className="wn-eval-card wn-eval-card--red">
           <div className="wn-eval-card__top">
             <div>
@@ -160,9 +154,38 @@ function MockupSeguimiento() {
   )
 }
 
-// ─── Mockup: SQL dev role ─────────────────────────────────────────────────────
-
-// ─── Mockup: Motivation ───────────────────────────────────────────────────────
+function MockupPromociones() {
+  return (
+    <div className="wn-mockup">
+      <div className="wn-mockup__bar">
+        <span className="wn-mockup__dot" style={{ background: "#ff5f57" }} />
+        <span className="wn-mockup__dot" style={{ background: "#febc2e" }} />
+        <span className="wn-mockup__dot" style={{ background: "#28c840" }} />
+        <span className="wn-mockup__url">/promociones</span>
+      </div>
+      <div className="wn-mockup__body" style={{ display: "flex", flexDirection: "column", gap: "1rem", padding: "1.5rem" }}>
+        <div className="wn-eval-card" style={{ border: "1px solid hsl(var(--border))" }}>
+          <div className="wn-eval-card__top">
+            <div>
+              <p className="wn-eval-card__name">Sincronización Automática</p>
+              <p className="wn-eval-card__meta">Conectado a Evaluaciones</p>
+            </div>
+            <div style={{ background: "hsl(var(--success)/0.1)", color: "hsl(var(--success))", padding: "0.5rem", borderRadius: "50%" }}>
+              <CheckCircle2 size={20} />
+            </div>
+          </div>
+          <div className="wn-pills" style={{ marginTop: "1rem" }}>
+            <span className="wn-pill wn-pill--green">Semestrales</span>
+            <span className="wn-pill wn-pill--green">Mensuales</span>
+          </div>
+          <div className="wn-compromisos">
+            Ahora las promociones toman en cuenta automáticamente la calificación más reciente del empleado.
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function MockupMotivation() {
   return (
@@ -176,7 +199,7 @@ function MockupMotivation() {
             Gracias por el esfuerzo que no siempre se ve.
           </h3>
           <p style={{ fontSize: "0.8125rem", color: "hsl(var(--muted-foreground))", lineHeight: 1.6, marginTop: "0.5rem", maxWidth: "340px", marginInline: "auto" }}>
-            Sabemos que hay días complejos y decisiones difíciles detrás de escena. Queremos que sepas que valoramos profundamente tu entrega y la calidad humana que le imprimes a cada cosa que haces.
+            Sabemos que hay días complejos y decisiones difíciles detrás de escena. Queremos que sepas que valoramos profundamente tu entrega.
           </p>
         </div>
       </div>
@@ -190,15 +213,16 @@ const SLIDES: Slide[] = [
   {
     id: "welcome",
     badge: "¿Qué hay de nuevo?",
-    title: "3 nuevas funciones implementadas",
+    title: "4 nuevas funciones implementadas",
     description:
-      "Se agregaron herramientas para gestionar actas administrativas, planes de seguimiento y visualizar compromisos de evaluaciones de desempeño.",
+      "Lanzamos nuevas herramientas para facilitar la gestión de actas, seguimiento de compromisos y una conexión más directa con las promociones.",
     icon: <Sparkles size={22} />,
     mockup: (
       <div className="wn-welcome-grid">
         {[
           { icon: <FileWarning size={18} />, label: "Actas y Seguimiento", color: "red" },
           { icon: <TrendingDown size={18} />, label: "Seguimiento Compromisos", color: "orange" },
+          { icon: <GraduationCap size={18} />, label: "Promociones Sincronizadas", color: "green" },
           { icon: <Sparkles size={18} />, label: "Mejoras continuas", color: "purple" },
         ].map(({ icon, label, color }) => (
           <div key={label} className={`wn-feature-card wn-feature-card--${color}`}>
@@ -223,9 +247,18 @@ const SLIDES: Slide[] = [
     badge: "Menú de usuario → Seguimiento",
     title: "Nueva sección: Seguimiento de Compromisos",
     description:
-      "Accesible desde tu menú de perfil. Lista todas las evaluaciones con compromisos — reprobados (< 80) aparecen primero. Filtros por período, estado de revisión y alertas de vencimiento.",
+      "Accesible desde tu menú de perfil. Lista todas las evaluaciones con compromisos — reprobados (&lt; 80) aparecen primero. Filtros por período, estado de revisión y alertas de vencimiento.",
     icon: <TrendingDown size={22} />,
     mockup: <MockupSeguimiento />,
+  },
+  {
+    id: "promociones",
+    badge: "Módulo Promociones",
+    title: "Promociones conectadas a Desempeño",
+    description:
+      "El módulo de promociones ahora lee directamente las evaluaciones mensuales y semestrales que ya capturaste. Así evitas trabajar doble y la información siempre está al día.",
+    icon: <GraduationCap size={22} />,
+    mockup: <MockupPromociones />,
   },
   {
     id: "motivation",
@@ -270,8 +303,7 @@ export function WhatsNewWizard() {
     if (role !== "dev") return
     if (typeof window === "undefined") return
     if (localStorage.getItem(WIZARD_KEY) === "seen") return
-    // Small delay so layout settles first
-    const t = setTimeout(() => setOpen(true), 1200)
+    const t = setTimeout(() => setOpen(true), 800)
     return () => clearTimeout(t)
   }, [role, loading])
 
@@ -291,24 +323,10 @@ export function WhatsNewWizard() {
   return (
     <AnimatePresence>
       {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            className="wn-backdrop"
-            variants={backdropV}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-            onClick={dismiss}
-            aria-hidden="true"
-          />
-
-          {/* Panel */}
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Novedades del sistema"
-            className="wn-panel"
+        <motion.div
+          role="region"
+          aria-label="Novedades del sistema"
+          className="wn-panel"
             variants={panelV}
             initial="hidden"
             animate="show"
@@ -349,9 +367,7 @@ export function WhatsNewWizard() {
                   exit="exit"
                   className="wn-slide"
                 >
-                  {/* Icon badge */}
                   <div className="wn-slide__icon">{current.icon}</div>
-
                   <span className="wn-slide__badge">{current.badge}</span>
                   <h2 className="wn-slide__title">{current.title}</h2>
                   <p className="wn-slide__desc">{current.description}</p>
@@ -392,7 +408,6 @@ export function WhatsNewWizard() {
                 )}
               </div>
 
-              {/* Skip */}
               <button type="button" className="wn-skip" onClick={dismiss}>
                 Saltar todo
               </button>
@@ -415,7 +430,6 @@ export function WhatsNewWizard() {
               </AnimatePresence>
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   )

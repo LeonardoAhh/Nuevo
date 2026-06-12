@@ -27,29 +27,29 @@ export interface ReporteCalendarProps {
 
 function getAusentismoBadgeClasses(ausPct: number, threshold: number, active: boolean): string {
     if (active) return "bg-white/20 text-white"
-    if (ausPct > threshold * 2) return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-    if (ausPct > threshold) return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+    if (ausPct > threshold * 2) return "bg-destructive/15 text-destructive"
+    if (ausPct > threshold) return "bg-warning/15 text-warning"
+    return "bg-success/15 text-success"
 }
 
 function getCellHeatClasses(ausPct: number | undefined, threshold: number, active: boolean): string {
     if (active || ausPct === undefined) return ""
-    if (ausPct > threshold * 2) return "ring-1 ring-red-200 dark:ring-red-800"
-    if (ausPct > threshold) return "ring-1 ring-amber-200 dark:ring-amber-700"
-    return "ring-1 ring-emerald-200 dark:ring-emerald-800"
+    if (ausPct > threshold * 2) return "ring-1 ring-destructive/20"
+    if (ausPct > threshold) return "ring-1 ring-warning/20"
+    return "ring-1 ring-success/20"
 }
 
 // ─── Subcomponente: Cabecera de días ───────────────────────────────────────────
 
 function WeekDayHeaders() {
     return (
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1.5" role="row">
+        <div className="grid grid-cols-7 gap-1.5 mb-2" role="row">
             {WEEK_DAY_NAMES.map((n) => (
                 <div
                     key={n}
                     role="columnheader"
                     aria-label={n}
-                    className="py-1.5 text-center text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-muted-foreground select-none"
+                    className="py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground/70 select-none"
                 >
                     {n}
                 </div>
@@ -59,8 +59,6 @@ function WeekDayHeaders() {
 }
 
 // ─── Subcomponente: Celda de día ───────────────────────────────────────────────
-// Usamos <div> con role="button" en lugar de <button> para poder
-// anidar el botón "!" de revelar sin violar las reglas de HTML.
 
 interface DayCellProps {
     day: string
@@ -77,6 +75,7 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
 
     const hasAus = ausPct !== undefined
     const dayNumber = parseInt(day, 10)
+    const hasData = hasAus || count > 0
 
     const ariaLabel = [
         `Día ${dayNumber}`,
@@ -87,42 +86,47 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
             : hasAus
                 ? "Ausentismo oculto, presiona ! para revelar"
                 : null,
+        !hasData ? "Sin información" : null
     ]
         .filter(Boolean)
         .join(", ")
 
     return (
-        // div con role="button" — permite anidar <button> dentro sin error de hidratación
         <div
             role="button"
-            tabIndex={0}
+            tabIndex={hasData ? 0 : -1}
             aria-label={ariaLabel}
             aria-pressed={active}
             aria-selected={active}
-            onClick={() => onSelectDay(day)}
+            aria-disabled={!hasData}
+            onClick={() => {
+                if (hasData) onSelectDay(day)
+            }}
             onKeyDown={(e) => {
+                if (!hasData) return
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault()
                     onSelectDay(day)
                 }
             }}
             className={cn(
-                "relative flex flex-col rounded-lg border p-1.5 sm:p-2 text-left text-xs cursor-pointer",
-                "min-h-[56px] sm:min-h-[80px]",
-                "transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex flex-col rounded-xl border p-2 sm:p-2.5 text-left text-xs",
+                "min-h-[64px] sm:min-h-[88px]",
+                "transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                !hasData ? "opacity-50 cursor-not-allowed bg-muted/20" : "cursor-pointer",
                 active
-                    ? "border-foreground bg-foreground text-background shadow-md"
+                    ? "border-primary bg-primary text-primary-foreground shadow-md"
                     : [
-                        "border-border bg-background text-foreground",
-                        "hover:border-foreground/30 hover:bg-muted/30",
+                        !hasData ? "border-border/50 text-foreground/50" : "border-border bg-card text-foreground",
+                        hasData && "hover:border-primary/25 hover:bg-muted/40 hover:shadow-sm",
                         revealed ? getCellHeatClasses(ausPct, threshold, active) : "",
                     ],
             )}
         >
             {/* Número del día */}
             <span className={cn(
-                "font-bold text-xs sm:text-sm leading-none",
-                active ? "text-background" : "text-foreground",
+                "font-bold text-sm sm:text-base leading-none",
+                active ? "text-primary-foreground" : "text-foreground",
             )}>
                 {dayNumber}
             </span>
@@ -133,38 +137,37 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
                     <span
                         title={holidayLabel}
                         className={cn(
-                            "mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight truncate max-w-full",
+                            "mt-1.5 rounded-md px-1.5 py-0.5 text-[9px] font-semibold leading-tight truncate max-w-full",
                             "hidden sm:inline-flex items-center",
                             active
                                 ? "bg-white/20 text-white"
-                                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+                                : "bg-success/10 text-success border border-success/20",
                         )}
                     >
                         {holidayLabel}
                     </span>
-                    <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500 sm:hidden" />
+                    <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 rounded-full bg-success sm:hidden" />
                 </>
             )}
 
             {/* Fila inferior: ausentismo + incidencias */}
-            <div className="mt-auto flex items-center justify-between gap-1 w-full">
+            <div className="mt-auto flex items-end justify-between gap-1 w-full pt-1">
 
-                {/* Ausentismo: "!" si oculto, badge con % si revelado */}
+                {/* Ausentismo */}
                 {hasAus && (
                     revealed ? (
                         <span
                             className={cn(
-                                "inline-flex items-center justify-center rounded-full",
-                                "text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 leading-none",
+                                "inline-flex items-center justify-center rounded-md",
+                                "text-[10px] font-bold px-1.5 py-0.5 leading-none",
                                 "animate-in fade-in zoom-in-75 duration-300",
                                 getAusentismoBadgeClasses(ausPct!, threshold, active),
                             )}
                         >
-                            <span className="hidden sm:inline">Aus&nbsp;</span>
+                            <span className="hidden sm:inline mr-0.5">Aus</span>
                             {ausPct!.toFixed(1)}%
                         </span>
                     ) : (
-                        // <button> válido aquí porque el padre es <div>, no <button>
                         <button
                             type="button"
                             aria-label={`Revelar ausentismo del día ${dayNumber}`}
@@ -174,12 +177,12 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
                             }}
                             className={cn(
                                 "inline-flex items-center justify-center",
-                                "h-5 w-5 rounded-full text-[11px] font-black leading-none",
+                                "h-5 w-5 rounded-md text-[11px] font-black leading-none",
                                 "transition-all duration-150 select-none",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                 active
-                                    ? "bg-white/20 text-white hover:bg-white/35"
-                                    : "bg-muted text-muted-foreground hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-300",
+                                    ? "bg-white/20 text-white hover:bg-white/30"
+                                    : "bg-muted/80 text-muted-foreground hover:bg-warning/15 hover:text-warning border border-border/50",
                             )}
                         >
                             !
@@ -190,8 +193,8 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
                 {/* Badge de incidencias */}
                 {count > 0 ? (
                     <span className={cn(
-                        "inline-flex items-center justify-center rounded-full",
-                        "text-xs font-semibold px-2 py-0.5 leading-none",
+                        "inline-flex items-center justify-center rounded-md",
+                        "text-xs font-bold px-2 py-0.5 leading-none",
                         active
                             ? "bg-white/20 text-white"
                             : "bg-destructive/15 text-destructive",
@@ -199,7 +202,7 @@ function DayCell({ day, count, ausPct, active, holidayLabel, threshold, onSelect
                         {count}
                     </span>
                 ) : (
-                    <span aria-hidden="true" className="text-[10px] text-muted-foreground/30">—</span>
+                    <span aria-hidden="true" className="text-[10px] text-muted-foreground/20">—</span>
                 )}
             </div>
         </div>
@@ -221,13 +224,13 @@ export default function ReporteCalendar({
     const monthPart = currentMonth.split("-")[1]
 
     return (
-        <div role="grid" aria-label="Calendario de reporte de asistencia">
+        <div role="grid" aria-label="Calendario de reporte de asistencia" className="bg-card rounded-xl border border-border p-3 sm:p-4">
             <WeekDayHeaders />
 
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            <div className="grid grid-cols-7 gap-1.5">
                 {calendarCells.map((day, idx) => {
                     if (!day) {
-                        return <div key={`empty-${idx}`} role="gridcell" aria-hidden="true" />
+                        return <div key={`empty-${idx}`} role="gridcell" aria-hidden="true" className="min-h-[64px] sm:min-h-[88px]" />
                     }
 
                     const count = daySummaries[day] ?? 0

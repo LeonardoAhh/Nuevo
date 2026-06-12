@@ -1,7 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
 import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
     Select,
@@ -9,9 +12,20 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+}
+from "@/components/ui/select"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+import { format, getISOWeek } from "date-fns"
+import { es } from "date-fns/locale"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import {
     CloudUpload,
@@ -21,6 +35,7 @@ import {
     X,
     Download,
     Save,
+    Check,
     Database,
     Trash2,
     Clock,
@@ -28,6 +43,8 @@ import {
     Building2,
     SunMedium,
     User,
+    ChevronRight,
+    ChevronLeft,
 } from "lucide-react"
 
 import { INCIDENT_TABS, INCIDENCIA_LABELS, AREA_STAFF, ALLOWED_PUESTOS } from "./constants"
@@ -40,6 +57,7 @@ import ReporteIncidentTabs from "./reporte-incident-tabs"
 import ReporteKpiDashboard from "./reporte-kpi-dashboard"
 import ReporteComparison from "./reporte-comparison"
 import ReporteEmployeeDetail from "./reporte-employee-detail"
+import ReportesGuardadosDialog from "./reportes-guardados-dialog"
 import { useReporteDiario } from "@/lib/hooks/useReporteDiario"
 import type { ReporteDiarioSummary } from "@/lib/hooks/useReporteDiario"
 
@@ -59,6 +77,7 @@ export default function ReporteDiarioContent() {
     const [loading, setLoading] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const [saveSuccess, setSaveSuccess] = useState(false)
 
     const {
         loading: dbLoading,
@@ -126,6 +145,11 @@ export default function ReporteDiarioContent() {
         const total = selectedRows.length
         if (total === 0) return {} as Record<string, number>
         return dayHeaders.reduce<Record<string, number>>((acc, day) => {
+            const hasAnyCode = selectedRows.some((r) => !!r.days[day])
+            if (!hasAnyCode) {
+                return acc
+            }
+
             const ausentes = selectedRows.reduce((n, r) => {
                 const code = r.days[day]
                 return n + (code === "F" || code === "P" || code === "I" ? 1 : 0)
@@ -184,7 +208,7 @@ export default function ReporteDiarioContent() {
             const personal_incidencia = rowsInArea.reduce((count, row) => {
                 return count + (isIncidence(row.days[selectedDay]) ? 1 : 0)
             }, 0)
-            
+
             let is_descanso = false
             if (dayOfWeek !== -1) {
                 if (area.area === "PRODUCCIÓN 1ER. TURNO" && dayOfWeek === 0) {
@@ -242,6 +266,35 @@ export default function ReporteDiarioContent() {
             return acc
         }, base)
     }, [selectedRows, selectedDay])
+
+    const daysWithData = useMemo(() => {
+        return dayHeaders.filter(day => dayAusentismoPct[day] !== undefined || (daySummaries[day] ?? 0) > 0)
+    }, [dayHeaders, dayAusentismoPct, daySummaries])
+
+    const currentDayIndex = selectedDay ? daysWithData.indexOf(selectedDay) : -1
+    const prevDay = currentDayIndex > 0 ? daysWithData[currentDayIndex - 1] : null
+    const nextDay = currentDayIndex !== -1 && currentDayIndex < daysWithData.length - 1 ? daysWithData[currentDayIndex + 1] : null
+
+    const selectedDateTitle = useMemo(() => {
+        if (!selectedDay || !currentMonth) return ""
+        try {
+            const dateStr = `${currentMonth}-${selectedDay}`
+            const date = new Date(dateStr + "T00:00:00")
+
+            const weekday = format(date, "EEEE", { locale: es })
+            const day = format(date, "d", { locale: es })
+            const month = format(date, "MMMM", { locale: es })
+            const year = format(date, "yyyy", { locale: es })
+
+            const capWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1)
+            const capMonth = month.charAt(0).toUpperCase() + month.slice(1)
+            const weekNum = getISOWeek(date)
+
+            return `${capWeekday} ${day} ${capMonth} ${year} - Semana ${weekNum}`
+        } catch {
+            return `Incidencias — día ${parseInt(selectedDay, 10)}`
+        }
+    }, [selectedDay, currentMonth])
 
     const monthFirstDay = currentMonth ? (() => {
         const [year, month] = currentMonth.split("-").map(Number)
@@ -357,6 +410,8 @@ export default function ReporteDiarioContent() {
             pct_ausentismo: pctAusentismo,
         })
         if (result.success) {
+            setSaveSuccess(true)
+            setTimeout(() => setSaveSuccess(false), 3500)
             const updated = await fetchSummaries()
             setSavedSummaries(updated)
         }
@@ -517,14 +572,19 @@ export default function ReporteDiarioContent() {
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p className="text-xs">Mes</p></TooltipContent>
                                 </Tooltip>
-                                <PopoverContent align="end" className="w-48 p-2">
-                                    <span className={labelCls}>Mes</span>
-                                    <Select value={currentMonth} onValueChange={setSelectedMes} disabled={!months.length}>
-                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Seleccionar mes" /></SelectTrigger>
-                                        <SelectContent>
-                                            {months.map((m) => (<SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select>
+                                <PopoverContent align="end" className="w-60 p-4 rounded-xl border-border shadow-xl">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                            <Calendar className="w-4 h-4 text-primary" />
+                                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">Mes</span>
+                                        </div>
+                                        <Select value={currentMonth} onValueChange={setSelectedMes} disabled={!months.length}>
+                                            <SelectTrigger className="rounded-lg bg-muted/30 border-border/50"><SelectValue placeholder="Seleccionar mes" /></SelectTrigger>
+                                            <SelectContent>
+                                                {months.map((m) => (<SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
 
@@ -546,15 +606,20 @@ export default function ReporteDiarioContent() {
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p className="text-xs">Departamento</p></TooltipContent>
                                 </Tooltip>
-                                <PopoverContent align="end" className="w-56 p-2">
-                                    <span className={labelCls}>Departamento</span>
-                                    <Select value={departamentoFilter || "__all__"} onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)} disabled={!availableDepartments.length}>
-                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all__">Todos</SelectItem>
-                                            {availableDepartments.map((d) => (<SelectItem key={d} value={d}>{d}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select>
+                                <PopoverContent align="end" className="w-72 p-4 rounded-xl border-border shadow-xl">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                            <Building2 className="w-4 h-4 text-primary" />
+                                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">Departamento</span>
+                                        </div>
+                                        <Select value={departamentoFilter || "__all__"} onValueChange={(v) => setDepartamentoFilter(v === "__all__" ? "" : v)} disabled={!availableDepartments.length}>
+                                            <SelectTrigger className="rounded-lg bg-muted/30 border-border/50"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__all__">Todos</SelectItem>
+                                                {availableDepartments.map((d) => (<SelectItem key={d} value={d}>{d}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
 
@@ -576,15 +641,20 @@ export default function ReporteDiarioContent() {
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p className="text-xs">Turno</p></TooltipContent>
                                 </Tooltip>
-                                <PopoverContent align="end" className="w-48 p-2">
-                                    <span className={labelCls}>Turno</span>
-                                    <Select value={turnoFilter || "__all__"} onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)} disabled={!availableTurnos.length}>
-                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Todos" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__all__">Todos</SelectItem>
-                                            {availableTurnos.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select>
+                                <PopoverContent align="end" className="w-64 p-4 rounded-xl border-border shadow-xl">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                            <SunMedium className="w-4 h-4 text-primary" />
+                                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">Turno</span>
+                                        </div>
+                                        <Select value={turnoFilter || "__all__"} onValueChange={(v) => setTurnoFilter(v === "__all__" ? "" : v)} disabled={!availableTurnos.length}>
+                                            <SelectTrigger className="rounded-lg bg-muted/30 border-border/50"><SelectValue placeholder="Todos" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="__all__">Todos</SelectItem>
+                                                {availableTurnos.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
 
@@ -606,42 +676,65 @@ export default function ReporteDiarioContent() {
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p className="text-xs">Empleado</p></TooltipContent>
                                 </Tooltip>
-                                <PopoverContent align="end" className="w-64 p-2">
-                                    <span className={labelCls}>Empleado</span>
-                                    <Select
-                                        value={selectedEmployee || "__none__"}
-                                        onValueChange={(v) => {
-                                            if (v === "__none__") { setSelectedEmployee(""); setSearch("") }
-                                            else { setSelectedEmployee(v); setSearch(""); setEmpDetailOpen(true) }
-                                        }}
-                                        disabled={!selectedRows.length}
-                                    >
-                                        <SelectTrigger className="rounded-lg"><SelectValue placeholder="Seleccionar empleado" /></SelectTrigger>
-                                        <SelectContent className="max-h-60">
-                                            <SelectItem value="__none__">Todos</SelectItem>
-                                            {selectedRows.slice().sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10)).map((r) => (
-                                                <SelectItem key={r.numero_empleado} value={r.numero_empleado}>{r.numero_empleado} — {r.nombre}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <PopoverContent align="end" className="w-80 p-4 rounded-xl border-border shadow-xl">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                                            <User className="w-4 h-4 text-primary" />
+                                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">Empleado</span>
+                                        </div>
+                                        <Select
+                                            value={selectedEmployee || "__none__"}
+                                            onValueChange={(v) => {
+                                                if (v === "__none__") { setSelectedEmployee(""); setSearch("") }
+                                                else { setSelectedEmployee(v); setSearch(""); setEmpDetailOpen(true) }
+                                            }}
+                                            disabled={!selectedRows.length}
+                                        >
+                                            <SelectTrigger className="rounded-lg bg-muted/30 border-border/50"><SelectValue placeholder="Seleccionar empleado" /></SelectTrigger>
+                                            <SelectContent className="max-h-60">
+                                                <SelectItem value="__none__">Todos</SelectItem>
+                                                {selectedRows.slice().sort((a, b) => parseInt(a.numero_empleado, 10) - parseInt(b.numero_empleado, 10)).map((r) => (
+                                                    <SelectItem key={r.numero_empleado} value={r.numero_empleado}>
+                                                        {r.numero_empleado} - {r.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
 
                             {/* Save */}
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <button
+                                    <motion.button
+                                        whileHover={{ scale: 1.15 }}
+                                        whileTap={{ scale: 0.9 }}
                                         type="button"
                                         onClick={handleSaveToDb}
-                                        disabled={dbSaving}
+                                        disabled={dbSaving || saveSuccess}
                                         className={cn(
-                                            "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
-                                            "text-primary hover:bg-primary/10",
+                                            "inline-flex items-center justify-center h-8 w-8 rounded-md transition-colors",
+                                            saveSuccess ? "text-green-500 bg-green-500/10" : "text-primary hover:bg-primary/10",
                                             "disabled:opacity-50 disabled:cursor-not-allowed",
                                         )}
                                     >
-                                        {dbSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    </button>
+                                        <AnimatePresence mode="wait" initial={false}>
+                                            {saveSuccess ? (
+                                                <motion.div key="success" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                                    <Check className="w-4 h-4" />
+                                                </motion.div>
+                                            ) : dbSaving ? (
+                                                <motion.div key="saving" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div key="save" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                                    <Save className="w-4 h-4" />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.button>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom"><p className="text-xs">Guardar {formatMes(currentMonth)}</p></TooltipContent>
                             </Tooltip>
@@ -675,10 +768,24 @@ export default function ReporteDiarioContent() {
                 className="hidden"
             />
 
+            {/* ── Acciones / Modales ─────────────────────────────────────────── */}
+            {(savedSummaries.length > 0) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    {savedSummaries.length >= 2 && (
+                        <ReporteComparison summaries={savedSummaries} />
+                    )}
+                    <ReportesGuardadosDialog 
+                        savedSummaries={savedSummaries}
+                        dbSaving={dbSaving}
+                        onLoad={handleLoadFromDb}
+                        onDelete={handleDeleteFromDb}
+                        formatMes={formatMes}
+                    />
+                </div>
+            )}
+
             {hasData ? (
-                <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[2fr_1fr]">
-                    {/* ── Columna izquierda · insight ─────────────────────── */}
-                    <div className="flex min-w-0 flex-col gap-5">
+                <div className="flex flex-col gap-5">
 
             {/* ── KPI Dashboard ─────────────────────────────────────────── */}
             {currentMonth && rows.length > 0 && (
@@ -720,33 +827,50 @@ export default function ReporteDiarioContent() {
                 </Card>
             )}
 
-            {/* ── Comparación ─────────────────────────────────────────── */}
-            {savedSummaries.length >= 2 && (
-                <ReporteComparison summaries={savedSummaries} />
-            )}
-                    </div>
-
-                    {/* ── Columna derecha · detalle (sticky) ──── */}
-                    <div className="flex flex-col gap-5 lg:sticky lg:top-4">
-                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
+            {/* ── Detalle del día ──── */}
+            <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
                             <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
                                 <div className="flex items-center justify-between gap-2.5">
                                     <div className="flex items-center gap-2.5">
                                         <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
                                         <p className="text-sm font-semibold text-foreground">
-                                            {selectedDay ? `Incidencias — día ${parseInt(selectedDay, 10)}` : "Detalle del día"}
+                                            {selectedDay ? selectedDateTitle : "Detalle del día"}
                                         </p>
                                     </div>
-                                    {selectedDay && (
-                                        <button
-                                            type="button"
-                                            onClick={handleExportPdf}
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground hover:border-foreground/40"
-                                        >
-                                            <Download className="w-3.5 h-3.5" />
-                                            PDF
-                                        </button>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {selectedDay && (
+                                            <div className="flex items-center gap-1 mr-2 border border-border rounded-md p-0.5 bg-muted/20">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => prevDay && setSelectedDay(prevDay)}
+                                                    disabled={!prevDay}
+                                                    className="p-1 rounded text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                    title="Día anterior"
+                                                >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => nextDay && setSelectedDay(nextDay)}
+                                                    disabled={!nextDay}
+                                                    className="p-1 rounded text-muted-foreground hover:bg-background hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all"
+                                                    title="Día siguiente"
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        {selectedDay && (
+                                            <button
+                                                type="button"
+                                                onClick={handleExportPdf}
+                                                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground hover:border-foreground/40"
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                                PDF
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="px-3 py-4 sm:px-5">
@@ -773,111 +897,8 @@ export default function ReporteDiarioContent() {
                                 )}
                             </CardContent>
                         </Card>
-
-                        {savedSummaries.length > 0 && (
-                            <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                                <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <Database className="w-4 h-4 text-muted-foreground" />
-                                        <p className="text-sm font-semibold text-foreground">
-                                            Reportes guardados
-                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                                ({savedSummaries.length})
-                                            </span>
-                                        </p>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex flex-col gap-2 p-3">
-                                    {savedSummaries.map((s) => (
-                                        <div
-                                            key={s.id}
-                                            role="button"
-                                            tabIndex={0}
-                                            onClick={() => handleLoadFromDb(s.mes)}
-                                            onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
-                                            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
-                                        >
-                                            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                                                {formatMes(s.mes)}
-                                            </span>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs text-foreground">
-                                                    <span className="font-semibold">{s.total_incidencias}</span> inc.
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
-                                                    disabled={dbSaving}
-                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
                 </div>
-            ) : (
-                <div className="flex flex-col gap-5">
-                    {savedSummaries.length > 0 && (
-                        <Card className="border-border shadow-sm rounded-xl overflow-hidden bg-card">
-                            <CardHeader className="bg-muted/40 border-b border-border px-5 py-4">
-                                <div className="flex items-center gap-2">
-                                    <Database className="w-4 h-4 text-muted-foreground" />
-                                    <p className="text-sm font-semibold text-foreground">
-                                        Reportes guardados
-                                        <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                            ({savedSummaries.length})
-                                        </span>
-                                    </p>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-4">
-                                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                                    {savedSummaries.map((s) => (
-                                        <div
-                                            key={s.id}
-                                            role="button"
-                                            tabIndex={0}
-                                            onClick={() => handleLoadFromDb(s.mes)}
-                                            onKeyDown={(e) => { if (e.key === "Enter") handleLoadFromDb(s.mes) }}
-                                            className="text-left rounded-2xl border border-border p-4 bg-background shadow-sm transition-all hover:border-foreground/40 hover:bg-muted/50 cursor-pointer"
-                                        >
-                                            <div className="flex items-center justify-between mb-3">
-                                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                                                    {formatMes(s.mes)}
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFromDb(s.id) }}
-                                                    disabled={dbSaving}
-                                                    className="rounded-md p-1 text-muted-foreground/40 transition hover:text-destructive hover:bg-destructive/10"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                            <div className="grid gap-2 text-sm text-foreground">
-                                                {[
-                                                    { label: "Empleados", value: s.total_empleados },
-                                                    { label: "Incidencias", value: s.total_incidencias },
-                                                ].map(({ label, value }) => (
-                                                    <div key={label} className="flex items-center justify-between rounded-md bg-muted/70 px-3 py-2">
-                                                        <span>{label}</span>
-                                                        <span className="font-semibold">{value}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-            )}
+            ) : null}
 
             {/* ── Errors ───────────────────────────────────────────────── */}
             {errors.length > 0 && (
@@ -914,6 +935,66 @@ export default function ReporteDiarioContent() {
                 dayHeaders={dayHeaders}
                 currentMonth={currentMonth}
             />
+
+            {/* ── Save Overlay ────────────────────────────────── */}
+            <AnimatePresence>
+                {(dbSaving || saveSuccess) && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="flex flex-col items-center justify-center p-10 bg-card rounded-[2rem] shadow-2xl border border-border/50 min-w-[320px]"
+                        >
+                            <AnimatePresence mode="wait">
+                                {saveSuccess ? (
+                                    <motion.div
+                                        key="success"
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ type: "spring", bounce: 0.5, duration: 0.6 }}
+                                        className="w-24 h-24 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mb-6"
+                                    >
+                                        <Check className="w-12 h-12 stroke-[3]" />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="saving"
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        exit={{ scale: 0 }}
+                                        className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6"
+                                    >
+                                        <Loader2 className="w-12 h-12 animate-spin" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                            <motion.h2
+                                key={saveSuccess ? "title-success" : "title-saving"}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-2xl font-bold text-foreground"
+                            >
+                                {saveSuccess ? "¡Guardado Exitoso!" : "Guardando reporte..."}
+                            </motion.h2>
+                            <motion.p
+                                key={saveSuccess ? "desc-success" : "desc-saving"}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="text-muted-foreground mt-2 text-center"
+                            >
+                                {saveSuccess ? "La información se ha sincronizado." : "Por favor, espera un momento."}
+                            </motion.p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

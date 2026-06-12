@@ -820,40 +820,29 @@ html.guia-open header[role="banner"] {
 
 /* Backdrop */
 .wn-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: hsl(222 14% 4% / 0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    display: none;
 }
 
 /* Panel */
 .wn-panel {
-    position: fixed;
-    inset: 0;
-    z-index: 1001;
-    margin: auto;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
-    width: calc(100% - 2rem);
-    max-width: 880px;
-    height: fit-content;
-    max-height: calc(100dvh - 2rem);
-    border-radius: 1.5rem;
+    height: auto;
+    border-radius: 1.25rem;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
-    box-shadow:
-        0 0 0 1px hsl(var(--border) / 0.4),
-        0 24px 60px hsl(222 14% 4% / 0.3),
-        0 8px 24px hsl(222 14% 4% / 0.15);
+    box-shadow: 0 4px 16px hsl(222 14% 4% / 0.05);
     overflow: hidden;
 }
 
 @media (min-width: 640px) {
     .wn-panel {
         flex-direction: row;
-        max-height: 580px;
+        max-height: 480px;
     }
 }
 

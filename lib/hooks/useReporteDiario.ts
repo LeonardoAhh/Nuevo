@@ -136,7 +136,6 @@ export function useReporteDiario() {
                     { onConflict: "mes", ignoreDuplicates: false },
                 )
             if (error) throw error
-            notify.success(`Reporte de ${report.mes} guardado`)
             return { success: true }
         } catch (err) {
             const msg = describeSupabaseError(err, "Error al guardar reporte")

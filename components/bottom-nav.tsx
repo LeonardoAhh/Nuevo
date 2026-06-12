@@ -70,7 +70,6 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
       { label: "Calificaciones",         href: "/calificaciones",          icon: LayoutGrid    },
       { label: "Promociones",            href: "/promociones",             icon: TrendingUp    },
       { label: "Exámenes",               href: "/examenes",                icon: ClipboardCheck},
-      { label: "WhatsApp Bot",           href: "/whatsapp",                icon: MessageSquare },
       { label: "Seguimiento Compromisos",href: "/desempeno/seguimiento",   icon: FileWarning   },
     ],
   },
@@ -78,7 +77,6 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Público",
     items: [
       { label: "Cursos", href: "/cursos", icon: BookOpen },
-      { label: "Bot WhatsApp", href: "/bot", icon: Bot },
       { label: "Eventos", href: "/eventos", icon: ImageIcon },
     ],
   },
@@ -256,9 +254,8 @@ function isActive(pathname: string, href: string) {
 function isPublicPath(pathname: string) {
   return (
     pathname.startsWith("/auth") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/offline") ||
-    pathname.startsWith("/bot") ||
+    pathname === "/login" ||
+    pathname === "/offline" ||
     pathname.startsWith("/eventos") ||
     pathname.startsWith("/recursos") ||
     pathname.startsWith("/cursos") ||
