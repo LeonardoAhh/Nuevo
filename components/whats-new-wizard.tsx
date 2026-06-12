@@ -162,37 +162,22 @@ function MockupSeguimiento() {
 
 // ─── Mockup: SQL dev role ─────────────────────────────────────────────────────
 
-function MockupSQL() {
-  return (
-    <div className="wn-mockup">
-      <div className="wn-mockup__bar">
-        <span className="wn-mockup__dot" style={{ background: "#ff5f57" }} />
-        <span className="wn-mockup__dot" style={{ background: "#febc2e" }} />
-        <span className="wn-mockup__dot" style={{ background: "#28c840" }} />
-        <span className="wn-mockup__url">Supabase · SQL Editor</span>
-      </div>
-      <div className="wn-mockup__body wn-mockup__body--dark">
-        <pre className="wn-sql"><code>{`<span class="wn-sql-comment">-- Asignar rol dev a un usuario</span>
-<span class="wn-sql-kw">UPDATE</span> public.profiles
-<span class="wn-sql-kw">SET</span>    role = <span class="wn-sql-str">'dev'</span>
-<span class="wn-sql-kw">WHERE</span>  email = <span class="wn-sql-str">'tu@email.com'</span>;
+// ─── Mockup: Motivation ───────────────────────────────────────────────────────
 
-<span class="wn-sql-comment">-- Verificar</span>
-<span class="wn-sql-kw">SELECT</span> email, role
-<span class="wn-sql-kw">FROM</span>   public.profiles
-<span class="wn-sql-kw">WHERE</span>  email = <span class="wn-sql-str">'tu@email.com'</span>;`}
-        </code></pre>
-        <div className="wn-sql-result">
-          <span className="wn-sql-result__label">Resultado</span>
-          <div className="wn-sql-table">
-            <div className="wn-sql-table__head">
-              <span>email</span><span>role</span>
-            </div>
-            <div className="wn-sql-table__row">
-              <span>leo@adm.com</span>
-              <span className="wn-badge wn-badge--purple">dev</span>
-            </div>
-          </div>
+function MockupMotivation() {
+  return (
+    <div className="wn-mockup" style={{ border: "none", boxShadow: "none", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+        <div style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))", padding: "1rem", borderRadius: "1rem" }}>
+          <Sparkles size={48} />
+        </div>
+        <div>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0, color: "hsl(var(--foreground))" }}>
+            Gracias por el esfuerzo que no siempre se ve.
+          </h3>
+          <p style={{ fontSize: "0.8125rem", color: "hsl(var(--muted-foreground))", lineHeight: 1.6, marginTop: "0.5rem", maxWidth: "340px", marginInline: "auto" }}>
+            Sabemos que hay días complejos y decisiones difíciles detrás de escena. Queremos que sepas que valoramos profundamente tu entrega y la calidad humana que le imprimes a cada cosa que haces.
+          </p>
         </div>
       </div>
     </div>
@@ -214,7 +199,7 @@ const SLIDES: Slide[] = [
         {[
           { icon: <FileWarning size={18} />, label: "Actas y Seguimiento", color: "red" },
           { icon: <TrendingDown size={18} />, label: "Seguimiento Compromisos", color: "orange" },
-          { icon: <GraduationCap size={18} />, label: "Asignación de Permisos", color: "purple" },
+          { icon: <Sparkles size={18} />, label: "Mejoras continuas", color: "purple" },
         ].map(({ icon, label, color }) => (
           <div key={label} className={`wn-feature-card wn-feature-card--${color}`}>
             <div className={`wn-feature-card__icon wn-feature-card__icon--${color}`}>{icon}</div>
@@ -243,14 +228,13 @@ const SLIDES: Slide[] = [
     mockup: <MockupSeguimiento />,
   },
   {
-    id: "sql",
-    badge: "Gestión de Accesos",
-    title: "Nuevos Roles y Permisos",
-    description:
-      "Ahora se pueden otorgar permisos completos (rol 'dev') a usuarios específicos para gestionar todas las evaluaciones y reportes del sistema.",
-    icon: <GraduationCap size={22} />,
-    mockup: <MockupSQL />,
-  },
+    id: "motivation",
+    badge: "¡Gracias!",
+    title: "Tu experiencia nos importa",
+    description: "Sabemos el esfuerzo que dedicas al desarrollo de nuestra gente, por eso tus comentarios son clave para construir una herramienta que verdaderamente facilite tu día a día.",
+    icon: <Sparkles size={22} />,
+    mockup: <MockupMotivation />,
+  }
 ]
 
 // ─── Animation variants ───────────────────────────────────────────────────────
