@@ -8,7 +8,7 @@ import type { IncidentTab, EmployeeRef } from "./types"
 
 interface ReporteIncidentTabsProps {
     selectedTab: IncidentTab | ""
-    onSelectTab: (tab: IncidentTab) => void
+    onSelectTab: (tab: IncidentTab | "") => void
     dayCounts: Record<IncidentTab, number>
     incidentSummary: Record<IncidentTab, EmployeeRef[]>
 }
