@@ -1,13 +1,13 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { CircleAlert } from "lucide-react"
+import { CircleAlert, X } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { INCIDENT_TABS, INCIDENCIA_LABELS } from "./constants"
 import type { IncidentTab, EmployeeRef } from "./types"
 
 interface ReporteIncidentTabsProps {
-    selectedTab: IncidentTab
+    selectedTab: IncidentTab | ""
     onSelectTab: (tab: IncidentTab) => void
     dayCounts: Record<IncidentTab, number>
     incidentSummary: Record<IncidentTab, EmployeeRef[]>
@@ -52,6 +52,17 @@ export default function ReporteIncidentTabs({
                         </TabsTrigger>
                     )
                 })}
+                
+                {selectedTab !== "" && (
+                    <button
+                        type="button"
+                        onClick={() => onSelectTab("")}
+                        className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                        Ocultar tabla
+                    </button>
+                )}
             </TabsList>
 
             {INCIDENT_TABS.map((code) => (

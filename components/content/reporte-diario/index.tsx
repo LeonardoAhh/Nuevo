@@ -59,6 +59,7 @@ import ReporteKpiDashboard from "./reporte-kpi-dashboard"
 import ReporteComparison from "./reporte-comparison"
 import ReporteEmployeeDetail from "./reporte-employee-detail"
 import ReportesGuardadosDialog from "./reportes-guardados-dialog"
+import ReporteInsights from "./reporte-insights"
 import { useReporteDiario } from "@/lib/hooks/useReporteDiario"
 import type { ReporteDiarioSummary } from "@/lib/hooks/useReporteDiario"
 
@@ -70,7 +71,7 @@ export default function ReporteDiarioContent() {
     const [empDetailOpen, setEmpDetailOpen] = useState(false)
     const [departamentoFilter, setDepartamentoFilter] = useState("")
     const [turnoFilter, setTurnoFilter] = useState("")
-    const [selectedIncidentTab, setSelectedIncidentTab] = useState<IncidentTab>(INCIDENT_TABS[0])
+    const [selectedIncidentTab, setSelectedIncidentTab] = useState<IncidentTab | "">("")
     const [selectedDay, setSelectedDay] = useState("")
     const [selectedArea, setSelectedArea] = useState("")
     const [errors, setErrors] = useState<string[]>([])
@@ -348,11 +349,11 @@ export default function ReporteDiarioContent() {
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
 
         try {
-            await delay(400) // Simulación de lectura
+            await delay(1200) // Simulación de lectura (más tiempo)
             const text = await file.text()
             
             setProcessStep("validating")
-            await delay(600) // Simulación de validación
+            await delay(2000) // Simulación de validación (más tiempo)
 
             const json = JSON.parse(text)
             const { rows: parsed, errors: errs } = parseReporteJSON(json)
@@ -383,7 +384,7 @@ export default function ReporteDiarioContent() {
         if (!previewData) return
         setProcessStep("generating")
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
-        await delay(500)
+        await delay(1500) // Simulación de generación (más tiempo)
 
         setRows(previewData.rows)
         setSelectedMes(previewData.mes)
@@ -599,19 +600,7 @@ export default function ReporteDiarioContent() {
                     )}
 
                     <div className="flex items-center gap-1 ml-2">
-                        {/* Upload Data */}
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition hover:text-primary hover:bg-primary/10"
-                                >
-                                    {processStep ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom"><p className="text-xs">Cargar archivo de reporte</p></TooltipContent>
-                        </Tooltip>
+
 
                         {/* Retardos */}
                         <Tooltip>
@@ -646,38 +635,6 @@ export default function ReporteDiarioContent() {
                     {hasData && (
                         <>
                             {/* Mes */}
-                            <Popover>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <PopoverTrigger asChild>
-                                            <button
-                                                type="button"
-                                                className={cn(
-                                                    "inline-flex items-center justify-center h-8 w-8 rounded-md transition",
-                                                    "text-muted-foreground hover:text-primary hover:bg-primary/10",
-                                                )}
-                                            >
-                                                <Calendar className="w-4 h-4" />
-                                            </button>
-                                        </PopoverTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom"><p className="text-xs">Mes</p></TooltipContent>
-                                </Tooltip>
-                                <PopoverContent align="end" className="w-60 p-4 rounded-xl border-border shadow-xl">
-                                    <div className="flex flex-col gap-4">
-                                        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                                            <Calendar className="w-4 h-4 text-primary" />
-                                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">Mes</span>
-                                        </div>
-                                        <Select value={currentMonth} onValueChange={setSelectedMes} disabled={!months.length}>
-                                            <SelectTrigger className="rounded-lg bg-muted/30 border-border/50"><SelectValue placeholder="Seleccionar mes" /></SelectTrigger>
-                                            <SelectContent>
-                                                {months.map((m) => (<SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
 
                             {/* Departamento */}
                             <Popover>
@@ -859,12 +816,12 @@ export default function ReporteDiarioContent() {
                 className="hidden"
             />
 
-            {/* ── Acciones / Modales ─────────────────────────────────────────── */}
-            {(savedSummaries.length > 0) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                    {savedSummaries.length >= 2 && (
-                        <ReporteComparison summaries={savedSummaries} />
-                    )}
+            {/* ── Top Grid (Acciones & Insights) ─────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                {(savedSummaries.length >= 2) && (
+                    <ReporteComparison summaries={savedSummaries} />
+                )}
+                {(savedSummaries.length > 0) && (
                     <ReportesGuardadosDialog 
                         savedSummaries={savedSummaries}
                         dbSaving={dbSaving}
@@ -872,8 +829,16 @@ export default function ReporteDiarioContent() {
                         onDelete={handleDeleteFromDb}
                         formatMes={formatMes}
                     />
-                </div>
-            )}
+                )}
+                
+                {hasData && currentMonth && selectedRows.length > 0 && (
+                    <ReporteInsights 
+                        selectedRows={selectedRows}
+                        dayHeaders={dayHeaders}
+                        dayAusentismoPct={dayAusentismoPct}
+                    />
+                )}
+            </div>
 
             {hasData ? (
                 <div className="flex flex-col gap-5">
