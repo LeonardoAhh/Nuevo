@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Menu, Moon, Sun, Monitor, Settings, LogOut,
-  BookOpen, FileCheck2, CalendarRange,
+  BookOpen, FileCheck2, CalendarRange, FileWarning,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -40,6 +40,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/cursos":                 "Cursos",
   "/bot":                    "Bot WhatsApp",
   "/eventos":                "Eventos",
+  "/desempeno/seguimiento": "Seguimiento Compromisos",
   "/guia-evaluador":         "Guía Evaluador",
   "/settings":               "Configuración",
 }
@@ -107,6 +108,12 @@ export default function Header({
       href:    "/ingresos-semanales",
       label:   "Ingresos Semanales",
       icon:    CalendarRange,
+      show:    !roleLoading && !isEvaluador,
+    },
+    {
+      href:    "/desempeno/seguimiento",
+      label:   "Seguimiento Compromisos",
+      icon:    FileWarning,
       show:    !roleLoading && !isEvaluador,
     },
     {

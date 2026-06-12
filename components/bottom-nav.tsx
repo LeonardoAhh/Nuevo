@@ -9,6 +9,7 @@ import {
   BookOpen,
   Bot,
   ClipboardCheck,
+  FileWarning,
   ImageIcon,
   GraduationCap,
   LayoutDashboard,
@@ -66,10 +67,11 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Capacitación",
     items: [
-      { label: "Calificaciones", href: "/calificaciones", icon: LayoutGrid },
-      { label: "Promociones", href: "/promociones", icon: TrendingUp },
-      { label: "Exámenes", href: "/examenes", icon: ClipboardCheck },
-      { label: "WhatsApp Bot", href: "/whatsapp", icon: MessageSquare },
+      { label: "Calificaciones",         href: "/calificaciones",          icon: LayoutGrid    },
+      { label: "Promociones",            href: "/promociones",             icon: TrendingUp    },
+      { label: "Exámenes",               href: "/examenes",                icon: ClipboardCheck},
+      { label: "WhatsApp Bot",           href: "/whatsapp",                icon: MessageSquare },
+      { label: "Seguimiento Compromisos",href: "/desempeno/seguimiento",   icon: FileWarning   },
     ],
   },
   {

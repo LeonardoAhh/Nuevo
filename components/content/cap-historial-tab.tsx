@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays } from "lucide-react"
+import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +30,7 @@ interface CapHistorialTabProps {
   onAddCourses: (emp: Employee) => void
   onDeleteEmployee: (emp: Employee) => void
   onIncidencias: (emp: Employee) => void
+  onActasSeguimiento: (emp: Employee) => void
 }
 
 export function CapHistorialTab({
@@ -37,6 +38,7 @@ export function CapHistorialTab({
   newEmpSuccess, addCoursesSuccess,
   onNewEmployee, onBulkImport, onBulkCreateEmployees,
   onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee, onIncidencias,
+  onActasSeguimiento,
 }: CapHistorialTabProps) {
   const [empSearch, setEmpSearch]         = useState("")
   const [empFilterDept, setEmpFilterDept] = useState("all")
@@ -221,6 +223,17 @@ export function CapHistorialTab({
                         </TableCell>
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
+                            {emp.numero && (
+                              <Button
+                                variant="outline" size="icon"
+                                className="h-9 w-9 text-destructive/70 hover:text-destructive hover:border-destructive/40 focus-visible:ring-2 focus-visible:ring-ring"
+                                onClick={() => onActasSeguimiento(emp)}
+                                title="Actas y Seguimiento"
+                                aria-label={`Actas y seguimiento de ${emp.nombre}`}
+                              >
+                                <FileWarning className="h-4 w-4" />
+                              </Button>
+                            )}
                             {emp.numero && (
                               <Button
                                 variant="outline" size="icon"

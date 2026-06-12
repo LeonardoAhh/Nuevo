@@ -11,7 +11,7 @@ export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '
  * Rutas explícitamente bloqueadas para evaluador, incluso si
  * caen bajo un prefijo en EVALUADOR_ALLOWED_ROUTES (ej. /desempeno/*).
  */
-export const EVALUADOR_DENIED_ROUTES = ['/desempeno/cumplimiento']
+export const EVALUADOR_DENIED_ROUTES = ['/desempeno/cumplimiento', '/desempeno/seguimiento']
 
 /** Helper: determina si una ruta es accesible para evaluador. */
 export function isEvaluadorAllowedRoute(path: string): boolean {

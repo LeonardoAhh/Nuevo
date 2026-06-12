@@ -25,6 +25,7 @@ import { CapImportTab } from "@/components/content/cap-import-tab"
 import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
 import { CapBulkCreateEmployees } from "@/components/content/cap-bulk-create-employees"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
+import { ActasSeguimientoModal } from "@/components/content/actas-seguimiento-modal"
 
 // Hooks
 import { useBulkImport } from "@/lib/hooks/useBulkImport"
@@ -317,6 +318,16 @@ export default function CapacitacionContent() {
     setIncidenciasOpen(true)
   }, [])
 
+  // ── Actas / Seguimiento modal state ────────────────────────────────────────
+  const [actasOpen, setActasOpen] = useState(false)
+  const [actasEmpleado, setActasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
+
+  const handleOpenActas = useCallback((emp: Employee) => {
+    if (!emp.numero) return
+    setActasEmpleado({ numero: emp.numero, nombre: emp.nombre })
+    setActasOpen(true)
+  }, [])
+
   const handleDeleteEmployee = useCallback(async (emp: Employee) => {
     const ok = await notify.confirm({
       title: "Eliminar empleado",
@@ -394,6 +405,7 @@ export default function CapacitacionContent() {
             onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
             onDeleteEmployee={handleDeleteEmployee}
             onIncidencias={handleOpenIncidencias}
+            onActasSeguimiento={handleOpenActas}
           />
         </TabsContent>
 
@@ -523,6 +535,15 @@ export default function CapacitacionContent() {
           onClose={() => setIncidenciasOpen(false)}
           numeroEmpleado={incidenciasEmpleado.numero}
           nombreEmpleado={incidenciasEmpleado.nombre}
+        />
+      )}
+
+      {actasEmpleado && (
+        <ActasSeguimientoModal
+          open={actasOpen}
+          onClose={() => setActasOpen(false)}
+          numeroEmpleado={actasEmpleado.numero}
+          nombreEmpleado={actasEmpleado.nombre}
         />
       )}
     </>
