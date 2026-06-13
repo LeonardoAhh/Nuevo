@@ -36,7 +36,7 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
     // Redirect logic based on what role they actually have
     if (userRole === 'admin') return <Navigate to="/empresa" replace />;
     if (userRole === 'chofer') return <Navigate to="/chofer" replace />;
-    return <Navigate to="/usuario" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

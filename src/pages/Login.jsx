@@ -29,19 +29,19 @@ export const Login = () => {
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      
+
       const role = data.user?.user_metadata?.role || 'usuario';
       const name = data.user?.user_metadata?.nombre || '';
-      
+
       setUserName(name);
       setSuccessAnim(true);
-      
+
       setTimeout(() => {
         if (role === 'admin')        navigate('/empresa');
         else if (role === 'chofer')  navigate('/chofer');
-        else                         navigate('/usuario');
+        else                         navigate('/');
       }, 2500);
-      
+
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
       setLoading(false);
@@ -62,8 +62,8 @@ export const Login = () => {
         <header style={s.brand}>
           <LogoMockup />
           <div style={{ textAlign: 'center' }}>
-            <h1 style={s.brandName}>Transporte ViñoPlastic</h1>
-            <p style={s.brandTagline}>Administración · Logística</p>
+            <h1 style={s.brandName}>VIÑOPLASTIC</h1>
+            <p style={s.brandTagline}>Rercursos Humanos Reclutamiento</p>
           </div>
         </header>
 
@@ -120,19 +120,9 @@ export const Login = () => {
 
           {/* Password */}
           <div style={s.field}>
-            <div style={s.labelRow}>
-              <label htmlFor="login-password" style={s.label}>
-                Contraseña
-              </label>
-              <button
-                type="button"
-                style={s.linkBtn}
-                tabIndex={-1}
-                onClick={() => {/* reset password flow */}}
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
+            <label htmlFor="login-password" style={s.label}>
+              Contraseña
+            </label>
             <div style={s.inputWrap}>
               <Lock size={16} style={s.inputIcon} aria-hidden="true" />
               <input
@@ -188,7 +178,7 @@ export const Login = () => {
         </button>
 
         <p style={s.footer}>
-          Planta Querétaro&nbsp;&nbsp;·&nbsp;&nbsp;Sistema de Capacitación
+          v0.1 Beta Release
         </p>
       </div>
     </main>

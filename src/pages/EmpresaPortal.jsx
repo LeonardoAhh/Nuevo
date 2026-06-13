@@ -5,7 +5,7 @@ import { EmployeeWizard } from '../components/EmployeeWizard';
 import { JsonUploadModal } from '../components/JsonUploadModal';
 import { PhotoUploadModal } from '../components/PhotoUploadModal';
 import { QrGenerateModal } from '../components/QrGenerateModal';
-import { Upload, Users, Search, Edit2, Trash2, ChevronLeft, ChevronRight, UserPlus, Image, QrCode, Unlock } from 'lucide-react';
+import { Upload, Users, Search, Edit2, Trash2, ChevronLeft, ChevronRight, UserPlus, Image, QrCode, Unlock, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -99,9 +99,11 @@ export const EmpresaPortal = () => {
   const [isModalOpen,        setIsModalOpen]        = useState(false);
   const [isUploadModalOpen,  setIsUploadModalOpen]  = useState(false);
   const [isPhotoModalOpen,   setIsPhotoModalOpen]   = useState(false);
+  const [openDropdownId,     setOpenDropdownId]     = useState(null);
   const [isQrModalOpen,      setIsQrModalOpen]      = useState(false);
   const [previewQrUrl,       setPreviewQrUrl]       = useState(null);
   const [editingEmployee,    setEditingEmployee]    = useState(null);
+  const [confirmDialog,      setConfirmDialog]      = useState({ isOpen: false, title: '', message: '', confirmText: '', onConfirm: null, isDestructive: false });
   const [searchQuery,        setSearchQuery]        = useState('');
   const [currentPage,        setCurrentPage]        = useState(1);
 
@@ -136,18 +138,36 @@ export const EmpresaPortal = () => {
     fetchEmployees();
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este empleado?')) return;
-    const { error } = await supabase.from('empleados').delete().eq('id', id);
-    if (error) toast.error('Error al eliminar: ' + error.message);
-    else { toast.success('Empleado eliminado'); fetchEmployees(); }
+  const handleDelete = (id) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Empleado',
+      message: '¿Estás seguro de que deseas eliminar este registro? Esta acción es permanente.',
+      confirmText: 'Eliminar',
+      isDestructive: true,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        const { error } = await supabase.from('empleados').delete().eq('id', id);
+        if (error) toast.error('Error al eliminar: ' + error.message);
+        else { toast.success('Empleado eliminado'); fetchEmployees(); }
+      }
+    });
   };
 
-  const handleResetNip = async (id, nombre) => {
-    if (!window.confirm(`¿Resetear acceso (borrar NIP) de ${nombre}?`)) return;
-    const { error } = await supabase.from('empleados').update({ nip: null }).eq('id', id);
-    if (error) toast.error('Error al resetear NIP: ' + error.message);
-    else { toast.success('Acceso reseteado'); fetchEmployees(); }
+  const handleResetNip = (id, nombre) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Resetear Acceso',
+      message: `¿Borrar el NIP de ${nombre}? Tendrá que crear uno nuevo al ingresar la próxima vez.`,
+      confirmText: 'Resetear NIP',
+      isDestructive: false,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        const { error } = await supabase.from('empleados').update({ nip: null }).eq('id', id);
+        if (error) toast.error('Error al resetear NIP: ' + error.message);
+        else { toast.success('Acceso reseteado'); fetchEmployees(); }
+      }
+    });
   };
 
   const handleUploadConfirm = async (parsedData) => {
@@ -194,6 +214,25 @@ export const EmpresaPortal = () => {
         }
         @media (prefers-reduced-motion: reduce) {
           * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+        .dropdown-item {
+          display: flex;
+          alignItems: center;
+          gap: 10px;
+          width: 100%;
+          padding: 10px 12px;
+          border: none;
+          background: transparent;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          color: hsl(var(--color-ink));
+          cursor: pointer;
+          transition: background 0.15s ease;
+          text-align: left;
+        }
+        .dropdown-item:hover {
+          background: hsl(var(--color-canvas-soft));
         }
       `}</style>
 
@@ -247,11 +286,35 @@ export const EmpresaPortal = () => {
                     <p style={{ margin: 0, fontSize: '14px', fontWeight: 500, color: 'hsl(var(--color-ink))', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.nombre}</p>
                     <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'hsl(var(--color-muted))', fontVariantNumeric: 'tabular-nums' }}>#{emp.numero_empleado}</p>
                   </div>
-                  <div className="emp-card-actions" style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    <motion.button onClick={() => handleResetNip(emp.id, emp.nombre)} title="Resetear Acceso (NIP)" style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><Unlock size={13} /></motion.button>
-                    {emp.qr_code && <motion.button onClick={() => setPreviewQrUrl(emp.qr_code)} title="Ver QR" style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><QrCode size={13} /></motion.button>}
-                    <motion.button onClick={() => { setEditingEmployee(emp); setIsModalOpen(true); }} title="Editar" style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><Edit2 size={13} /></motion.button>
-                    <motion.button onClick={() => handleDelete(emp.id)} title="Eliminar" style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-semantic-error))' }}><Trash2 size={13} /></motion.button>
+                  <div className="emp-card-actions" style={{ position: 'relative', flexShrink: 0 }}>
+                    <motion.button 
+                      onClick={() => setOpenDropdownId(openDropdownId === emp.id ? null : emp.id)} 
+                      title="Opciones" 
+                      style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: openDropdownId === emp.id ? 'hsl(var(--color-canvas-soft))' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}
+                    >
+                      <MoreHorizontal size={18} />
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {openDropdownId === emp.id && (
+                        <>
+                          <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setOpenDropdownId(null)} />
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--color-surface-card)', border: '1px solid hsl(var(--color-hairline-soft))', borderRadius: '12px', padding: '6px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', minWidth: '160px' }}
+                          >
+                            <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); handleResetNip(emp.id, emp.nombre); }}><Unlock size={15} /> Resetear NIP</button>
+                            {emp.qr_code && <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); setPreviewQrUrl(emp.qr_code); }}><QrCode size={15} /> Ver código QR</button>}
+                            <div style={{ height: '1px', background: 'hsl(var(--color-hairline-soft))', margin: '4px 0' }} />
+                            <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); setEditingEmployee(emp); setIsModalOpen(true); }}><Edit2 size={15} /> Editar datos</button>
+                            <button className="dropdown-item" style={{ color: 'hsl(var(--color-semantic-error))' }} onClick={() => { setOpenDropdownId(null); handleDelete(emp.id); }}><Trash2 size={15} /> Eliminar</button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </motion.div>
               ))}
@@ -280,6 +343,22 @@ export const EmpresaPortal = () => {
       <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} title="Carga Masiva de Empleados">
         <JsonUploadModal onConfirm={handleUploadConfirm} onCancel={() => setIsUploadModalOpen(false)} />
       </Modal>
+
+      {/* ── Custom Confirm Dialog ── */}
+      <AnimatePresence>
+        {confirmDialog.isOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 99999 }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} style={{ background: 'var(--color-surface-card)', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: '1px solid var(--color-hairline-soft)' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600, color: 'var(--color-ink)' }}>{confirmDialog.title}</h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: 'var(--color-muted)', lineHeight: 1.5 }}>{confirmDialog.message}</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))} style={{ padding: '0 16px', height: '40px', borderRadius: '8px', border: '1px solid var(--color-hairline-soft)', background: 'transparent', color: 'var(--color-ink)', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={confirmDialog.onConfirm} style={{ padding: '0 16px', height: '40px', borderRadius: '8px', border: 'none', background: confirmDialog.isDestructive ? 'var(--color-semantic-error)' : 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>{confirmDialog.confirmText}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Modal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} title="Carga Masiva de Fotos">
         <PhotoUploadModal onCancel={() => setIsPhotoModalOpen(false)} onComplete={() => { setIsPhotoModalOpen(false); fetchEmployees(); }} />

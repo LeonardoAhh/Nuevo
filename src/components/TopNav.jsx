@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Rutas de navegación ─── */
 const NAV_LINKS = [
-  { label: 'Usuario', path: '/usuario' },
   { label: 'Chofer',  path: '/chofer'  },
   { label: 'Empresa', path: '/empresa' },
 ];
@@ -35,7 +34,7 @@ export const TopNav = () => {
   const handleLogout = async () => {
     setMenuOpen(false);
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   const isActive = (path) => location.pathname === path;
@@ -48,7 +47,7 @@ export const TopNav = () => {
           position: relative;
           font-size: 13px;
           font-weight: 500;
-          color: hsl(var(--color-muted));
+          color: var(--color-muted);
           cursor: pointer;
           text-decoration: none;
           padding: 4px 0;
@@ -57,14 +56,14 @@ export const TopNav = () => {
           transition: color 0.15s;
           white-space: nowrap;
         }
-        .topnav-link:hover { color: hsl(var(--color-ink)); }
-        .topnav-link.active { color: hsl(var(--color-ink)); }
+        .topnav-link:hover { color: var(--color-ink); }
+        .topnav-link.active { color: var(--color-ink); }
         .topnav-link.active::after {
           content: '';
           position: absolute;
           bottom: -2px; left: 0; right: 0;
           height: 1.5px;
-          background: hsl(var(--color-ink));
+          background: var(--color-ink);
           border-radius: 1px;
         }
         @media (min-width: 640px) { .topnav-mobile-only { display: none !important; } }
@@ -85,8 +84,8 @@ export const TopNav = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 24px',
-          background: 'hsl(var(--color-canvas))',
-          borderBottom: '1px solid hsl(var(--color-hairline-soft))',
+          background: 'var(--color-canvas)',
+          borderBottom: '1px solid var(--color-hairline-soft)',
         }}
       >
         {/* ── Brand ── */}
@@ -95,10 +94,10 @@ export const TopNav = () => {
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             fontSize: '15px', fontWeight: 600, letterSpacing: '-0.01em',
-            color: 'hsl(var(--color-ink))',
+            color: 'var(--color-ink)',
           }}
         >
-          Viño<span style={{ color: 'hsl(var(--color-accent))' }}>Plastic</span>
+          Viño<span style={{ color: 'var(--color-accent)' }}>Plastic</span>
         </button>
 
         {/* ── Desktop nav ── */}
@@ -117,7 +116,7 @@ export const TopNav = () => {
           ))}
 
           {/* Separador */}
-          <div style={{ width: '1px', height: '16px', background: 'hsl(var(--color-hairline-soft))' }} />
+          <div style={{ width: '1px', height: '16px', background: 'var(--color-hairline-soft)' }} />
 
           {/* Logout */}
           <motion.button
@@ -129,7 +128,7 @@ export const TopNav = () => {
             style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
               display: 'flex', alignItems: 'center',
-              color: 'hsl(var(--color-semantic-error))',
+              color: 'var(--color-semantic-error)',
             }}
           >
             <LogOut size={16} />
@@ -145,7 +144,7 @@ export const TopNav = () => {
             background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '36px', height: '36px', borderRadius: '8px',
-            color: 'hsl(var(--color-ink))',
+            color: 'var(--color-ink)',
           }}
         >
           <AnimatePresence mode="wait" initial={false}>
@@ -176,11 +175,12 @@ export const TopNav = () => {
               position: 'fixed',
               top: '56px', left: 0, right: 0,
               zIndex: 999,
-              background: 'hsl(var(--color-canvas))',
-              borderBottom: '1px solid hsl(var(--color-hairline-soft))',
+              background: 'var(--color-canvas)',
+              borderBottom: '1px solid var(--color-hairline-soft)',
               padding: '8px 24px 16px',
               display: 'flex',
               flexDirection: 'column',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.06)'
             }}
           >
             {NAV_LINKS.map(({ label, path }, i) => (
@@ -194,8 +194,8 @@ export const TopNav = () => {
                   background: 'none', border: 'none', cursor: 'pointer',
                   textAlign: 'left', padding: '12px 0',
                   fontSize: '14px', fontWeight: isActive(path) ? 500 : 400,
-                  color: isActive(path) ? 'hsl(var(--color-ink))' : 'hsl(var(--color-muted))',
-                  borderBottom: '1px solid hsl(var(--color-hairline-soft))',
+                  color: isActive(path) ? 'var(--color-ink)' : 'var(--color-muted)',
+                  borderBottom: '1px solid var(--color-hairline-soft)',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}
               >
@@ -203,7 +203,7 @@ export const TopNav = () => {
                 {isActive(path) && (
                   <span style={{
                     width: '6px', height: '6px', borderRadius: '50%',
-                    background: 'hsl(var(--color-accent))',
+                    background: 'var(--color-accent)',
                   }} />
                 )}
               </motion.button>
@@ -215,7 +215,7 @@ export const TopNav = () => {
                 background: 'none', border: 'none', cursor: 'pointer',
                 textAlign: 'left', padding: '12px 0',
                 fontSize: '14px', fontWeight: 400,
-                color: 'hsl(var(--color-semantic-error))',
+                color: 'var(--color-semantic-error)',
                 display: 'flex', alignItems: 'center', gap: '8px',
                 marginTop: '4px',
               }}

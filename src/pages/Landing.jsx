@@ -12,24 +12,24 @@ const ROLES = [
   {
     id: 'empleado',
     icon: User,
-    title: 'Soy empleado',
-    subtitle: 'Accede a tu pase digital y ruta',
+    title: 'Colaboradores',
+    subtitle: 'Acceso a codigo QR individual',
     path: '/empleado/login',
     ariaDescribedBy: 'desc-empleado',
   },
   {
     id: 'chofer',
     icon: Truck,
-    title: 'Soy chofer',
-    subtitle: 'Portal de operadores',
-    path: '/login',
+    title: 'Transporte',
+    subtitle: 'UTEP',
+    path: '/chofer/login',
     ariaDescribedBy: 'desc-chofer',
   },
   {
     id: 'admin',
     icon: ShieldCheck,
-    title: 'Administración',
-    subtitle: 'Recursos humanos y logística',
+    title: 'Recursos Humanos',
+    subtitle: 'Reclutamiento',
     path: '/login',
     ariaDescribedBy: 'desc-admin',
   },
@@ -107,7 +107,7 @@ export const Landing = () => {
     <main style={styles.page}>
       {/* Screen-reader heading */}
       <h2 className="sr-only" style={styles.srOnly}>
-        Portal de acceso — Transporte ViñoPlastic
+        Transporte ViñoPlastic
       </h2>
 
       <div style={styles.container}>
@@ -116,7 +116,7 @@ export const Landing = () => {
         <header style={styles.brand}>
           <LogoMockup />
           <div style={styles.brandText}>
-            <h1 style={styles.brandName}>Transporte ViñoPlastic</h1>
+            <h1 style={{ ...styles.brandName, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ViñoPlastic Inyección S.A de C.V</h1>
           </div>
         </header>
 

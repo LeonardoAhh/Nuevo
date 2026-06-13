@@ -5,7 +5,7 @@ import { EmpresaPortal } from './pages/EmpresaPortal';
 import { Login } from './pages/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ChoferPortal } from './pages/ChoferPortal';
-import { UsuarioPortal } from './pages/UsuarioPortal';
+import { ChoferLogin } from './pages/ChoferLogin';
 import { EmpleadoLogin } from './pages/EmpleadoLogin';
 import { EmpleadoDashboard } from './pages/EmpleadoDashboard';
 import { Landing } from './pages/Landing';
@@ -13,7 +13,7 @@ import { Landing } from './pages/Landing';
 // Wrapper to conditionally show TopNav (hide on login and landing)
 const Layout = ({ children }) => {
   const location = useLocation();
-  const isAuthView = location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/empleado');
+  const isAuthView = location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/empleado') || location.pathname === '/chofer/login';
   return (
     <div className="app-container">
       <Toaster position="top-right" richColors />
@@ -31,14 +31,9 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/chofer/login" element={<ChoferLogin />} />
           <Route path="/empleado/login" element={<EmpleadoLogin />} />
           <Route path="/empleado/dashboard" element={<EmpleadoDashboard />} />
-          
-          <Route path="/usuario" element={
-            <ProtectedRoute allowedRoles={['admin', 'usuario']}>
-              <UsuarioPortal />
-            </ProtectedRoute>
-          } />
           
           <Route path="/chofer" element={
             <ProtectedRoute allowedRoles={['admin', 'chofer']}>

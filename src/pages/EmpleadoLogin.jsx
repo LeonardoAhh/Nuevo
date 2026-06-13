@@ -14,7 +14,7 @@ export const EmpleadoLogin = () => {
   const [numEmpleado, setNumEmpleado] = useState('');
   const [empleado, setEmpleado] = useState(null);
   const [successAnim, setSuccessAnim] = useState(false);
-  
+
   // Opciones generadas para pregunta de seguridad
   const [options, setOptions] = useState([]);
   const [nip, setNip] = useState('');
@@ -24,40 +24,48 @@ export const EmpleadoLogin = () => {
     e.preventDefault();
     if (!numEmpleado.trim()) return;
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from('empleados')
       .select('*')
       .eq('numero_empleado', numEmpleado.trim())
       .single();
-      
+
     if (error || !data) {
       setLoading(false);
       toast.error('Número de empleado no encontrado.');
       return;
     }
-    
+
     setEmpleado(data);
-    
+
     if (data.nip) {
       setLoading(false);
       setStep(5); // Ya tiene NIP, ir a login normal
     } else {
       setLoading(false);
-      
-      let realTurno = String(data.turno || '').trim() || 'Sin asignar';
+
+      const mapaTurnos = {
+        "1": "1", "2": "2", "3": "3", "4": "4",
+        "6": "2", "7": "2", "13": "2", "16": "3",
+        "26": "1", "30": "2", "31": "2", "35": "1", "36": "2"
+      };
+
+      let dbTurno = String(data.turno || '').trim();
+      let realTurno = mapaTurnos[dbTurno] || dbTurno || 'Sin asignar';
+
       let posibles = ['1', '2', '3', '4'];
-      
-      // Si por alguna razón tiene un turno que no es 1, 2, 3 o 4, lo agregamos para que pueda pasar
+
+      // Si por alguna razón tiene un turno que no está en el mapa, lo agregamos
       if (!posibles.includes(realTurno) && realTurno !== 'Sin asignar') {
          posibles.push(realTurno);
       }
-      
+
       const combinadas = posibles.map(t => ({
         label: t,
         isReal: t === realTurno
       }));
-        
+
       setOptions(combinadas);
       setStep(2); // No tiene NIP, ir a verificación
     }
@@ -67,7 +75,7 @@ export const EmpleadoLogin = () => {
     if (isReal) {
       setStep(3); // Crear NIP
     } else {
-      toast.error('Respuesta incorrecta. Contacta a RH si hay un error en tus datos.');
+      toast.error('Respuesta incorrecta. Contacta al departamento de Reclutamiento si hay un error en tus datos.');
       setNumEmpleado('');
       setEmpleado(null);
       setStep(1);
@@ -90,15 +98,15 @@ export const EmpleadoLogin = () => {
       setStep(3);
       return;
     }
-    
+
     setLoading(true);
     const { error } = await supabase
       .from('empleados')
       .update({ nip: nip })
       .eq('id', empleado.id);
-      
+
     setLoading(false);
-    
+
     if (error) {
       toast.error('Error al guardar NIP.');
     } else {
@@ -134,20 +142,20 @@ export const EmpleadoLogin = () => {
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgb(var(--color-accent-raw) / 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                 <User size={24} color="var(--color-accent)" />
               </div>
-              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--color-ink)' }}>Bienvenido</h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Ingresa tu número de empleado para continuar</p>
+              <h2 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)' }}>Bienvenido</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>Ingresa tu número de empleado para continuar</p>
             </div>
-            
-            <input 
-              type="number" 
-              placeholder="Ej. 10234" 
-              value={numEmpleado} 
-              onChange={e => setNumEmpleado(e.target.value)} 
-              style={{ width: '100%', boxSizing: 'border-box', height: '44px', padding: '0 16px', borderRadius: '10px', border: '1px solid var(--color-hairline-soft)', fontSize: '16px', textAlign: 'center', letterSpacing: '2px', marginBottom: '16px' }}
+
+            <input
+              type="number"
+              placeholder="Ej. 10234"
+              value={numEmpleado}
+              onChange={e => setNumEmpleado(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', height: '44px', padding: '0 var(--spacing-base)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--color-hairline-soft)', fontSize: 'var(--typography-body-md-size)', fontFamily: 'var(--font-body)', textAlign: 'center', letterSpacing: '0.12em', marginBottom: 'var(--spacing-base)' }}
               autoFocus
             />
-            
-            <button type="submit" disabled={!numEmpleado || loading} style={{ width: '100%', height: '44px', borderRadius: '10px', border: 'none', background: 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: (!numEmpleado || loading) ? 'not-allowed' : 'pointer', opacity: (!numEmpleado || loading) ? 0.7 : 1 }}>
+
+            <button type="submit" disabled={!numEmpleado || loading} style={{ width: '100%', height: '44px', borderRadius: 'var(--rounded-lg)', border: 'none', background: 'var(--color-accent)', color: 'var(--color-on-primary)', fontSize: 'var(--typography-button-size)', fontWeight: 'var(--typography-button-weight)', fontFamily: 'var(--font-body)', letterSpacing: 'var(--typography-button-ls)', cursor: (!numEmpleado || loading) ? 'not-allowed' : 'pointer', opacity: (!numEmpleado || loading) ? 0.7 : 1 }}>
               {loading ? 'Buscando...' : 'Siguiente'}
             </button>
           </motion.form>
@@ -159,10 +167,10 @@ export const EmpleadoLogin = () => {
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgb(var(--color-semantic-success-raw) / 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                 <ShieldCheck size={24} color="var(--color-semantic-success)" />
               </div>
-              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--color-ink)' }}>Verificación de Identidad</h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Hola, {empleado.nombre.split(' ')[0]}. Selecciona tu turno asignado:</p>
+              <h2 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)' }}>Verificación de Identidad</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>Hola, {empleado.nombre.split(' ')[0]}. Selecciona tu turno asignado:</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {options.map((opcion, idx) => (
                 <button
@@ -176,7 +184,7 @@ export const EmpleadoLogin = () => {
                     border: '1px solid var(--color-hairline-soft)',
                     background: 'var(--color-surface-card)',
                     color: 'var(--color-ink)',
-                    fontSize: '15px',
+                    fontSize: 'var(--typography-body-md-size)',
                     textAlign: 'left',
                     cursor: 'pointer',
                     transition: 'all 120ms ease'
@@ -197,21 +205,21 @@ export const EmpleadoLogin = () => {
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgb(var(--color-accent-raw) / 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                 <Lock size={24} color="var(--color-accent)" />
               </div>
-              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--color-ink)' }}>Crea tu NIP</h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Ingresa 4 números para proteger tu cuenta</p>
+              <h2 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)' }}>Crea tu NIP</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>Ingresa 4 números para proteger tu cuenta</p>
             </div>
-            
-            <input 
-              type="password" 
+
+            <input
+              type="password"
               maxLength={4}
-              placeholder="••••" 
-              value={nip} 
-              onChange={e => setNip(e.target.value.replace(/\D/g, ''))} 
-              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 16px', borderRadius: '10px', border: '1px solid var(--color-hairline-soft)', fontSize: '24px', textAlign: 'center', letterSpacing: '8px', marginBottom: '16px' }}
+              placeholder="••••"
+              value={nip}
+              onChange={e => setNip(e.target.value.replace(/\D/g, ''))}
+              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 var(--spacing-base)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--color-hairline-soft)', fontSize: 'var(--typography-display-sm-size)', fontFamily: 'var(--font-body)', textAlign: 'center', letterSpacing: '0.5em', marginBottom: 'var(--spacing-base)' }}
               autoFocus
             />
-            
-            <button onClick={handleCrearNip} disabled={nip.length !== 4} style={{ width: '100%', height: '44px', borderRadius: '10px', border: 'none', background: 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: nip.length !== 4 ? 'not-allowed' : 'pointer', opacity: nip.length !== 4 ? 0.7 : 1 }}>
+
+            <button onClick={handleCrearNip} disabled={nip.length !== 4} style={{ width: '100%', height: '44px', borderRadius: 'var(--rounded-lg)', border: 'none', background: 'var(--color-accent)', color: 'var(--color-on-primary)', fontSize: 'var(--typography-button-size)', fontWeight: 'var(--typography-button-weight)', fontFamily: 'var(--font-body)', letterSpacing: 'var(--typography-button-ls)', cursor: nip.length !== 4 ? 'not-allowed' : 'pointer', opacity: nip.length !== 4 ? 0.7 : 1 }}>
               Siguiente
             </button>
           </motion.div>
@@ -223,21 +231,21 @@ export const EmpleadoLogin = () => {
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgb(var(--color-accent-raw) / 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                 <Check size={24} color="var(--color-accent)" />
               </div>
-              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--color-ink)' }}>Confirma tu NIP</h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Vuelve a ingresar los 4 números</p>
+              <h2 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)' }}>Confirma tu NIP</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>Vuelve a ingresar los 4 números</p>
             </div>
-            
-            <input 
-              type="password" 
+
+            <input
+              type="password"
               maxLength={4}
-              placeholder="••••" 
-              value={confirmNip} 
-              onChange={e => setConfirmNip(e.target.value.replace(/\D/g, ''))} 
-              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 16px', borderRadius: '10px', border: '1px solid var(--color-hairline-soft)', fontSize: '24px', textAlign: 'center', letterSpacing: '8px', marginBottom: '16px' }}
+              placeholder="••••"
+              value={confirmNip}
+              onChange={e => setConfirmNip(e.target.value.replace(/\D/g, ''))}
+              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 var(--spacing-base)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--color-hairline-soft)', fontSize: 'var(--typography-display-sm-size)', fontFamily: 'var(--font-body)', textAlign: 'center', letterSpacing: '0.5em', marginBottom: 'var(--spacing-base)' }}
               autoFocus
             />
-            
-            <button onClick={handleConfirmarNip} disabled={confirmNip.length !== 4 || loading} style={{ width: '100%', height: '44px', borderRadius: '10px', border: 'none', background: 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: (confirmNip.length !== 4 || loading) ? 'not-allowed' : 'pointer', opacity: (confirmNip.length !== 4 || loading) ? 0.7 : 1 }}>
+
+            <button onClick={handleConfirmarNip} disabled={confirmNip.length !== 4 || loading} style={{ width: '100%', height: '44px', borderRadius: 'var(--rounded-lg)', border: 'none', background: 'var(--color-accent)', color: 'var(--color-on-primary)', fontSize: 'var(--typography-button-size)', fontWeight: 'var(--typography-button-weight)', fontFamily: 'var(--font-body)', letterSpacing: 'var(--typography-button-ls)', cursor: (confirmNip.length !== 4 || loading) ? 'not-allowed' : 'pointer', opacity: (confirmNip.length !== 4 || loading) ? 0.7 : 1 }}>
               {loading ? 'Guardando...' : 'Finalizar e Ingresar'}
             </button>
           </motion.div>
@@ -253,26 +261,26 @@ export const EmpleadoLogin = () => {
                   <User size={32} color="var(--color-accent)" />
                 </div>
               )}
-              <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--color-ink)' }}>¡Hola, {empleado.nombre.split(' ')[0]}!</h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Ingresa tu NIP para acceder</p>
+              <h2 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)' }}>¡Hola, {empleado.nombre.split(' ')[0]}!</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>Ingresa tu NIP para acceder</p>
             </div>
-            
-            <input 
-              type="password" 
+
+            <input
+              type="password"
               maxLength={4}
-              placeholder="••••" 
-              value={nip} 
-              onChange={e => setNip(e.target.value.replace(/\D/g, ''))} 
-              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 16px', borderRadius: '10px', border: '1px solid var(--color-hairline-soft)', fontSize: '24px', textAlign: 'center', letterSpacing: '8px', marginBottom: '16px' }}
+              placeholder="••••"
+              value={nip}
+              onChange={e => setNip(e.target.value.replace(/\D/g, ''))}
+              style={{ width: '100%', boxSizing: 'border-box', height: '54px', padding: '0 var(--spacing-base)', borderRadius: 'var(--rounded-lg)', border: '1px solid var(--color-hairline-soft)', fontSize: 'var(--typography-display-sm-size)', fontFamily: 'var(--font-body)', textAlign: 'center', letterSpacing: '0.5em', marginBottom: 'var(--spacing-base)' }}
               autoFocus
             />
-            
-            <button type="submit" disabled={nip.length !== 4} style={{ width: '100%', height: '44px', borderRadius: '10px', border: 'none', background: 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: nip.length !== 4 ? 'not-allowed' : 'pointer', opacity: nip.length !== 4 ? 0.7 : 1 }}>
+
+            <button type="submit" disabled={nip.length !== 4} style={{ width: '100%', height: '44px', borderRadius: 'var(--rounded-lg)', border: 'none', background: 'var(--color-accent)', color: 'var(--color-on-primary)', fontSize: 'var(--typography-button-size)', fontWeight: 'var(--typography-button-weight)', fontFamily: 'var(--font-body)', letterSpacing: 'var(--typography-button-ls)', cursor: nip.length !== 4 ? 'not-allowed' : 'pointer', opacity: nip.length !== 4 ? 0.7 : 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 Ingresar <LogIn size={16} />
               </div>
             </button>
-            <button type="button" onClick={() => { setStep(1); setNumEmpleado(''); setEmpleado(null); setNip(''); }} style={{ width: '100%', marginTop: '12px', background: 'none', border: 'none', fontSize: '12px', color: 'var(--color-muted)', cursor: 'pointer' }}>
+            <button type="button" onClick={() => { setStep(1); setNumEmpleado(''); setEmpleado(null); setNip(''); }} style={{ width: '100%', marginTop: 'var(--spacing-sm)', background: 'none', border: 'none', fontSize: 'var(--typography-caption-size)', fontFamily: 'var(--font-body)', color: 'var(--color-muted)', cursor: 'pointer' }}>
               ¿No eres tú? Cambiar empleado
             </button>
           </motion.form>
@@ -287,11 +295,10 @@ export const EmpleadoLogin = () => {
       <LoginTransition isVisible={successAnim} userName={empleado?.nombre} />
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-canvas)', padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '360px' }}>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '32px' }}>
           <LogoMockup />
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: 'var(--color-ink)', letterSpacing: '-0.03em' }}>Transporte ViñoPlastic</h1>
-          <p style={{ margin: '8px 0 0', fontSize: '14px', color: 'var(--color-muted)' }}>Portal de Empleados</p>
+          <h1 style={{ margin: 0, fontSize: 'var(--typography-display-sm-size)', fontWeight: 'var(--typography-title-md-weight)', color: 'var(--color-ink)', fontFamily: 'var(--font-display)', letterSpacing: '-0.03em' }}>VIÑOPLASTIC</h1>
         </div>
 
         <div style={{ background: 'var(--color-surface-card)', borderRadius: '20px', padding: '32px 24px', boxShadow: '0 8px 32px rgba(0,0,0,0.04)', border: '1px solid var(--color-hairline-soft)' }}>
