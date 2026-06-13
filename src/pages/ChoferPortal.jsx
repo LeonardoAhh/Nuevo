@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, XCircle, ScanLine, List, Camera, LogOut, ChevronRight, ChevronLeft, Bus, Calendar, Users, Clock, MapPin, X } from 'lucide-react';
+import { CheckCircle, XCircle, ScanLine, List, Camera, LogOut, ChevronRight, ChevronLeft, Bus, Calendar, Users, Clock, MapPin, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Helpers ─────────────────────────────────────────────── */
@@ -461,6 +461,12 @@ export const ChoferPortal = () => {
   const [session, setSession] = useState(null);
   const timerRef = useRef(null);
   const isScanningRef = useRef(false);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => window.location.reload(true), 300);
+  };
   const qrRef = useRef(null);
 
   useEffect(() => {
@@ -860,10 +866,23 @@ export const ChoferPortal = () => {
           <h1 style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>Portal Abordaje</h1>
           <p style={{ margin: '2px 0 0', fontSize: 'var(--typography-caption-size)', fontFamily: 'var(--font-body)', color: 'var(--color-muted)' }}>ViñoPlastic Transporte</p>
         </div>
-        <button onClick={async () => { await supabase.auth.signOut(); navigate('/'); }} title="Cerrar sesión"
-          style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-canvas)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LogOut size={18} color="var(--color-semantic-error)" />
-        </button>
+        
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            animate={{ rotate: isRefreshing ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            onClick={handleRefresh}
+            title="Actualizar aplicación"
+            style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgb(var(--color-accent-raw) / 0.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <RefreshCw size={18} color="var(--color-accent)" />
+          </motion.button>
+
+          <button onClick={async () => { await supabase.auth.signOut(); navigate('/'); }} title="Cerrar sesión"
+            style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgb(var(--color-semantic-error-raw) / 0.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LogOut size={18} color="var(--color-semantic-error)" />
+          </button>
+        </div>
       </header>
 
       {/* Content */}

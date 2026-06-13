@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Rutas de navegación ─── */
@@ -35,6 +35,12 @@ export const TopNav = () => {
     setMenuOpen(false);
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => window.location.reload(true), 300);
   };
 
   const isActive = (path) => location.pathname === path.split('#')[0];
@@ -118,9 +124,26 @@ export const TopNav = () => {
           {/* Separador */}
           <div style={{ width: '1px', height: '16px', background: 'var(--color-hairline-soft)' }} />
 
+          {/* Actualizar */}
+          <motion.button
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{ rotate: isRefreshing ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            onClick={handleRefresh}
+            title="Actualizar aplicación"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+              display: 'flex', alignItems: 'center',
+              color: 'var(--color-muted)',
+            }}
+          >
+            <RefreshCw size={16} />
+          </motion.button>
+
           {/* Logout */}
           <motion.button
-            whileHover={{ x: 2 }}
+            whileHover={{ y: -1 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={handleLogout}
@@ -208,6 +231,24 @@ export const TopNav = () => {
                 )}
               </motion.button>
             ))}
+
+            <button
+              onClick={handleRefresh}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                textAlign: 'left', padding: '12px 0',
+                fontSize: '14px', fontWeight: 400,
+                color: 'var(--color-ink)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                marginTop: '4px',
+                borderBottom: '1px solid var(--color-hairline-soft)',
+              }}
+            >
+              <motion.div animate={{ rotate: isRefreshing ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                <RefreshCw size={15} color="var(--color-muted)" />
+              </motion.div>
+              Actualizar aplicación
+            </button>
 
             <button
               onClick={handleLogout}

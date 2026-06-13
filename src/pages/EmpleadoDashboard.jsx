@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { LogOut, MapPin, Clock, QrCode } from 'lucide-react';
+import { LogOut, MapPin, Clock, QrCode, RefreshCw, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── Helpers ─── */
@@ -10,6 +10,21 @@ const getInitials = (nombre) => {
   const parts = nombre.trim().split(/\s+/);
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const splitName = (fullName) => {
+  if (!fullName) return { apellidos: '', nombres: '' };
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 1) return { apellidos: '', nombres: parts.join(' ') };
+  if (parts.length === 2) return { apellidos: parts[0], nombres: parts[1] };
+  return { apellidos: parts.slice(0, 2).join(' '), nombres: parts.slice(2).join(' ') };
+};
+
+const parseRuta = (ruta) => {
+  if (!ruta || ruta === 'Sin ruta') return { code: 'SR', desc: ruta || 'Sin ruta' };
+  const match = ruta.match(/^(R\d+)[-\s]+(.+)$/i);
+  if (!match) return { code: 'R?', desc: ruta };
+  return { code: match[1].toUpperCase(), desc: match[2].trim() };
 };
 
 /* ─── Skeleton ─── */
@@ -61,60 +76,89 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-/* ─── Info tile ─── */
-const InfoTile = ({ icon: Icon, label, value }) => (
-  <div style={{
-    background: 'var(--color-canvas)',
-    padding: '14px 12px',
-    borderRadius: '12px',
-    border: '1px solid var(--color-hairline-soft)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    textAlign: 'center', gap: '6px',
-  }}>
-    <div style={{
-      width: '32px', height: '32px', borderRadius: '50%',
-      background: 'rgb(var(--color-accent-raw) / 0.08)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Icon size={15} color="var(--color-accent)" />
+/* ─── Info tile mini ─── */
+const InfoTileMini = ({ icon: Icon, label, value, isRoute }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const displayValue = isRoute ? parseRuta(value).code : value;
+  const fullValue = value || 'Sin asignar';
+
+  return (
+    <div 
+      style={{ position: 'relative' }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={() => setShowTooltip(!showTooltip)}
+    >
+      <div style={{
+        background: 'var(--color-canvas)',
+        padding: '10px 12px',
+        borderRadius: '12px',
+        border: '1px solid var(--color-hairline-soft)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: '4px', cursor: isRoute ? 'pointer' : 'default',
+        minWidth: '56px'
+      }}>
+        <Icon size={16} color="var(--color-accent)" />
+        <span style={{ fontSize: '13px', fontWeight: 600, color: value ? 'var(--color-ink)' : 'var(--color-muted-soft)', letterSpacing: '0.02em' }}>
+          {displayValue || '-'}
+        </span>
+      </div>
+
+      {/* Tooltip / Popover */}
+      <AnimatePresence>
+        {showTooltip && isRoute && value && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              bottom: '100%', right: 0,
+              marginBottom: '8px',
+              padding: '6px 10px',
+              background: 'var(--color-ink)',
+              color: 'var(--color-canvas)',
+              borderRadius: '8px',
+              fontSize: '11px',
+              whiteSpace: 'nowrap',
+              zIndex: 100,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              pointerEvents: 'none',
+              fontWeight: 500
+            }}
+          >
+            {fullValue}
+            <div style={{ position: 'absolute', bottom: '-4px', right: '24px', width: '8px', height: '8px', background: 'var(--color-ink)', transform: 'rotate(45deg)' }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-    <span style={{
-      fontSize: '10px', textTransform: 'uppercase',
-      color: 'var(--color-muted)', letterSpacing: '0.06em', fontWeight: 500,
-    }}>
-      {label}
-    </span>
-    <span style={{
-      fontSize: '13px', fontWeight: 500,
-      color: value ? 'var(--color-ink)' : 'var(--color-muted-soft)',
-    }}>
-      {value || 'Sin asignar'}
-    </span>
-  </div>
-);
+  );
+};
 
 /* ─── Avatar ─── */
-const Avatar = ({ empleado }) => {
+const Avatar = ({ empleado, size = '48px' }) => {
   if (empleado.foto_url) {
     return (
       <img
         src={empleado.foto_url}
         alt={empleado.nombre}
         style={{
-          width: '72px', height: '72px', borderRadius: '50%',
+          width: size, height: size, borderRadius: '50%',
           objectFit: 'cover',
-          border: '2px solid var(--color-hairline-soft)',
+          border: '1px solid var(--color-hairline-soft)',
         }}
       />
     );
   }
   return (
     <div style={{
-      width: '72px', height: '72px', borderRadius: '50%',
+      width: size, height: size, borderRadius: '50%',
       background: 'rgb(var(--color-accent-raw) / 0.1)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       color: 'var(--color-accent)',
-      fontSize: '24px', fontWeight: 600, letterSpacing: '-0.02em',
+      fontSize: `calc(${size} / 2.5)`, fontWeight: 600, letterSpacing: '-0.02em',
     }}>
       {getInitials(empleado.nombre)}
     </div>
@@ -148,12 +192,12 @@ const QrPanel = ({ empleado }) => (
         <img
           src={empleado.qr_code}
           alt="QR Code"
-          style={{ width: '180px', height: '180px', display: 'block' }}
+          style={{ width: '220px', height: '220px', display: 'block' }}
         />
       </div>
     ) : (
       <div style={{
-        width: '180px', height: '180px',
+        width: '220px', height: '220px',
         borderRadius: '12px',
         border: '1px solid var(--color-hairline-soft)',
         background: 'var(--color-canvas)',
@@ -211,6 +255,12 @@ export const EmpleadoDashboard = () => {
     navigate('/empleado/login');
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => window.location.reload(true), 300);
+  };
+
   if (loading)    return <LoadingSkeleton />;
   if (!empleado)  return null;
 
@@ -235,21 +285,41 @@ export const EmpleadoDashboard = () => {
           Viño<span style={{ color: 'var(--color-accent)' }}>Plastic</span>
         </span>
 
-        <motion.button
-          whileTap={{ scale: 0.93 }}
-          onClick={handleLogout}
-          title="Cerrar sesión"
-          style={{
-            width: '34px', height: '34px', borderRadius: '50%',
-            border: 'none',
-            background: 'rgb(var(--color-semantic-error-raw) / 0.08)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--color-semantic-error)',
-            cursor: 'pointer',
-          }}
-        >
-          <LogOut size={15} />
-        </motion.button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            animate={{ rotate: isRefreshing ? 180 : 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            onClick={handleRefresh}
+            title="Actualizar aplicación"
+            style={{
+              width: '34px', height: '34px', borderRadius: '50%',
+              border: 'none',
+              background: 'rgb(var(--color-accent-raw) / 0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-accent)',
+              cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={16} />
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            style={{
+              width: '34px', height: '34px', borderRadius: '50%',
+              border: 'none',
+              background: 'rgb(var(--color-semantic-error-raw) / 0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--color-semantic-error)',
+              cursor: 'pointer',
+            }}
+          >
+            <LogOut size={16} />
+          </motion.button>
+        </div>
       </header>
 
       {/* ── Card principal ── */}
@@ -262,56 +332,114 @@ export const EmpleadoDashboard = () => {
           background: 'var(--color-surface-card)',
           border: '1px solid var(--color-hairline-soft)',
           borderRadius: '20px',
-          padding: '28px 20px',
+          padding: '24px 20px',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           gap: '24px',
         }}
       >
-
-        {/* Avatar + nombre */}
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', gap: '10px',
-          textAlign: 'center',
-        }}>
-          <Avatar empleado={empleado} />
-
-          <div>
-            <h1 style={{
-              margin: 0,
-              fontSize: '17px', fontWeight: 600,
-              color: 'var(--color-ink)',
-              textTransform: 'uppercase', letterSpacing: '0.02em',
-              lineHeight: 1.3,
-            }}>
-              {empleado.nombre}
-            </h1>
-            <p style={{
-              margin: '4px 0 0',
-              fontSize: '12px',
-              color: 'var(--color-muted)',
-              fontVariantNumeric: 'tabular-nums',
-              letterSpacing: '0.05em',
-            }}>
-              #{empleado.numero_empleado}
-            </p>
+        {/* Encabezado: Izq (Foto+Nombre), Der (Cards ruta/turno) */}
+        <div style={{ display: 'flex', gap: '16px', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+            <div style={{ flexShrink: 0 }}><Avatar empleado={empleado} size="48px" /></div>
+            <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ 
+                margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--color-ink)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                lineHeight: 1.2, textTransform: 'uppercase'
+              }}>
+                {splitName(empleado.nombre).apellidos && (
+                  <span style={{ display: 'block', fontSize: '10px', color: 'var(--color-muted)', fontWeight: 500, marginBottom: '1px' }}>
+                    {splitName(empleado.nombre).apellidos}
+                  </span>
+                )}
+                {splitName(empleado.nombre).nombres}
+              </div>
+              <p style={{
+                margin: 0, fontSize: '11px', color: 'var(--color-muted)',
+                fontVariantNumeric: 'tabular-nums', letterSpacing: '0.05em'
+              }}>
+                #{empleado.numero_empleado}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Divider */}
-        <div style={{ width: '100%', height: '1px', background: 'var(--color-hairline-soft)' }} />
-
-        {/* Tiles de info */}
-        <div style={{
-          width: '100%',
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px',
-        }}>
-          <InfoTile icon={MapPin} label="Ruta"  value={empleado.ruta}  />
-          <InfoTile icon={Clock}  label="Turno" value={empleado.turno} />
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+             <InfoTileMini icon={MapPin} label="Ruta" value={empleado.ruta} isRoute />
+             <InfoTileMini icon={Clock} label="Turno" value={empleado.turno} />
+          </div>
         </div>
 
         {/* QR */}
         <QrPanel empleado={empleado} />
+
+        {/* Banner de prohibición — Mobile-first, responsivo, animado y flotante */}
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+          whileHover={{ 
+            y: -2, 
+            boxShadow: '0 8px 24px rgba(var(--color-semantic-warning-raw) / 0.15)',
+            borderColor: 'rgb(var(--color-semantic-warning-raw) / 0.4)'
+          }}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(135deg, rgb(var(--color-semantic-warning-raw) / 0.08) 0%, rgb(var(--color-semantic-warning-raw) / 0.03) 100%)',
+            border: '1px solid rgb(var(--color-semantic-warning-raw) / 0.2)',
+            borderRadius: 'var(--rounded-xl, 0.75rem)',
+            padding: 'var(--spacing-base, 0.75rem) var(--spacing-lg, 1rem)',
+            display: 'flex',
+            gap: 'var(--spacing-base, 0.75rem)',
+            alignItems: 'flex-start',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+            transition: 'border-color 0.2s ease',
+            cursor: 'default',
+          }}
+        >
+          <motion.div 
+            animate={{ rotate: [-2, 2, -2] }}
+            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+            style={{
+              flexShrink: 0,
+              width: '2.2rem',
+              height: '2.2rem',
+              borderRadius: 'var(--rounded-lg, 0.5rem)',
+              background: 'linear-gradient(135deg, rgb(var(--color-semantic-warning-raw) / 0.18) 0%, rgb(var(--color-semantic-warning-raw) / 0.08) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '0.125rem',
+              boxShadow: 'inset 0 1px 2px rgb(255 255 255 / 0.3)',
+            }}
+          >
+            <AlertTriangle 
+              size="1.25em" 
+              color="var(--color-semantic-warning)" 
+              strokeWidth={2.5}
+            />
+          </motion.div>
+          
+          <div style={{ minWidth: 0 }}>
+            <p style={{ 
+              margin: 0, 
+              fontWeight: 600, 
+              color: 'var(--color-semantic-warning)',
+              lineHeight: '1.25',
+              fontSize: 'var(--typography-body-size, 14px)'
+            }}>
+              Uso Estrictamente Personal
+            </p>
+            <p style={{ 
+              margin: 'var(--spacing-xs, 0.25rem) 0 0', 
+              color: 'var(--color-muted)', 
+              lineHeight: '1.625',
+              fontSize: 'var(--typography-caption-size, 12px)',
+            }}>
+              Este código QR es <strong style={{ color: 'var(--color-semantic-warning)' }}>intransferible</strong>. El uso indebido o préstamo del mismo incurrirá en sanciones administrativas.
+            </p>
+          </div>
+        </motion.div>
 
       </motion.div>
 
