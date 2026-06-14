@@ -1,59 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Truck, ShieldCheck, MapPin, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, User, Truck, ShieldCheck } from 'lucide-react';
 import { LogoMockup } from '../components/LogoMockup';
 
 /* ============================================================
-   LANDING — Transporte ViñoPlastic
-   Mobile-first · Design tokens · Accesibilidad · Skeleton
+   LANDING — ViñoPlastic
+   Minimalista · Mobile-first · 100% design tokens
    ============================================================ */
 
 const ROLES = [
-  {
-    id: 'empleado',
-    icon: User,
-    title: 'Colaboradores',
-    subtitle: 'Acceso a codigo QR individual',
-    path: '/empleado/login',
-    ariaDescribedBy: 'desc-empleado',
-  },
-  {
-    id: 'chofer',
-    icon: Truck,
-    title: 'Transporte',
-    subtitle: 'UTEP',
-    path: '/chofer/login',
-    ariaDescribedBy: 'desc-chofer',
-  },
-  {
-    id: 'admin',
-    icon: ShieldCheck,
-    title: 'Recursos Humanos',
-    subtitle: 'Reclutamiento',
-    path: '/login',
-    ariaDescribedBy: 'desc-admin',
-  },
+  { id: 'empleado', icon: User,        label: 'Colaborador',    path: '/empleado/login' },
+  { id: 'chofer',   icon: Truck,       label: 'Transporte',     path: '/chofer/login'   },
+  { id: 'admin',    icon: ShieldCheck, label: 'Administración', path: '/login'          },
 ];
 
-/* ---------- Skeleton ---------- */
-function NavSkeleton() {
-  return (
-    <ul style={styles.navList} aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <li key={i} style={styles.skeletonItem} />
-      ))}
-    </ul>
-  );
-}
+/* ─── Skeleton ─────────────────────────────────────────────── */
+const RoleSkeleton = () => (
+  <ul style={S.list} aria-hidden="true">
+    {ROLES.map((_, i) => (
+      <li key={i} style={S.skeletonItem} />
+    ))}
+  </ul>
+);
 
-/* ---------- Nav item ---------- */
-function NavButton({ role, onClick }) {
+/* ─── Role row ─────────────────────────────────────────────── */
+const RoleRow = ({ role, onClick, delay }) => {
   const Icon = role.icon;
-  const [hovered, setHovered] = React.useState(false);
-  const [pressed, setPressed] = React.useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
 
   return (
-    <li>
+    <li style={{ animation: `vp-fade-up 420ms ${delay}ms both` }}>
       <button
         type="button"
         onClick={() => onClick(role.path)}
@@ -63,249 +40,210 @@ function NavButton({ role, onClick }) {
         onMouseUp={() => setPressed(false)}
         onTouchStart={() => setPressed(true)}
         onTouchEnd={() => setPressed(false)}
-        aria-describedby={role.ariaDescribedBy}
+        data-testid={`landing-role-${role.id}`}
+        aria-label={`Ingresar como ${role.label}`}
         style={{
-          ...styles.navBtn,
-          ...(hovered ? styles.navBtnHover : {}),
-          ...(pressed ? styles.navBtnActive : {}),
+          ...S.row,
+          borderColor: hovered ? 'var(--color-hairline-strong)' : 'var(--color-hairline-soft)',
+          background: pressed ? 'var(--color-canvas-soft)' : 'var(--color-surface-card)',
+          transform: pressed ? 'scale(0.985)' : 'scale(1)',
         }}
       >
-        <div style={styles.iconBox} aria-hidden="true">
-          <Icon size={20} strokeWidth={1.75} />
-        </div>
+        <span style={{ ...S.iconBox, color: hovered ? 'var(--color-accent)' : 'var(--color-ink)' }} aria-hidden="true">
+          <Icon size={18} strokeWidth={1.75} />
+        </span>
 
-        <div style={styles.textBox}>
-          <span style={styles.navTitle}>{role.title}</span>
-          <span id={role.ariaDescribedBy} style={styles.navSubtitle}>
-            {role.subtitle}
-          </span>
-        </div>
+        <span style={S.label}>{role.label}</span>
 
-        <ChevronRight
-          size={16}
-          strokeWidth={1.75}
-          style={styles.chevron}
-          aria-hidden="true"
-        />
+        <span style={{ ...S.arrow, color: hovered ? 'var(--color-accent)' : 'var(--color-muted-soft)' }} aria-hidden="true">
+          <ArrowUpRight size={16} strokeWidth={1.75} />
+        </span>
       </button>
     </li>
   );
-}
+};
 
-/* ---------- Landing ---------- */
+/* ─── Landing ──────────────────────────────────────────────── */
 export const Landing = () => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
 
-  /* Simula carga de sesión / config inicial */
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 600);
+    const t = setTimeout(() => setReady(true), 250);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <main style={styles.page}>
-      {/* Screen-reader heading */}
-      <h2 className="sr-only" style={styles.srOnly}>
-        Transporte ViñoPlastic
-      </h2>
+    <main style={S.page} data-testid="landing-page">
+      <style>{`
+        @keyframes vp-fade-up {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0);   }
+        }
+        @keyframes vp-pulse-soft {
+          0%, 100% { opacity: 1;   }
+          50%      { opacity: 0.5; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+      `}</style>
 
-      <div style={styles.container}>
+      <section style={S.container} aria-labelledby="landing-title">
 
         {/* Brand */}
-        <header style={styles.brand}>
+        <header style={S.brand}>
           <LogoMockup />
-          <div style={styles.brandText}>
-            <h1 style={{ ...styles.brandName, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ViñoPlastic Inyección S.A de C.V</h1>
-          </div>
+          <h1 id="landing-title" style={S.title}>
+            Viño<span style={{ color: 'var(--color-accent)' }}>Plastic</span>
+          </h1>
         </header>
 
-        {/* Navigation */}
-        <nav aria-label="Acceso por perfil">
+        {/* Acceso */}
+        <nav aria-label="Acceso por perfil" style={S.nav}>
+          <p style={S.eyebrow}>Acceso</p>
           {ready ? (
-            <ul style={styles.navList}>
-              {ROLES.map((role) => (
-                <NavButton key={role.id} role={role} onClick={navigate} />
+            <ul style={S.list}>
+              {ROLES.map((r, i) => (
+                <RoleRow key={r.id} role={r} onClick={navigate} delay={i * 60} />
               ))}
             </ul>
           ) : (
-            <NavSkeleton />
+            <RoleSkeleton />
           )}
         </nav>
 
-        {/* Footer */}
-        {ready && (
-          <footer style={styles.footerNote}>
-            <p>v0.1 Beta Release</p>
-          </footer>
-        )}
-
-      </div>
+        {/* Footer minimalista */}
+        <footer style={S.footer}>
+          <span>Planta Querétaro</span>
+        </footer>
+      </section>
     </main>
   );
 };
 
 /* ============================================================
-   STYLES — todos los valores via design tokens
+   STYLES — 100% design tokens (sin hex, sin px hardcoded fuera de borders)
    ============================================================ */
-const styles = {
-  /* ---- Visually hidden (accesibilidad) ---- */
-  srOnly: {
-    position: 'absolute',
-    width: '1px',
-    height: '1px',
-    padding: 0,
-    margin: '-1px',
-    overflow: 'hidden',
-    clip: 'rect(0,0,0,0)',
-    whiteSpace: 'nowrap',
-    border: 0,
-  },
-
-  /* ---- Page ---- */
+const S = {
+  /* Page */
   page: {
     minHeight: '100dvh',
+    background: 'var(--color-canvas)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 'clamp(var(--spacing-lg), 5vw, var(--spacing-xxl)) var(--spacing-base)',
-    background: 'var(--color-canvas)',
+    padding: 'clamp(var(--spacing-lg), 6vw, var(--spacing-xxl)) var(--spacing-base)',
+    paddingTop: 'max(clamp(var(--spacing-lg), 6vw, var(--spacing-xxl)), env(safe-area-inset-top))',
+    paddingBottom: 'max(clamp(var(--spacing-lg), 6vw, var(--spacing-xxl)), env(safe-area-inset-bottom))',
   },
 
-  /* ---- Container ---- */
   container: {
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: 'min(92vw, 22rem)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 'var(--spacing-xl)',
+    gap: 'clamp(var(--spacing-xl), 8vw, var(--spacing-xxl))',
   },
 
-  /* ---- Brand header ---- */
+  /* Brand */
   brand: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 'var(--spacing-base)',
+    gap: 'var(--spacing-xs)',
     textAlign: 'center',
   },
-  brandIcon: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '60px',
-    height: '60px',
-    borderRadius: '18px',
-    background: 'var(--color-surface-strong)',
-    color: 'var(--color-ink)',
-    flexShrink: 0,
-  },
-  brandText: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 'var(--spacing-xxs)',
-  },
-  brandName: {
-    fontSize: 'var(--typography-title-md-size)',
+  title: {
+    margin: 0,
+    fontFamily: 'var(--font-display)',
+    fontSize: 'clamp(var(--typography-title-md-size), 6vw, var(--typography-display-sm-size))',
     fontWeight: 'var(--typography-title-md-weight)',
     color: 'var(--color-ink)',
     letterSpacing: '-0.03em',
-    lineHeight: 1.2,
-  },
-  brandTagline: {
-    fontSize: 'var(--typography-caption-size)',
-    color: 'var(--color-muted)',
-    lineHeight: 'var(--typography-caption-lh)',
+    lineHeight: 1.1,
   },
 
-  /* ---- Nav list ---- */
-  navList: {
-    listStyle: 'none',
+  /* Nav */
+  nav: {
     display: 'flex',
     flexDirection: 'column',
     gap: 'var(--spacing-sm)',
   },
-
-  /* ---- Nav button ---- */
-  navBtn: {
+  eyebrow: {
+    margin: 0,
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-uppercase-size)',
+    fontWeight: 'var(--typography-caption-uppercase-weight)',
+    letterSpacing: 'var(--typography-caption-uppercase-ls)',
+    textTransform: 'uppercase',
+    color: 'var(--color-muted-soft)',
+    paddingLeft: 'var(--spacing-xxs)',
+  },
+  list: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
     display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--spacing-xs)',
+  },
+
+  /* Role row */
+  row: {
+    width: '100%',
+    minHeight: '3.5rem',
+    display: 'grid',
+    gridTemplateColumns: 'auto 1fr auto',
     alignItems: 'center',
     gap: 'var(--spacing-base)',
-    width: '100%',
-    minHeight: '64px',
-    padding: 'var(--spacing-base)',
-    borderRadius: 'var(--rounded-xl)',
+    padding: 'var(--spacing-sm) var(--spacing-base)',
+    borderRadius: 'var(--rounded-lg)',
     border: '1px solid var(--color-hairline-soft)',
     background: 'var(--color-surface-card)',
     cursor: 'pointer',
     textAlign: 'left',
-    transition: 'border-color 150ms ease, background 150ms ease, transform 150ms ease',
+    fontFamily: 'var(--font-body)',
+    transition: 'border-color 160ms ease, background 160ms ease, transform 120ms ease',
     WebkitTapHighlightColor: 'transparent',
-    /* Focus accesible por CSS global (.btn:focus-visible) */
     outline: 'none',
   },
-  navBtnHover: {
-    borderColor: 'var(--color-hairline-strong)',
-    background: 'var(--color-canvas-soft)',
-  },
-  navBtnActive: {
-    transform: 'scale(0.98)',
-  },
-
-  /* ---- Icon box ---- */
   iconBox: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '44px',
-    height: '44px',
-    borderRadius: 'var(--rounded-lg)',
-    background: 'var(--color-surface-strong)',
-    color: 'var(--color-ink)',
-    flexShrink: 0,
+    width: '2rem',
+    height: '2rem',
+    transition: 'color 160ms ease',
   },
-
-  /* ---- Text ---- */
-  textBox: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-    flex: 1,
-  },
-  navTitle: {
-    fontSize: 'var(--typography-title-sm-size)',
+  label: {
+    fontSize: 'var(--typography-body-sm-size)',
     fontWeight: 'var(--typography-title-sm-weight)',
     color: 'var(--color-ink)',
-    lineHeight: 'var(--typography-title-sm-lh)',
+    letterSpacing: '-0.005em',
   },
-  navSubtitle: {
-    fontSize: 'var(--typography-caption-size)',
-    color: 'var(--color-muted)',
-    lineHeight: 'var(--typography-caption-lh)',
-  },
-
-  /* ---- Chevron ---- */
-  chevron: {
-    color: 'var(--color-muted-soft)',
-    flexShrink: 0,
+  arrow: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'color 160ms ease, transform 160ms ease',
   },
 
-  /* ---- Skeleton ---- */
+  /* Skeleton */
   skeletonItem: {
-    height: '72px',
-    borderRadius: 'var(--rounded-xl)',
-    background: 'var(--color-surface-strong)',
-    border: '1px solid var(--color-hairline-soft)',
-    animation: 'vp-pulse 1.4s ease-in-out infinite',
-    marginBottom: 'var(--spacing-sm)',
+    height: '3.5rem',
+    borderRadius: 'var(--rounded-lg)',
+    background: 'var(--color-hairline-soft)',
+    animation: 'vp-pulse-soft 1.4s ease-in-out infinite',
   },
 
-  /* ---- Footer ---- */
-  footerNote: {
+  /* Footer */
+  footer: {
     textAlign: 'center',
+    fontFamily: 'var(--font-body)',
     fontSize: 'var(--typography-caption-size)',
     color: 'var(--color-muted-soft)',
-    lineHeight: 'var(--typography-caption-lh)',
+    letterSpacing: '0.02em',
   },
 };
