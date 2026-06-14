@@ -975,21 +975,14 @@ samp {
   [data-sonner-toast] {
 
 /* ============================================================
-   Print overrides — anular padding del Layout y el TopNav
+   Print overrides — colores y page-size globales
+   (el detalle por componente vive en /pages/QrPrintPage.jsx)
    ============================================================ */
 @media print {
   body, html {
     background: white !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-  .app-container > header,
-  .app-container > nav,
-  [data-sonner-toaster] { display: none !important; }
-  .vp-app-main {
-    padding: 0 !important;
-    max-width: none !important;
-    margin: 0 !important;
   }
 }
 

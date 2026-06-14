@@ -480,19 +480,42 @@ const PrintStyles = () => (
 
     /* ── Impresión ─────────────────────────────────────────── */
     @media print {
-      :root, html, body {
+      /* Reset global: oculta TODO lo de la página… */
+      html, body {
         background: white !important;
-        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      .vp-no-print { display: none !important; }
+      body * {
+        visibility: hidden !important;
+      }
+
+      /* …excepto el área de print y sus descendientes */
+      .vp-print-area,
+      .vp-print-area * {
+        visibility: visible !important;
+      }
+
+      /* Posicionar el área desde el origen de la página */
       .vp-print-area {
-        gap: 0;
-        margin: 0;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
       }
+
       .vp-print-sheet {
         border: none !important;
         box-shadow: none !important;
-        padding: 0;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
         page-break-after: always;
         break-after: page;
       }
@@ -500,13 +523,14 @@ const PrintStyles = () => (
         page-break-after: auto;
         break-after: auto;
       }
+
       .vp-qr-card {
         background: white !important;
         color: black !important;
         border-color: black !important;
         box-shadow: none !important;
       }
-      /* Asegurar que se imprimen los fondos blancos y los QR negros */
+
       .vp-qr-img {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
