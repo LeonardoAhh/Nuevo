@@ -16,7 +16,27 @@ const Layout = ({ children }) => {
   const isAuthView = location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/empleado') || location.pathname === '/chofer/login';
   return (
     <div className="app-container">
-      <Toaster position="top-right" richColors />
+      <Toaster
+        position="top-center"
+        richColors
+        closeButton
+        expand={false}
+        gap={8}
+        offset="max(var(--spacing-sm), env(safe-area-inset-top))"
+        visibleToasts={4}
+        toastOptions={{
+          duration: 3500,
+          className: 'vp-toast',
+          style: {
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--typography-body-sm-size)',
+            borderRadius: 'var(--rounded-md)',
+            border: '1px solid var(--color-hairline-soft)',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+            padding: 'var(--spacing-sm) var(--spacing-base)',
+          },
+        }}
+      />
       {!isAuthView && <TopNav />}
       <main style={isAuthView ? { padding: 0 } : { padding: '32px 24px', maxWidth: '1200px', margin: '0 auto' }}>
         {children}

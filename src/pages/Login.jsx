@@ -6,6 +6,7 @@ import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
 import { LoginTransition } from '../components/LoginTransition';
+import { notify } from '../lib/notify';
 
 /* ============================================================
    LOGIN — Administración
@@ -33,6 +34,7 @@ export const Login = () => {
 
       setUserName(name);
       setSuccessAnim(true);
+      notify.welcome(name);
 
       setTimeout(() => {
         if (role === 'admin')        navigate('/empresa');
@@ -40,7 +42,9 @@ export const Login = () => {
         else                         navigate('/');
       }, 2500);
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
+      const msg = err.message || 'Error al iniciar sesión';
+      setError(msg);
+      notify.error('No se pudo iniciar sesión', { description: msg });
       setLoading(false);
     }
   };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { notify } from '../lib/notify';
 
 /**
  * PortalHeader — header sticky cohesivo con TopNav (Empresa).
@@ -35,7 +36,17 @@ export const PortalHeader = ({
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => window.location.reload(true), 300);
+    const id = notify.loading('Actualizando aplicación…');
+    setTimeout(() => {
+      notify.dismiss(id);
+      window.location.reload(true);
+    }, 300);
+  };
+
+  const handleLogout = () => {
+    notify.bye();
+    // Pequeño delay para que el toast se muestre antes de la navegación/recarga
+    setTimeout(() => { onLogout?.(); }, 120);
   };
 
   return (
@@ -136,7 +147,7 @@ export const PortalHeader = ({
 
         <motion.button
           whileTap={{ scale: 0.93 }}
-          onClick={onLogout}
+          onClick={handleLogout}
           title="Cerrar sesión"
           aria-label="Cerrar sesión"
           data-testid="portal-header-logout"

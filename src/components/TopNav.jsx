@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { LogOut, Menu, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { notify } from '../lib/notify';
 
 /* ─── Rutas de navegación ─── */
 const NAV_LINKS = [
@@ -33,6 +34,7 @@ export const TopNav = () => {
 
   const handleLogout = async () => {
     setMenuOpen(false);
+    notify.bye();
     await supabase.auth.signOut();
     navigate('/');
   };
@@ -40,7 +42,11 @@ export const TopNav = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => window.location.reload(true), 300);
+    const id = notify.loading('Actualizando aplicación…');
+    setTimeout(() => {
+      notify.dismiss(id);
+      window.location.reload(true);
+    }, 300);
   };
 
   const isActive = (path) => location.pathname === path.split('#')[0];

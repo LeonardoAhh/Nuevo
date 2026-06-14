@@ -6,6 +6,7 @@ import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
 import { LoginTransition } from '../components/LoginTransition';
+import { notify } from '../lib/notify';
 
 /* ============================================================
    LOGIN — Chofer
@@ -38,9 +39,12 @@ export const ChoferLogin = () => {
 
       setUserName(name);
       setSuccessAnim(true);
+      notify.welcome(name);
       setTimeout(() => navigate('/chofer'), 2500);
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
+      const msg = err.message || 'Error al iniciar sesión';
+      setError(msg);
+      notify.error('Acceso denegado', { description: msg });
       setLoading(false);
     }
   };

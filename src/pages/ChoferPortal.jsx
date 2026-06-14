@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, XCircle, ScanLine, List, Camera, ChevronRight, ChevronLeft, Bus, Calendar, Users, Clock, MapPin, X, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PortalHeader } from '../components/PortalHeader';
+import { notify } from '../lib/notify';
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 const getInitials = (nombre) => {
@@ -984,21 +985,25 @@ export const ChoferPortal = () => {
 
   const handleSelectRoute = async (ruta) => {
     if (!session?.user?.id) return;
+    const code = parseRuta(ruta).code;
     try {
       const { error } = await supabase.from('rutas_activas').insert({ ruta, chofer_id: session.user.id });
       if (error) throw error;
       setSelectedRoute(ruta);
+      notify.routeSelected(code);
     } catch (err) {
       console.warn('Error al insertar ruta_activa, usando local:', err.message);
       const local = JSON.parse(localStorage.getItem('rutas_activas_local') || '[]');
       local.push({ ruta, chofer_id: session.user.id });
       localStorage.setItem('rutas_activas_local', JSON.stringify(local));
       setSelectedRoute(ruta);
+      notify.routeSelected(code);
     }
   };
 
   const handleEndRoute = async () => {
     if (!selectedRoute || !session?.user?.id) return;
+    const code = parseRuta(selectedRoute).code;
     setIsFinishing(true);
     try {
       await supabase.from('rutas_activas').delete().eq('ruta', selectedRoute);
@@ -1010,6 +1015,7 @@ export const ChoferPortal = () => {
     setSelectedRoute(null);
     setIsFinishing(false);
     fetchRutasActivas();
+    notify.routeFinished(code);
   };
 
   useEffect(() => {

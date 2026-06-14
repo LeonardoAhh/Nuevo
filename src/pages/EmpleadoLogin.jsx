@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Check, LogIn } from 'lucide-react';
-import { toast } from 'sonner';
 import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
 import { LoginTransition } from '../components/LoginTransition';
+import { notify, toast } from '../lib/notify';
 
 /* ============================================================
    LOGIN — Colaborador (flujo NIP 4 dígitos)
@@ -115,6 +115,7 @@ export const EmpleadoLogin = () => {
 
   const iniciarSesion = (id) => {
     localStorage.setItem('empleado_id', id);
+    notify.welcome(empleado?.nombre);
     setSuccessAnim(true);
     setTimeout(() => navigate('/empleado/dashboard'), 2500);
   };
