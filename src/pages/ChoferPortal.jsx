@@ -34,6 +34,15 @@ const SHIFT_SCHEDULE = {
 
 const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
+// Prioridad de anomalías para ordenar registros: menor número = más crítico
+const PRIORITY = {
+  rechazado_ruta: 1, // Ruta Incorrecta — el chofer rechazó a alguien de otra ruta
+  rechazado_qr:   2, // QR no registrado
+  fuera_horario:  3, // Fuera de la ventana de horario del turno
+  dia_descanso:   4, // Intento de abordar en día de descanso
+  autorizado:     5, // Acceso normal
+};
+
 // Número de semana ISO 8601 (lunes = primer día)
 const getISOWeek = (dateOrStr) => {
   const d = new Date(dateOrStr instanceof Date ? dateOrStr : dateOrStr + 'T12:00:00');
@@ -209,8 +218,34 @@ const RegistrosPanel = ({ registros, loading }) => {
       if (!map[t]) map[t] = [];
       map[t].push(reg);
     });
+    // Orden por prioridad de anomalía dentro de cada turno:
+    // 1. Ruta Incorrecta · 2. QR Inválido · 3. Fuera de Horario · 4. Día Descanso · 5. Autorizado
+    // Dentro de cada prioridad, por hora más reciente primero.
+    Object.keys(map).forEach(t => {
+      map[t].sort((a, b) => {
+        const pa = PRIORITY[a.estado] ?? 99;
+        const pb = PRIORITY[b.estado] ?? 99;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.fecha_hora) - new Date(a.fecha_hora);
+      });
+    });
     return map;
   }, [dayRegs]);
+
+  // Turnos ordenados: los que tienen anomalías arriba, luego ascendente numérico
+  const turnosOrdered = useMemo(() => {
+    return Object.keys(byTurno).sort((a, b) => {
+      const anomA = byTurno[a].filter(r => r.estado !== 'autorizado').length;
+      const anomB = byTurno[b].filter(r => r.estado !== 'autorizado').length;
+      if ((anomA > 0) !== (anomB > 0)) return anomB - anomA; // turnos con anomalías primero
+      // luego orden natural (números primero, "Sin turno" al final)
+      const na = parseInt(a, 10), nb = parseInt(b, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1;
+      if (!isNaN(nb)) return 1;
+      return a.localeCompare(b);
+    });
+  }, [byTurno]);
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: 'var(--spacing-xxl)', color: 'var(--color-muted)', fontFamily: 'var(--font-body)' }}>
@@ -347,20 +382,37 @@ const RegistrosPanel = ({ registros, loading }) => {
           </motion.div>
         )}
 
-        {/* NIVEL 3 – Turnos + Empleados */}
+        {/* NIVEL 3 – Turnos + Empleados (ordenados por prioridad de anomalía) */}
         {level === 3 && (
           <motion.div key="turnos" {...slideIn}>
-            <Header title={formatDayLabel(currentDay)} sub={`${dayRegs.length} empleado${dayRegs.length !== 1 ? 's' : ''} abordaron`} />
+            <Header title={formatDayLabel(currentDay)} sub={`${dayRegs.length} empleado${dayRegs.length !== 1 ? 's' : ''} abordaron · ordenados por prioridad`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-              {Object.entries(byTurno).sort().map(([turno, regs]) => (
+              {turnosOrdered.map(turno => {
+                const regs = byTurno[turno];
+                const anomalies = regs.filter(r => r.estado !== 'autorizado').length;
+                return (
                 <div key={turno}>
                   {/* Cabecera de turno */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-sm)' }}>
                     <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--typography-caption-uppercase-size)', fontWeight: 'var(--typography-caption-uppercase-weight)', letterSpacing: 'var(--typography-caption-uppercase-ls)', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
                       Turno {turno}
                     </span>
+                    {anomalies > 0 && (
+                      <span style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 'var(--typography-caption-size)',
+                        lineHeight: 1,
+                        background: 'rgb(var(--color-semantic-error-raw) / 0.1)',
+                        color: 'var(--color-semantic-error)',
+                        padding: '2px var(--spacing-xs)',
+                        borderRadius: 'var(--rounded-pill)',
+                        fontWeight: 600,
+                      }} title={`${anomalies} incidencia${anomalies !== 1 ? 's' : ''}`}>
+                        {anomalies} ⚠
+                      </span>
+                    )}
                     <div style={{ flex: 1, height: '1px', background: 'var(--color-hairline-soft)' }} />
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)' }}>{regs.length}</span>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--typography-caption-size)', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>{regs.length}</span>
                   </div>
                   {/* Lista de empleados */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' }}>
@@ -441,7 +493,8 @@ const RegistrosPanel = ({ registros, loading }) => {
                     })}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
