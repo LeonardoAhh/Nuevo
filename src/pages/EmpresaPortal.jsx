@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Modal } from '../components/Modal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmployeeWizard } from '../components/EmployeeWizard';
 import { JsonUploadModal } from '../components/JsonUploadModal';
 import { PhotoUploadModal } from '../components/PhotoUploadModal';
 import { QrGenerateModal } from '../components/QrGenerateModal';
-import { Upload, Users, Search, Edit2, Trash2, ChevronLeft, ChevronRight, UserPlus, Image, QrCode, Unlock, MoreHorizontal } from 'lucide-react';
+import {
+  Upload, Users, Search, Edit2, Trash2, ChevronLeft, ChevronRight,
+  UserPlus, Image as ImageIcon, QrCode, Unlock, MoreHorizontal, X as XIcon,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
-/* ─── Helpers ─── */
+/* ============================================================
+   EMPRESA PORTAL — Directorio de empleados
+   Cohesivo · Mobile-first · 100% tokens · UI/UX semántico
+   ============================================================ */
+
+/* ─── Helpers ─────────────────────────────────────────────── */
 const getInitials = (nombre) => {
   if (!nombre) return '?';
   const parts = nombre.trim().split(/\s+/);
@@ -17,95 +26,105 @@ const getInitials = (nombre) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-const AVATAR_PALETTES = [
-  { bg: 'hsl(var(--color-accent) / 0.12)', text: 'hsl(var(--color-accent))' },
-  { bg: 'hsl(210 60% 93%)',                text: 'hsl(210 60% 35%)' },
-  { bg: 'hsl(142 40% 90%)',                text: 'hsl(142 40% 28%)' },
-  { bg: 'hsl(32 80% 92%)',                 text: 'hsl(32 70% 30%)' },
-  { bg: 'hsl(280 50% 93%)',                text: 'hsl(280 50% 35%)' },
-];
+const ITEMS_PER_PAGE = 12;
 
-const getAvatarPalette = (nombre) => {
-  let hash = 0;
-  for (let i = 0; i < (nombre || '').length; i++) hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_PALETTES[Math.abs(hash) % AVATAR_PALETTES.length];
-};
-
-/* ─── Avatar ─── */
+/* ─── Avatar ──────────────────────────────────────────────── */
 const Avatar = ({ nombre, photoUrl }) => {
-  const { bg, text } = getAvatarPalette(nombre);
   if (photoUrl) {
-    return <img src={photoUrl} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} alt={nombre} />;
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        style={{
+          width: '2.5rem', height: '2.5rem', borderRadius: '50%',
+          objectFit: 'cover', flexShrink: 0,
+          border: '1px solid var(--color-hairline-soft)',
+        }}
+      />
+    );
   }
   return (
-    <div style={{
-      width: '40px', height: '40px', borderRadius: '50%',
-      background: bg, color: text,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '13px', fontWeight: 600, flexShrink: 0,
-      letterSpacing: '0.02em',
-    }}>
+    <div
+      aria-hidden="true"
+      style={{
+        width: '2.5rem', height: '2.5rem', borderRadius: '50%',
+        background: 'rgb(var(--color-accent-raw) / 0.1)',
+        color: 'var(--color-accent)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--typography-caption-size)',
+        fontWeight: 600,
+        flexShrink: 0,
+        letterSpacing: '0.02em',
+      }}
+    >
       {getInitials(nombre)}
     </div>
   );
 };
 
-/* ─── Empty State ─── */
+/* ─── Empty State ─────────────────────────────────────────── */
 const EmptyState = ({ hasQuery }) => (
-  <div style={{
-    gridColumn: '1 / -1',
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', gap: '12px',
-    padding: '64px 24px', textAlign: 'center',
-  }}>
-    <div style={{
-      width: '48px', height: '48px', borderRadius: '50%',
-      background: 'hsl(var(--color-accent) / 0.08)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Users size={22} color="hsl(var(--color-accent))" />
+  <div role="status" data-testid="empresa-empty" style={S.empty}>
+    <div aria-hidden="true" style={S.emptyIcon}>
+      <Users size={22} strokeWidth={1.5} />
     </div>
-    <p style={{ margin: 0, fontWeight: 500, color: 'hsl(var(--color-ink))' }}>
+    <p style={S.emptyTitle}>
       {hasQuery ? 'Sin resultados' : 'Directorio vacío'}
     </p>
-    <p style={{ margin: '0', fontSize: '13px', color: 'hsl(var(--color-muted))', maxWidth: '240px' }}>
+    <p style={S.emptySub}>
       {hasQuery
         ? 'No hay empleados que coincidan con tu búsqueda.'
-        : 'Añade empleados manualmente o carga un archivo JSON para comenzar.'}
+        : 'Añade empleados o carga un archivo JSON para comenzar.'}
     </p>
   </div>
 );
 
-/* ─── Skeleton ─── */
+/* ─── Skeleton ────────────────────────────────────────────── */
 const SkeletonCard = () => (
-  <div style={{
-    padding: '14px 16px', borderRadius: '10px',
-    border: '1px solid hsl(var(--color-hairline-soft))',
-    display: 'flex', alignItems: 'center', gap: '12px',
-    animation: 'pulse 1.4s ease-in-out infinite',
-  }}>
-    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'hsl(var(--color-hairline-soft))' }} />
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div style={{ height: 10, width: '60%', borderRadius: 4, background: 'hsl(var(--color-hairline-soft))' }} />
-      <div style={{ height: 8,  width: '35%', borderRadius: 4, background: 'hsl(var(--color-hairline-soft))' }} />
+  <div style={S.skeletonCard} aria-hidden="true">
+    <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'var(--color-hairline-soft)' }} />
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' }}>
+      <div style={{ height: '0.625rem', width: '60%', borderRadius: 'var(--rounded-sm)', background: 'var(--color-hairline-soft)' }} />
+      <div style={{ height: '0.5rem',   width: '35%', borderRadius: 'var(--rounded-sm)', background: 'var(--color-hairline-soft)' }} />
     </div>
   </div>
 );
 
-/* ─── Componente principal ─── */
+/* ─── Botón icono cuadrado (header actions) ───────────────── */
+const IconAction = ({ icon: Icon, onClick, title, testId }) => (
+  <motion.button
+    type="button"
+    whileHover={{ y: -1 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={onClick}
+    title={title}
+    aria-label={title}
+    data-testid={testId}
+    style={S.iconAction}
+  >
+    <Icon size={16} strokeWidth={1.75} />
+  </motion.button>
+);
+
+/* ─── Componente principal ────────────────────────────────── */
 export const EmpresaPortal = () => {
-  const [employees,          setEmployees]          = useState([]);
-  const [loading,            setLoading]            = useState(true);
-  const [isModalOpen,        setIsModalOpen]        = useState(false);
-  const [isUploadModalOpen,  setIsUploadModalOpen]  = useState(false);
-  const [isPhotoModalOpen,   setIsPhotoModalOpen]   = useState(false);
-  const [openDropdownId,     setOpenDropdownId]     = useState(null);
-  const [isQrModalOpen,      setIsQrModalOpen]      = useState(false);
-  const [previewQrUrl,       setPreviewQrUrl]       = useState(null);
-  const [editingEmployee,    setEditingEmployee]    = useState(null);
-  const [confirmDialog,      setConfirmDialog]      = useState({ isOpen: false, title: '', message: '', confirmText: '', onConfirm: null, isDestructive: false });
-  const [searchQuery,        setSearchQuery]        = useState('');
-  const [currentPage,        setCurrentPage]        = useState(1);
+  const [employees,         setEmployees]         = useState([]);
+  const [loading,           setLoading]           = useState(true);
+  const [isModalOpen,       setIsModalOpen]       = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isPhotoModalOpen,  setIsPhotoModalOpen]  = useState(false);
+  const [openDropdownId,    setOpenDropdownId]    = useState(null);
+  const [isQrModalOpen,     setIsQrModalOpen]     = useState(false);
+  const [previewQrUrl,      setPreviewQrUrl]      = useState(null);
+  const [editingEmployee,   setEditingEmployee]   = useState(null);
+  const [confirmDialog,     setConfirmDialog]     = useState({
+    isOpen: false, title: '', message: '', confirmText: '', onConfirm: null, isDestructive: false,
+  });
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [currentPage, setCurrentPage]   = useState(1);
 
   /* ── Fetch ── */
   const fetchEmployees = async () => {
@@ -141,32 +160,32 @@ export const EmpresaPortal = () => {
   const handleDelete = (id) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Eliminar Empleado',
-      message: '¿Estás seguro de que deseas eliminar este registro? Esta acción es permanente.',
+      title: 'Eliminar empleado',
+      message: '¿Eliminar este registro? Esta acción es permanente.',
       confirmText: 'Eliminar',
       isDestructive: true,
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         const { error } = await supabase.from('empleados').delete().eq('id', id);
         if (error) toast.error('Error al eliminar: ' + error.message);
         else { toast.success('Empleado eliminado'); fetchEmployees(); }
-      }
+      },
     });
   };
 
   const handleResetNip = (id, nombre) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Resetear Acceso',
-      message: `¿Borrar el NIP de ${nombre}? Tendrá que crear uno nuevo al ingresar la próxima vez.`,
+      title: 'Resetear acceso',
+      message: `¿Borrar el NIP de ${nombre}? Tendrá que crear uno nuevo al ingresar.`,
       confirmText: 'Resetear NIP',
       isDestructive: false,
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         const { error } = await supabase.from('empleados').update({ nip: null }).eq('id', id);
         if (error) toast.error('Error al resetear NIP: ' + error.message);
         else { toast.success('Acceso reseteado'); fetchEmployees(); }
-      }
+      },
     });
   };
 
@@ -191,8 +210,7 @@ export const EmpresaPortal = () => {
     );
   });
 
-  const ITEMS_PER_PAGE   = 12;
-  const totalPages       = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
   const currentEmployees = filteredEmployees.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -202,77 +220,103 @@ export const EmpresaPortal = () => {
   return (
     <>
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.45; }
-        }
-        .emp-card-actions { opacity: 0; transition: opacity 0.15s ease; }
-        .emp-card:hover .emp-card-actions,
-        .emp-card:focus-within .emp-card-actions { opacity: 1; }
+        @keyframes vp-emp-pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+        .vp-emp-card .vp-emp-actions { opacity: 0; transition: opacity 160ms ease; }
+        .vp-emp-card:hover .vp-emp-actions,
+        .vp-emp-card:focus-within .vp-emp-actions { opacity: 1; }
         @media (max-width: 640px) {
-          .emp-card-actions { opacity: 1; }
+          .vp-emp-card .vp-emp-actions { opacity: 1; }
         }
+        .vp-emp-dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-sm);
+          width: 100%;
+          padding: var(--spacing-sm) var(--spacing-base);
+          border: none;
+          background: transparent;
+          border-radius: var(--rounded-md);
+          font-family: var(--font-body);
+          font-size: var(--typography-body-sm-size);
+          font-weight: 500;
+          color: var(--color-ink);
+          cursor: pointer;
+          transition: background 120ms ease;
+          text-align: left;
+        }
+        .vp-emp-dropdown-item:hover { background: var(--color-canvas-soft); }
+        .vp-emp-dropdown-item--danger { color: var(--color-semantic-error); }
         @media (prefers-reduced-motion: reduce) {
           * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
-        .dropdown-item {
-          display: flex;
-          alignItems: center;
-          gap: 10px;
-          width: 100%;
-          padding: 10px 12px;
-          border: none;
-          background: transparent;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 500;
-          color: hsl(var(--color-ink));
-          cursor: pointer;
-          transition: background 0.15s ease;
-          text-align: left;
-        }
-        .dropdown-item:hover {
-          background: hsl(var(--color-canvas-soft));
-        }
       `}</style>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <section data-testid="empresa-portal" aria-labelledby="empresa-title" style={S.page}>
 
         {/* ── Header ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-          <div style={{
-            display: 'flex', justifyContent: 'space-between',
-            alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px',
-          }}>
-            <div>
-              <h1 style={{
-                margin: 0, fontSize: 'clamp(20px, 4vw, 26px)',
-                fontWeight: 500, color: 'hsl(var(--color-ink))', lineHeight: 1.2,
-              }}>
-                Colaboradores Activos
+        <header style={S.headerBlock}>
+          <div style={S.headerRow}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h1 id="empresa-title" style={S.h1}>
+                Colaboradores
               </h1>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'hsl(var(--color-muted))' }}>
-                {loading ? '—' : `${employees.length} empleados registrados`}
+              <p style={S.h1Sub} data-testid="empresa-count">
+                {loading ? '—' : `${employees.length} empleado${employees.length === 1 ? '' : 's'} registrado${employees.length === 1 ? '' : 's'}`}
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <motion.button whileHover={{ y: -2 }} onClick={() => setIsQrModalOpen(true)} title="Generar QRs" style={{ width: '38px', height: '38px', borderRadius: '8px', border: '1px solid hsl(var(--color-hairline-soft))', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><QrCode size={16} /></motion.button>
-              <motion.button whileHover={{ y: -2 }} onClick={() => setIsPhotoModalOpen(true)} title="Cargar Fotos" style={{ width: '38px', height: '38px', borderRadius: '8px', border: '1px solid hsl(var(--color-hairline-soft))', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><Image size={16} /></motion.button>
-              <motion.button whileHover={{ y: -2 }} onClick={() => setIsUploadModalOpen(true)} title="Cargar JSON" style={{ width: '38px', height: '38px', borderRadius: '8px', border: '1px solid hsl(var(--color-hairline-soft))', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}><Upload size={16} /></motion.button>
-              <motion.button whileHover={{ y: -2 }} onClick={() => { setEditingEmployee(null); setIsModalOpen(true); }} title="Añadir empleado" style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '38px', padding: '0 14px', borderRadius: '8px', border: '1px solid hsl(var(--color-accent) / 0.4)', background: 'hsl(var(--color-accent) / 0.08)', cursor: 'pointer', color: 'hsl(var(--color-accent))', fontSize: '13px', fontWeight: 500 }}><UserPlus size={15} /><span>Añadir</span></motion.button>
+            <div style={S.headerActions}>
+              <IconAction icon={QrCode}    onClick={() => setIsQrModalOpen(true)}    title="Generar QRs" testId="action-qr" />
+              <IconAction icon={ImageIcon} onClick={() => setIsPhotoModalOpen(true)} title="Cargar fotos" testId="action-photos" />
+              <IconAction icon={Upload}    onClick={() => setIsUploadModalOpen(true)} title="Cargar JSON"  testId="action-upload" />
+
+              <motion.button
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { setEditingEmployee(null); setIsModalOpen(true); }}
+                aria-label="Añadir empleado"
+                data-testid="action-add"
+                style={S.addBtn}
+              >
+                <UserPlus size={15} strokeWidth={1.75} />
+                <span>Añadir</span>
+              </motion.button>
             </div>
           </div>
 
-          <div style={{ position: 'relative', maxWidth: '440px', width: '100%' }}>
-            <Search size={15} color="hsl(var(--color-muted))" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            <input type="text" placeholder="Buscar por número o nombre…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="input" style={{ paddingLeft: '36px', height: '38px', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-          </div>
-        </div>
+          {/* Search */}
+          <label style={S.searchWrap}>
+            <Search
+              size={15} strokeWidth={1.75}
+              style={S.searchIcon}
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              placeholder="Buscar por número o nombre…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="empresa-search-input"
+              aria-label="Buscar empleado"
+              style={S.searchInput}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Limpiar búsqueda"
+                data-testid="empresa-search-clear"
+                style={S.searchClear}
+              >
+                <XIcon size={14} strokeWidth={2} />
+              </button>
+            )}
+          </label>
+        </header>
 
         {/* ── Grid ── */}
-        <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+        <div style={S.grid} role="list" aria-label="Lista de empleados">
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
           ) : currentEmployees.length === 0 ? (
@@ -280,43 +324,98 @@ export const EmpresaPortal = () => {
           ) : (
             <AnimatePresence mode="popLayout">
               {currentEmployees.map((emp, i) => (
-                <motion.div key={emp.id} className="emp-card" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.18, delay: Math.min(i * 0.025, 0.3) }} style={{ padding: '14px 16px', borderRadius: '10px', border: '1px solid hsl(var(--color-hairline-soft))', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+                <motion.article
+                  key={emp.id}
+                  role="listitem"
+                  className="vp-emp-card"
+                  data-testid={`empresa-card-${emp.numero_empleado || emp.id}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.18, delay: Math.min(i, 8) * 0.025 }}
+                  style={S.card}
+                >
                   <Avatar nombre={emp.nombre || ''} photoUrl={emp.foto_url} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 500, color: 'hsl(var(--color-ink))', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.nombre}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'hsl(var(--color-muted))', fontVariantNumeric: 'tabular-nums' }}>#{emp.numero_empleado}</p>
+
+                  <div style={S.cardBody}>
+                    <p style={S.cardName} title={emp.nombre}>{emp.nombre}</p>
+                    <p style={S.cardNum}>#{emp.numero_empleado}</p>
                   </div>
-                  <div className="emp-card-actions" style={{ position: 'relative', flexShrink: 0 }}>
-                    <motion.button 
-                      onClick={() => setOpenDropdownId(openDropdownId === emp.id ? null : emp.id)} 
-                      title="Opciones" 
-                      style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: openDropdownId === emp.id ? 'hsl(var(--color-canvas-soft))' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--color-muted))' }}
+
+                  <div className="vp-emp-actions" style={S.actionsWrap}>
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.93 }}
+                      onClick={() => setOpenDropdownId(openDropdownId === emp.id ? null : emp.id)}
+                      aria-label="Opciones del empleado"
+                      aria-haspopup="menu"
+                      aria-expanded={openDropdownId === emp.id}
+                      data-testid={`empresa-card-menu-${emp.numero_empleado || emp.id}`}
+                      style={{
+                        ...S.moreBtn,
+                        background: openDropdownId === emp.id ? 'var(--color-canvas-soft)' : 'transparent',
+                      }}
                     >
-                      <MoreHorizontal size={18} />
+                      <MoreHorizontal size={18} strokeWidth={1.75} />
                     </motion.button>
 
                     <AnimatePresence>
                       {openDropdownId === emp.id && (
                         <>
-                          <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setOpenDropdownId(null)} />
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                          <div
+                            aria-hidden="true"
+                            style={{ position: 'fixed', inset: 0, zIndex: 9 }}
+                            onClick={() => setOpenDropdownId(null)}
+                          />
+                          <motion.div
+                            role="menu"
+                            initial={{ opacity: 0, scale: 0.96, y: -4 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                            transition={{ duration: 0.15 }}
-                            style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 10, background: 'var(--color-surface-card)', border: '1px solid hsl(var(--color-hairline-soft))', borderRadius: '12px', padding: '6px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', minWidth: '160px' }}
+                            exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                            transition={{ duration: 0.14 }}
+                            style={S.dropdown}
                           >
-                            <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); handleResetNip(emp.id, emp.nombre); }}><Unlock size={15} /> Resetear NIP</button>
-                            {emp.qr_code && <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); setPreviewQrUrl(emp.qr_code); }}><QrCode size={15} /> Ver código QR</button>}
-                            <div style={{ height: '1px', background: 'hsl(var(--color-hairline-soft))', margin: '4px 0' }} />
-                            <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); setEditingEmployee(emp); setIsModalOpen(true); }}><Edit2 size={15} /> Editar datos</button>
-                            <button className="dropdown-item" style={{ color: 'hsl(var(--color-semantic-error))' }} onClick={() => { setOpenDropdownId(null); handleDelete(emp.id); }}><Trash2 size={15} /> Eliminar</button>
+                            <button
+                              type="button" role="menuitem"
+                              className="vp-emp-dropdown-item"
+                              onClick={() => { setOpenDropdownId(null); handleResetNip(emp.id, emp.nombre); }}
+                              data-testid="card-action-reset-nip"
+                            >
+                              <Unlock size={15} strokeWidth={1.75} /> Resetear NIP
+                            </button>
+                            {emp.qr_code && (
+                              <button
+                                type="button" role="menuitem"
+                                className="vp-emp-dropdown-item"
+                                onClick={() => { setOpenDropdownId(null); setPreviewQrUrl(emp.qr_code); }}
+                                data-testid="card-action-view-qr"
+                              >
+                                <QrCode size={15} strokeWidth={1.75} /> Ver código QR
+                              </button>
+                            )}
+                            <div style={S.dropdownDivider} aria-hidden="true" />
+                            <button
+                              type="button" role="menuitem"
+                              className="vp-emp-dropdown-item"
+                              onClick={() => { setOpenDropdownId(null); setEditingEmployee(emp); setIsModalOpen(true); }}
+                              data-testid="card-action-edit"
+                            >
+                              <Edit2 size={15} strokeWidth={1.75} /> Editar datos
+                            </button>
+                            <button
+                              type="button" role="menuitem"
+                              className="vp-emp-dropdown-item vp-emp-dropdown-item--danger"
+                              onClick={() => { setOpenDropdownId(null); handleDelete(emp.id); }}
+                              data-testid="card-action-delete"
+                            >
+                              <Trash2 size={15} strokeWidth={1.75} /> Eliminar
+                            </button>
                           </motion.div>
                         </>
                       )}
                     </AnimatePresence>
                   </div>
-                </motion.div>
+                </motion.article>
               ))}
             </AnimatePresence>
           )}
@@ -324,55 +423,376 @@ export const EmpresaPortal = () => {
 
         {/* ── Paginación ── */}
         {!loading && totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid hsl(var(--color-hairline-soft))' }}>
-            <span style={{ fontSize: '12px', color: 'hsl(var(--color-muted))' }}>{filteredEmployees.length} resultado{filteredEmployees.length !== 1 ? 's' : ''}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ width: '32px', height: '32px', borderRadius: '7px', border: '1px solid hsl(var(--color-hairline-soft))', background: 'transparent', cursor: 'pointer', opacity: currentPage === 1 ? 0.4 : 1 }}><ChevronLeft size={15} /></button>
-              <span style={{ fontSize: '12px', color: 'hsl(var(--color-muted))' }}>{currentPage} / {totalPages}</span>
-              <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ width: '32px', height: '32px', borderRadius: '7px', border: '1px solid hsl(var(--color-hairline-soft))', background: 'transparent', cursor: 'pointer', opacity: currentPage === totalPages ? 0.4 : 1 }}><ChevronRight size={15} /></button>
+          <nav aria-label="Paginación" style={S.pagination}>
+            <span style={S.pagInfo} data-testid="pagination-info">
+              {filteredEmployees.length} resultado{filteredEmployees.length !== 1 ? 's' : ''}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Página anterior"
+                data-testid="pagination-prev"
+                style={{ ...S.pagBtn, opacity: currentPage === 1 ? 0.4 : 1 }}
+              >
+                <ChevronLeft size={15} strokeWidth={1.75} />
+              </button>
+              <span style={S.pagInfo}>{currentPage} / {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Página siguiente"
+                data-testid="pagination-next"
+                style={{ ...S.pagBtn, opacity: currentPage === totalPages ? 0.4 : 1 }}
+              >
+                <ChevronRight size={15} strokeWidth={1.75} />
+              </button>
             </div>
-          </div>
+          </nav>
         )}
-      </div>
+      </section>
 
       {/* ── Modales ── */}
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingEmployee(null); }} title={editingEmployee ? 'Editar empleado' : 'Nuevo empleado'}>
-        <EmployeeWizard initialData={editingEmployee} onSave={handleSaveEmployee} onCancel={() => { setIsModalOpen(false); setEditingEmployee(null); }} />
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingEmployee(null); }}
+             title={editingEmployee ? 'Editar empleado' : 'Nuevo empleado'} testId="modal-employee">
+        <EmployeeWizard
+          initialData={editingEmployee}
+          onSave={handleSaveEmployee}
+          onCancel={() => { setIsModalOpen(false); setEditingEmployee(null); }}
+        />
       </Modal>
 
-      <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} title="Carga Masiva de Empleados">
-        <JsonUploadModal onConfirm={handleUploadConfirm} onCancel={() => setIsUploadModalOpen(false)} />
+      <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} title="Carga masiva" testId="modal-upload">
+        <JsonUploadModal
+          onConfirm={handleUploadConfirm}
+          onCancel={() => setIsUploadModalOpen(false)}
+        />
       </Modal>
 
-      {/* ── Custom Confirm Dialog ── */}
-      <AnimatePresence>
-        {confirmDialog.isOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 99999 }}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} style={{ background: 'var(--color-surface-card)', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: '1px solid var(--color-hairline-soft)' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600, color: 'var(--color-ink)' }}>{confirmDialog.title}</h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: 'var(--color-muted)', lineHeight: 1.5 }}>{confirmDialog.message}</p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))} style={{ padding: '0 16px', height: '40px', borderRadius: '8px', border: '1px solid var(--color-hairline-soft)', background: 'transparent', color: 'var(--color-ink)', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>Cancelar</button>
-                <button onClick={confirmDialog.onConfirm} style={{ padding: '0 16px', height: '40px', borderRadius: '8px', border: 'none', background: confirmDialog.isDestructive ? 'var(--color-semantic-error)' : 'var(--color-accent)', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>{confirmDialog.confirmText}</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Modal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} title="Carga Masiva de Fotos">
-        <PhotoUploadModal onCancel={() => setIsPhotoModalOpen(false)} onComplete={() => { setIsPhotoModalOpen(false); fetchEmployees(); }} />
+      <Modal isOpen={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} title="Carga de fotos" testId="modal-photos">
+        <PhotoUploadModal
+          onCancel={() => setIsPhotoModalOpen(false)}
+          onComplete={() => { setIsPhotoModalOpen(false); fetchEmployees(); }}
+        />
       </Modal>
 
-      <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} title="Generar Códigos QR">
-        <QrGenerateModal onCancel={() => setIsQrModalOpen(false)} onComplete={() => { setIsQrModalOpen(false); fetchEmployees(); }} />
+      <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} title="Generar QRs" testId="modal-qr">
+        <QrGenerateModal
+          onCancel={() => setIsQrModalOpen(false)}
+          onComplete={() => { setIsQrModalOpen(false); fetchEmployees(); }}
+        />
       </Modal>
 
-      <Modal isOpen={!!previewQrUrl} onClose={() => setPreviewQrUrl(null)} title="Código QR del Empleado">
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-          <img src={previewQrUrl} alt="QR Code" style={{ width: '250px', height: '250px' }} />
+      <Modal isOpen={!!previewQrUrl} onClose={() => setPreviewQrUrl(null)} title="Código QR" size="sm" testId="modal-qr-preview">
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--spacing-sm) 0' }}>
+          <img
+            src={previewQrUrl}
+            alt="Código QR del empleado"
+            data-testid="qr-preview-img"
+            style={{
+              width: '100%',
+              maxWidth: '16rem',
+              height: 'auto',
+              aspectRatio: '1 / 1',
+              borderRadius: 'var(--rounded-md)',
+              border: '1px solid var(--color-hairline-soft)',
+            }}
+          />
         </div>
       </Modal>
+
+      {/* ── Confirm Dialog ── */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        isDestructive={confirmDialog.isDestructive}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
     </>
   );
+};
+
+/* ============================================================
+   STYLES — 100% tokens · mobile-first
+   ============================================================ */
+const S = {
+  page: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--spacing-xxl)',
+  },
+
+  /* Header */
+  headerBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--spacing-base)',
+  },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 'var(--spacing-base)',
+  },
+  h1: {
+    margin: 0,
+    fontFamily: 'var(--font-display)',
+    fontSize: 'clamp(var(--typography-title-md-size), 4vw, var(--typography-display-sm-size))',
+    fontWeight: 'var(--typography-title-md-weight)',
+    color: 'var(--color-ink)',
+    lineHeight: 1.15,
+    letterSpacing: '-0.02em',
+  },
+  h1Sub: {
+    margin: 'var(--spacing-xxs) 0 0',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    color: 'var(--color-muted)',
+    lineHeight: 'var(--typography-caption-lh)',
+  },
+  headerActions: {
+    display: 'flex',
+    gap: 'var(--spacing-xs)',
+    flexWrap: 'wrap',
+  },
+  iconAction: {
+    width: '2.5rem', height: '2.5rem',
+    borderRadius: 'var(--rounded-md)',
+    border: '1px solid var(--color-hairline-soft)',
+    background: 'transparent',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--color-muted)',
+    transition: 'color 120ms ease, border-color 120ms ease',
+  },
+  addBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--spacing-xs)',
+    minHeight: '2.5rem',
+    padding: '0 var(--spacing-base)',
+    borderRadius: 'var(--rounded-md)',
+    border: '1px solid rgb(var(--color-accent-raw) / 0.4)',
+    background: 'rgb(var(--color-accent-raw) / 0.08)',
+    cursor: 'pointer',
+    color: 'var(--color-accent)',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    fontWeight: 600,
+  },
+
+  /* Search */
+  searchWrap: {
+    position: 'relative',
+    display: 'block',
+    maxWidth: '28rem',
+    width: '100%',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 'var(--spacing-sm)',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: 'var(--color-muted-soft)',
+    pointerEvents: 'none',
+  },
+  searchInput: {
+    width: '100%',
+    minHeight: '2.5rem',
+    paddingLeft: '2.25rem',
+    paddingRight: '2.25rem',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    color: 'var(--color-ink)',
+    background: 'var(--color-canvas-soft)',
+    border: '1px solid var(--color-hairline)',
+    borderRadius: 'var(--rounded-md)',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 120ms ease, background 120ms ease',
+  },
+  searchClear: {
+    position: 'absolute',
+    right: 'var(--spacing-xs)',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '1.5rem', height: '1.5rem',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'var(--color-hairline-soft)',
+    color: 'var(--color-muted)',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* Grid */
+  grid: {
+    display: 'grid',
+    gap: 'var(--spacing-sm)',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 16rem), 1fr))',
+  },
+
+  /* Card */
+  card: {
+    padding: 'var(--spacing-sm) var(--spacing-base)',
+    borderRadius: 'var(--rounded-md)',
+    border: '1px solid var(--color-hairline-soft)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--spacing-sm)',
+    position: 'relative',
+    background: 'var(--color-surface-card)',
+    minHeight: '4rem',
+    transition: 'border-color 160ms ease',
+  },
+  cardBody: {
+    flex: 1, minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  cardName: {
+    margin: 0,
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    fontWeight: 'var(--typography-title-sm-weight)',
+    color: 'var(--color-ink)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.01em',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    lineHeight: 1.2,
+  },
+  cardNum: {
+    margin: 0,
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-size)',
+    color: 'var(--color-muted)',
+    fontVariantNumeric: 'tabular-nums',
+    letterSpacing: '0.03em',
+  },
+
+  /* Actions */
+  actionsWrap: {
+    position: 'relative',
+    flexShrink: 0,
+  },
+  moreBtn: {
+    width: '2rem', height: '2rem',
+    borderRadius: 'var(--rounded-md)',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--color-muted)',
+    transition: 'background 120ms ease',
+  },
+  dropdown: {
+    position: 'absolute',
+    right: 0,
+    top: 'calc(100% + var(--spacing-xxs))',
+    zIndex: 10,
+    background: 'var(--color-surface-card)',
+    border: '1px solid var(--color-hairline-soft)',
+    borderRadius: 'var(--rounded-md)',
+    padding: 'var(--spacing-xxs)',
+    boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: '11rem',
+  },
+  dropdownDivider: {
+    height: '1px',
+    background: 'var(--color-hairline-soft)',
+    margin: 'var(--spacing-xxs) 0',
+  },
+
+  /* Empty */
+  empty: {
+    gridColumn: '1 / -1',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'var(--spacing-xs)',
+    padding: 'var(--spacing-xxl) var(--spacing-lg)',
+    textAlign: 'center',
+  },
+  emptyIcon: {
+    width: '3rem', height: '3rem',
+    borderRadius: '50%',
+    background: 'rgb(var(--color-accent-raw) / 0.08)',
+    color: 'var(--color-accent)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 'var(--spacing-xxs)',
+  },
+  emptyTitle: {
+    margin: 0,
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    fontWeight: 'var(--typography-title-sm-weight)',
+    color: 'var(--color-ink)',
+  },
+  emptySub: {
+    margin: 0,
+    maxWidth: '16rem',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-size)',
+    color: 'var(--color-muted)',
+    lineHeight: 'var(--typography-caption-lh)',
+  },
+
+  /* Skeleton */
+  skeletonCard: {
+    padding: 'var(--spacing-sm) var(--spacing-base)',
+    borderRadius: 'var(--rounded-md)',
+    border: '1px solid var(--color-hairline-soft)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--spacing-sm)',
+    animation: 'vp-emp-pulse 1.4s ease-in-out infinite',
+    minHeight: '4rem',
+  },
+
+  /* Pagination */
+  pagination: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 'var(--spacing-sm)',
+    borderTop: '1px solid var(--color-hairline-soft)',
+    gap: 'var(--spacing-sm)',
+    flexWrap: 'wrap',
+  },
+  pagInfo: {
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-size)',
+    color: 'var(--color-muted)',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  pagBtn: {
+    width: '2rem', height: '2rem',
+    borderRadius: 'var(--rounded-sm)',
+    border: '1px solid var(--color-hairline-soft)',
+    background: 'transparent',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--color-muted)',
+  },
 };

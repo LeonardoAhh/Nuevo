@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Input } from './Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Truck, MapPin, Check } from 'lucide-react';
+import { User, Truck, MapPin, Check, ChevronLeft } from 'lucide-react';
 
-/* ─── Configuración de pasos ─── */
+/* ============================================================
+   EMPLOYEE WIZARD — Crear / editar empleado (3 pasos)
+   Cohesivo · 100% tokens · UI/UX semántico
+   ============================================================ */
+
 const STEPS = [
   {
     id: 1,
     label: 'Identificación',
     icon: User,
     fields: [
-      { name: 'numero_empleado', label: 'Número de empleado', placeholder: 'Ej. 10234', required: true },
-      { name: 'nombre',          label: 'Nombre completo',    placeholder: 'Apellido Apellido Nombre', required: true },
+      { name: 'numero_empleado', label: 'Número de empleado', placeholder: 'Ej. 10234', required: true, inputMode: 'numeric', autoComplete: 'off' },
+      { name: 'nombre',          label: 'Nombre completo',    placeholder: 'Apellido Apellido Nombre', required: true, autoComplete: 'name' },
     ],
   },
   {
@@ -19,8 +22,8 @@ const STEPS = [
     label: 'Logística',
     icon: Truck,
     fields: [
-      { name: 'turno', label: 'Turno', placeholder: 'Ej. Matutino', required: true },
-      { name: 'ruta',  label: 'Ruta',  placeholder: 'Ej. Ruta 1 — Centro', required: true },
+      { name: 'turno', label: 'Turno', placeholder: 'Ej. 1, 2, 3…', required: true, autoComplete: 'off' },
+      { name: 'ruta',  label: 'Ruta',  placeholder: 'Ej. R1- QUERETARO', required: true, autoComplete: 'off' },
     ],
   },
   {
@@ -28,235 +31,352 @@ const STEPS = [
     label: 'Ubicación',
     icon: MapPin,
     fields: [
-      { name: 'colonia',     label: 'Colonia',     placeholder: '',                              required: true  },
-      { name: 'referencia',  label: 'Referencia',  placeholder: 'Casa verde esquina con…',       required: false },
+      { name: 'colonia',     label: 'Colonia',    placeholder: 'Ej. La Luz', required: true, autoComplete: 'address-level2' },
+      { name: 'referencia',  label: 'Referencia', placeholder: 'Casa verde esquina con…', required: false, autoComplete: 'off' },
     ],
   },
 ];
 
 const EMPTY_FORM = {
   numero_empleado: '',
-  nombre:          '',
-  turno:           '',
-  ruta:            '',
-  colonia:         '',
-  referencia:      '',
+  nombre: '',
+  turno: '',
+  ruta: '',
+  colonia: '',
+  referencia: '',
 };
 
-/* ─── Step indicator ─── */
-const StepIndicator = ({ current, total }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '32px' }}>
+/* ─── Step indicator ──────────────────────────────────────── */
+const StepIndicator = ({ current }) => (
+  <ol style={S.stepperRow} aria-label="Progreso del formulario">
     {STEPS.map((s, i) => {
-      const done    = current > s.id;
-      const active  = current === s.id;
-      const Icon    = s.icon;
+      const done   = current > s.id;
+      const active = current === s.id;
+      const Icon   = s.icon;
 
       return (
         <React.Fragment key={s.id}>
-          {/* Nodo */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.2s, border-color 0.2s',
-              background: done
-                ? 'hsl(var(--color-accent))'
-                : active
-                  ? 'hsl(var(--color-accent) / 0.1)'
-                  : 'transparent',
-              border: done
-                ? '1.5px solid hsl(var(--color-accent))'
-                : active
-                  ? '1.5px solid hsl(var(--color-accent))'
-                  : '1.5px solid hsl(var(--color-hairline-soft))',
-            }}>
+          <li style={S.stepNode} aria-current={active ? 'step' : undefined}>
+            <div
+              aria-hidden="true"
+              style={{
+                ...S.stepDot,
+                background:  done ? 'var(--color-accent)' : active ? 'rgb(var(--color-accent-raw) / 0.1)' : 'transparent',
+                borderColor: done || active ? 'var(--color-accent)' : 'var(--color-hairline-strong)',
+                color:       done ? 'var(--color-on-primary)' : active ? 'var(--color-accent)' : 'var(--color-muted)',
+              }}
+            >
               {done
-                ? <Check size={13} color="hsl(var(--color-canvas, white))" strokeWidth={2.5} />
-                : <Icon
-                    size={13}
-                    color={active ? 'hsl(var(--color-accent))' : 'hsl(var(--color-muted))'}
-                    strokeWidth={2}
-                  />
+                ? <Check size={13} strokeWidth={2.5} />
+                : <Icon size={13} strokeWidth={2} />
               }
             </div>
             <span style={{
-              fontSize: '10px', letterSpacing: '0.03em',
-              color: active ? 'hsl(var(--color-accent))' : 'hsl(var(--color-muted))',
-              fontWeight: active ? 500 : 400,
-              whiteSpace: 'nowrap',
+              ...S.stepLabel,
+              color: active ? 'var(--color-accent)' : 'var(--color-muted)',
+              fontWeight: active ? 600 : 500,
             }}>
               {s.label}
             </span>
-          </div>
+          </li>
 
-          {/* Conector */}
           {i < STEPS.length - 1 && (
-            <div style={{
-              flex: 1, height: '1px', margin: '0 4px', marginBottom: '16px',
-              background: current > s.id
-                ? 'hsl(var(--color-accent) / 0.4)'
-                : 'hsl(var(--color-hairline-soft))',
-              transition: 'background 0.3s',
-            }} />
+            <li
+              aria-hidden="true"
+              style={{
+                ...S.stepConnector,
+                background: current > s.id ? 'rgb(var(--color-accent-raw) / 0.4)' : 'var(--color-hairline-soft)',
+              }}
+            />
           )}
         </React.Fragment>
       );
     })}
-  </div>
+  </ol>
 );
 
-/* ─── Componente principal ─── */
+/* ─── Field ───────────────────────────────────────────────── */
+const Field = ({ field, value, onChange }) => {
+  const id = `field-${field.name}`;
+  return (
+    <div style={S.field}>
+      <label htmlFor={id} style={S.label}>
+        {field.label}
+        {field.required && <span style={S.required} aria-hidden="true">*</span>}
+      </label>
+      <input
+        id={id}
+        name={field.name}
+        type="text"
+        value={value || ''}
+        onChange={onChange}
+        placeholder={field.placeholder}
+        required={field.required}
+        inputMode={field.inputMode}
+        autoComplete={field.autoComplete}
+        data-testid={`wizard-field-${field.name}`}
+        style={S.input}
+      />
+    </div>
+  );
+};
+
+/* ─── Componente principal ────────────────────────────────── */
 export const EmployeeWizard = ({ initialData, onSave, onCancel }) => {
   const [step,     setStep]     = useState(1);
-  const [dir,      setDir]      = useState(1);   // 1 = adelante, -1 = atrás
+  const [dir,      setDir]      = useState(1);
   const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
-    if (initialData) setFormData(initialData);
+    if (initialData) setFormData({ ...EMPTY_FORM, ...initialData });
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNext = () => { setDir(1);  setStep(s => s + 1); };
-  const handlePrev = () => { setDir(-1); setStep(s => s - 1); };
+  const handleNext = () => { setDir(1);  setStep((s) => s + 1); };
+  const handlePrev = () => { setDir(-1); setStep((s) => s - 1); };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (step < 3) { handleNext(); return; }
+    if (step < STEPS.length) { handleNext(); return; }
     onSave(formData);
   };
 
   const currentStep = STEPS[step - 1];
 
-  /* Variantes de animación */
   const variants = {
-    enter:   { opacity: 0, x: dir * 24 },
-    center:  { opacity: 1, x: 0 },
-    exit:    { opacity: 0, x: dir * -24 },
+    enter:  { opacity: 0, x: dir * 24 },
+    center: { opacity: 1, x: 0 },
+    exit:   { opacity: 0, x: dir * -24 },
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={S.root} data-testid="employee-wizard">
 
-      <StepIndicator current={step} total={STEPS.length} />
+      <StepIndicator current={step} />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
 
         {/* Panel animado del paso actual */}
-        <div style={{ minHeight: '180px', position: 'relative', overflow: 'hidden' }}>
+        <div style={S.stage}>
           <AnimatePresence mode="wait" initial={false} custom={dir}>
-            <motion.div
+            <motion.fieldset
               key={step}
               custom={dir}
               variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
+              style={S.fieldset}
             >
+              <legend style={S.legend}>{currentStep.label}</legend>
               {currentStep.fields.map((field) => (
-                <div key={field.name}>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    color: 'hsl(var(--color-muted))',
-                    marginBottom: '6px',
-                  }}>
-                    {field.label}
-                    {field.required && (
-                      <span style={{ color: 'hsl(var(--color-semantic-error))', marginLeft: '3px' }}>*</span>
-                    )}
-                  </label>
-                  <Input
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    placeholder={field.placeholder}
-                    required={field.required}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                  />
-                </div>
+                <Field
+                  key={field.name}
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                />
               ))}
-            </motion.div>
+            </motion.fieldset>
           </AnimatePresence>
         </div>
 
-        {/* Pie: navegación */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginTop: '28px', paddingTop: '20px',
-          borderTop: '1px solid hsl(var(--color-hairline-soft))',
-        }}>
-
-          {/* Izquierda: cancelar o anterior */}
+        {/* Footer */}
+        <div style={S.footer}>
           {step === 1 ? (
             <button
               type="button"
               onClick={onCancel}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: '0',
-                fontSize: '13px', color: 'hsl(var(--color-muted))',
-              }}
+              data-testid="wizard-cancel"
+              style={S.btnLink}
             >
               Cancelar
             </button>
           ) : (
             <motion.button
               type="button"
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: 0.985 }}
               onClick={handlePrev}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                height: '36px', padding: '0 14px', borderRadius: '8px',
-                border: '1px solid hsl(var(--color-hairline-soft))',
-                background: 'transparent', cursor: 'pointer',
-                fontSize: '13px', color: 'hsl(var(--color-ink))',
-              }}
+              data-testid="wizard-prev"
+              style={S.btnSecondary}
             >
+              <ChevronLeft size={14} strokeWidth={2} />
               Anterior
             </motion.button>
           )}
 
-          {/* Derecha: siguiente o guardar */}
           <motion.button
             type="submit"
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            whileTap={{ scale: 0.985 }}
+            data-testid="wizard-submit"
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              height: '36px', padding: '0 18px', borderRadius: '8px',
-              border: '1px solid hsl(var(--color-accent) / 0.4)',
-              background: step === 3
-                ? 'hsl(var(--color-accent))'
-                : 'hsl(var(--color-accent) / 0.08)',
-              cursor: 'pointer',
-              fontSize: '13px', fontWeight: 500,
-              color: step === 3
-                ? 'hsl(var(--color-canvas, white))'
-                : 'hsl(var(--color-accent))',
-              transition: 'background 0.2s, color 0.2s',
+              ...S.btnPrimary,
+              background: step === STEPS.length
+                ? 'var(--color-accent)'
+                : 'rgb(var(--color-accent-raw) / 0.1)',
+              color: step === STEPS.length ? 'var(--color-on-primary)' : 'var(--color-accent)',
+              border: step === STEPS.length ? 'none' : '1px solid rgb(var(--color-accent-raw) / 0.4)',
             }}
           >
-            {step === 3 ? (
-              <>
-                <Check size={14} strokeWidth={2.5} />
-                {initialData ? 'Guardar cambios' : 'Crear empleado'}
-              </>
-            ) : (
-              'Siguiente'
-            )}
+            {step === STEPS.length
+              ? <><Check size={14} strokeWidth={2.5} /> {initialData ? 'Guardar cambios' : 'Crear empleado'}</>
+              : 'Siguiente'
+            }
           </motion.button>
-
         </div>
       </form>
     </div>
   );
+};
+
+const S = {
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+
+  /* Stepper */
+  stepperRow: {
+    listStyle: 'none',
+    margin: '0 0 var(--spacing-xl)',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 0,
+  },
+  stepNode: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 'var(--spacing-xxs)',
+    flex: '0 0 auto',
+  },
+  stepDot: {
+    width: '2rem', height: '2rem', borderRadius: '50%',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    border: '1.5px solid var(--color-hairline-strong)',
+    transition: 'background 200ms ease, border-color 200ms ease, color 200ms ease',
+  },
+  stepLabel: {
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-size)',
+    letterSpacing: '0.02em',
+    whiteSpace: 'nowrap',
+  },
+  stepConnector: {
+    flex: 1,
+    height: '1px',
+    margin: '1rem var(--spacing-xxs) 0',
+    transition: 'background 320ms ease',
+  },
+
+  /* Stage */
+  stage: {
+    minHeight: '11rem',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  fieldset: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--spacing-base)',
+    border: 'none',
+    padding: 0,
+    margin: 0,
+  },
+  legend: {
+    position: 'absolute',
+    width: '1px', height: '1px',
+    margin: '-1px', padding: 0,
+    overflow: 'hidden',
+    clip: 'rect(0,0,0,0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  },
+
+  /* Field */
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--spacing-xxs)',
+  },
+  label: {
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-caption-uppercase-size)',
+    fontWeight: 'var(--typography-caption-uppercase-weight)',
+    letterSpacing: 'var(--typography-caption-uppercase-ls)',
+    textTransform: 'uppercase',
+    color: 'var(--color-muted)',
+  },
+  required: {
+    color: 'var(--color-semantic-error)',
+    marginLeft: '3px',
+  },
+  input: {
+    width: '100%',
+    minHeight: '2.75rem',
+    padding: 'var(--spacing-xs) var(--spacing-sm)',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    color: 'var(--color-ink)',
+    background: 'var(--color-canvas-soft)',
+    border: '1px solid var(--color-hairline)',
+    borderRadius: 'var(--rounded-md)',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 120ms ease, background 120ms ease',
+  },
+
+  /* Footer */
+  footer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 'var(--spacing-lg)',
+    paddingTop: 'var(--spacing-base)',
+    borderTop: '1px solid var(--color-hairline-soft)',
+    gap: 'var(--spacing-sm)',
+  },
+  btnLink: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: 'var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) 0',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    color: 'var(--color-muted)',
+  },
+  btnSecondary: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--spacing-xxs)',
+    minHeight: '2.5rem',
+    padding: '0 var(--spacing-base)',
+    borderRadius: 'var(--rounded-md)',
+    border: '1px solid var(--color-hairline)',
+    background: 'transparent',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    fontWeight: 500,
+    color: 'var(--color-ink)',
+  },
+  btnPrimary: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--spacing-xxs)',
+    minHeight: '2.5rem',
+    padding: '0 var(--spacing-lg)',
+    borderRadius: 'var(--rounded-md)',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--typography-body-sm-size)',
+    fontWeight: 600,
+    transition: 'background 160ms ease, color 160ms ease',
+  },
 };
