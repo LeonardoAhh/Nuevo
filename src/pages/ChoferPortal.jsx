@@ -702,6 +702,9 @@ export const ChoferPortal = () => {
       isScanningRef.current = true;
       if (timerRef.current) clearTimeout(timerRef.current);
 
+      // uiColor en scope externo al try para poder usarlo en el finally
+      let uiColor = 'success';
+
       try {
         // ─── Parsear el contenido del QR ──────────────────
         // Los QR generados contienen JSON: {"numero_empleado":"4"}
@@ -796,7 +799,7 @@ export const ChoferPortal = () => {
         }
 
         const isWarning = estado === 'dia_descanso' || estado === 'fuera_horario';
-        const uiColor = isValid ? (isWarning ? 'warning' : 'success') : 'error';
+        uiColor = isValid ? (isWarning ? 'warning' : 'success') : 'error';
         
         let warningReason = '';
         if (estado === 'dia_descanso') warningReason = 'Día de descanso';
@@ -811,6 +814,13 @@ export const ChoferPortal = () => {
           employee: emp, 
           time: timeStr 
         });
+
+        // Feedback háptico (móvil): patrón distinto según severidad
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          if (uiColor === 'success') navigator.vibrate(60);
+          else if (uiColor === 'warning') navigator.vibrate([60, 80, 60]);
+          else navigator.vibrate([120, 80, 120, 80, 120]);
+        }
 
         // Insertar en registros sin importar si es válido o no (requiere que empleado_id sea null-able si es rechazado_qr)
         const record = { 
@@ -832,7 +842,13 @@ export const ChoferPortal = () => {
       } catch (err) {
         console.error(err);
       } finally {
-        timerRef.current = setTimeout(() => { setScanResult(null); isScanningRef.current = false; }, 3000);
+        // Duración del aviso según severidad — los errores/advertencias se quedan
+        // más tiempo para que el chofer alcance a leerlos antes de seguir escaneando.
+        // El usuario también puede tocar el aviso para descartarlo manualmente.
+        let ms = 4000; // éxito por defecto
+        if (uiColor === 'warning') ms = 6000;
+        else if (uiColor === 'error') ms = 6500;
+        timerRef.current = setTimeout(() => { setScanResult(null); isScanningRef.current = false; }, ms);
       }
     };
 
@@ -1007,34 +1023,130 @@ export const ChoferPortal = () => {
 
                 {/* Resultado flotante */}
                 <AnimatePresence>
-                  {scanResult && (
-                    <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                      style={{ position: 'absolute', bottom: 'var(--spacing-xl)', left: 'var(--spacing-base)', right: 'var(--spacing-base)', zIndex: 10, background: 'var(--color-surface-card)', borderRadius: 'var(--rounded-xl)', padding: 'var(--spacing-base)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: `2px solid var(--color-semantic-${scanResult.uiColor})`, display: 'flex', alignItems: 'center', gap: 'var(--spacing-base)' }}>
-                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0, background: `var(--color-semantic-${scanResult.uiColor})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: scanResult.uiColor === 'warning' ? 'var(--color-ink)' : 'var(--color-on-primary)' }}>
-                        {scanResult.isValid ? <CheckCircle size={32} /> : <XCircle size={32} />}
-                      </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <p style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 'var(--typography-title-md-weight)', fontFamily: 'var(--font-body)', color: 'var(--color-ink)' }}>
-                          {scanResult.isValid ? (scanResult.uiColor === 'warning' ? 'Alerta de Horario' : 'Acceso Autorizado') : 'Acceso Denegado'}
-                        </p>
-                        <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-body-sm-size)', fontFamily: 'var(--font-body)', color: scanResult.isValid && scanResult.uiColor !== 'warning' ? 'var(--color-muted)' : `var(--color-semantic-${scanResult.uiColor})`, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                          {scanResult.isValid ? scanResult.employee?.nombre : scanResult.rejectReason}
-                        </p>
-                        {scanResult.employee?.turno && (
-                          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)' }}>
-                            <span style={{ padding: 'var(--spacing-xxs) var(--spacing-xs)', background: 'var(--color-canvas)', borderRadius: 'var(--rounded-sm)', fontSize: 'var(--typography-caption-uppercase-size)', fontWeight: 'var(--typography-caption-uppercase-weight)', fontFamily: 'var(--font-body)', color: 'var(--color-ink)' }}>
-                              Turno {scanResult.employee.turno}
-                            </span>
+                  {scanResult && (() => {
+                    const dur = scanResult.uiColor === 'success' ? 4000 : scanResult.uiColor === 'warning' ? 6000 : 6500;
+                    const titleText = scanResult.isValid
+                      ? (scanResult.uiColor === 'warning' ? 'Alerta de Horario' : 'Acceso Autorizado')
+                      : (scanResult.estado === 'rechazado_qr' ? 'QR no Reconocido' : 'Acceso Denegado');
+                    const tone = `var(--color-semantic-${scanResult.uiColor})`;
+                    const toneRaw = `var(--color-semantic-${scanResult.uiColor}-raw)`;
+                    return (
+                      <motion.div
+                        key={`scan-${scanResult.estado}-${scanResult.time}`}
+                        initial={{ opacity: 0, y: 60, scale: 0.92 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                        onClick={() => {
+                          if (timerRef.current) clearTimeout(timerRef.current);
+                          setScanResult(null);
+                          isScanningRef.current = false;
+                        }}
+                        data-testid="scan-result-card"
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                          position: 'absolute',
+                          bottom: 'var(--spacing-xl)',
+                          left: 'var(--spacing-base)', right: 'var(--spacing-base)',
+                          zIndex: 10,
+                          background: 'var(--color-surface-card)',
+                          borderRadius: 'var(--rounded-xl)',
+                          padding: 'var(--spacing-lg) var(--spacing-base) var(--spacing-base)',
+                          boxShadow: `0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px ${tone}`,
+                          borderTop: `4px solid ${tone}`,
+                          display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)',
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {/* Fila principal */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-base)' }}>
+                          <motion.div
+                            initial={{ scale: 0.6, rotate: -15 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 14, delay: 0.05 }}
+                            style={{
+                              width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0,
+                              background: tone,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: scanResult.uiColor === 'warning' ? 'var(--color-ink)' : 'var(--color-on-primary)',
+                              boxShadow: `0 8px 20px rgb(${toneRaw} / 0.35)`,
+                            }}
+                          >
+                            {scanResult.isValid ? <CheckCircle size={36} strokeWidth={2.5} /> : <XCircle size={36} strokeWidth={2.5} />}
+                          </motion.div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: 'var(--typography-title-md-size)', fontWeight: 700, fontFamily: 'var(--font-display)', color: tone, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+                              {titleText}
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: 'var(--typography-body-sm-size)', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--color-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {scanResult.isValid ? (scanResult.employee?.nombre || '—') : (scanResult.rejectReason || '—')}
+                            </p>
+                            {scanResult.employee?.numero_empleado && (
+                              <p style={{ margin: '2px 0 0', fontSize: 'var(--typography-caption-size)', fontFamily: 'var(--font-body)', color: 'var(--color-muted)' }}>
+                                #{scanResult.employee.numero_empleado} · {scanResult.time}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Chips de turno y ruta */}
+                        {scanResult.employee && (scanResult.employee.turno || scanResult.employee.ruta) && (
+                          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', flexWrap: 'wrap' }}>
+                            {scanResult.employee.turno && (
+                              <span style={{
+                                padding: 'var(--spacing-xxs) var(--spacing-sm)',
+                                background: 'var(--color-canvas)',
+                                borderRadius: 'var(--rounded-pill)',
+                                fontSize: 'var(--typography-caption-uppercase-size)',
+                                fontWeight: 'var(--typography-caption-uppercase-weight)',
+                                letterSpacing: 'var(--typography-caption-uppercase-ls)',
+                                textTransform: 'uppercase',
+                                fontFamily: 'var(--font-body)',
+                                color: 'var(--color-ink)',
+                                border: '1px solid var(--color-hairline-soft)',
+                              }}>
+                                Turno {scanResult.employee.turno}
+                              </span>
+                            )}
                             {scanResult.employee.ruta && (
-                              <span style={{ padding: 'var(--spacing-xxs) var(--spacing-xs)', background: scanResult.isValid ? 'var(--color-canvas)' : 'rgb(var(--color-semantic-error-raw) / 0.1)', borderRadius: 'var(--rounded-sm)', fontSize: 'var(--typography-caption-uppercase-size)', fontWeight: 'var(--typography-caption-uppercase-weight)', fontFamily: 'var(--font-body)', color: scanResult.isValid ? 'var(--color-ink)' : 'var(--color-semantic-error)' }}>
-                                {scanResult.employee.ruta}
+                              <span style={{
+                                padding: 'var(--spacing-xxs) var(--spacing-sm)',
+                                background: scanResult.estado === 'rechazado_ruta' ? `rgb(${toneRaw} / 0.1)` : 'var(--color-canvas)',
+                                borderRadius: 'var(--rounded-pill)',
+                                fontSize: 'var(--typography-caption-uppercase-size)',
+                                fontWeight: 'var(--typography-caption-uppercase-weight)',
+                                letterSpacing: 'var(--typography-caption-uppercase-ls)',
+                                textTransform: 'uppercase',
+                                fontFamily: 'var(--font-body)',
+                                color: scanResult.estado === 'rechazado_ruta' ? tone : 'var(--color-ink)',
+                                border: `1px solid ${scanResult.estado === 'rechazado_ruta' ? `rgb(${toneRaw} / 0.3)` : 'var(--color-hairline-soft)'}`,
+                                maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}>
+                                {parseRuta(scanResult.employee.ruta).code} · {parseRuta(scanResult.employee.ruta).desc}
                               </span>
                             )}
                           </div>
                         )}
-                      </div>
-                    </motion.div>
-                  )}
+
+                        {/* Barra de progreso (countdown visual) */}
+                        <div style={{ height: '3px', background: 'var(--color-hairline-soft)', borderRadius: 'var(--rounded-pill)', overflow: 'hidden', marginTop: 'var(--spacing-xxs)' }}>
+                          <motion.div
+                            initial={{ width: '100%' }}
+                            animate={{ width: '0%' }}
+                            transition={{ duration: dur / 1000, ease: 'linear' }}
+                            style={{ height: '100%', background: tone, borderRadius: 'inherit' }}
+                          />
+                        </div>
+
+                        <p style={{ margin: 0, fontSize: 'var(--typography-caption-size)', fontFamily: 'var(--font-body)', color: 'var(--color-muted-soft)', textAlign: 'center' }}>
+                          Toca para cerrar
+                        </p>
+                      </motion.div>
+                    );
+                  })()}
                 </AnimatePresence>
               </>
             )}
