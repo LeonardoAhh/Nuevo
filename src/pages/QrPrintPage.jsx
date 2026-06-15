@@ -44,13 +44,13 @@ const QrCard = ({ emp }) => {
       className="vp-qr-card"
       aria-label={`Credencial de ${emp.nombre}`}
     >
-      {/* Banda lateral negra con marca vertical */}
-      <div className="vp-qr-rail" aria-hidden="true">
+      {/* Cabecera negra horizontal */}
+      <header className="vp-qr-rail" aria-hidden="true">
         <span className="vp-qr-rail-text">VIÑO·PLASTIC</span>
         <span className="vp-qr-rail-chev" />
-      </div>
+      </header>
 
-      {/* QR con corchetes */}
+      {/* QR central con corchetes */}
       <div className="vp-qr-frame" aria-hidden="true">
         <span className="vp-qr-brackets vp-qr-brackets--tl" />
         <span className="vp-qr-brackets vp-qr-brackets--tr" />
@@ -63,13 +63,13 @@ const QrCard = ({ emp }) => {
         )}
       </div>
 
-      {/* Datos */}
+      {/* Datos abajo */}
       <div className="vp-qr-data">
         <div className="vp-qr-numrow">
           <span className="vp-qr-numlabel">N°</span>
           <span className="vp-qr-num">{emp.numero_empleado}</span>
+          <span className="vp-qr-name">{nombres}</span>
         </div>
-        <p className="vp-qr-name">{nombres}</p>
         <div className="vp-qr-meta">
           <span className="vp-qr-badge">
             <span className="vp-qr-badge-label">R</span>
@@ -362,8 +362,8 @@ const PrintStyles = () => (
     }
 
     /* ============================================================
-       CREDENCIAL COMPACTA — 12 por hoja (3 × 4)
-       Cell ≈ 62mm × 62mm · QR protagonista · sólo nombre
+       CREDENCIAL COMPACTA — 12 por hoja (3 × 4) · layout vertical
+       Cell ≈ 65 × 63mm · QR protagonista · sólo nombre
        B&W puro · keywords \`black\` / \`white\` · sin grises
        ============================================================ */
     .vp-qr-card {
@@ -375,30 +375,27 @@ const PrintStyles = () => (
       color: black;
       border: 1pt solid black;
       border-radius: 2mm;
-      display: grid;
-      grid-template-columns: 5mm 36mm minmax(0, 1fr);
-      gap: 2mm;
-      align-items: stretch;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       page-break-inside: avoid;
       break-inside: avoid;
     }
 
-    /* Banda lateral con marca vertical */
+    /* Cabecera negra horizontal */
     .vp-qr-rail {
+      flex-shrink: 0;
       background: black;
       color: white;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 2mm 0;
+      gap: 1.5mm;
+      padding: 1.2mm 2mm;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     .vp-qr-rail-text {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
       font-family: var(--font-display);
       font-weight: 800;
       font-size: 6.5pt;
@@ -408,14 +405,15 @@ const PrintStyles = () => (
     }
     .vp-qr-rail-chev {
       display: block;
-      width: 3mm; height: 3mm;
+      width: 2.5mm; height: 2.5mm;
       background: white;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       clip-path: polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%, 40% 50%);
+      flex-shrink: 0;
     }
 
-    /* QR frame con corchetes tipo cámara */
+    /* QR frame con corchetes (centrado, protagonista) */
     .vp-qr-frame {
       position: relative;
       align-self: center;
@@ -427,7 +425,7 @@ const PrintStyles = () => (
       justify-content: center;
       padding: 1.5mm;
       box-sizing: border-box;
-      margin: 2mm 0;
+      margin: 2mm 0 1mm;
     }
     .vp-qr-brackets {
       position: absolute;
@@ -468,34 +466,41 @@ const PrintStyles = () => (
       color: black;
     }
 
-    /* Identidad */
+    /* Datos (debajo del QR, ancho completo) */
     .vp-qr-data {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 1.5mm;
+      gap: 1mm;
+      padding: 0 2.5mm 2mm;
       min-width: 0;
-      padding: 2mm 2mm 2mm 0;
+      align-items: center;
     }
     .vp-qr-numrow {
       display: inline-flex;
       align-items: baseline;
       gap: 1.2mm;
+      max-width: 100%;
+      flex-wrap: nowrap;
+      justify-content: center;
     }
     .vp-qr-numlabel {
+      flex-shrink: 0;
       font-family: var(--font-body);
-      font-size: 5.5pt;
+      font-size: 5pt;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       color: black;
       text-transform: uppercase;
-      padding: 0.4mm 1mm;
-      border: 0.5pt solid black;
+      padding: 0.3mm 0.9mm;
+      border: 0.4pt solid black;
       border-radius: 0.6mm;
+      line-height: 1;
     }
     .vp-qr-num {
+      flex-shrink: 0;
       font-family: var(--font-display);
-      font-size: 13pt;
+      font-size: 10pt;
       font-weight: 800;
       letter-spacing: -0.01em;
       font-variant-numeric: tabular-nums;
@@ -503,26 +508,23 @@ const PrintStyles = () => (
       line-height: 1;
     }
     .vp-qr-name {
-      margin: 0;
       font-family: var(--font-display);
-      font-size: 12pt;
-      font-weight: 800;
-      letter-spacing: -0.015em;
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0;
       text-transform: uppercase;
       line-height: 1.05;
       color: black;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
     .vp-qr-meta {
       display: flex;
       gap: 1.2mm;
-      margin-top: 0.5mm;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      justify-content: center;
     }
     .vp-qr-badge {
       display: inline-flex;
@@ -534,7 +536,7 @@ const PrintStyles = () => (
     .vp-qr-badge-label {
       background: black;
       color: white;
-      padding: 0.4mm 1.2mm;
+      padding: 0.3mm 1mm;
       font-family: var(--font-display);
       font-size: 6pt;
       font-weight: 800;
@@ -547,16 +549,16 @@ const PrintStyles = () => (
     .vp-qr-badge-value {
       background: white;
       color: black;
-      padding: 0.4mm 1.4mm;
+      padding: 0.3mm 1.2mm;
       font-family: var(--font-display);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 800;
       letter-spacing: 0.02em;
       font-variant-numeric: tabular-nums;
       display: inline-flex;
       align-items: center;
     }
-    .vp-qr-badge--alt .vp-qr-badge-label { background: white; color: black; border-right: 0.5pt solid black; }
+    .vp-qr-badge--alt .vp-qr-badge-label { background: white; color: black; border-right: 0.4pt solid black; }
     .vp-qr-badge--alt .vp-qr-badge-value { background: black; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     /* ── Pantalla (preview) ────────────────────────────────── */
@@ -571,16 +573,13 @@ const PrintStyles = () => (
         margin: 0 auto;
         box-shadow: 0 1px 0 var(--color-hairline-soft);
       }
-      /* En móvil/tablet: 2 columnas y QR un pelín más pequeño */
+      /* Móvil / tablet */
       @media (max-width: 900px) {
         .vp-print-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: none; gap: var(--spacing-xs); }
       }
       @media (max-width: 480px) {
         .vp-print-grid { grid-template-columns: 1fr; }
-        .vp-qr-card    { grid-template-columns: 4mm 30mm minmax(0, 1fr); }
-        .vp-qr-frame   { width: 30mm; height: 30mm; }
-        .vp-qr-name    { font-size: 11pt; }
-        .vp-qr-num     { font-size: 12pt; }
+        .vp-qr-frame   { width: 32mm; height: 32mm; }
       }
     }
 
