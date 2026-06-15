@@ -18,6 +18,63 @@ const MAX_BYTES        = 8 * 1024 * 1024; // 8 MB
 const ACCEPTED_TYPES   = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/jpg'];
 const CONCURRENCY      = 4;
 
+/* Compresión cliente-side */
+const COMPRESS_MAX_DIM   = 1200;            // px (max width/height)
+const COMPRESS_QUALITY   = 0.82;            // 0..1
+const COMPRESS_MIN_BYTES = 150 * 1024;      // <150 KB: no vale la pena comprimir
+const COMPRESS_MIME      = 'image/webp';
+const COMPRESS_UNSUPPORTED = ['image/heic', 'image/heif']; // canvas no decodifica nativo
+
+/**
+ * Comprime una imagen a webp via canvas. Devuelve { file, originalSize, compressedSize }
+ * Si falla o el formato no es soportado, retorna el archivo original.
+ */
+const compressImage = (file) => new Promise((resolve) => {
+  const originalSize = file.size;
+  const mime = (file.type || '').toLowerCase();
+
+  // Skip si es pequeño o formato no soportado
+  if (file.size < COMPRESS_MIN_BYTES || COMPRESS_UNSUPPORTED.includes(mime)) {
+    return resolve({ file, originalSize, compressedSize: originalSize, compressed: false });
+  }
+
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+
+  const cleanup = () => URL.revokeObjectURL(url);
+  const fallback = () => { cleanup(); resolve({ file, originalSize, compressedSize: originalSize, compressed: false }); };
+
+  img.onerror = fallback;
+  img.onload = () => {
+    try {
+      const { width: w0, height: h0 } = img;
+      const scale = Math.min(1, COMPRESS_MAX_DIM / Math.max(w0, h0));
+      const w = Math.max(1, Math.round(w0 * scale));
+      const h = Math.max(1, Math.round(h0 * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return fallback();
+      ctx.drawImage(img, 0, 0, w, h);
+
+      canvas.toBlob((blob) => {
+        cleanup();
+        if (!blob || blob.size >= originalSize) {
+          // No se ahorra nada — devolver el original
+          return resolve({ file, originalSize, compressedSize: originalSize, compressed: false });
+        }
+        const newName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+        const out = new File([blob], newName, { type: COMPRESS_MIME, lastModified: Date.now() });
+        resolve({ file: out, originalSize, compressedSize: blob.size, compressed: true });
+      }, COMPRESS_MIME, COMPRESS_QUALITY);
+    } catch {
+      fallback();
+    }
+  };
+  img.src = url;
+});
+
 /* Phases */
 const PHASE = {
   PICKING:    'picking',
@@ -178,10 +235,21 @@ export const PhotoUploadModal = ({ onCancel, onComplete }) => {
 
   /* ─── Subida concurrente ─── */
   const uploadOne = useCallback(async (item) => {
-    const { file, num, id } = item;
-    updateItem(id, { status: STATUS.UPLOADING, message: 'Subiendo…' });
+    const { file: original, num, id } = item;
+    updateItem(id, { status: STATUS.UPLOADING, message: 'Optimizando…' });
 
     try {
+      // 1) Comprimir cliente-side (webp via canvas)
+      const { file, originalSize, compressedSize, compressed } = await compressImage(original);
+
+      if (compressed) {
+        const saved = Math.round((1 - compressedSize / originalSize) * 100);
+        updateItem(id, { message: `Subiendo · ${formatBytes(compressedSize)} (-${saved}%)` });
+      } else {
+        updateItem(id, { message: 'Subiendo…' });
+      }
+
+      // 2) Upload a Supabase Storage
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
       const safeName = `${num}-${Date.now()}.${ext}`;
 
@@ -199,7 +267,10 @@ export const PhotoUploadModal = ({ onCancel, onComplete }) => {
         .eq('numero_empleado', num);
       if (updErr) throw updErr;
 
-      updateItem(id, { status: STATUS.DONE, message: 'Subida' });
+      const doneMsg = compressed
+        ? `Subida · ${formatBytes(originalSize)} → ${formatBytes(compressedSize)}`
+        : 'Subida';
+      updateItem(id, { status: STATUS.DONE, message: doneMsg });
     } catch (err) {
       updateItem(id, { status: STATUS.ERROR, message: err.message || 'Error al subir' });
     }
