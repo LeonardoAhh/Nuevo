@@ -24,7 +24,18 @@ const Layout = ({ children }) => {
         closeButton={false}
         expand={false}
         gap={8}
-        offset="max(var(--spacing-sm), env(safe-area-inset-top))"
+        offset={{
+          top: 'max(var(--spacing-sm), calc(env(safe-area-inset-top) + var(--spacing-xs)))',
+          bottom: 'max(var(--spacing-sm), env(safe-area-inset-bottom))',
+          left: 'max(var(--spacing-sm), env(safe-area-inset-left))',
+          right: 'max(var(--spacing-sm), env(safe-area-inset-right))',
+        }}
+        mobileOffset={{
+          top: 'max(var(--spacing-sm), calc(env(safe-area-inset-top) + var(--spacing-xs)))',
+          bottom: 'max(var(--spacing-sm), env(safe-area-inset-bottom))',
+          left: 'max(var(--spacing-xs), env(safe-area-inset-left))',
+          right: 'max(var(--spacing-xs), env(safe-area-inset-right))',
+        }}
         visibleToasts={3}
         toastOptions={{
           className: 'vp-toast',

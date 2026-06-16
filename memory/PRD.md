@@ -105,6 +105,29 @@ Sistema web (Vite + React + Supabase) para gestión de transporte de personal en
 - ✅ Icons (`/pwa-512x512.png`, `/apple-touch-icon-180x180.png` 200)
 - ✅ Viewport meta verificado en runtime (test playwright)
 
+## Implementado en esta sesión (Ene 2026) — Safe-area fix headers + toasts
+
+### Bug reportado
+En PWA iOS standalone (con `viewport-fit=cover` + `apple-mobile-web-app-status-bar-style=black-translucent`), el contenido se dibuja **debajo** de la barra de estado del sistema. Tanto el `PortalHeader`/`TopNav` como las notificaciones de Sonner quedaban tapados por el reloj, señal, 4G y batería.
+
+### Cambios
+1. **`PortalHeader` y `TopNav`** (sticky headers):
+   - `top: 1rem` → `top: max(var(--spacing-base), calc(env(safe-area-inset-top) + var(--spacing-xs)))`
+   - Añadido `margin-top: max(var(--spacing-sm), env(safe-area-inset-top))` para el primer render
+   - `width: calc(100% - 2rem)` → `width: calc(100% - var(--spacing-xxl))` (tokens 100%)
+
+2. **`<Toaster>` en `App.jsx`** (Sonner v2.0.7):
+   - Bug real: en móvil Sonner usa el prop **`mobileOffset`** ignorando `offset` (Sonner v2 introdujo esto)
+   - Antes: `offset="max(var(--spacing-sm), env(safe-area-inset-top))"` — ignorado en mobile
+   - Ahora: `offset` y `mobileOffset` ambos configurados como objeto `{ top, right, bottom, left }` con `env(safe-area-inset-*)` y fallback `var(--spacing-*)`
+   - Aplica safe-area en los 4 lados (no solo top) para iPhone landscape con notch lateral
+
+### Validación
+- ✅ `yarn build` limpio · `safe-area-inset-top` aparece 12 veces en el bundle · `mobileOffset` integrado
+- ✅ Test en runtime (browser sin notch): `computed top: 12px` (fallback `--spacing-sm` correcto)
+- ✅ En iOS PWA con notch: `max()` elegirá `env(safe-area-inset-top)` ≈ 47-59px automáticamente
+- ✅ Headers no se solapan con barra de estado iOS
+
 ## Implementado en esta sesión (Ene 2026) — Toasts · Errores · LoginTransition (minimalismo + a11y)
 
 ### `notify.js` reescrito (`/app/src/lib/notify.js`)

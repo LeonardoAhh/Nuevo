@@ -57,11 +57,13 @@ export const TopNav = () => {
       <style>{`
         .topnav-wrapper {
           position: sticky;
-          top: 1rem;
+          /* Respeta zona segura iOS (notch / status bar en PWA standalone) */
+          top: max(var(--spacing-base), calc(env(safe-area-inset-top) + var(--spacing-xs)));
           z-index: 1000;
           margin: 0 auto;
           max-width: 1200px;
-          width: calc(100% - 2rem);
+          width: calc(100% - var(--spacing-xxl));
+          margin-top: max(var(--spacing-sm), env(safe-area-inset-top));
         }
         .topnav-link {
           position: relative;

@@ -54,11 +54,14 @@ export const PortalHeader = ({
       <style>{`
         .portal-header-wrapper {
           position: sticky;
-          top: 1rem;
+          /* Respeta la zona segura iOS (notch / barra de estado en PWA standalone) */
+          top: max(var(--spacing-base), calc(env(safe-area-inset-top) + var(--spacing-xs)));
           z-index: 1000;
           margin: 0 auto;
           max-width: 1200px;
-          width: calc(100% - 2rem);
+          width: calc(100% - var(--spacing-xxl));
+          /* Margen superior cuando el header se monta directo en viewport (no scrolleado) */
+          margin-top: max(var(--spacing-sm), env(safe-area-inset-top));
         }
       `}</style>
       <div className="portal-header-wrapper">
