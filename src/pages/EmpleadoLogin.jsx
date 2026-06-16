@@ -15,6 +15,7 @@ import { useReducedMotion } from '../lib/useReducedMotion';
 import { empleadoApi } from '../lib/empleadoApi';
 import { empleadoSession, webauthnHints } from '../lib/empleadoSession';
 import { webauthn } from '../lib/webauthn';
+import { WebAuthnDiagnostics } from '../components/WebAuthnDiagnostics';
 import { APP_ROUTES, MOTION, getFirstName } from '../lib/choferConfig';
 
 /* ============================================================
@@ -66,6 +67,7 @@ export const EmpleadoLogin = () => {
   const [successAnim, setSuccessAnim] = useState(false);
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioRegistering, setBioRegistering] = useState(false);
+  const [lastBioError, setLastBioError] = useState(null);
 
   const introHintId = useId();
 
@@ -207,6 +209,7 @@ export const EmpleadoLogin = () => {
   /* ── Login biométrico (atajo desde step 5) ── */
   const handleBiometricLogin = async () => {
     setError('');
+    setLastBioError(null);
     setLoading(true);
     try {
       const { token, empleado: fresh } = await webauthn.loginWithBiometric(numEmpleado.trim());
@@ -214,11 +217,13 @@ export const EmpleadoLogin = () => {
       setEmpleado(fresh);
       iniciarSesion();
     } catch (err) {
-      if (err?.name === 'NotAllowedError') {
-        // Usuario canceló el prompt — silencio
-      } else {
-        setError(err.message || 'No se pudo usar biometría');
-      }
+      const friendly = err?.name === 'NotAllowedError'
+        ? 'Operación cancelada o tiempo agotado'
+        : `${err?.name || 'Error'}: ${err?.message || 'sin detalle'}`;
+      setError(friendly);
+      setLastBioError({
+        name: err?.name, message: err?.message, code: err?.code, stack: err?.stack,
+      });
     } finally {
       setLoading(false);
     }
@@ -226,6 +231,8 @@ export const EmpleadoLogin = () => {
 
   /* ── Step 6: Enrolar biometría (opcional) ── */
   const handleEnableBio = async () => {
+    setError('');
+    setLastBioError(null);
     setBioRegistering(true);
     try {
       await webauthn.register({ deviceLabel: navigator.userAgent.slice(0, 80) });
@@ -233,10 +240,15 @@ export const EmpleadoLogin = () => {
       notify.success('Biometría activada');
       iniciarSesion();
     } catch (err) {
-      if (err?.name !== 'NotAllowedError') {
-        notify.error('No se pudo activar la biometría');
-      }
-      iniciarSesion();
+      const friendly = err?.name === 'NotAllowedError'
+        ? 'Operación cancelada o tiempo agotado'
+        : `${err?.name || 'Error'}: ${err?.message || 'sin detalle'}`;
+      setError(friendly);
+      setLastBioError({
+        name: err?.name, message: err?.message, code: err?.code, stack: err?.stack,
+      });
+      // No avanzamos automáticamente: dejamos que el usuario vea el error y decida
+      // (Reintentar / Saltar).
     } finally {
       setBioRegistering(false);
     }
@@ -488,6 +500,10 @@ export const EmpleadoLogin = () => {
               >
                 ¿No eres tú? Cambiar empleado
               </button>
+
+              {(lastBioError || showBioInStep5) && (
+                <WebAuthnDiagnostics lastError={lastBioError} />
+              )}
             </motion.form>
           )}
 
@@ -517,6 +533,7 @@ export const EmpleadoLogin = () => {
               >
                 Ahora no
               </button>
+              <WebAuthnDiagnostics lastError={lastBioError} />
             </motion.div>
           )}
 
