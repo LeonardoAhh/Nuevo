@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabaseClient';
 import { MapPin, Clock, QrCode, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PortalHeader } from '../components/PortalHeader';
+import { empleadoSession } from '../lib/empleadoSession';
+import { APP_ROUTES } from '../lib/choferConfig';
 
 /* ============================================================
    EMPLEADO DASHBOARD
@@ -160,19 +162,19 @@ export const EmpleadoDashboard = () => {
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    const id = localStorage.getItem('empleado_id');
-    if (!id) { navigate('/empleado/login'); return; }
+    const id = empleadoSession.getEmpleadoId();
+    if (!id) { navigate(APP_ROUTES.empleadoLogin, { replace: true }); return; }
 
     const fetchEmpleado = async () => {
       const { data, error } = await supabase
         .from('empleados')
-        .select('*')
+        .select('id, nombre, numero_empleado, turno, ruta, foto_url, qr_code, colonia, referencia')
         .eq('id', id)
         .maybeSingle();
 
       if (error || !data) {
-        localStorage.removeItem('empleado_id');
-        navigate('/empleado/login');
+        empleadoSession.clear();
+        navigate(APP_ROUTES.empleadoLogin, { replace: true });
       } else {
         setEmpleado(data);
       }
@@ -183,8 +185,8 @@ export const EmpleadoDashboard = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('empleado_id');
-    navigate('/empleado/login');
+    empleadoSession.clear();
+    navigate(APP_ROUTES.empleadoLogin, { replace: true });
   };
 
   if (loading)   return <LoadingState />;
