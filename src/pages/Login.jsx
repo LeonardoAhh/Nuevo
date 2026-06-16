@@ -5,8 +5,9 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
-import { LoginTransition } from '../components/LoginTransition';
-import { notify } from '../lib/notify';
+import { AuthError } from '../components/AuthError';
+import { LoginTransition, LOGIN_TRANSITION_MS } from '../components/LoginTransition';
+import { friendlyAuthError } from '../lib/authErrors';
 
 /* ============================================================
    LOGIN — Administración
@@ -34,17 +35,14 @@ export const Login = () => {
 
       setUserName(name);
       setSuccessAnim(true);
-      notify.welcome(name);
 
       setTimeout(() => {
         if (role === 'admin')        navigate('/empresa');
         else if (role === 'chofer')  navigate('/chofer');
         else                         navigate('/');
-      }, 2500);
+      }, LOGIN_TRANSITION_MS);
     } catch (err) {
-      const msg = err.message || 'Error al iniciar sesión';
-      setError(msg);
-      notify.error('No se pudo iniciar sesión', { description: msg });
+      setError(friendlyAuthError(err));
       setLoading(false);
     }
   };
@@ -55,11 +53,7 @@ export const Login = () => {
     <>
       <LoginTransition isVisible={successAnim} userName={userName} />
       <AuthShell eyebrow="Administración" testId="admin-login-page">
-        {error && (
-          <div role="alert" data-testid="login-error" style={errorStyle}>
-            {error}
-          </div>
-        )}
+        <AuthError testId="login-error">{error}</AuthError>
 
         <AuthField
           id="admin-email"
@@ -74,6 +68,7 @@ export const Login = () => {
           placeholder="usuario@vinoplastic.com"
           disabled={loading}
           aria-required="true"
+          aria-invalid={Boolean(error)}
           data-testid="admin-email-input"
         />
 
@@ -89,12 +84,14 @@ export const Login = () => {
           placeholder="••••••••"
           disabled={loading}
           aria-required="true"
+          aria-invalid={Boolean(error)}
           data-testid="admin-password-input"
           suffix={
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={showPassword}
               data-testid="admin-toggle-password"
               style={eyeBtnStyle}
             >
@@ -120,19 +117,6 @@ export const Login = () => {
   );
 };
 
-/* ─── Inline styles compartidos ─── */
-const errorStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: 'var(--typography-body-sm-size)',
-  lineHeight: 1.5,
-  color: 'var(--color-semantic-error)',
-  background: 'rgb(var(--color-semantic-error-raw) / 0.06)',
-  border: '1px solid rgb(var(--color-semantic-error-raw) / 0.2)',
-  borderRadius: 'var(--rounded-md)',
-  padding: 'var(--spacing-sm) var(--spacing-base)',
-  textAlign: 'center',
-};
-
 const eyeBtnStyle = {
   background: 'none',
   border: 'none',
@@ -141,4 +125,7 @@ const eyeBtnStyle = {
   color: 'var(--color-muted-soft)',
   display: 'inline-flex',
   alignItems: 'center',
+  minHeight: '2rem',
+  minWidth: '2rem',
+  justifyContent: 'center',
 };

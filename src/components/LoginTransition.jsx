@@ -1,16 +1,27 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useReducedMotion } from '../lib/useReducedMotion';
 
 /* ============================================================
-   LoginTransition — Animación de entrada al dashboard
-   Diseño abstracto: anillos concéntricos + check geométrico
-   + saludo tipográfico. Sin logo, sin emojis.
+   LoginTransition — Animación minimalista de entrada al dashboard
+   ------------------------------------------------------------
+   Objetivos:
+     • Texto mínimo (saludo corto, sin descripciones).
+     • Mark único (check geométrico, sin anillos ni dots).
+     • Duración total ≤ 1.2 s (no entorpece el flujo).
+     • Respeta `prefers-reduced-motion`.
+     • Mobile-first, tokens 100%.
    ============================================================ */
 
-const EASE = [0.22, 1, 0.36, 1]; // ease-out cubic suave
+const TRANSITION_TOTAL_MS = 1200; // Visible total
+export const LOGIN_TRANSITION_MS = TRANSITION_TOTAL_MS;
+
+const EASE = [0.22, 1, 0.36, 1];
 
 export const LoginTransition = ({ isVisible, userName = '' }) => {
+  const reducedMotion = useReducedMotion();
   const firstName = userName ? String(userName).trim().split(/\s+/)[0] : '';
+  const greeting = firstName ? `Hola, ${firstName}` : 'Bienvenido';
 
   return (
     <AnimatePresence>
@@ -18,33 +29,27 @@ export const LoginTransition = ({ isVisible, userName = '' }) => {
         <motion.div
           role="status"
           aria-live="polite"
+          aria-label={greeting}
           data-testid="login-transition"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: 'blur(8px)' }}
-          transition={{ duration: 0.45, ease: EASE }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reducedMotion ? 0.01 : 0.28, ease: EASE }}
           style={S.overlay}
         >
-          {/* Ruido decorativo de fondo (anillos sutiles que se expanden) */}
-          <RipplesBg />
-
-          {/* Núcleo central */}
           <motion.div
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.08, duration: 0.55, ease: EASE }}
+            initial={reducedMotion ? false : { y: 8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.32, ease: EASE, delay: 0.04 }}
             style={S.core}
           >
-            <Mark />
+            <Mark reducedMotion={reducedMotion} />
 
-            {/* Saludo tipográfico */}
-            <div style={S.textBlock}>
-              <Eyebrow />
-              <Heading firstName={firstName} />
-            </div>
+            <h2 style={S.greeting} aria-hidden="true">
+              {greeting}
+            </h2>
 
-            {/* Indicador de progreso */}
-            <Indicator />
+            <Progress reducedMotion={reducedMotion} />
           </motion.div>
         </motion.div>
       )}
@@ -52,135 +57,63 @@ export const LoginTransition = ({ isVisible, userName = '' }) => {
   );
 };
 
-/* ─── Anillos concéntricos de fondo ───────────────────────── */
-const RipplesBg = () => (
-  <>
-    {[0, 1, 2].map((i) => (
-      <motion.div
-        key={i}
-        aria-hidden="true"
-        initial={{ scale: 0.4, opacity: 0 }}
-        animate={{ scale: 2.5, opacity: 0 }}
-        transition={{
-          delay: i * 0.55,
-          duration: 2.8,
-          ease: 'easeOut',
-          repeat: Infinity,
-        }}
-        style={{
-          position: 'absolute',
-          width: 'min(60vmin, 24rem)',
-          height: 'min(60vmin, 24rem)',
-          borderRadius: '50%',
-          border: '1px solid rgb(var(--color-accent-raw) / 0.18)',
-          pointerEvents: 'none',
-        }}
-      />
-    ))}
-  </>
-);
-
-/* ─── Símbolo geométrico (check abstracto) ────────────────── */
-const Mark = () => (
-  <motion.svg
-    width="72" height="72" viewBox="0 0 72 72"
-    initial={{ scale: 0.6, opacity: 0 }}
-    animate={{ scale: 1, opacity: 1 }}
-    transition={{ delay: 0.18, type: 'spring', stiffness: 220, damping: 18 }}
-    style={{ display: 'block' }}
-    aria-hidden="true"
-  >
-    {/* Círculo accent (trazo animado) */}
-    <motion.circle
-      cx="36" cy="36" r="30"
-      fill="none"
-      stroke="rgb(var(--color-accent-raw))"
-      strokeWidth="2"
-      strokeLinecap="round"
-      initial={{ pathLength: 0, opacity: 0 }}
-      animate={{ pathLength: 1, opacity: 1 }}
-      transition={{ delay: 0.24, duration: 0.7, ease: EASE }}
-    />
-    {/* Check trazo a trazo */}
-    <motion.path
-      d="M 22 37 L 32 47 L 51 27"
-      fill="none"
-      stroke="rgb(var(--color-accent-raw))"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      initial={{ pathLength: 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{ delay: 0.55, duration: 0.45, ease: EASE }}
-    />
-  </motion.svg>
-);
-
-/* ─── Eyebrow ─────────────────────────────────────────────── */
-const Eyebrow = () => (
-  <motion.span
-    initial={{ opacity: 0, y: 6 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.85, duration: 0.4, ease: EASE }}
-    style={S.eyebrow}
-  >
-    Acceso autorizado
-  </motion.span>
-);
-
-/* ─── Heading con saludo (split letra a letra) ────────────── */
-const Heading = ({ firstName }) => {
-  const text = firstName ? `Hola, ${firstName}` : 'Bienvenido';
-  const chars = text.split('');
-
+/* ─── Mark geométrico ─────────────────────────────────────── */
+const Mark = ({ reducedMotion }) => {
+  const dur = reducedMotion ? 0.001 : 0.5;
   return (
-    <h2 style={S.heading} aria-label={text}>
-      {chars.map((ch, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.95 + i * 0.025,
-            duration: 0.42,
-            ease: EASE,
-          }}
-          style={{ display: 'inline-block', whiteSpace: 'pre' }}
-          aria-hidden="true"
-        >
-          {ch === ' ' ? '\u00A0' : ch}
-        </motion.span>
-      ))}
-    </h2>
+    <motion.svg
+      width="56"
+      height="56"
+      viewBox="0 0 56 56"
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <motion.circle
+        cx="28"
+        cy="28"
+        r="24"
+        fill="none"
+        stroke="rgb(var(--color-accent-raw) / 0.35)"
+        strokeWidth="1.5"
+        initial={reducedMotion ? false : { pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: dur, ease: EASE }}
+      />
+      <motion.path
+        d="M 18 29 L 25 36 L 39 22"
+        fill="none"
+        stroke="rgb(var(--color-accent-raw))"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={reducedMotion ? false : { pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: dur * 0.7, ease: EASE, delay: dur * 0.6 }}
+      />
+    </motion.svg>
   );
 };
 
-/* ─── Indicador de progreso ───────────────────────────────── */
-const Indicator = () => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 1.4, duration: 0.3 }}
-    style={S.indicator}
-    aria-hidden="true"
+/* ─── Barra de progreso lineal (consume el tiempo restante) ─ */
+const Progress = ({ reducedMotion }) => (
+  <div
+    style={S.progressTrack}
+    role="progressbar"
+    aria-valuemin={0}
+    aria-valuemax={100}
+    aria-label="Cargando"
   >
-    {[0, 1, 2].map((i) => (
-      <motion.span
-        key={i}
-        style={S.dot}
-        animate={{
-          opacity:   [0.25, 1, 0.25],
-          y:         [0, -4, 0],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 1.1,
-          ease: 'easeInOut',
-          delay: i * 0.15,
-        }}
-      />
-    ))}
-  </motion.div>
+    <motion.div
+      initial={{ width: '0%' }}
+      animate={{ width: '100%' }}
+      transition={{
+        duration: reducedMotion ? 0.01 : (TRANSITION_TOTAL_MS - 320) / 1000,
+        ease: 'linear',
+        delay: 0.2,
+      }}
+      style={S.progressFill}
+    />
+  </div>
 );
 
 /* ─── Styles ──────────────────────────────────────────────── */
@@ -191,55 +124,42 @@ const S = {
     zIndex: 9999,
     background: 'var(--color-canvas)',
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    padding: 'var(--spacing-lg)',
+    paddingTop:    'env(safe-area-inset-top)',
+    paddingBottom: 'env(safe-area-inset-bottom)',
+    paddingLeft:   'max(var(--spacing-lg), env(safe-area-inset-left))',
+    paddingRight:  'max(var(--spacing-lg), env(safe-area-inset-right))',
   },
   core: {
-    position: 'relative',
-    zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 'var(--spacing-xl)',
+    gap: 'var(--spacing-base)',
+    maxWidth: 'min(92vw, 18rem)',
   },
-  textBlock: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 'var(--spacing-xs)',
-    textAlign: 'center',
-  },
-  eyebrow: {
-    fontFamily: 'var(--font-body)',
-    fontSize: 'var(--typography-caption-uppercase-size)',
-    fontWeight: 'var(--typography-caption-uppercase-weight)',
-    letterSpacing: 'var(--typography-caption-uppercase-ls)',
-    textTransform: 'uppercase',
-    color: 'var(--color-accent)',
-  },
-  heading: {
+  greeting: {
     margin: 0,
     fontFamily: 'var(--font-display)',
-    fontSize: 'clamp(var(--typography-title-md-size), 7vw, var(--typography-display-md-size))',
+    fontSize: 'clamp(var(--typography-title-md-size), 5.5vw, var(--typography-display-sm-size))',
     fontWeight: 'var(--typography-title-md-weight)',
     color: 'var(--color-ink)',
-    letterSpacing: '-0.03em',
+    letterSpacing: '-0.02em',
     lineHeight: 1.1,
+    textAlign: 'center',
   },
-  indicator: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.4rem',
-    marginTop: 'var(--spacing-sm)',
+  progressTrack: {
+    width: '100%',
+    maxWidth: '8rem',
+    height: '2px',
+    background: 'rgb(var(--color-accent-raw) / 0.15)',
+    borderRadius: 'var(--rounded-pill)',
+    overflow: 'hidden',
+    marginTop: 'var(--spacing-xs)',
   },
-  dot: {
-    display: 'inline-block',
-    width: '0.4rem',
-    height: '0.4rem',
-    borderRadius: '50%',
+  progressFill: {
+    height: '100%',
     background: 'var(--color-accent)',
+    borderRadius: 'inherit',
   },
 };

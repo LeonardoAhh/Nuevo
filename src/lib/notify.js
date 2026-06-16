@@ -1,110 +1,113 @@
 import { toast } from 'sonner';
-import { CheckCircle2, XCircle, Info, AlertTriangle, LogOut, Hand, WifiOff } from 'lucide-react';
 import React from 'react';
+import { CheckCircle2, XCircle, AlertTriangle, Info, LogOut, WifiOff } from 'lucide-react';
 
 /* ============================================================
    NOTIFY — Notificaciones cohesivas (wrapper sobre sonner)
    ------------------------------------------------------------
-   API:
-     notify.success(msg, { description, duration })
-     notify.error  (msg, { description, duration })
-     notify.info   (msg, opts)
-     notify.warning(msg, opts)
-     notify.loading(msg, opts)        → devuelve id
-     notify.dismiss(id)
-     notify.promise(promise, { loading, success, error })
+   Filosofía:
+     • Texto mínimo. Una idea por toast.
+     • Sin descripciones largas — sólo cuando aporten valor real.
+     • Duraciones tokenizadas (no más magic numbers en cada call).
+     • ARIA: success/info → polite; warning/error → assertive.
+     • Iconos coherentes con el sistema de diseño.
 
-   Helpers semánticos:
-     notify.welcome(name)
-     notify.bye()
-     notify.saved(what?)
-     notify.deleted(what?)
-     notify.created(what?)
-     notify.updated(what?)
-     notify.networkError(err?)
-     notify.copied()
-     notify.routeSelected(code)
-     notify.routeFinished(code)
+   API pública:
+     notify.success(msg, opts?)
+     notify.error  (msg, opts?)
+     notify.info   (msg, opts?)
+     notify.warning(msg, opts?)
+     notify.loading(msg, opts?)        → id (dismissable)
+     notify.dismiss(id?)
+     notify.promise(promise, { loading, success, error })
+     notify.networkError()             → tono error, mensaje fijo
+     notify.bye()                      → cierre de sesión
+     notify.copied()                   → confirmación de copiado
    ============================================================ */
 
-const ICON = {
-  size: 18,
-  strokeWidth: 1.75,
-};
-
-const wrapIcon = (Icon, color) => (
-  React.createElement('span', {
-    style: { display: 'inline-flex', color, flexShrink: 0 },
-    'aria-hidden': true,
-  }, React.createElement(Icon, { size: ICON.size, strokeWidth: ICON.strokeWidth }))
-);
-
-/* Duraciones recomendadas por tipo (ms) */
-const DUR = {
-  success: 3200,
-  info:    3500,
-  warning: 4200,
-  error:   5000,
+/* Duraciones (ms) — alineadas al modelo de UX de sonner. */
+export const NOTIFY_DURATIONS = {
+  success: 2800,
+  info:    3200,
+  warning: 4000,
+  error:   4800,
   loading: Infinity,
 };
 
-const base = (kind) => (msg, opts = {}) => toast[kind](msg, { duration: DUR[kind], ...opts });
+const ICON_SIZE = 16;
+const ICON_STROKE = 2;
+
+const renderIcon = (Icon, colorVar) =>
+  React.createElement(
+    'span',
+    {
+      'aria-hidden': true,
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: colorVar,
+        flexShrink: 0,
+      },
+    },
+    React.createElement(Icon, { size: ICON_SIZE, strokeWidth: ICON_STROKE }),
+  );
+
+const ICONS = {
+  success: () => renderIcon(CheckCircle2, 'var(--color-semantic-success)'),
+  error:   () => renderIcon(XCircle, 'var(--color-semantic-error)'),
+  warning: () => renderIcon(AlertTriangle, 'var(--color-semantic-warning)'),
+  info:    () => renderIcon(Info, 'var(--color-accent)'),
+};
+
+/* Helper interno: lanza un toast tipado con icono y duración por defecto. */
+const fire = (kind) => (msg, opts = {}) => toast[kind](msg, {
+  duration: NOTIFY_DURATIONS[kind],
+  icon: ICONS[kind] ? ICONS[kind]() : undefined,
+  ...opts,
+});
 
 export const notify = {
-  /* Tipos básicos */
-  success: base('success'),
-  error:   base('error'),
-  info:    base('info'),
-  warning: base('warning'),
-  message: (msg, opts) => toast(msg, opts),
-  loading: (msg, opts = {}) => toast.loading(msg, { duration: DUR.loading, ...opts }),
+  success: fire('success'),
+  error:   fire('error'),
+  warning: fire('warning'),
+  info:    fire('info'),
+
+  /* Texto plano sin tipo (neutro). */
+  message: (msg, opts = {}) => toast(msg, { duration: NOTIFY_DURATIONS.info, ...opts }),
+
+  /* Loading persistente — devuelve id para dismiss. */
+  loading: (msg, opts = {}) => toast.loading(msg, {
+    duration: NOTIFY_DURATIONS.loading,
+    ...opts,
+  }),
+
   dismiss: (id) => toast.dismiss(id),
+
+  /* Promise wrapper (toast lifecycle). */
   promise: toast.promise,
 
-  /* ── Helpers semánticos ──────────────────────────── */
-  welcome: (name) => toast.success(
-    name ? `Bienvenido, ${String(name).split(' ')[0]}` : 'Bienvenido',
-    { description: 'Sesión iniciada correctamente.', icon: wrapIcon(Hand, 'var(--color-accent)'), duration: DUR.success }
-  ),
+  /* ─── Helpers semánticos del dominio ───────────────────────── */
 
-  bye: () => toast(
-    'Sesión cerrada',
-    { description: 'Hasta pronto.', icon: wrapIcon(LogOut, 'var(--color-muted)'), duration: 2400 }
-  ),
-
-  saved: (what = 'Cambios') => toast.success(`${what} guardados`, { duration: DUR.success }),
-
-  created: (what = 'Registro') => toast.success(`${what} creado`, {
-    icon: wrapIcon(CheckCircle2, 'var(--color-semantic-success)'),
-    duration: DUR.success,
+  /** Sesión cerrada — neutro, sin descripción. */
+  bye: () => toast('Sesión cerrada', {
+    duration: 2200,
+    icon: renderIcon(LogOut, 'var(--color-muted)'),
   }),
 
-  updated: (what = 'Registro') => toast.success(`${what} actualizado`, { duration: DUR.success }),
-
-  deleted: (what = 'Registro') => toast.success(`${what} eliminado`, {
-    icon: wrapIcon(XCircle, 'var(--color-semantic-error)'),
-    duration: DUR.success,
+  /** Copia al portapapeles — confirmación brevísima. */
+  copied: () => toast.success('Copiado', {
+    duration: 1800,
+    icon: ICONS.success(),
   }),
 
-  networkError: (err) => toast.error('Sin conexión', {
-    description: err?.message || 'Comprueba tu internet e inténtalo de nuevo.',
-    icon: wrapIcon(WifiOff, 'var(--color-semantic-error)'),
-    duration: DUR.error,
+  /** Error de red — texto fijo, sin exponer detalles de err. */
+  networkError: () => toast.error('Sin conexión', {
+    duration: NOTIFY_DURATIONS.error,
+    icon: renderIcon(WifiOff, 'var(--color-semantic-error)'),
   }),
 
-  copied: () => toast.success('Copiado al portapapeles', { duration: 1800 }),
-
-  /* Específicos del dominio */
-  routeSelected: (code) => toast.success(`Ruta ${code || ''} lista`, {
-    description: 'Ya puedes escanear los códigos QR.',
-    duration: DUR.success,
-  }),
-  routeFinished: (code) => toast(`Ruta ${code || ''} finalizada`, {
-    description: 'El historial quedó guardado.',
-    duration: 3000,
-  }),
-
-  /* Acceso al toast original por si se necesita */
+  /* Acceso al toast crudo para casos avanzados. */
   raw: toast,
 };
 

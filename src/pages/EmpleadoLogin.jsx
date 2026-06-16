@@ -6,8 +6,8 @@ import { User, Lock, Check, LogIn } from 'lucide-react';
 import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
-import { LoginTransition } from '../components/LoginTransition';
-import { notify, toast } from '../lib/notify';
+import { notify } from '../lib/notify';
+import { LoginTransition, LOGIN_TRANSITION_MS } from '../components/LoginTransition';
 import { MAPA_TURNOS } from '../lib/turnos';
 
 /* ============================================================
@@ -53,7 +53,7 @@ export const EmpleadoLogin = () => {
     setLoading(false);
 
     if (error || !data) {
-      toast.error('Número de empleado no encontrado.');
+      notify.error('Empleado no encontrado');
       return;
     }
 
@@ -76,19 +76,19 @@ export const EmpleadoLogin = () => {
     if (isReal) {
       setStep(3);
     } else {
-      toast.error('Respuesta incorrecta. Contacta a Reclutamiento si hay un error en tus datos.');
+      notify.error('Respuesta incorrecta');
       setNumEmpleado(''); setEmpleado(null); setStep(1);
     }
   };
 
   const handleCrearNip = () => {
-    if (nip.length !== 4) { toast.error('El NIP debe ser de 4 dígitos.'); return; }
+    if (nip.length !== 4) { notify.error('NIP de 4 dígitos'); return; }
     setStep(4);
   };
 
   const handleConfirmarNip = async () => {
     if (nip !== confirmNip) {
-      toast.error('Los NIP no coinciden.');
+      notify.error('Los NIP no coinciden');
       setNip(''); setConfirmNip(''); setStep(3);
       return;
     }
@@ -97,22 +97,21 @@ export const EmpleadoLogin = () => {
     const { error } = await supabase.from('empleados').update({ nip }).eq('id', empleado.id);
     setLoading(false);
 
-    if (error) { toast.error('Error al guardar NIP.'); return; }
-    toast.success('¡NIP creado!');
+    if (error) { notify.error('No se pudo guardar'); return; }
+    notify.success('NIP creado');
     iniciarSesion(empleado.id);
   };
 
   const handleLoginNip = (e) => {
     e?.preventDefault?.();
-    if (nip !== empleado.nip) { toast.error('NIP incorrecto.'); setNip(''); return; }
+    if (nip !== empleado.nip) { notify.error('NIP incorrecto'); setNip(''); return; }
     iniciarSesion(empleado.id);
   };
 
   const iniciarSesion = (id) => {
     localStorage.setItem('empleado_id', id);
-    notify.welcome(empleado?.nombre);
     setSuccessAnim(true);
-    setTimeout(() => navigate('/empleado/dashboard'), 2500);
+    setTimeout(() => navigate('/empleado/dashboard'), LOGIN_TRANSITION_MS);
   };
 
   const handleCambiarEmpleado = () => {

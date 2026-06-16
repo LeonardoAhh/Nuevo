@@ -105,6 +105,78 @@ Sistema web (Vite + React + Supabase) para gestión de transporte de personal en
 - ✅ Icons (`/pwa-512x512.png`, `/apple-touch-icon-180x180.png` 200)
 - ✅ Viewport meta verificado en runtime (test playwright)
 
+## Implementado en esta sesión (Ene 2026) — Toasts · Errores · LoginTransition (minimalismo + a11y)
+
+### `notify.js` reescrito (`/app/src/lib/notify.js`)
+- API mínima: `success / error / warning / info / loading / message / dismiss / promise + bye / copied / networkError`
+- **Duraciones tokenizadas** en `NOTIFY_DURATIONS` (success 2.8s, info 3.2s, warning 4s, error 4.8s)
+- **Iconos cohesivos** (lucide) con colores semánticos del token system (no rich-colors de sonner)
+- **Eliminados helpers obsoletos**: `welcome`, `saved`, `updated`, `created`, `deleted`, `routeSelected`, `routeFinished` (sustituidos por `success` directo con texto corto)
+- `networkError()` ya no acepta `err` — texto fijo "Sin conexión" para no exponer stack
+
+### `Toaster` (App.jsx) refinado
+- `richColors={false}`, `closeButton={false}` (menos ruido visual)
+- `visibleToasts={3}` (antes 4)
+- Sin styles inline duplicados — todo via CSS `.vp-toast`
+
+### Sonner CSS (`index.css`)
+- **100% tokens**: `--color-*`, `--spacing-*`, `--rounded-*`, `--typography-*`, `--font-*`
+- **Borde lateral 3px** del color semántico (success/error/warning/info/loading) en lugar de fondos tintados
+- **Mobile-first**: `@media (max-width: 480px)` ajusta width y font-size
+- Soporte `prefers-reduced-motion`
+- Sin `box-shadow` inline — definido en CSS con tokens de tinta
+
+### `<AuthError>` — nuevo componente (`/app/src/components/AuthError.jsx`)
+- Reemplaza el `errorStyle` inline duplicado en `Login.jsx` y `ChoferLogin.jsx`
+- `role="alert"` + `aria-live="assertive"` (anuncio inmediato)
+- Icono `AlertCircle` 16px + texto compacto
+- Tokens 100%, mobile-first, sin hex/px hardcoded
+- No renderiza si `children` está vacío (evita placeholder vacío)
+
+### `friendlyAuthError()` — mapeo de errores (`/app/src/lib/authErrors.js`)
+- Convierte mensajes crudos de Supabase/red a textos amables:
+  - `Failed to fetch / NetworkError` → "Sin conexión"
+  - `Invalid login credentials` → "Correo o contraseña incorrectos"
+  - `Email not confirmed` → "Confirma tu correo primero"
+  - `Email rate limit exceeded` / `Too many requests` → "Demasiados intentos"
+- Recorta mensajes >80 chars a fallback genérico
+- Match parcial por keywords (fetch/network/credential/rate limit)
+
+### `LoginTransition.jsx` reescrito — minimalista
+- **Antes**: anillos concéntricos infinitos + check + eyebrow "Acceso autorizado" + saludo letra-por-letra + 3 dots animados, 2.5s total
+- **Ahora**: mark único (círculo + check trazado), saludo corto, barra de progreso lineal, **1.2s total**
+- Exporta `LOGIN_TRANSITION_MS` para que las páginas usen el mismo timeout (sin magic number)
+- Respeta `prefers-reduced-motion` (atajo instantáneo)
+- `role="status"` + `aria-live="polite"` + `aria-label={greeting}`
+- Safe-area-inset en padding del overlay
+- Sin emojis, sin descripciones largas
+
+### Logins refactorizados (3 páginas)
+- `Login.jsx` y `ChoferLogin.jsx`: usan `<AuthError>` + `friendlyAuthError` + `LOGIN_TRANSITION_MS`
+- **Eliminado `notify.welcome(name)`** — info redundante con la transición visual
+- `EmpleadoLogin.jsx`: `toast.error/success` → `notify.error/success` (cohesión) + textos recortados ("Empleado no encontrado", "NIP creado", "Los NIP no coinciden")
+- `aria-invalid={Boolean(error)}` añadido en inputs cuando hay error (a11y)
+- `aria-pressed` en el botón mostrar/ocultar contraseña (a11y)
+- Tap targets del eye button ≥ 32px (WCAG 2.5.5)
+
+### `ChoferPortal.jsx` — toasts alineados
+- `notify.routeSelected(code)` → `notify.success(\`Ruta ${code}\`)`
+- `notify.routeFinished(code)` → `notify.message(\`Ruta ${code} finalizada\`)`
+- `notify.networkError({...})` → `notify.networkError()` (sin descripción)
+- "Ruta cerrada solo localmente" + descripción → "Cerrada sin sincronizar" (mensaje único, sin saturar)
+- Sincronización de cola: "Sincronizados N registros pendientes" → "N registro(s) sincronizado(s)"
+
+### Validación
+- ✅ `yarn build` limpio · 1.119 KB / 320 KB gzip · PWA + SW intactos
+- ✅ Snapshot iPhone 14 (390×844): login renderiza minimalista
+- ✅ Disparo error real: "Failed to fetch" → mapeado a "Sin conexión" en pantalla
+- ✅ `role="alert"` + `aria-live="assertive"` verificados con Playwright
+- ✅ Computed styles del `AuthError`: bg `rgba(207,45,86,0.06)`, border `rgba(207,45,86,0.22)`, padding tokens, radius `--rounded-md` ← 100% tokens
+
+### Bundle
+- Build limpio · 1,119 KB → **320 KB gzip** (-1 KB vs sesión anterior, menos código en LoginTransition)
+- Sin nuevas dependencias
+
 ## Backlog
 - P0 (item 1 pendiente): Mover `RUTAS_LIST`, `SHIFT_SCHEDULE`, `SHIFT_HOURS` a Supabase + Edge Function para validar `estado` server-side (evita manipulación cliente)
 - P0 (item 10 pendiente): RLS estricta sobre `registros` y `rutas_activas`

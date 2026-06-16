@@ -5,8 +5,9 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { AuthShell } from '../components/AuthShell';
 import { AuthField } from '../components/AuthField';
 import { AuthButton } from '../components/AuthButton';
-import { LoginTransition } from '../components/LoginTransition';
-import { notify } from '../lib/notify';
+import { AuthError } from '../components/AuthError';
+import { LoginTransition, LOGIN_TRANSITION_MS } from '../components/LoginTransition';
+import { friendlyAuthError } from '../lib/authErrors';
 
 /* ============================================================
    LOGIN — Chofer
@@ -34,17 +35,14 @@ export const ChoferLogin = () => {
 
       if (role !== 'chofer' && role !== 'admin') {
         await supabase.auth.signOut();
-        throw new Error('Esta cuenta no tiene acceso de Chofer.');
+        throw new Error('Cuenta sin acceso de Chofer');
       }
 
       setUserName(name);
       setSuccessAnim(true);
-      notify.welcome(name);
-      setTimeout(() => navigate('/chofer'), 2500);
+      setTimeout(() => navigate('/chofer'), LOGIN_TRANSITION_MS);
     } catch (err) {
-      const msg = err.message || 'Error al iniciar sesión';
-      setError(msg);
-      notify.error('Acceso denegado', { description: msg });
+      setError(friendlyAuthError(err));
       setLoading(false);
     }
   };
@@ -55,11 +53,7 @@ export const ChoferLogin = () => {
     <>
       <LoginTransition isVisible={successAnim} userName={userName} />
       <AuthShell eyebrow="Transporte" testId="chofer-login-page">
-        {error && (
-          <div role="alert" data-testid="chofer-login-error" style={errorStyle}>
-            {error}
-          </div>
-        )}
+        <AuthError testId="chofer-login-error">{error}</AuthError>
 
         <AuthField
           id="chofer-email"
@@ -74,6 +68,7 @@ export const ChoferLogin = () => {
           placeholder="chofer@vinoplastic.com"
           disabled={loading}
           aria-required="true"
+          aria-invalid={Boolean(error)}
           data-testid="chofer-email-input"
         />
 
@@ -89,12 +84,14 @@ export const ChoferLogin = () => {
           placeholder="••••••••"
           disabled={loading}
           aria-required="true"
+          aria-invalid={Boolean(error)}
           data-testid="chofer-password-input"
           suffix={
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={showPassword}
               data-testid="chofer-toggle-password"
               style={eyeBtnStyle}
             >
@@ -120,18 +117,6 @@ export const ChoferLogin = () => {
   );
 };
 
-const errorStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: 'var(--typography-body-sm-size)',
-  lineHeight: 1.5,
-  color: 'var(--color-semantic-error)',
-  background: 'rgb(var(--color-semantic-error-raw) / 0.06)',
-  border: '1px solid rgb(var(--color-semantic-error-raw) / 0.2)',
-  borderRadius: 'var(--rounded-md)',
-  padding: 'var(--spacing-sm) var(--spacing-base)',
-  textAlign: 'center',
-};
-
 const eyeBtnStyle = {
   background: 'none',
   border: 'none',
@@ -140,4 +125,7 @@ const eyeBtnStyle = {
   color: 'var(--color-muted-soft)',
   display: 'inline-flex',
   alignItems: 'center',
+  minHeight: '2rem',
+  minWidth: '2rem',
+  justifyContent: 'center',
 };

@@ -222,7 +222,7 @@ export const ChoferPortal = () => {
   /* ── Cola offline (item 8) ───────────────────────────────────── */
   useEffect(() => {
     const off = wireOfflineFlush(({ ok }) => {
-      if (ok > 0) notify.success(`Sincronizados ${ok} registros pendientes`);
+      if (ok > 0) notify.success(`${ok} registro${ok !== 1 ? 's' : ''} sincronizado${ok !== 1 ? 's' : ''}`);
     });
     return off;
   }, []);
@@ -287,9 +287,7 @@ export const ChoferPortal = () => {
         .eq('ruta', selectedRoute);
       if (error) throw error;
     } catch {
-      notify.warning('Ruta cerrada solo localmente', {
-        description: 'No pudimos sincronizar con el servidor. Se reintentará al recuperar conexión.',
-      });
+      notify.warning('Cerrada sin sincronizar');
     }
     const local = safeStorage.get(STORAGE_KEYS.rutasActivas, [])
       .filter((r) => r.ruta !== selectedRoute);
@@ -298,7 +296,7 @@ export const ChoferPortal = () => {
     setSelectedRoute(null);
     setIsFinishing(false);
     fetchRutasActivas();
-    notify.routeFinished(code);
+    notify.message(`Ruta ${code} finalizada`);
   }, [selectedRoute, session, fetchRutasActivas]);
 
   /* ── Escáner QR ──────────────────────────────────────────────── */
@@ -475,7 +473,7 @@ export const ChoferPortal = () => {
       } catch {
         // Falla de red en la búsqueda: notificamos al chofer
         if (!cancelledRef.current) {
-          notify.networkError({ message: 'No pudimos validar el QR. Inténtalo de nuevo.' });
+          notify.networkError();
         }
       } finally {
         const ms = SCAN_CONFIG.scanCooldownMs[uiColor] || SCAN_CONFIG.scanCooldownMs.success;
