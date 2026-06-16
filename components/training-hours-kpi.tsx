@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LabelList, Cell,
@@ -22,42 +23,51 @@ function HoursTooltip({
 }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
+  if (!d) return null
   return (
-    <div data-testid="hours-kpi-tooltip" className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[200px]">
-      <p className="font-semibold text-foreground mb-1.5">Año {label}</p>
-      <div className="space-y-1 text-muted-foreground">
-        <div className="flex justify-between gap-4">
+    <div data-testid="hours-kpi-tooltip" className="bg-popover/95 backdrop-blur-sm border rounded-xl shadow-xl p-3 text-sm min-w-[210px]">
+      <p className="font-bold text-foreground mb-2 flex items-center justify-between">
+        <span>Año {label}</span>
+        <Badge variant="secondary" className="font-bold tabular-nums">
+          {d.totalHours} h
+        </Badge>
+      </p>
+      <div className="space-y-1.5 text-xs">
+        <div className="flex justify-between gap-3 text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-primary" />
-            Total horas
-          </span>
-          <span className="font-bold text-foreground">{d.totalHours}</span>
-        </div>
-        <div className="flex justify-between gap-4">
-          <span className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
+            <Users className="h-3 w-3" />
             Empleados
           </span>
-          <span className="font-medium text-foreground">{d.uniqueEmployees}</span>
+          <span className="font-semibold text-foreground tabular-nums">{d.uniqueEmployees}</span>
         </div>
-        <div className="flex justify-between gap-4">
+        <div className="flex justify-between gap-3 text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5" />
-            Promedio/empleado
-          </span>
-          <span className="font-bold text-primary">{d.avgHoursPerEmployee} h</span>
-        </div>
-        <div className="flex justify-between gap-4 pt-1 mt-1 border-t">
-          <span className="flex items-center gap-1.5">
-            <BookOpen className="h-3.5 w-3.5" />
+            <BookOpen className="h-3 w-3" />
             Cursos tomados
           </span>
-          <span className="font-medium">{d.courseTakings}</span>
+          <span className="font-semibold text-foreground tabular-nums">{d.courseTakings}</span>
+        </div>
+        <div className="flex justify-between gap-3 pt-1.5 mt-1.5 border-t border-border/50">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <TrendingUp className="h-3 w-3 text-primary" />
+            Prom. h/empleado
+          </span>
+          <span className="font-bold text-primary tabular-nums">{d.avgHoursPerEmployee} h</span>
         </div>
       </div>
     </div>
   )
 }
+
+// ─── Range filter type ────────────────────────────────────────────────────
+
+type Range = "5y" | "10y" | "all"
+
+const RANGE_OPTIONS: { id: Range; label: string }[] = [
+  { id: "5y", label: "5 años" },
+  { id: "10y", label: "10 años" },
+  { id: "all", label: "Histórico" },
+]
 
 // ─── Componente principal ─────────────────────────────────────────────────
 
@@ -66,216 +76,315 @@ export default function TrainingHoursKPI() {
     loading, years, totalCoursesInCatalog, coursesWithDurationCount, refresh,
   } = useTrainingHours()
 
-  const grandTotal = years.reduce((s, y) => s + y.totalHours, 0)
-  const totalEmployees = new Set<string>()
-  // Approx: average of avgs from yearly stats. We don't have global unique emp set here, so compute weighted avg
-  const totalTakings = years.reduce((s, y) => s + y.courseTakings, 0)
-  const globalAvg = years.length > 0
-    ? Math.round((years.reduce((s, y) => s + y.avgHoursPerEmployee, 0) / years.length) * 100) / 100
+  const [range, setRange] = useState<Range>("5y")
+
+  const currentYear = new Date().getFullYear()
+
+  const filteredYears = useMemo(() => {
+    if (range === "all") return years
+    const minYear = currentYear - (range === "5y" ? 4 : 9)
+    return years.filter(y => Number(y.year) >= minYear)
+  }, [years, range, currentYear])
+
+  // Métricas agregadas del rango seleccionado
+  const totalHoursRange = filteredYears.reduce((s, y) => s + y.totalHours, 0)
+  const totalTakingsRange = filteredYears.reduce((s, y) => s + y.courseTakings, 0)
+  const avgHoursRange = filteredYears.length > 0
+    ? Math.round((filteredYears.reduce((s, y) => s + y.avgHoursPerEmployee, 0) / filteredYears.length) * 100) / 100
     : 0
-  void totalEmployees
+
+  // Año actual destacado
+  const currentYearStat = years.find(y => y.year === String(currentYear))
 
   const hasNoDuration = coursesWithDurationCount === 0
   const hasNoYearData = !hasNoDuration && years.length === 0
-  const showChart = !loading && years.length > 0
+  const showChart = !loading && filteredYears.length > 0
+
+  // Altura de chart proporcional al # de años (acotada)
+  const chartHeight = Math.min(360, Math.max(200, filteredYears.length * 42))
 
   return (
-    <Card data-testid="training-hours-kpi-card">
-      <CardHeader className="pb-3">
+    <Card data-testid="training-hours-kpi-card" className="overflow-hidden">
+      <CardHeader className="pb-3 border-b bg-gradient-to-br from-primary/5 via-transparent to-transparent">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/15">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/15 ring-1 ring-primary/20">
               <Clock size={18} className="text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-base">
-                Horas de capacitación por año
+            <div className="min-w-0">
+              <CardTitle className="text-base leading-tight">
+                Horas de capacitación
               </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Suma de horas según la duración de cada curso tomado
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Suma según la duración de cada curso tomado
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5" data-testid="hours-kpi-coverage-badge">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge
+              variant="outline"
+              className="text-[10px] gap-1 px-2 py-0.5 font-medium"
+              data-testid="hours-kpi-coverage-badge"
+              title="Cursos con duración registrada en el catálogo"
+            >
               <BookOpen className="h-3 w-3" />
-              {coursesWithDurationCount}/{totalCoursesInCatalog} cursos con duración
+              {coursesWithDurationCount}/{totalCoursesInCatalog} con duración
             </Badge>
             <Button
               data-testid="hours-kpi-refresh-btn"
-              variant="ghost" size="icon" className="h-8 w-8"
+              variant="ghost" size="icon" className="h-7 w-7"
               onClick={refresh} disabled={loading}
+              title="Refrescar"
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
             </Button>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="pt-4">
         {loading ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 rounded-xl" />
+                <Skeleton key={i} className="h-16 rounded-xl" />
               ))}
             </div>
             <Skeleton className="h-56 w-full rounded-lg" />
           </div>
         ) : hasNoDuration ? (
-          <div
-            data-testid="hours-kpi-no-duration"
-            className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2 rounded-xl border border-dashed bg-muted/30"
-          >
-            <AlertTriangle size={28} className="text-warning" />
-            <p className="text-sm font-medium text-foreground">
-              Aún no hay cursos con duración capturada
-            </p>
-            <p className="text-xs text-center max-w-md">
-              Ve a <span className="font-medium text-foreground">Capacitación → Cursos</span> y captura la duración (en horas) de cada curso para alimentar este KPI.
-            </p>
-          </div>
+          <EmptyState
+            testid="hours-kpi-no-duration"
+            icon={<AlertTriangle size={26} className="text-amber-500" />}
+            title="Aún no hay cursos con duración capturada"
+            body={
+              <>
+                Ve a <span className="font-semibold text-foreground">Capacitación → Cursos</span> y captura la duración (en horas) de cada curso para alimentar este KPI.
+              </>
+            }
+          />
         ) : hasNoYearData ? (
-          <div
-            data-testid="hours-kpi-no-records"
-            className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2"
-          >
-            <Clock size={28} className="opacity-30" />
-            <p className="text-sm">No hay cursos tomados con duración en el historial.</p>
-          </div>
+          <EmptyState
+            testid="hours-kpi-no-records"
+            icon={<Clock size={26} className="opacity-30" />}
+            title="Sin historial todavía"
+            body="No hay cursos tomados con duración registrada."
+          />
         ) : (
           <>
-            {/* Métricas */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            {/* Hero metric: año actual destacado */}
+            {currentYearStat && (
               <div
-                data-testid="hours-kpi-total"
-                className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/10"
+                data-testid="hours-kpi-current-year"
+                className="mb-4 rounded-2xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 flex flex-wrap items-end justify-between gap-4"
               >
-                <span className="p-1.5 rounded-lg text-primary bg-primary/15">
-                  <Clock size={18} />
-                </span>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
-                    {grandTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-primary/70">
+                    {currentYear}
                   </span>
-                  <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                    Horas totales
+                  <span className="text-4xl font-black tabular-nums leading-none">
+                    {currentYearStat.totalHours.toLocaleString("es-MX", { maximumFractionDigits: 0 })}
                   </span>
+                  <span className="text-sm text-muted-foreground font-medium">h</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <Metric icon={<Users size={12} />} label="empleados" value={currentYearStat.uniqueEmployees} />
+                  <Metric icon={<BookOpen size={12} />} label="cursos" value={currentYearStat.courseTakings} />
+                  <Metric
+                    icon={<TrendingUp size={12} className="text-primary" />}
+                    label="prom h/emp"
+                    value={currentYearStat.avgHoursPerEmployee}
+                    highlight
+                  />
                 </div>
               </div>
-              <div
-                data-testid="hours-kpi-avg"
-                className="flex items-center gap-2.5 p-3 rounded-xl bg-success/10"
-              >
-                <span className="p-1.5 rounded-lg text-success bg-success/15">
-                  <TrendingUp size={18} />
-                </span>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
-                    {globalAvg.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                    Prom. h/empleado/año
-                  </span>
-                </div>
+            )}
+
+            {/* Range toggle */}
+            <div
+              className="flex items-center justify-between gap-2 mb-3"
+              data-testid="hours-kpi-range-toggle"
+            >
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Tendencia
+              </span>
+              <div className="inline-flex items-center rounded-lg border bg-muted/40 p-0.5">
+                {RANGE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.id}
+                    data-testid={`hours-kpi-range-${opt.id}`}
+                    onClick={() => setRange(opt.id)}
+                    className={
+                      "px-2.5 py-1 text-[11px] font-medium rounded-md transition-all " +
+                      (range === opt.id
+                        ? "bg-background shadow text-foreground"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-              <div
-                data-testid="hours-kpi-takings"
-                className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/60 col-span-2 sm:col-span-1"
-              >
-                <span className="p-1.5 rounded-lg text-foreground bg-background">
-                  <BookOpen size={18} />
-                </span>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
-                    {totalTakings.toLocaleString("es-MX")}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                    Cursos contabilizados
-                  </span>
-                </div>
-              </div>
+            </div>
+
+            {/* Métricas del rango */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <CompactStat
+                testid="hours-kpi-total"
+                icon={<Clock size={14} />}
+                value={totalHoursRange.toLocaleString("es-MX", { maximumFractionDigits: 0 })}
+                suffix="h"
+                label="Totales"
+                tone="primary"
+              />
+              <CompactStat
+                testid="hours-kpi-avg"
+                icon={<TrendingUp size={14} />}
+                value={avgHoursRange.toLocaleString("es-MX", { maximumFractionDigits: 1 })}
+                suffix="h"
+                label="Prom h/emp/año"
+                tone="success"
+              />
+              <CompactStat
+                testid="hours-kpi-takings"
+                icon={<BookOpen size={14} />}
+                value={totalTakingsRange.toLocaleString("es-MX")}
+                label="Cursos"
+                tone="neutral"
+              />
             </div>
 
             {/* Gráfica */}
             {showChart && (
               <div className="w-full" data-testid="hours-kpi-chart">
-                <ResponsiveContainer width="100%" height={Math.max(220, years.length * 70)}>
+                <ResponsiveContainer width="100%" height={chartHeight}>
                   <BarChart
-                    data={years}
+                    data={filteredYears}
                     layout="vertical"
-                    margin={{ top: 4, right: 60, left: 0, bottom: 4 }}
-                    barSize={28}
+                    margin={{ top: 4, right: 56, left: 0, bottom: 4 }}
+                    barCategoryGap="20%"
                   >
+                    <defs>
+                      <linearGradient id="hoursBarGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid
-                      strokeDasharray="3 3"
+                      strokeDasharray="2 4"
                       horizontal={false}
                       className="stroke-muted-foreground/15"
                     />
                     <XAxis
                       type="number"
-                      tick={{ fontSize: 11, fill: "currentColor" }}
+                      tick={{ fontSize: 10, fill: "currentColor" }}
                       className="text-muted-foreground"
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(v) => `${v}h`}
+                      tickFormatter={(v: number) => `${v}h`}
                     />
                     <YAxis
                       type="category"
                       dataKey="year"
-                      tick={{ fontSize: 12, fill: "currentColor", fontWeight: 600 }}
+                      tick={{ fontSize: 11, fill: "currentColor", fontWeight: 600 }}
                       className="text-foreground"
                       tickLine={false}
                       axisLine={false}
-                      width={56}
+                      width={42}
                     />
-                    <Tooltip content={<HoursTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
-                    <Bar dataKey="totalHours" radius={[0, 6, 6, 0]}>
-                      {years.map((_, i) => (
-                        <Cell key={i} fill="hsl(var(--primary))" />
+                    <Tooltip content={<HoursTooltip />} cursor={{ fill: "hsl(var(--primary) / 0.08)" }} />
+                    <Bar
+                      dataKey="totalHours"
+                      radius={[0, 8, 8, 0]}
+                      fill="url(#hoursBarGradient)"
+                      isAnimationActive
+                      animationDuration={700}
+                    >
+                      {filteredYears.map((y) => (
+                        <Cell
+                          key={y.year}
+                          fill={y.year === String(currentYear) ? "hsl(var(--primary))" : "url(#hoursBarGradient)"}
+                        />
                       ))}
                       <LabelList
                         dataKey="totalHours"
                         position="right"
-                        formatter={(v: number) => `${v} h`}
+                        formatter={(v: number) => `${Math.round(v)} h`}
                         style={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
                       />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-
-                {/* Tabla complementaria con promedios */}
-                <div className="mt-4 grid gap-2" data-testid="hours-kpi-year-list">
-                  {years.map(y => (
-                    <div
-                      key={y.year}
-                      data-testid={`hours-kpi-year-${y.year}`}
-                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border bg-muted/30 text-xs"
-                    >
-                      <span className="font-semibold text-foreground tabular-nums w-12">{y.year}</span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Users size={11} />
-                        <span className="tabular-nums">{y.uniqueEmployees}</span> empl.
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <BookOpen size={11} />
-                        <span className="tabular-nums">{y.courseTakings}</span> cursos
-                      </span>
-                      <span className="flex items-center gap-1.5 ml-auto">
-                        <span className="text-muted-foreground">Prom.</span>
-                        <Badge variant="secondary" className="tabular-nums">
-                          {y.avgHoursPerEmployee} h
-                        </Badge>
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
           </>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// ─── Subcomponentes ────────────────────────────────────────────────────────
+
+function Metric({
+  icon, label, value, highlight,
+}: { icon: React.ReactNode; label: string; value: number | string; highlight?: boolean }) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className={highlight ? "text-primary" : "text-muted-foreground"}>{icon}</span>
+      <span className={"tabular-nums font-bold " + (highlight ? "text-primary" : "text-foreground")}>
+        {value}
+      </span>
+      <span className="text-muted-foreground text-[10px]">{label}</span>
+    </span>
+  )
+}
+
+function CompactStat({
+  testid, icon, value, suffix, label, tone,
+}: {
+  testid: string
+  icon: React.ReactNode
+  value: string
+  suffix?: string
+  label: string
+  tone: "primary" | "success" | "neutral"
+}) {
+  const toneClass =
+    tone === "primary"
+      ? "bg-primary/10 text-primary"
+      : tone === "success"
+        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        : "bg-muted text-foreground"
+  return (
+    <div
+      data-testid={testid}
+      className="rounded-xl border bg-card/60 p-2.5 flex items-center gap-2.5 min-w-0"
+    >
+      <span className={"p-1.5 rounded-lg shrink-0 " + toneClass}>{icon}</span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-base font-bold leading-none tabular-nums truncate">
+          {value}
+          {suffix && <span className="text-[11px] text-muted-foreground font-medium ml-0.5">{suffix}</span>}
+        </span>
+        <span className="text-[10px] text-muted-foreground mt-1 leading-tight truncate">{label}</span>
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({
+  testid, icon, title, body,
+}: { testid: string; icon: React.ReactNode; title: string; body: React.ReactNode }) {
+  return (
+    <div
+      data-testid={testid}
+      className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2 rounded-xl border border-dashed bg-muted/20"
+    >
+      {icon}
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-xs text-center max-w-md leading-relaxed">{body}</p>
+    </div>
   )
 }
