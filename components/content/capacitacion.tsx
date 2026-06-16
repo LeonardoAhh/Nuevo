@@ -16,6 +16,7 @@ import { CapPositionCoursesDialog }   from "@/components/content/cap-position-co
 import { CapEmployeeProgressDialog }  from "@/components/content/cap-employee-progress-dialog"
 import { CapNewPositionDialog }       from "@/components/content/cap-new-position-dialog"
 import { CapNewCourseDialog }         from "@/components/content/cap-new-course-dialog"
+import { CapEditCourseDialog }        from "@/components/content/cap-edit-course-dialog"
 
 // Tab components
 import { CapPositionsTab }   from "@/components/content/cap-positions-tab"
@@ -37,7 +38,7 @@ export default function CapacitacionContent() {
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
     clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee,
     addCoursesToEmployee, bulkImportCourseRecords,
-    createPosition, createCourse,
+    createPosition, createCourse, updateCourse,
     addCourseToPosition, removeCourseFromPosition,
   } = useCapacitacion()
 
@@ -68,6 +69,9 @@ export default function CapacitacionContent() {
   const [newPosSaving, setNewPosSaving] = useState(false)
   const [newCourseOpen, setNewCourseOpen]   = useState(false)
   const [newCourseSaving, setNewCourseSaving] = useState(false)
+  const [editCourseOpen, setEditCourseOpen] = useState(false)
+  const [editCourseTarget, setEditCourseTarget] = useState<Course | null>(null)
+  const [editCourseSaving, setEditCourseSaving] = useState(false)
 
   // ── Employee-progress dialog ──────────────────────────────────────────────
   const [empDlgOpen, setEmpDlgOpen]               = useState(false)
@@ -217,13 +221,25 @@ export default function CapacitacionContent() {
     else notify.error(result.error ?? 'Error al crear puesto')
   }, [createPosition, loadPositionData])
 
-  const handleSaveNewCourse = useCallback(async (name: string) => {
+  const handleSaveNewCourse = useCallback(async (name: string, durationHours: number | null) => {
     setNewCourseSaving(true)
-    const result = await createCourse(name)
+    const result = await createCourse(name, durationHours)
     setNewCourseSaving(false)
     if (result.success) { setNewCourseOpen(false); loadCoursesData(); notify.success('Curso creado correctamente') }
     else notify.error(result.error ?? 'Error al crear curso')
   }, [createCourse, loadCoursesData])
+
+  const handleSaveEditCourse = useCallback(async (id: string, data: { name: string; duration_hours: number | null }) => {
+    setEditCourseSaving(true)
+    const result = await updateCourse(id, data)
+    setEditCourseSaving(false)
+    if (result.success) {
+      setEditCourseOpen(false); setEditCourseTarget(null); loadCoursesData()
+      notify.success('Curso actualizado')
+    } else {
+      notify.error(result.error ?? 'Error al actualizar curso')
+    }
+  }, [updateCourse, loadCoursesData])
 
   // ── Employee handlers ─────────────────────────────────────────────────────
   const handleViewEmployee = useCallback(async (emp: Employee) => {
@@ -362,6 +378,7 @@ export default function CapacitacionContent() {
             employees={employees}
             empCourses={empCourses}
             onNewCourse={() => setNewCourseOpen(true)}
+            onEditCourse={(c) => { setEditCourseTarget(c); setEditCourseOpen(true) }}
           />
         </TabsContent>
 
@@ -494,6 +511,14 @@ export default function CapacitacionContent() {
         saving={newCourseSaving}
         onClose={() => setNewCourseOpen(false)}
         onSave={handleSaveNewCourse}
+      />
+
+      <CapEditCourseDialog
+        course={editCourseTarget}
+        open={editCourseOpen}
+        saving={editCourseSaving}
+        onClose={() => { setEditCourseOpen(false); setEditCourseTarget(null) }}
+        onSave={handleSaveEditCourse}
       />
     </>
   )

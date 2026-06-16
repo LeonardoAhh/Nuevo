@@ -22,6 +22,7 @@ export interface Position {
 export interface Course {
   id: string
   name: string
+  duration_hours: number | null
   created_at: string
 }
 
@@ -903,16 +904,39 @@ export function useCapacitacion() {
   // ── Crear curso manualmente ───────────────────────────────────────────────
 
   const createCourse = async (
-    name: string
+    name: string,
+    durationHours: number | null = null
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase
         .from('courses')
-        .insert([{ name: name.trim() }])
+        .insert([{ name: name.trim(), duration_hours: durationHours }])
       if (error) throw new Error(error.message)
       return { success: true }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al crear curso'
+      return { success: false, error: msg }
+    }
+  }
+
+  // ── Actualizar curso (nombre / duración) ─────────────────────────────────
+
+  const updateCourse = async (
+    courseId: string,
+    data: { name?: string; duration_hours?: number | null }
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const payload: { name?: string; duration_hours?: number | null } = {}
+      if (data.name !== undefined) payload.name = data.name.trim()
+      if (data.duration_hours !== undefined) payload.duration_hours = data.duration_hours
+      const { error } = await supabase
+        .from('courses')
+        .update(payload)
+        .eq('id', courseId)
+      if (error) throw new Error(error.message)
+      return { success: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al actualizar curso'
       return { success: false, error: msg }
     }
   }
@@ -944,6 +968,7 @@ export function useCapacitacion() {
     bulkImportCourseRecords,
     createPosition,
     createCourse,
+    updateCourse,
     addCourseToPosition,
     removeCourseFromPosition,
   }

@@ -7,6 +7,7 @@ import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
 import HeroDashboard from "@/components/hero-dashboard"
 import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
 import CapacitacionChart from "@/components/capacitacion-chart"
+import TrainingHoursKPI from "@/components/training-hours-kpi"
 import NotesWidget from "@/components/notes-widget"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StickyNote, Bell, GraduationCap } from "lucide-react"
@@ -44,6 +45,7 @@ export default function DashboardHome() {
 
         <TabsContent value="capacitacion" className="space-y-6 mt-4">
           <DashboardCumplimiento />
+          <TrainingHoursKPI />
           <RgCumplimientoChart />
           <CapacitacionChart />
           <DashboardYearlyCompliance />

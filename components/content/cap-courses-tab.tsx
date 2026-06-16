@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, BookOpen, X } from "lucide-react"
+import { Search, Plus, BookOpen, X, Clock, Pencil } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +23,7 @@ interface CapCoursesTabProps {
   employees: Employee[]
   empCourses: EmployeeCourse[]
   onNewCourse: () => void
+  onEditCourse: (course: Course) => void
 }
 
 function courseStatus(calificacion: number | null): { estado: string; clase: string } {
@@ -33,7 +34,7 @@ function courseStatus(calificacion: number | null): { estado: string; clase: str
 }
 
 export function CapCoursesTab({
-  courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse,
+  courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse, onEditCourse,
 }: CapCoursesTabProps) {
   const [courseSearch, setCourseSearch] = useState("")
   const [coursePage, setCoursePage]     = useState(1)
@@ -142,7 +143,42 @@ export function CapCoursesTab({
                         </span>
                         <BookOpen className="h-4 w-4 text-primary shrink-0" />
                         <span className="text-sm text-foreground leading-tight flex-1 text-left">{course.name}</span>
-                        <Badge variant="secondary" className="bg-muted text-foreground ml-2">
+                        {course.duration_hours != null ? (
+                          <Badge
+                            data-testid={`course-duration-${course.id}`}
+                            className="bg-primary/10 text-primary border border-primary/30 gap-1"
+                            variant="outline"
+                          >
+                            <Clock className="h-3 w-3" />
+                            {course.duration_hours} h
+                          </Badge>
+                        ) : (
+                          <Badge
+                            data-testid={`course-duration-empty-${course.id}`}
+                            variant="outline"
+                            className="text-[10px] text-muted-foreground border-dashed"
+                          >
+                            sin duración
+                          </Badge>
+                        )}
+                        {!isReadOnly && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            data-testid={`edit-course-btn-${course.id}`}
+                            onClick={e => { e.stopPropagation(); onEditCourse(course) }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault(); e.stopPropagation(); onEditCourse(course)
+                              }
+                            }}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            aria-label="Editar curso"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                        <Badge variant="secondary" className="bg-muted text-foreground ml-1">
                           {empleadosConEstado.length}
                         </Badge>
                       </div>
