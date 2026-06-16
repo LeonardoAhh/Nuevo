@@ -36,3 +36,10 @@ next-env.d.ts
 
 # Firebase service account credentials (never commit)
 public/*firebase-adminsdk*.json
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials

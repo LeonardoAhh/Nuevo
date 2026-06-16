@@ -6,25 +6,33 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
 import { TIPOS_CURSOS } from "@/lib/catalogo"
+import type { Course } from "@/lib/hooks"
 
-export interface CapNewCourseDialogProps {
+export interface CapEditCourseDialogProps {
+  course: Course | null
   open: boolean
   saving: boolean
   onClose: () => void
-  onSave: (name: string, tipo: string, durationHours: number | null) => void
+  onSave: (id: string, data: { name: string; tipo: string; duration_hours: number | null }) => void
 }
 
-export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCourseDialogProps) {
+export function CapEditCourseDialog({ course, open, saving, onClose, onSave }: CapEditCourseDialogProps) {
   const [name, setName] = useState('')
   const [tipo, setTipo] = useState<string>('INDUCCIÓN')
   const [duration, setDuration] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (open) { setName(''); setTipo('INDUCCIÓN'); setDuration(''); setError(null) }
-  }, [open])
+    if (open && course) {
+      setName(course.name)
+      setTipo(course.tipo ?? 'INDUCCIÓN')
+      setDuration(course.duration_hours != null ? String(course.duration_hours) : '')
+      setError(null)
+    }
+  }, [open, course])
 
   const handleConfirm = () => {
+    if (!course) return
     if (!name.trim()) { setError('El nombre del curso es requerido'); return }
     let durationHours: number | null = null
     if (duration.trim() !== '') {
@@ -36,13 +44,19 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
       durationHours = Math.round(n * 100) / 100
     }
     setError(null)
-    onSave(name, tipo, durationHours)
+    onSave(course.id, { name, tipo, duration_hours: durationHours })
   }
 
   return (
-    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo curso" description="Agrega un curso al catálogo">
+    <ResponsiveShell
+      open={open}
+      onClose={onClose}
+      maxWidth="sm:max-w-md"
+      title="Editar curso"
+      description="Actualiza nombre, tipo y duración del curso"
+    >
       <ModalToolbar
-        title="Nuevo curso"
+        title="Editar curso"
         saving={saving}
         onClose={onClose}
         onConfirm={handleConfirm}
@@ -53,23 +67,21 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Nombre del curso</label>
             <Input
-              data-testid="new-course-name-input"
-              placeholder="Ej. Seguridad industrial básica"
+              data-testid="edit-course-name-input"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm() }}
               className="bg-muted"
-              autoFocus
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Tipo de curso</label>
             <select
-              data-testid="new-course-tipo-select"
+              data-testid="edit-course-tipo-select"
               value={tipo}
               onChange={e => setTipo(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               {TIPOS_CURSOS.map(t => (
                 <option key={t} value={t}>{t}</option>
@@ -81,10 +93,10 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
             <label className="text-sm font-medium flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-primary" />
               Duración (horas)
-              <span className="text-xs text-muted-foreground font-normal">— opcional, alimenta el KPI</span>
+              <span className="text-xs text-muted-foreground font-normal">— alimenta el KPI</span>
             </label>
             <Input
-              data-testid="new-course-duration-input"
+              data-testid="edit-course-duration-input"
               type="number"
               inputMode="decimal"
               step="0.25"
@@ -96,12 +108,12 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
               className="bg-muted"
             />
             <p className="text-[11px] text-muted-foreground">
-              Solo los cursos con duración registrada contarán para el KPI de horas de capacitación por año.
+              Deja vacío para no contar este curso en el KPI de horas.
             </p>
           </div>
 
           {error && (
-            <Alert variant="destructive" className="py-2" data-testid="new-course-error">
+            <Alert variant="destructive" className="py-2" data-testid="edit-course-error">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
