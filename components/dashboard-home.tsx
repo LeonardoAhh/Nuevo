@@ -25,6 +25,7 @@ import DashboardCumplimiento from "@/components/dashboard-cumplimiento"
 import DashboardYearlyCompliance from "@/components/dashboard-yearly-compliance"
 import RgCumplimientoChart from "@/components/rg-cumplimiento-chart"
 import CapacitacionChart from "@/components/capacitacion-chart"
+import TrainingHoursKPI from "@/components/training-hours-kpi"
 import NotesWidget from "@/components/notes-widget"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -142,6 +143,7 @@ function DashboardContent() {
                 {/* Right column: charts */}
                 <div className="space-y-4">
                     <DashboardCumplimiento />
+                    <TrainingHoursKPI />
                     <RgCumplimientoChart />
                     <CapacitacionChart />
                     <DashboardYearlyCompliance />

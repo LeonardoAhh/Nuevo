@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, BookOpen, X, Download } from "lucide-react"
+import { Search, Plus, BookOpen, X, Download, Clock, Pencil } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +24,7 @@ interface CapCoursesTabProps {
   employees: Employee[]
   empCourses: EmployeeCourse[]
   onNewCourse: () => void
+  onEditCourse: (course: Course) => void
 }
 
 function courseStatus(calificacion: number | null): { estado: string; clase: string } {
@@ -34,7 +35,7 @@ function courseStatus(calificacion: number | null): { estado: string; clase: str
 }
 
 export function CapCoursesTab({
-  courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse,
+  courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse, onEditCourse,
 }: CapCoursesTabProps) {
   const [courseSearch, setCourseSearch] = useState("")
   const [coursePage, setCoursePage] = useState(1)
