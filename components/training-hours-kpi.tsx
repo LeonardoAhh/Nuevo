@@ -15,7 +15,7 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent
 } from "@/components/ui/accordion"
 import {
-  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider
+  Tooltip as TooltipUI, TooltipTrigger, TooltipContent, TooltipProvider
 } from "@/components/ui/tooltip"
 import {
   Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info
@@ -106,14 +106,14 @@ export default function TrainingHoursKPI() {
             <span className="text-[11px] text-muted-foreground mt-1 leading-tight flex items-center gap-1">
               Horas totales ({years.length} años)
               <TooltipProvider>
-                <Tooltip delayDuration={300}>
+                <TooltipUI delayDuration={300}>
                   <TooltipTrigger asChild>
                     <Info size={12} className="text-muted-foreground hover:text-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[250px] text-xs font-normal">
                     <p>Representa las <strong>horas-hombre</strong> totales. Se calcula sumando la duración de cada curso multiplicada por la cantidad de empleados que lo tomaron.</p>
                   </TooltipContent>
-                </Tooltip>
+                </TooltipUI>
               </TooltipProvider>
             </span>
           </div>
@@ -324,14 +324,14 @@ export default function TrainingHoursKPI() {
               <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                 {currentYearData ? `Horas totales en ${currentYear}` : "Horas totales (histórico)"}
                 <TooltipProvider>
-                  <Tooltip delayDuration={300}>
+                  <TooltipUI delayDuration={300}>
                     <TooltipTrigger asChild>
                       <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[250px] text-xs font-normal">
                       <p>Representa las <strong>horas-hombre</strong> totales. Se calcula sumando la duración de cada curso multiplicada por la cantidad de empleados que lo tomaron.</p>
                     </TooltipContent>
-                  </Tooltip>
+                  </TooltipUI>
                 </TooltipProvider>
               </span>
             </div>
