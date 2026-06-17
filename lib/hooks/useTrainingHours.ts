@@ -91,7 +91,11 @@ export function useTrainingHours(): TrainingHoursStats {
         g.takings += 1
       }
 
+      const currentYear = new Date().getFullYear()
+      const allowedYears = [String(currentYear - 2), String(currentYear - 1), String(currentYear)]
+
       const stats: TrainingHoursYearStat[] = Array.from(grouped.entries())
+        .filter(([year]) => allowedYears.includes(year))
         .map(([year, g]) => ({
           year,
           totalHours: Math.round(g.totalHours * 100) / 100,

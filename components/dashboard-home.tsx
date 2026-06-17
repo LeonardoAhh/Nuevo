@@ -134,18 +134,18 @@ function DashboardContent() {
             <GreetingBar />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {/* Left column: alertas + notas */}
+                {/* Left column */}
                 <div className="space-y-4">
                     <DashboardAlertas />
+                    <TrainingHoursKPI />
+                    <CapacitacionChart />
                     <NotesWidget />
                 </div>
 
-                {/* Right column: charts */}
+                {/* Right column */}
                 <div className="space-y-4">
                     <DashboardCumplimiento />
-                    <TrainingHoursKPI />
                     <RgCumplimientoChart />
-                    <CapacitacionChart />
                     <DashboardYearlyCompliance />
                 </div>
             </div>
