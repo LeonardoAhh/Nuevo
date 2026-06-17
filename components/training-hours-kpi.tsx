@@ -12,6 +12,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent
+} from "@/components/ui/accordion"
+import {
   Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2,
 } from "lucide-react"
 import { useTrainingHours, type TrainingHoursYearStat } from "@/lib/hooks/useTrainingHours"
@@ -53,9 +56,9 @@ function HoursTooltip({
         <div className="flex justify-between gap-4 pt-1 mt-1 border-t">
           <span className="flex items-center gap-1.5">
             <BookOpen className="h-3.5 w-3.5" />
-            Cursos tomados
+            Cursos contabilizados
           </span>
-          <span className="font-medium">{d.courseTakings}</span>
+          <span className="font-medium">{d.coursesWithDuration}</span>
         </div>
       </div>
     </div>
@@ -70,7 +73,7 @@ export default function TrainingHoursKPI() {
   } = useTrainingHours()
 
   const grandTotal = years.reduce((s, y) => s + y.totalHours, 0)
-  const totalTakings = years.reduce((s, y) => s + y.courseTakings, 0)
+  const totalTakings = years.reduce((s, y) => s + y.coursesWithDuration, 0)
   const globalAvg = years.length > 0
     ? Math.round((years.reduce((s, y) => s + y.avgHoursPerEmployee, 0) / years.length) * 100) / 100
     : 0
@@ -114,7 +117,7 @@ export default function TrainingHoursKPI() {
               {globalAvg.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
             </span>
             <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
-              Promedio general
+              Promedio general ({years.length} años)
             </span>
           </div>
         </div>
@@ -130,7 +133,7 @@ export default function TrainingHoursKPI() {
               {totalTakings.toLocaleString("es-MX")}
             </span>
             <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
-              Cursos contabilizados
+              Cursos contabilizados ({years.length} años)
             </span>
           </div>
         </div>
@@ -181,31 +184,48 @@ export default function TrainingHoursKPI() {
           </BarChart>
         </ResponsiveContainer>
 
-        <div className="mt-4 grid gap-2" data-testid="hours-kpi-year-list">
+        <Accordion type="single" collapsible className="mt-4 w-full space-y-2" data-testid="hours-kpi-year-list">
           {years.map(y => (
-            <div
-              key={y.year}
-              data-testid={`hours-kpi-year-${y.year}`}
-              className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border bg-muted/30 text-xs"
-            >
-              <span className="font-semibold text-foreground tabular-nums w-12">{y.year}</span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Users size={11} />
-                <span className="tabular-nums">{y.uniqueEmployees}</span> empl.
-              </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <BookOpen size={11} />
-                <span className="tabular-nums">{y.courseTakings}</span> cursos
-              </span>
-              <span className="flex items-center gap-1.5 ml-auto">
-                <span className="text-muted-foreground">Prom.</span>
-                <Badge variant="secondary" className="tabular-nums">
-                  {y.avgHoursPerEmployee} h
-                </Badge>
-              </span>
-            </div>
+            <AccordionItem value={y.year} key={y.year} className="border-none">
+              <AccordionTrigger className="py-2 px-3 hover:no-underline rounded-lg border bg-muted/30 data-[state=open]:bg-muted/50 transition-colors">
+                <div
+                  data-testid={`hours-kpi-year-${y.year}`}
+                  className="flex flex-1 items-center justify-between gap-3 text-xs pr-2"
+                >
+                  <span className="font-semibold text-foreground tabular-nums w-12 text-left">{y.year}</span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Users size={11} />
+                    <span className="tabular-nums">{y.uniqueEmployees}</span> empl.
+                  </span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <BookOpen size={11} />
+                    <span className="tabular-nums">{y.coursesWithDuration}</span> cursos
+                  </span>
+                  <span className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-muted-foreground hidden sm:inline" title="Promedio de horas de capacitación por empleado">Promedio</span>
+                    <Badge variant="secondary" className="tabular-nums font-normal">
+                      {y.avgHoursPerEmployee} h / empl.
+                    </Badge>
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-1 px-1">
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {y.months.map(m => (
+                    <div key={m.month} className="flex flex-col items-center justify-center p-2 rounded-md bg-muted/10 border border-muted-foreground/10 text-xs">
+                      <span className="text-muted-foreground text-[10px] uppercase mb-0.5 font-medium">
+                        {new Date(2000, m.month - 1).toLocaleString('es-MX', { month: 'short' }).replace('.', '')}
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {m.uniqueCourses}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       </div>
     </>
   )

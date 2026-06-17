@@ -6,6 +6,11 @@ import { notify } from "@/lib/notify"
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
+export interface TrainingHoursMonthStat {
+  month: number
+  uniqueCourses: number
+}
+
 export interface TrainingHoursYearStat {
   year: string
   totalHours: number
@@ -13,6 +18,7 @@ export interface TrainingHoursYearStat {
   avgHoursPerEmployee: number
   courseTakings: number
   coursesWithDuration: number
+  months: TrainingHoursMonthStat[]
 }
 
 export interface TrainingHoursStats {
@@ -76,19 +82,25 @@ export function useTrainingHours(): TrainingHoursStats {
         from += PAGE_SIZE
       }
 
-      const grouped = new Map<string, { totalHours: number; emps: Set<string>; takings: number; courses: Set<string> }>()
+      const grouped = new Map<string, { totalHours: number; emps: Set<string>; takings: number; courses: Set<string>; monthCourses: Map<number, Set<string>> }>()
       for (const r of allRows) {
         const year = r.fecha_aplicacion.slice(0, 4)
         if (!/^\d{4}$/.test(year)) continue
+        const month = parseInt(r.fecha_aplicacion.slice(5, 7), 10)
         const hours = durationMap.get(r.course_id) ?? 0
         if (!grouped.has(year)) {
-          grouped.set(year, { totalHours: 0, emps: new Set(), takings: 0, courses: new Set() })
+          grouped.set(year, { totalHours: 0, emps: new Set(), takings: 0, courses: new Set(), monthCourses: new Map() })
         }
         const g = grouped.get(year)!
         g.totalHours += hours
         g.emps.add(r.employee_id)
         g.courses.add(r.course_id)
         g.takings += 1
+
+        if (!g.monthCourses.has(month)) {
+          g.monthCourses.set(month, new Set())
+        }
+        g.monthCourses.get(month)!.add(r.course_id)
       }
 
       const currentYear = new Date().getFullYear()
@@ -96,14 +108,22 @@ export function useTrainingHours(): TrainingHoursStats {
 
       const stats: TrainingHoursYearStat[] = Array.from(grouped.entries())
         .filter(([year]) => allowedYears.includes(year))
-        .map(([year, g]) => ({
-          year,
-          totalHours: Math.round(g.totalHours * 100) / 100,
-          uniqueEmployees: g.emps.size,
-          avgHoursPerEmployee: g.emps.size > 0 ? Math.round((g.totalHours / g.emps.size) * 100) / 100 : 0,
-          courseTakings: g.takings,
-          coursesWithDuration: g.courses.size,
-        }))
+        .map(([year, g]) => {
+          const months: TrainingHoursMonthStat[] = []
+          for (let m = 1; m <= 12; m++) {
+             months.push({ month: m, uniqueCourses: g.monthCourses.get(m)?.size ?? 0 })
+          }
+
+          return {
+            year,
+            totalHours: Math.round(g.totalHours * 100) / 100,
+            uniqueEmployees: g.emps.size,
+            avgHoursPerEmployee: g.emps.size > 0 ? Math.round((g.totalHours / g.emps.size) * 100) / 100 : 0,
+            courseTakings: g.takings,
+            coursesWithDuration: g.courses.size,
+            months,
+          }
+        })
         .sort((a, b) => a.year.localeCompare(b.year))
 
       setYears(stats)
