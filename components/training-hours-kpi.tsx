@@ -248,10 +248,14 @@ export default function TrainingHoursKPI() {
                         {m.uniqueCourses}
                         <span className="text-[10px] font-medium text-muted-foreground">cursos</span>
                       </span>
-                      {m.inductionCourses > 0 && (
-                        <span className="text-[9.5px] font-medium text-muted-foreground/80 mt-0.5 bg-muted-foreground/10 px-1.5 py-0.5 rounded-sm">
-                          {m.inductionCourses} inducción
-                        </span>
+                      {Object.keys(m.typesCount).length > 0 && (
+                        <div className="flex flex-col gap-0.5 mt-1 items-center">
+                          {Object.entries(m.typesCount).map(([typeName, count]) => (
+                            <span key={typeName} className="text-[9px] font-medium text-muted-foreground/80 bg-muted-foreground/10 px-1.5 py-[2px] rounded-sm max-w-full truncate" title={`${count} ${typeName}`}>
+                              {count} {typeName}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
                   ))}
