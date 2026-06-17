@@ -83,6 +83,11 @@ export function parseReporteJSON(raw: unknown[]): { rows: ReporteRow[]; errors: 
         const puesto = normalizeString(row.puesto)
         const turno = normalizeString(row.turno)
 
+        // Ignoramos la fila si es un encabezado repetido del Excel
+        if (mes.toLowerCase() === "mes" && numero_empleado.toLowerCase() === "numero_empleado") {
+            return
+        }
+
         if (!mes || !/^\d{4}-\d{2}$/.test(mes)) { errors.push(`Fila ${index + 1}: mes inválido, use YYYY-MM`); return }
         if (!numero_empleado) { errors.push(`Fila ${index + 1}: falta numero_empleado`); return }
         if (!nombre) { errors.push(`Fila ${index + 1}: falta nombre`); return }
