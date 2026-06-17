@@ -194,11 +194,11 @@ export default function ReporteDiarioContent() {
     const selectedDayIncidentSummary = useMemo(() => {
         const base = emptyIncident()
         if (!selectedDay) return base
-        const result = selectedRows.reduce((acc, row) => {
+        const result = selectedRows.reduce((acc, row, idx) => {
             const code = row.days[selectedDay]
             if (!isIncidence(code) || !isIncidentTab(code!)) return acc
             acc[code].push({
-                key: `${code}||${row.departamento}||${row.area}||${row.turno || "-"}||${row.numero_empleado}`,
+                key: `${code}||${row.departamento}||${row.area}||${row.turno || "-"}||${row.numero_empleado}||${idx}`,
                 numero_empleado: row.numero_empleado,
                 nombre: row.nombre,
                 departamento: row.departamento,
@@ -273,8 +273,8 @@ export default function ReporteDiarioContent() {
                     ALLOWED_PUESTOS.has(row.puesto || "") &&
                     isIncidence(row.days[selectedDay]),
             )
-            .map((row) => ({
-                key: `${row.numero_empleado}||${row.area}`,
+            .map((row, idx) => ({
+                key: `${row.numero_empleado}||${row.area}||${idx}`,
                 numero_empleado: row.numero_empleado,
                 nombre: row.nombre,
                 puesto: row.puesto,
