@@ -9,6 +9,7 @@ import { notify } from "@/lib/notify"
 export interface TrainingHoursMonthStat {
   month: number
   uniqueCourses: number
+  inductionCourses: number
 }
 
 export interface TrainingHoursYearStat {
@@ -42,14 +43,16 @@ export function useTrainingHours(): TrainingHoursStats {
     try {
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
-        .select("id, duration_hours")
+        .select("id, duration_hours, tipo")
       if (coursesError) throw new Error(coursesError.message)
 
       const allCourses = coursesData ?? []
       const durationMap = new Map<string, number>()
+      const courseTypeMap = new Map<string, string>()
       for (const c of allCourses) {
         if (c.duration_hours != null && Number(c.duration_hours) > 0) {
           durationMap.set(c.id as string, Number(c.duration_hours))
+          if (c.tipo) courseTypeMap.set(c.id as string, c.tipo as string)
         }
       }
       setTotalCoursesInCatalog(allCourses.length)
@@ -111,7 +114,21 @@ export function useTrainingHours(): TrainingHoursStats {
         .map(([year, g]) => {
           const months: TrainingHoursMonthStat[] = []
           for (let m = 1; m <= 12; m++) {
-             months.push({ month: m, uniqueCourses: g.monthCourses.get(m)?.size ?? 0 })
+             const monthCourseSet = g.monthCourses.get(m)
+             let indCount = 0
+             if (monthCourseSet) {
+               for (const cid of monthCourseSet) {
+                 const t = courseTypeMap.get(cid)
+                 if (t && t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "induccion") {
+                   indCount++
+                 }
+               }
+             }
+             months.push({ 
+               month: m, 
+               uniqueCourses: monthCourseSet?.size ?? 0,
+               inductionCourses: indCount
+             })
           }
 
           return {

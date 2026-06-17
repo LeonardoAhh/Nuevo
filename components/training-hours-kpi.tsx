@@ -248,6 +248,11 @@ export default function TrainingHoursKPI() {
                         {m.uniqueCourses}
                         <span className="text-[10px] font-medium text-muted-foreground">cursos</span>
                       </span>
+                      {m.inductionCourses > 0 && (
+                        <span className="text-[9.5px] font-medium text-muted-foreground/80 mt-0.5 bg-muted-foreground/10 px-1.5 py-0.5 rounded-sm">
+                          {m.inductionCourses} inducción
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
