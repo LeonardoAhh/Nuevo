@@ -15,7 +15,10 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent
 } from "@/components/ui/accordion"
 import {
-  Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2,
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider
+} from "@/components/ui/tooltip"
+import {
+  Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info
 } from "lucide-react"
 import { useTrainingHours, type TrainingHoursYearStat } from "@/lib/hooks/useTrainingHours"
 
@@ -100,8 +103,18 @@ export default function TrainingHoursKPI() {
             <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
               {grandTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
             </span>
-            <span className="text-[11px] text-muted-foreground mt-1 leading-tight">
+            <span className="text-[11px] text-muted-foreground mt-1 leading-tight flex items-center gap-1">
               Horas totales ({years.length} años)
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Info size={12} className="text-muted-foreground hover:text-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[250px] text-xs font-normal">
+                    <p>Representa las <strong>horas-hombre</strong> totales. Se calcula sumando la duración de cada curso multiplicada por la cantidad de empleados que lo tomaron.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </span>
           </div>
         </div>
@@ -209,15 +222,20 @@ export default function TrainingHoursKPI() {
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pt-2 pb-1 px-1">
+              <AccordionContent className="pt-2 pb-2 px-1">
+                <p className="text-[10.5px] text-muted-foreground mb-2 px-1 flex items-center gap-1.5">
+                  <BookOpen size={12} className="text-muted-foreground" />
+                  Cursos contabilizados por mes:
+                </p>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                   {y.months.map(m => (
-                    <div key={m.month} className="flex flex-col items-center justify-center p-2 rounded-md bg-muted/10 border border-muted-foreground/10 text-xs">
-                      <span className="text-muted-foreground text-[10px] uppercase mb-0.5 font-medium">
+                    <div key={m.month} className="flex flex-col items-center justify-center p-2 rounded-md bg-muted/20 border border-muted-foreground/10 text-xs">
+                      <span className="text-muted-foreground text-[10px] uppercase mb-0.5 font-medium tracking-wide">
                         {new Date(2000, m.month - 1).toLocaleString('es-MX', { month: 'short' }).replace('.', '')}
                       </span>
-                      <span className="font-semibold text-foreground tabular-nums">
+                      <span className="font-semibold text-foreground tabular-nums flex items-baseline gap-1">
                         {m.uniqueCourses}
+                        <span className="text-[9px] font-normal text-muted-foreground">cursos</span>
                       </span>
                     </div>
                   ))}
@@ -303,8 +321,18 @@ export default function TrainingHoursKPI() {
               <span className="text-3xl font-bold tracking-tight text-foreground">
                 {currentYearData ? currentYearData.totalHours.toLocaleString("es-MX", { maximumFractionDigits: 2 }) : grandTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                 {currentYearData ? `Horas totales en ${currentYear}` : "Horas totales (histórico)"}
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Info size={14} className="text-muted-foreground hover:text-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[250px] text-xs font-normal">
+                      <p>Representa las <strong>horas-hombre</strong> totales. Se calcula sumando la duración de cada curso multiplicada por la cantidad de empleados que lo tomaron.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </span>
             </div>
             
