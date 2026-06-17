@@ -18,8 +18,9 @@ import {
   Tooltip as TooltipUI, TooltipTrigger, TooltipContent, TooltipProvider
 } from "@/components/ui/tooltip"
 import {
-  Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info
+  Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info, TrendingDown
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useTrainingHours, type TrainingHoursYearStat } from "@/lib/hooks/useTrainingHours"
 
 // ─── Tooltip ───────────────────────────────────────────────────────────────
@@ -96,9 +97,6 @@ export default function TrainingHoursKPI() {
           data-testid="hours-kpi-total"
           className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/10"
         >
-          <span className="p-1.5 rounded-lg text-primary bg-primary/15">
-            <Clock size={18} />
-          </span>
           <div className="flex flex-col min-w-0">
             <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
               {grandTotal.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
@@ -122,9 +120,6 @@ export default function TrainingHoursKPI() {
           data-testid="hours-kpi-avg"
           className="flex items-center gap-2.5 p-3 rounded-xl bg-success/10"
         >
-          <span className="p-1.5 rounded-lg text-success bg-success/15">
-            <TrendingUp size={18} />
-          </span>
           <div className="flex flex-col min-w-0">
             <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
               {globalAvg.toLocaleString("es-MX", { maximumFractionDigits: 2 })}
@@ -138,9 +133,6 @@ export default function TrainingHoursKPI() {
           data-testid="hours-kpi-takings"
           className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/60 col-span-2 sm:col-span-1"
         >
-          <span className="p-1.5 rounded-lg text-foreground bg-background">
-            <BookOpen size={18} />
-          </span>
           <div className="flex flex-col min-w-0">
             <span className="text-2xl font-bold leading-none text-foreground tabular-nums">
               {totalTakings.toLocaleString("es-MX")}
@@ -198,14 +190,33 @@ export default function TrainingHoursKPI() {
         </ResponsiveContainer>
 
         <Accordion type="single" collapsible className="mt-4 w-full space-y-2" data-testid="hours-kpi-year-list">
-          {years.map(y => (
+          {years.map((y, index) => {
+            const prevYear = index > 0 ? years[index - 1] : null;
+            const yoyChange = prevYear && prevYear.totalHours > 0 
+              ? ((y.totalHours - prevYear.totalHours) / prevYear.totalHours) * 100 
+              : null;
+            const isPositive = yoyChange !== null && yoyChange > 0;
+            const isNegative = yoyChange !== null && yoyChange < 0;
+
+            return (
             <AccordionItem value={y.year} key={y.year} className="border-none">
               <AccordionTrigger className="py-2 px-3 hover:no-underline rounded-lg border bg-muted/30 data-[state=open]:bg-muted/50 transition-colors">
                 <div
                   data-testid={`hours-kpi-year-${y.year}`}
                   className="flex flex-1 items-center justify-between gap-3 text-xs pr-2"
                 >
-                  <span className="font-semibold text-foreground tabular-nums w-12 text-left">{y.year}</span>
+                  <div className="flex items-center gap-2 w-28">
+                    <span className="text-base font-bold text-foreground tabular-nums text-left">{y.year}</span>
+                    {yoyChange !== null && (
+                      <span className={cn(
+                        "text-[9px] font-medium px-1.5 py-0.5 rounded-sm flex items-center gap-0.5", 
+                        isPositive ? "bg-success/15 text-success" : isNegative ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"
+                      )}>
+                        {isPositive ? <TrendingUp size={10} /> : isNegative ? <TrendingDown size={10} /> : null}
+                        {isPositive ? "+" : ""}{yoyChange.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Users size={11} />
                     <span className="tabular-nums">{y.uniqueEmployees}</span> empl.
@@ -230,19 +241,19 @@ export default function TrainingHoursKPI() {
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                   {y.months.map(m => (
                     <div key={m.month} className="flex flex-col items-center justify-center p-2 rounded-md bg-muted/20 border border-muted-foreground/10 text-xs">
-                      <span className="text-muted-foreground text-[10px] uppercase mb-0.5 font-medium tracking-wide">
+                      <span className="text-foreground text-[11px] uppercase mb-0.5 font-bold tracking-wide">
                         {new Date(2000, m.month - 1).toLocaleString('es-MX', { month: 'short' }).replace('.', '')}
                       </span>
-                      <span className="font-semibold text-foreground tabular-nums flex items-baseline gap-1">
+                      <span className="font-bold text-base text-foreground tabular-nums flex items-baseline gap-1 mt-0.5">
                         {m.uniqueCourses}
-                        <span className="text-[9px] font-normal text-muted-foreground">cursos</span>
+                        <span className="text-[10px] font-medium text-muted-foreground">cursos</span>
                       </span>
                     </div>
                   ))}
                 </div>
               </AccordionContent>
             </AccordionItem>
-          ))}
+          )})}
         </Accordion>
       </div>
     </>
