@@ -9,7 +9,7 @@ import { notify } from "@/lib/notify"
 export interface TrainingHoursMonthStat {
   month: number
   uniqueCourses: number
-  typesCount: Record<string, number>
+  inductionCourses: number
 }
 
 export interface TrainingHoursYearStat {
@@ -115,20 +115,19 @@ export function useTrainingHours(): TrainingHoursStats {
           const months: TrainingHoursMonthStat[] = []
           for (let m = 1; m <= 12; m++) {
              const monthCourseSet = g.monthCourses.get(m)
-             const typesCount: Record<string, number> = {}
+             let indCount = 0
              if (monthCourseSet) {
                for (const cid of monthCourseSet) {
                  const t = courseTypeMap.get(cid)
-                 if (t) {
-                   const typeName = t.toUpperCase()
-                   typesCount[typeName] = (typesCount[typeName] || 0) + 1
+                 if (t && t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes("induccion")) {
+                   indCount++
                  }
                }
              }
              months.push({ 
                month: m, 
                uniqueCourses: monthCourseSet?.size ?? 0,
-               typesCount
+               inductionCourses: indCount
              })
           }
 
