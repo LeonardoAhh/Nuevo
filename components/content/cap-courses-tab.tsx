@@ -145,7 +145,42 @@ export function CapCoursesTab({
                         <Badge variant="outline" className="text-xs shrink-0">
                           {course.tipo || getTipoCursoByName(course.name)}
                         </Badge>
-                        <Badge variant="secondary" className="bg-muted text-foreground ml-2">
+                        {course.duration_hours != null ? (
+                          <Badge
+                            data-testid={`course-duration-${course.id}`}
+                            variant="outline"
+                            className="text-xs gap-1 bg-primary/10 text-primary border-primary/30 shrink-0"
+                          >
+                            <Clock className="h-3 w-3" />
+                            {course.duration_hours} h
+                          </Badge>
+                        ) : (
+                          <Badge
+                            data-testid={`course-duration-empty-${course.id}`}
+                            variant="outline"
+                            className="text-[10px] text-muted-foreground border-dashed shrink-0"
+                          >
+                            sin duración
+                          </Badge>
+                        )}
+                        {!isReadOnly && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            data-testid={`edit-course-btn-${course.id}`}
+                            onClick={e => { e.stopPropagation(); onEditCourse(course) }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault(); e.stopPropagation(); onEditCourse(course)
+                              }
+                            }}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            aria-label="Editar curso"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                        <Badge variant="secondary" className="bg-muted text-foreground ml-1">
                           {empleadosConEstado.length}
                         </Badge>
                       </div>
