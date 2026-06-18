@@ -7,7 +7,7 @@ import {
   Search, X, AlertCircle, Printer, FileCheck2, CalendarClock,
   CheckCircle2, AlertTriangle, ShieldQuestion, Loader2,
   Filter, Users, Clock, TrendingUp, BarChart3,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ShieldAlert,
 } from "lucide-react"
 import { Button }              from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +21,8 @@ import { Skeleton }            from "@/components/ui/skeleton"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import RecontratacionLft from "@/components/content/recontratacion-lft"
 import { useNuevoIngreso, formatDate, daysFromToday } from "@/lib/hooks"
 import type { NuevoIngreso }   from "@/lib/hooks"
 import { useRecontratacion }   from "@/lib/hooks/useRecontratacion"
@@ -764,7 +766,22 @@ export default function RecontratacionContent() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <>
+    <Tabs defaultValue="vencimientos" className="space-y-4">
+      <TabsList
+        className="grid w-full grid-cols-2 sm:w-auto sm:inline-flex"
+        data-testid="recontratacion-tabs"
+      >
+        <TabsTrigger value="vencimientos" data-testid="tab-vencimientos" className="gap-1.5">
+          <FileCheck2 className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>Vencimientos</span>
+        </TabsTrigger>
+        <TabsTrigger value="lft" data-testid="tab-lft" className="gap-1.5">
+          <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>Baja LFT Art. 47</span>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="vencimientos" className="mt-0 space-y-0">
       {/* Error global */}
       {error && (
         <Alert variant="destructive" className="mb-4">
@@ -939,6 +956,11 @@ export default function RecontratacionContent() {
         onClose={() => dispatchDetalle({ type: "close" })}
         onImprimir={imprimir}
       />
-    </>
+      </TabsContent>
+
+      <TabsContent value="lft" className="mt-0">
+        <RecontratacionLft />
+      </TabsContent>
+    </Tabs>
   )
 }
