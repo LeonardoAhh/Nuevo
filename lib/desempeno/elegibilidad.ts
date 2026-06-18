@@ -43,13 +43,27 @@ export function esPeriodoSemestral(periodo: string): boolean {
 /**
  * Calcula el cutoff (último ingreso permitido) para un periodo semestral.
  * Devuelve string YYYY-MM-DD, o null si el periodo no es semestral.
+ *
+ * Implementación manual para evitar el bug de desborde de `Date.setMonth()`
+ * cuando el día origen no existe en el mes destino (p.ej. 31-may - 3 meses
+ * NO debe rodar a 03-mar, sino al último día válido = 28-feb).
  */
 export function getCutoffParaPeriodo(periodo: string): string | null {
   const fin = PERIODO_FIN[periodo]
   if (!fin) return null
-  const date = new Date(fin + "T00:00:00")
-  date.setMonth(date.getMonth() - MESES_MIN_ANTIGUEDAD_SEMESTRAL)
-  return date.toISOString().slice(0, 10)
+  const [y, m, d] = fin.split("-").map(Number)
+  let targetMonth = m - MESES_MIN_ANTIGUEDAD_SEMESTRAL // 1-indexed
+  let targetYear = y
+  while (targetMonth <= 0) {
+    targetMonth += 12
+    targetYear -= 1
+  }
+  // Último día del mes destino: Date(y, month, 0) usa month 1-indexed aquí.
+  const lastDay = new Date(targetYear, targetMonth, 0).getDate()
+  const targetDay = Math.min(d, lastDay)
+  const mm = String(targetMonth).padStart(2, "0")
+  const dd = String(targetDay).padStart(2, "0")
+  return `${targetYear}-${mm}-${dd}`
 }
 
 export interface ElegibilidadResultado {
