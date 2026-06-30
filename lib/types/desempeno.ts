@@ -2913,6 +2913,43 @@ const OBJETIVOS_AUXILIAR_DE_SUPERVISOR: Objetivo[] = [
     }
 ];
 
+export const _OBJETIVOS_CHOFER: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cumplir con limpieza de unidades",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },{
+         numero: 2,
+        descripcion: "Cumplir con el llenado de check list de unidades",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },{
+        numero: 3,
+        descripcion: "Cumplir con el mantenimiento de unidades",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Planificar tiempos y movimientos de rutas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Cumplimiento a normas de seguridad y regulaciones",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
+
 export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     /*GERENCIAS*/
     "GERENTE DE PLANTA": _OBJETIVOS_GERENTE_PLANTA,
@@ -3019,6 +3056,9 @@ export const OBJETIVOS_POR_PUESTO: Record<string, Objetivo[]> = {
     "AUXILIAR DE ALMACÉN C": _OBJETIVOS_AUXILIAR_ALMACEN,
     "AUXILIAR DE ALMACÉN D": _OBJETIVOS_AUXILIAR_ALMACEN,
     "AUXILIAR DE ALMACÉN E": _OBJETIVOS_AUXILIAR_ALMACEN,
+    "CHOFER A": _OBJETIVOS_CHOFER,
+    "CHOFER B": _OBJETIVOS_CHOFER,
+    "CHOFER C": _OBJETIVOS_CHOFER,
     /* SISTEMAS */
     "COORDINADOR DE RPS": _OBJETIVOS_COORDINADOR_RPS,
     "AUXILIAR PROGRAMADOR": _OBJETIVOS_AUXILIAR_PROGRAMADOR,
