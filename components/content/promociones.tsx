@@ -49,7 +49,7 @@ import { DesktopTable, MobileList } from "./prom-table-rows"
 // Re-export types for backward compat (page.tsx may import from here)
 export type { AptitudStatus, CursoRequerido, ReglaPromocion, EvaluacionDesempeño, EmpleadoPromocion } from "@/lib/promociones/types"
 
-const PAGE_SIZE = 30
+const PAGE_SIZE = 15
 
 export default function PromocionesContent({
   empleados,

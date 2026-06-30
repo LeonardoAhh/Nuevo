@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -110,6 +110,8 @@ export default function LoginForm() {
       setIsLoading(false)
     }
   }
+
+  const hasError = Boolean(error)
 
   return (
     <div>
