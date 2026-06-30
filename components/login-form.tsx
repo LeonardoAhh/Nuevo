@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,8 @@ export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const errorId = useId()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -83,9 +85,11 @@ export default function LoginForm() {
     }
   }
 
+  const hasError = Boolean(error)
+
   return (
     <motion.div variants={formEntrance} initial="hidden" animate="visible">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <AnimatePresence mode="wait">
           {error && (
             <motion.div
@@ -95,6 +99,7 @@ export default function LoginForm() {
               animate="animate"
               exit="exit"
               role="alert"
+              id={errorId}
               className="p-3 text-sm bg-destructive/10 text-destructive rounded-lg border border-destructive/20"
             >
               {error}
@@ -104,7 +109,7 @@ export default function LoginForm() {
 
         <div className="space-y-2">
           <Label htmlFor="email" className="text-foreground/80 text-sm font-medium">
-            Correo electrónico
+            Email
           </Label>
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
@@ -113,10 +118,17 @@ export default function LoginForm() {
             <Input
               id="email"
               type="email"
-              placeholder=""
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10"
+              disabled={isLoading}
+              aria-invalid={hasError}
+              aria-describedby={hasError ? errorId : undefined}
+              className="pl-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10 disabled:opacity-60"
               required
             />
           </div>
@@ -124,7 +136,7 @@ export default function LoginForm() {
 
         <div className="space-y-2">
           <Label htmlFor="password" className="text-foreground/80 text-sm font-medium">
-            Contraseña
+            Password
           </Label>
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -133,17 +145,22 @@ export default function LoginForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder=""
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10"
+              disabled={isLoading}
+              aria-invalid={hasError}
+              aria-describedby={hasError ? errorId : undefined}
+              className="pl-10 pr-10 h-11 transition-shadow focus:shadow-md focus:shadow-primary/10 disabled:opacity-60"
               required
             />
             <motion.button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={isLoading}
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -157,9 +174,9 @@ export default function LoginForm() {
                   className="inline-flex"
                 >
                   {showPassword ? (
-                    <EyeOffIcon className="h-5 w-5 text-muted-foreground" />
+                    <EyeOffIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-muted-foreground" />
+                    <EyeIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                   )}
                 </motion.span>
               </AnimatePresence>
@@ -168,26 +185,20 @@ export default function LoginForm() {
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember-me"
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-            />
-            <Label htmlFor="remember-me" className="text-sm text-muted-foreground">
-              Recordarme
-            </Label>
-          </div>
         </div>
 
         <Button
           type="submit"
           className="w-full h-11 font-semibold text-sm tracking-wide transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]"
           disabled={isLoading}
+          aria-busy={isLoading}
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <span className="login-spinner h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full" />
+              <span
+                className="login-spinner h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
+                aria-hidden="true"
+              />
               Iniciando sesión...
             </span>
           ) : (
