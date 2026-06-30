@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import LoginForm from "@/components/login-form"
 import LoginHeroVideo from "@/components/login-hero-video"
-import LoginWelcome from "@/components/login-welcome"
 
 export const metadata: Metadata = {
   title: "Login | Capacitación Qro",
@@ -20,8 +19,6 @@ export default function LoginPage() {
       {/* ── Form Panel (derecha en desktop, abajo en móvil) ── */}
       <div className="relative z-10 -mt-10 lg:mt-0 flex flex-1 items-start lg:items-center justify-center px-4 pt-2 sm:px-8 lg:px-12 xl:px-20 bg-background rounded-t-3xl lg:rounded-none shadow-[0_-8px_30px_rgba(0,0,0,0.08)] lg:shadow-none safe-bottom-content">
         <div className="w-full max-w-md">
-          <LoginWelcome />
-
           <Suspense>
             <LoginForm />
           </Suspense>
