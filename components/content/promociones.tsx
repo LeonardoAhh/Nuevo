@@ -4,6 +4,9 @@ import React, { useState, useMemo, useCallback } from "react"
 import {
   CheckCircle2,
   ChevronRight,
+  Download,
+  FileSpreadsheet,
+  FileText,
   FilterX,
   Info,
   Search,
@@ -14,6 +17,16 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { notify } from "@/lib/notify"
+import { exportPromocionesPDF, exportPromocionesExcel } from "@/lib/promociones/export"
 import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
@@ -112,6 +125,40 @@ export default function PromocionesContent({
 
   const hasFilters = busqueda || filtroDept !== "todos" || filtroStatus !== "todos" || filtroPuesto !== "todos"
 
+  const [exporting, setExporting] = useState(false)
+  const exportMeta = useMemo(
+    () => ({ filtros: { busqueda, departamento: filtroDept, puesto: filtroPuesto, estado: filtroStatus } }),
+    [busqueda, filtroDept, filtroPuesto, filtroStatus]
+  )
+
+  const handleExportPDF = useCallback(() => {
+    if (todosOrdenados.length === 0) { notify.error("No hay registros para exportar"); return }
+    setExporting(true)
+    try {
+      exportPromocionesPDF(todosOrdenados, exportMeta)
+      notify.success(`PDF generado (${todosOrdenados.length} registros)`)
+    } catch (e) {
+      console.error(e)
+      notify.error("Error al generar el PDF")
+    } finally {
+      setExporting(false)
+    }
+  }, [todosOrdenados, exportMeta])
+
+  const handleExportExcel = useCallback(async () => {
+    if (todosOrdenados.length === 0) { notify.error("No hay registros para exportar"); return }
+    setExporting(true)
+    try {
+      await exportPromocionesExcel(todosOrdenados, exportMeta)
+      notify.success(`Excel generado (${todosOrdenados.length} registros)`)
+    } catch (e) {
+      console.error(e)
+      notify.error("Error al generar el Excel")
+    } finally {
+      setExporting(false)
+    }
+  }, [todosOrdenados, exportMeta])
+
   return (
     <TooltipProvider delayDuration={300}>
     <div className="space-y-4">
@@ -209,6 +256,35 @@ export default function PromocionesContent({
               <FilterX size={14} />
             </Button>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5"
+                disabled={exporting || todosOrdenados.length === 0}
+                data-testid="promociones-export-trigger"
+              >
+                <Download size={14} />
+                <span className="hidden sm:inline">{exporting ? "Generando…" : "Descargar"}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {todosOrdenados.length} registro{todosOrdenados.length !== 1 ? "s" : ""}
+                {hasFilters ? " (filtrados)" : ""}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleExportPDF} data-testid="promociones-export-pdf" className="gap-2 cursor-pointer">
+                <FileText size={15} className="text-destructive" />
+                <span>Reporte PDF</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel} data-testid="promociones-export-excel" className="gap-2 cursor-pointer">
+                <FileSpreadsheet size={15} className="text-success" />
+                <span>Reporte Excel</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
