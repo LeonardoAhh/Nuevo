@@ -8,7 +8,6 @@ import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -50,7 +49,6 @@ export default function LoginForm() {
   const [direction, setDirection] = useState(1)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -328,17 +326,6 @@ export default function LoginForm() {
                     </AnimatePresence>
                   </motion.button>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <Label htmlFor="remember-me" className="text-sm text-muted-foreground">
-                  Recordarme
-                </Label>
               </div>
 
               <Button
