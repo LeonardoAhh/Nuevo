@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import LoginForm from "@/components/login-form"
-import LoginHero from "@/components/login-hero"
+import LoginHeroVideo from "@/components/login-hero-video"
 import LoginWelcome from "@/components/login-welcome"
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export default function LoginPage() {
     <div className="login-page min-h-[100dvh] flex flex-col lg:flex-row bg-background text-foreground">
       {/* ── Hero Panel (izquierda en desktop, arriba en móvil) ── */}
       <div className="login-hero-panel relative flex-shrink-0 lg:w-[55%] xl:w-[58%] h-[48dvh] sm:h-[52dvh] lg:h-auto lg:min-h-[100dvh]">
-        <LoginHero />
+        <LoginHeroVideo />
       </div>
 
       {/* ── Form Panel (derecha en desktop, abajo en móvil) ── */}
