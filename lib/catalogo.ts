@@ -1,0 +1,681 @@
+export interface CatalogoJerarquia {
+  [departamento: string]: {
+    areas: string[];
+    puestos: string[];
+  }
+}
+//ACTUALIZADO
+export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
+  "PRODUCCIÓN": {
+    areas: ["PRODUCCIÓN 1ER TURNO",
+      "PRODUCCIÓN 2DO TURNO",
+      "PRODUCCIÓN 3ER TURNO",
+      "PRODUCCIÓN 4TO TURNO",
+      "PRODUCCIÓN ADMINISTRATIVO",
+      "PRODUCCIÓN MONTAJE"],
+    puestos: ["GERENTE DE PRODUCCIÓN",
+      "JEFE DE PRODUCCIÓN",
+      "ASISTENTE DE PRODUCCIÓN A",
+      "ASISTENTE DE PRODUCCIÓN B",
+      "PLANEADOR DE PRODUCCIÓN",
+      "SUPERVISOR DE PRODUCCIÓN A",
+      "SUPERVISOR DE PRODUCCIÓN B",
+      "SUPERVISOR DE PRODUCCIÓN C",
+      "SUPERVISOR DE PRODUCCIÓN D",
+      "OPERADOR DE MÁQUINA A",
+      "OPERADOR DE MÁQUINA B",
+      "OPERADOR DE MÁQUINA C",
+      "OPERADOR DE MÁQUINA D",
+      "AUXILIAR DE SCRAP A",
+      "AUXILIAR DE SCRAP B",
+      "AUXILIAR DE BÁSCULA A",
+      "AUXILIAR DE BÁSCULA B",
+      "AUXILIAR DE SUPERVISOR A",
+      "AUXILIAR DE SUPERVISOR B",
+      "CHECK LIST A",
+      "CHECK LIST B",
+      "MATERIALISTA A",
+      "MATERIALISTA B",
+      "PREPARADOR A",
+      "PREPARADOR B",
+      "CAPTURISTA RPS A",
+      "CAPTURISTA RPS B",
+      "JEFE DE PROCESO",
+      "INGENIERO DE PROCESO A",
+      "INGENIERO DE PROCESO B",
+      "INGENIERO DE PROCESO C",
+      "INGENIERO DE PROCESO D",
+      "SUPERVISOR DE MONTAJE",
+      "MONTADOR DE MOLDES A",
+      "MONTADOR DE MOLDES B",
+      "MONTADOR DE MOLDES C",
+      "MONTADOR DE MOLDES D"]
+  },//ACTUALIZADO
+  "CALIDAD": {
+    areas: ["A. CALIDAD 1ER TURNO",
+      "A. CALIDAD 2DO TURNO",
+      "CALIDAD ADMINISTRATIVO",
+      "RESIDENTES DE CALIDAD"
+    ],
+    puestos: ["GERENTE DE CALIDAD",
+      "JEFE DE CALIDAD",
+      "AUXILIAR DE CALIDAD",
+      "INGENIERO DE CALIDAD A",
+      "INGENIERO DE CALIDAD B",
+      "INGENIERO DE CALIDAD C",
+      "INSPECTOR DE CALIDAD A",
+      "INSPECTOR DE CALIDAD B",
+      "INSPECTOR DE CALIDAD C",
+      "INSPECTOR DE CALIDAD D",
+      "INSPECTOR RECIBO",
+      "OPERADOR DE ACABADOS - GP12 A",
+      "OPERADOR DE ACABADOS - GP12 B",
+      "OPERADOR DE ACABADOS - GP12 C",
+      "OPERADOR DE ACABADOS - GP12 D",
+      "RESIDENTE DE CALIDAD A",
+      "RESIDENTE DE CALIDAD B",
+      "RESIDENTE DE CALIDAD C",
+      "SUPERVISOR DE ACABADOS - GP12 A",
+      "SUPERVISOR DE ACABADOS - GP12 B",
+      "SUPERVISOR DE ACABADOS - GP12 C"]
+  },//ACTUALIZADO
+  "MANTENIMIENTO": {
+    areas: ["MANTENIMIENTO"],
+    puestos: ["AUXILIAR ADMINISTRATIVO DE MANTENIMIENTO",
+      "AUXILIAR DE MANTENIMIENTO A",
+      "AUXILIAR DE MANTENIMIENTO C",
+      "JEFE DE MANTENIMIENTO",
+      "TÉCNICO DE MANTENIMIENTO B",
+      "TÉCNICO DE MANTENIMIENTO C",
+      "TÉCNICO DE MANTENIMIENTO D",
+      "TECNICO DE MANTENIMIENTO DE EDIFICIOS A",
+      "TÉCNICO ESPECIALISTA DE MANTENIMIENTO A",
+      "TÉCNICO ESPECIALISTA DE MANTENIMIENTO B"]
+  },//ACTUALIZADO
+  "ALMACÉN": {
+    areas: ["ALMACÉN"],
+    puestos: ["ALMACENISTA DE MATERIA PRIMA",
+      "AUXILIAR ADMINISTRATIVO DE ALMACÉN A",
+      "AUXILIAR ADMINISTRATIVO DE ALMACÉN B",
+      "AUXILIAR ADMINISTRATIVO DE ALMACÉN C",
+      "AUXILIAR DE ALMACÉN A",
+      "AUXILIAR DE ALMACÉN B",
+      "AUXILIAR DE ALMACÉN C",
+      "AUXILIAR DE ALMACÉN D",
+      "CHOFER A",
+      "CHOFER B",
+      "JEFE DE ALMACÉN"]
+  },//ACTUALIZADO
+  "RECURSOS HUMANOS": {
+    areas: ["RECURSOS HUMANOS"],
+    puestos: ["JEFE DE RECURSOS HUMANOS",
+      "AUXILIAR DE LIMPIEZA A",
+      "AUXILIAR DE LIMPIEZA B",
+      "ANALISTA DE CAPACITACIÓN",
+      "ANALISTA DE RECLUTAMIENTO Y SELECCIÓN A",
+      "ANALISTA DE RECLUTAMIENTO Y SELECCIÓN B",
+      "ANALISTA DE SEGURIDAD E HIGIENE",
+      "ANALISTA DE RECURSOS HUMANOS",
+      "ASISTENTE DE RECURSOS HUMANOS",
+      "COORDINADOR DE RECLUTAMIENTO Y SELECCIÓN"]
+  },//ACTUALIZADO
+  "TALLER DE MOLDES": {
+    areas: ["MOLDES"],
+    puestos: ["AUXILIAR ADMINISTRATIVO DE TALLER DE MOLDES",
+      "JEFE DE TALLER DE MOLDES",
+      "TÉCNICO DE MOLDES A",
+      "TÉCNICO DE MOLDES B",
+      "TÉCNICO DE MOLDES C",
+      "TÉCNICO DE MOLDES D",
+      "TÉCNICO DE MOLDES E"]
+  },//ACTUALIZADO
+  "SGI": {
+    areas: ["SGI"],
+    puestos: ["COORDINADOR DEL SGI",
+      "AUXILIAR DEL SGI A",
+      "AUXILIAR DEL SGI B",
+      "AUXILIAR DEL SGI C"]
+  },//ACTUALIZADO
+  "METROLOGÍA": {
+    areas: ["METROLOGÍA"],
+    puestos: ["JEFE DE METROLOGÍA",
+      "SUPERVISOR DE METROLOGÍA",
+      "METRÓLOGO A",
+      "METRÓLOGO B",
+      "METRÓLOGO C",
+      "AUXILIAR DE METROLOGÍA"]
+  },//ACTUALIZADO
+  "PROYECTOS": {
+    areas: ["PROYECTOS"],
+    puestos: ["GERENTE DE PROYECTOS",
+      "AUXILIAR DE PROYECTOS",
+      "LIDER DE COTIZACIONES",
+      "INGENIERO DE PROYECTOS A",
+      "INGENIERO DE PROYECTOS B",
+      "INGENIERO DE PROYECTOS D",
+      "LIDER DE PROYECTOS A",
+      "LIDER DE PROYECTOS B",
+      "LÍDER DE PROYECTOS C"]
+  },//ACTUALIZADO
+  "SISTEMAS": {
+    areas: ["SISTEMAS"],
+    puestos: ["COORDINADOR DE RPS",
+      "AUXILIAR PROGRAMADOR"]
+  },//ACTUALIZADO
+  "LOGISTICA": {
+    areas: ["LOGISTICA"],
+    puestos: ["JEFE DE LOGISTICA",
+      "SUPERVISOR DE LOGISTICA"]
+  },//ACTUALIZADO
+  "GERENCIA DE PLANTA": {
+    areas: ["GERENCIA DE PLANTA"],
+    puestos: ["GERENTE DE PLANTA"]
+  } //ACTUALIZADO
+}
+//ACTUALIZADO
+export const TURNOS = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "Mixto"
+]
+//ACTUALIZADO
+export const JEFES_DE_AREA = [
+  "AGUILLON RANGEL LIZBETH",
+  "BONILLA HERNANDEZ ADRIANA BEATRIZ",
+  "BRAVO GARCIA JESUS FERNANDO",
+  "CABRERO BOO MANUEL ALBERTO",
+  "GONZALEZ ALEMAN ALFREDO GUILLERMO",
+  "ESQUIVEL MATA ARIADNA NAYELY",
+  "GARCIA JUAREZ XICOTENCATL",
+  "GOMEZ SANCHEZ CARLOS ARIEL",
+  "GOMEZ SANCHEZ CESAR",
+  "HERNANDEZ GUDIÑO NOEMI",
+  "HERNANDEZ RUIZ MIGUEL ANGEL",
+  "PEREZ BAUTISTA EDGAR",
+  "SALINAS ORTIZ ANA ERIKA",
+  "TERRAZAS MARTINEZ JAIME",
+  "VIÑOLAS GONZALEZ JOSE LUIS"
+]
+
+export const EVALUADORES_DESEMPENO = [
+  "AGUILLON RANGEL LIZBETH",
+  "BIBIANO GARCIA FLOR",
+  "BONILLA HERNANDEZ ADRIANA BEATRIZ",
+  "BRAVO GARCIA JESUS FERNANDO",
+  "CABRERO BOO MANUEL ALBERTO",
+    "GONZALEZ ALEMAN ALFREDO GUILLERMO",
+    "HERNANDEZ HERNANDEZ STEFFI MONSERRATH",
+  "CHONG ALTUZAR JOSE ANTONIO",
+  "CORONA ARCE LILIANA",
+  "DIAZ GUTIERREZ JOSE GUADALUPE",
+  "ESQUIVEL MATA ARIADNA NAYELY",
+  "FLORES IBARRA VICTOR MANUEL",
+  "GARCIA JUAREZ XICOTENCATL",
+  "GOMEZ SANCHEZ CARLOS ARIEL",
+  "GOMEZ SANCHEZ CESAR",
+  "GUTIERREZ LOPEZ GUADALUPE",
+  "HERNANDEZ CRUZ JORGE",
+  "HERNANDEZ GARCIA JOVANIC TOMAS",
+  "HERNANDEZ GUDIÑO NOEMI",
+  "HERNANDEZ RUIZ MIGUEL ANGEL",
+  "JUAREZ HERNANDEZ SERGIO RICARDO",
+  "MARTINEZ COBOS OMAR",
+  "OCHOA ORTUÑO JOSE MA.",
+  "ORTIZ OLVERA JUAN FIDEL",
+  "PEREZ BAUTISTA EDGAR",
+  "PEREZ SAMANIEGO ISRAEL",
+  "RUEDA MUÑOZ FRANCISCO",
+  "SALINAS ORTIZ ANA ERIKA",
+  "SIXTOS PINEDA LUIS ANGEL",
+  "TERRAZAS MARTINEZ JAIME",
+  "VALDIVIA FRANCO CARLOS ALAIN",
+  "VAZQUEZ IRETA SOFIA GUADALUPE",
+  "VILLAMAR HINOJOSA DEISY",
+  "VIÑOLAS GONZALEZ JOSE LUIS",
+]
+
+export const EVALUADORES_PUESTO: Record<string, string> = {
+  "AGUILLON RANGEL LIZBETH": "COORDINADOR DEL SGI",
+  "ALVARADO FRAGOSO JORGE ALBERTO": "SUPERVISOR DE PRODUCCIÓN D",
+  "BIBIANO GARCIA FLOR": "SUPERVISOR DE PRODUCCIÓN A",
+  "BONILLA HERNANDEZ ADRIANA BEATRIZ": "GERENTE DE RECURSOS HUMANOS",
+  "BRAVO GARCIA JESUS FERNANDO": "JEFE DE MANTENIMIENTO",
+  "CABRERO BOO MANUEL ALBERTO": "COORDINADOR DE RPS",
+  "GONZALEZ ALEMAN ALFREDO GUILLERMO": "GERENTE DE CALIDAD",
+  "CHONG ALTUZAR JOSE ANTONIO": "SUPERVISOR DE PRODUCCIÓN D",
+  "CORONA ARCE LILIANA": "JEFE DE LOGISTICA",
+  "DIAZ GUTIERREZ JOSE GUADALUPE": "SUPERVISOR DE PRODUCCIÓN C",
+  "ESQUIVEL MATA ARIADNA NAYELY": "JEFE DE METROLOGÍA",
+  "FLORES IBARRA VICTOR MANUEL": "SUPERVISOR DE PRODUCCIÓN B",
+  "GARCIA JUAREZ XICOTENCATL": "JEFE DE ALMACÉN",
+  "GOMEZ SANCHEZ CARLOS ARIEL": "GERENTE DE PRODUCCIÓN",
+  "GOMEZ SANCHEZ CESAR": "JEFE DE TALLER DE MOLDES",
+  "GUTIERREZ LOPEZ GUADALUPE": "SUPERVISOR DE ACABADOS - GP12 B",
+  "HERNANDEZ CRUZ JORGE": "SUPERVISOR DE MONTAJE",
+  "HERNANDEZ GARCIA JOVANIC TOMAS": "SUPERVISOR DE PRODUCCIÓN D",
+  "HERNANDEZ GUDIÑO NOEMI": "JEFE DE RECURSOS HUMANOS",
+  "HERNANDEZ RUIZ MIGUEL ANGEL": "DIRECTOR DE PLANTAS",
+  "JUAREZ HERNANDEZ SERGIO RICARDO": "JEFE DE PRODUCCIÓN",
+  "MARTINEZ COBOS OMAR": "SUPERVISOR DE PRODUCCIÓN D",
+  "OCHOA ORTUÑO JOSE MA.": "SUPERVISOR DE PRODUCCIÓN B",
+  "ORTIZ OLVERA JUAN FIDEL": "SUPERVISOR DE PRODUCCIÓN A",
+  "PEREZ BAUTISTA EDGAR": "JEFE DEL SGI",
+  "PEREZ SAMANIEGO ISRAEL": "SUPERVISOR DE PRODUCCIÓN C",
+  "RUEDA MUÑOZ FRANCISCO": "JEFE DE PROCESOS",
+  "SALINAS ORTIZ ANA ERIKA": "GERENTE DE PROYECTOS",
+  "SIXTOS PINEDA LUIS ANGEL": "SUPERVISOR DE PRODUCCIÓN D",
+  "TERRAZAS MARTINEZ JAIME": "GERENTE DE PLANTA",
+  "VALDIVIA FRANCO CARLOS ALAIN": "SUPERVISOR DE PRODUCCIÓN C",
+  "VAZQUEZ IRETA SOFIA GUADALUPE": "SUPERVISOR DE ACABADOS - GP12 C",
+  "VILLAMAR HINOJOSA DEISY": "SUPERVISOR DE PRODUCCIÓN C",
+  "VIÑOLAS GONZALEZ JOSE LUIS": "DIRECTOR GENERAL",
+}
+
+//ACTUALIZADO
+export const ESCOLARIDAD = [
+  "PRIMARIA",
+  "SECUNDARIA",
+  "PREPARATORIA",
+  "TECNICO",
+  "LICENCIATURA",
+  "INGENIERIA",
+  "MAESTRIA",
+  "DOCTORADO"
+]
+
+export const JEFES_DE_AREA_POR_DEPARTAMENTO: { [departamento: string]: string[] } = {
+  "PRODUCCIÓN": [
+    "GOMEZ SANCHEZ CARLOS ARIEL ",
+  ],
+  "CALIDAD": [
+    "GONZALEZ ALEMAN ALFREDO GUILLERMO",
+  ],
+  "MANTENIMIENTO": [
+    "BRAVO GARCIA JESUS FERNANDO",
+  ],
+  "ALMACÉN": [
+    "GARCIA JUAREZ XICOTENCATL",
+  ],
+  "RECURSOS HUMANOS": [
+    "HERNANDEZ GUDIÑO NOEMI",
+  ],
+  "TALLER DE MOLDES": [
+    "GOMEZ SANCHEZ CESAR",
+  ],
+  "SGI": [
+    "AGUILLON RANGEL LIZBETH",
+  ],
+  "METROLOGÍA": [
+    "ESQUIVEL MATA ARIADNA NAYELY",
+  ],
+  "PROYECTOS": [
+    "SALINAS ORTIZ ANA ERIKA",
+  ],
+  "SISTEMAS": [
+    "CABRERO BOO MANUEL ALBERTO",
+  ],
+}
+
+export const TIPO_DESEMPENO_POR_PUESTO = {
+  jefe: [
+    "GERENTE",
+    "JEFE",
+    "SUPERVISOR",
+    "COORDINADOR",
+    "LIDER",
+    "DIRECTOR",
+    "GERENTE DE",
+    "JEFE DE",
+    "SUPERVISOR DE",
+    "COORDINADOR DE",
+    "LÍDER DE",
+  ],
+  administrativo: [
+    "ADMINISTRATIVO",
+    "AUXILIAR ADMINISTRATIVO",
+    "ANALISTA",
+    "ASISTENTE",
+    "SECRETARIA",
+    "PROGRAMADOR",
+    "AUXILIAR DE RECURSOS HUMANOS",
+    "AUXILIAR DE CONTABILIDAD",
+    "METRÓLOGO",
+    "AUXILIAR DE METROLOGÍA",
+    "AUXILIAR DE PROYECTOS",
+    "INGENIERO DE PROYECTOS",
+    "AUXILIAR DEL SGI",
+    "PLANEADOR DE PRODUCCIÓN",
+    "INGENIERO DE PROCESO",
+    "INGENIERO DE CALIDAD",
+    "INSPECTOR DE CALIDAD",
+    "INSPECTOR RECIBO",
+    "RESIDENTE DE CALIDAD",
+    "LIDER DE COTIZACIONES",
+    "SUPERVISOR DE LOGISTICA",
+    "LIDER DE PROYECTOS",
+    "LÍDER DE PROYECTOS",
+    "COORDINADOR DE RPS",
+  ],
+  operativo: [
+    "OPERADOR",
+    "AUXILIAR",
+    "MATERIALISTA",
+    "PREPARADOR",
+    "MONTADOR",
+    "TÉCNICO",
+    "INSPECTOR",
+    "METRÓLOGO",
+    "CHOFER",
+    "RESIDENTE",
+    "AUXILIAR DE MANTENIMIENTO",
+  ],
+} as const
+
+export type TipoDesempeno = keyof typeof TIPO_DESEMPENO_POR_PUESTO
+
+export function getTipoDesempenoByPuesto(puesto: string): TipoDesempeno {
+  const normalized = puesto.toUpperCase().trim()
+
+  const matchList = (tipo: TipoDesempeno) =>
+    TIPO_DESEMPENO_POR_PUESTO[tipo].some((keyword) => normalized.includes(keyword))
+
+  if (
+    matchList("jefe") &&
+    !normalized.includes("AUXILIAR ADMINISTRATIVO") &&
+    !normalized.includes("AUXILIAR DE SUPERVISOR") &&
+    !normalized.includes("LIDER DE COTIZACIONES") &&
+    !normalized.includes("SUPERVISOR DE LOGISTICA") &&
+    !normalized.includes("LIDER DE PROYECTOS") &&
+    !normalized.includes("LÍDER DE PROYECTOS") &&
+    !normalized.includes("COORDINADOR DE RPS")
+  ) {
+    return "jefe"
+  }
+
+  if (matchList("administrativo")) {
+    return "administrativo"
+  }
+
+  return "operativo"
+}
+
+// Normaliza un puesto para comparar (UPPER, sin acentos, espacios colapsados).
+function normalizePuestoKey(puesto: string): string {
+  return puesto
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+// Mapa puesto normalizado → departamento, derivado de CATALOGO_ORGANIZACIONAL.
+const PUESTO_A_DEPARTAMENTO: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const [departamento, { puestos }] of Object.entries(CATALOGO_ORGANIZACIONAL)) {
+    for (const p of puestos) {
+      map[normalizePuestoKey(p)] = departamento
+    }
+  }
+  return map
+})()
+
+export const DEPARTAMENTO_SIN_ASIGNAR = "SIN DEPARTAMENTO"
+
+/**
+ * Devuelve el departamento de un puesto según `CATALOGO_ORGANIZACIONAL`.
+ * Si el puesto no está en el catálogo, devuelve `DEPARTAMENTO_SIN_ASIGNAR`.
+ */
+export function getDepartamentoByPuesto(puesto: string | null | undefined): string {
+  if (!puesto) return DEPARTAMENTO_SIN_ASIGNAR
+  return PUESTO_A_DEPARTAMENTO[normalizePuestoKey(puesto)] ?? DEPARTAMENTO_SIN_ASIGNAR
+}
+
+export const PERIODOS_DESEMPENO = {
+  semestrales: ["DIC-MAY 2026", "JUN-NOV 2026"] as const,
+  mensuales: [
+    "ENE-FEB 2026",
+    "FEB-MAR 2026",
+    "MAR-ABR 2026",
+    "ABR-MAY 2026",
+    "MAY-JUN 2026",
+    "JUN-JUL 2026",
+    "JUL-AGO 2026",
+    "AGO-SEP 2026",
+    "SEP-OCT 2026",
+    "OCT-NOV 2026",
+    "NOV-DIC 2026",
+  ] as const,
+} as const
+
+export type DesempenoPeriodo = (typeof PERIODOS_DESEMPENO)[keyof typeof PERIODOS_DESEMPENO][number]
+
+// Mapa abreviatura de mes (ES) → número 1-12.
+const MES_ABREV_A_NUM: Record<string, number> = {
+  ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6,
+  JUL: 7, AGO: 8, SEP: 9, OCT: 10, NOV: 11, DIC: 12,
+}
+
+/**
+ * Convierte un label de periodo de desempeño a la lista de meses `YYYY-MM`
+ * que abarca, en orden ascendente.
+ *
+ * El año del label corresponde al mes FINAL. Si el mes inicial es mayor que
+ * el final, el inicio cae en el año anterior (p.ej. "DIC-MAY 2026" →
+ * 2025-12 … 2026-05).
+ *
+ * - Mensual ("ENE-FEB 2026") → 2 meses.
+ * - Semestral ("DIC-MAY 2026") → 6 meses.
+ *
+ * Devuelve `[]` si el label no tiene el formato esperado.
+ */
+export function mesesDePeriodo(periodo: string | null | undefined): string[] {
+  if (!periodo) return []
+  const m = periodo.trim().match(/^([A-ZÁÉÍÓÚ]{3})-([A-ZÁÉÍÓÚ]{3})\s+(\d{4})$/i)
+  if (!m) return []
+
+  const startNum = MES_ABREV_A_NUM[m[1].toUpperCase()]
+  const endNum = MES_ABREV_A_NUM[m[2].toUpperCase()]
+  const endYear = Number(m[3])
+  if (!startNum || !endNum || !Number.isFinite(endYear)) return []
+
+  const startYear = startNum <= endNum ? endYear : endYear - 1
+
+  const meses: string[] = []
+  let y = startYear
+  let mm = startNum
+  // Límite de seguridad: máx 24 meses para evitar loop infinito ante datos raros.
+  for (let i = 0; i < 24; i++) {
+    meses.push(`${y}-${String(mm).padStart(2, "0")}`)
+    if (y === endYear && mm === endNum) break
+    mm += 1
+    if (mm > 12) { mm = 1; y += 1 }
+  }
+  return meses
+}
+
+export const SECCIONES_PONDERACION_DESEMPENO = {
+  operativo: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de objetivos productivos y operativos." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de cumplimiento de responsabilidades y reglamentos." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias y compromisos." },
+  ] as const,
+  administrativo: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de metas administrativas y de gestión." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de cumplimiento de procesos y comunicación." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias y resultados internos." },
+  ] as const,
+  jefe: [
+    { nombre: "Primera parte", peso: 40, descripcion: "Evaluación de liderazgo, seguimiento y resultados del equipo." },
+    { nombre: "Segunda parte", peso: 30, descripcion: "Evaluación de gestión de recursos y cumplimiento de metas." },
+    { nombre: "Tercera parte", peso: 30, descripcion: "Evaluación de competencias directivas y comunicación." },
+  ] as const,
+} as const
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catálogo de Tipos de Cursos
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const TIPOS_CURSOS = [
+  "INDUCCIÓN",
+  "EHS",
+  "TÉCNICOS",
+  "CALIDAD",
+  "SGI",
+  "EXTERNO",
+  "SIN TIPO",
+  "PRODUCCIÓN",
+  "ALMACÉN",
+] as const
+
+export type TipoCurso = typeof TIPOS_CURSOS[number]
+
+// Mapeo explícito de nombre de curso -> tipo de curso
+// EDITAR AQUÍ: agregar cada curso con su tipo
+export const CURSOS_POR_TIPO: Record<string, TipoCurso> = {
+  // INDUCCIÓN
+  "INDUCCIÓN A LA EMPRESA": "INDUCCIÓN",
+  "SEGURIDAD Y PREVENCIÓN DE ACCIDENTES": "INDUCCIÓN",
+  "ASPECTOS E IMPACTOS AMBIENTALES": "INDUCCIÓN",
+  "FAMILIAS DEL PRODUCTO": "INDUCCIÓN",
+  "SISTEMA DE GESTIÓN INTEGRAL": "INDUCCIÓN",
+  "ALERTAS DE CALIDAD Y CATÁLOGO DE FALLAS": "INDUCCIÓN",
+  "METODOLOGÍA 5S": "INDUCCIÓN",
+  "REPORTE DE PRODUCCIÓN": "INDUCCIÓN",
+  "INSTRUCCIONES DE TRABAJO": "INDUCCIÓN",
+  "NOM-036-1-STPS-2018": "EHS",
+  "OPERADORES DE MÁQUINA": "PRODUCCIÓN",
+  "SEPARACIÓN DE RESIDUOS": "EHS",
+  "AUDITORÍAS DE PROCESO EN CAPAS": "SGI",
+  "ESTRUCTURA DEL SGI Y DOCUMENTOS": "SGI",
+  "CORE TOOLS": "EXTERNO",
+  "INTERPRETACIÓN DE PLANOS": "EXTERNO",
+  "KEYENCE": "EXTERNO",
+  "MANEJO DE MATERIAL NO CONFORME": "CALIDAD",
+  "PROCESO DE LIBREACIÓN DE MATERIA PRIMA": "CALIDAD",
+  "TRAZABILIDAD DEL PRODUCTO": "CALIDAD",
+  "VALIDACIÓN DE ARRANQUE": "CALIDAD",
+  "NOM-035-STPS-2018": "EHS",
+  "INTRODUCCIÓN A LA METROLOGÍA Y MANEJO DE EQUIPOS DE MEDICIÓN": "EXTERNO",
+  "DIAGRAMA DE TORTUGA": "SGI",
+  "CONTROL DE CONTRATISTAS": "EHS",
+  "NOM-005-STPS-1998": "EHS",
+  "FORMACIÓN DE INSTRUCTORES INTERNOS": "EXTERNO",
+  "IT-ASC-019": "CALIDAD",
+  "IT-PRO-009": "SGI",
+  "MATRIZ DE RIESGOS": "SGI",
+  "METODO PEPS": "ALMACÉN",
+  "MI-GER-001": "SGI",
+  "MINITAB": "EXTERNO",
+  "NOM-002-STPS-2010": "EHS",
+  "NOM-004-STPS-1999": "EHS",
+  "NOM-027-STPS-2008": "EHS",
+  "OPERACIÓN SEGURA DE MONTACARGAS": "EXTERNO",
+  "VDA 6.3": "EXTERNO",
+  "VDA 6.5": "EXTERNO",
+  "APQP": "EXTERNO",
+  "PPAP": "EXTERNO",
+  "FMEA": "EXTERNO",
+}
+
+/**Obtiene el tipo de curso a partir del nombre del curso usando mapeo explícito.*/
+export function getTipoCursoByName(nombreCurso: string): TipoCurso {
+  const normalized = nombreCurso.toUpperCase().trim()
+
+  // Primero buscar coincidencia exacta
+  if (normalized in CURSOS_POR_TIPO) {
+    return CURSOS_POR_TIPO[normalized]
+  }
+
+  // Buscar coincidencia parcial
+  for (const [key, tipo] of Object.entries(CURSOS_POR_TIPO)) {
+    if (normalized.includes(key.toUpperCase())) {
+      return tipo
+    }
+  }
+
+  // Default
+  return "SIN TIPO"
+}
+
+
+/**
+ * Normaliza un nombre de departamento para comparación tolerante a
+ * acentos, mayúsculas y espacios sobrantes.
+ */
+export function normalizeDepartamento(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+}
+
+export const DEPARTAMENTOS_EVALUADORES: Record<string, string[]> = {
+  "Dirección": [
+    "VIÑOLAS GONZALEZ JOSE LUIS",
+    "HERNANDEZ RUIZ MIGUEL ANGEL",
+  ],
+  "Gerencia": [
+    "TERRAZAS MARTINEZ JAIME",
+  ],
+  "Producción": [
+    "GOMEZ SANCHEZ CARLOS ARIEL",
+    "JUAREZ HERNANDEZ SERGIO RICARDO",
+    "RUEDA MUÑOZ FRANCISCO",
+    "BIBIANO GARCIA FLOR",
+    "CHONG ALTUZAR JOSE ANTONIO",
+    "DIAZ GUTIERREZ JOSE GUADALUPE",
+    "FLORES IBARRA VICTOR MANUEL",
+    "HERNANDEZ GARCIA JOVANIC TOMAS",
+    "MARTINEZ COBOS OMAR",
+    "OCHOA ORTUÑO JOSE MA.",
+    "ORTIZ OLVERA JUAN FIDEL",
+    "PEREZ SAMANIEGO ISRAEL",
+    "SIXTOS PINEDA LUIS ANGEL",
+    "VALDIVIA FRANCO CARLOS ALAIN",
+    "VILLAMAR HINOJOSA DEISY",
+    ],
+  "Montaje": [
+    "HERNANDEZ CRUZ JORGE",
+  ],
+  "Acabados GP12": [
+    "GUTIERREZ LOPEZ GUADALUPE",
+    "VAZQUEZ IRETA SOFIA GUADALUPE",
+  ],
+  "Recursos Humanos": [
+    "BONILLA HERNANDEZ ADRIANA BEATRIZ",
+    "HERNANDEZ GUDIÑO NOEMI",
+  ],
+  "Calidad": [
+      "GONZALEZ ALEMAN ALFREDO GUILLERMO",
+      "HERNANDEZ HERNANDEZ STEFFI MONSERRATH",
+  ],
+  "Metrología": [
+    "ESQUIVEL MATA ARIADNA NAYELY",
+  ],
+  "SGI": [
+    "AGUILLON RANGEL LIZBETH",
+    "PEREZ BAUTISTA EDGAR",
+  ],
+  "Mantenimiento": [
+    "BRAVO GARCIA JESUS FERNANDO",
+  ],
+  "Almacén": [
+    "GARCIA JUAREZ XICOTENCATL",
+    ],
+  "Logística": [
+    "CORONA ARCE LILIANA",
+  ],
+  "Moldes": [
+    "GOMEZ SANCHEZ CESAR",
+  ],
+  "Proyectos": [
+    "SALINAS ORTIZ ANA ERIKA",
+  ],
+  "SISTEMAS": [
+    "CABRERO BOO MANUEL ALBERTO",
+    ],
+}
