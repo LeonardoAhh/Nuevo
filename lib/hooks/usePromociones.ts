@@ -196,8 +196,8 @@ export function usePromociones() {
           const cal   = taken?.calificacion ?? null
           return {
             nombre:          name,
-            // Aprobado = mismo criterio que useCapacitacion: cal >= 70 o simplemente tomado
-            completado:      taken != null && (cal == null || cal >= 70),
+            // Aprobado = mismo criterio que useCapacitacion: cal >= 7 o simplemente tomado
+            completado:      taken != null && (cal == null || cal >= 7),
             fechaAplicacion: taken?.fecha_aplicacion ?? undefined,
             calificacion:    cal ?? undefined,
           }

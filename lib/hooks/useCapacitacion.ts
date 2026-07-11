@@ -721,10 +721,18 @@ export function useCapacitacion() {
     setImportError(null)
     try {
       if (records.length === 0) return { success: true, inserted: 0 }
+      
+      // Eliminar duplicados para evitar error de Postgres: ON CONFLICT DO UPDATE command cannot affect row a second time
+      const map = new Map<string, typeof records[0]>()
+      for (const r of records) {
+        map.set(`${r.employee_id}|${r.raw_course_name}`, r)
+      }
+      const uniqueRecords = Array.from(map.values())
+
       const { error } = await supabase
         .from('employee_courses')
         .upsert(
-          records.map(r => ({
+          uniqueRecords.map(r => ({
             employee_id: r.employee_id,
             course_id: r.course_id,
             raw_course_name: r.raw_course_name,

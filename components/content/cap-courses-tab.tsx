@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import { downloadExcelReport } from "@/lib/capacitacion/excel"
 import { CapReportPreviewDialog } from "@/components/content/cap-report-preview-dialog"
+import { CapCourseAuditDialog } from "@/components/content/cap-course-audit-dialog"
 import { CapCourseDetailView } from "@/components/content/cap-course-detail-view"
 import { getTipoCursoByName } from "@/lib/catalogo"
 import { motion, AnimatePresence } from "framer-motion"
@@ -50,6 +51,7 @@ export function CapCoursesTab({
   useEffect(() => { setCoursePage(1) }, [courseSearch])
 
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [auditOpen, setAuditOpen] = useState(false)
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
 
   const handleDownload = async () => {
@@ -69,6 +71,16 @@ export function CapCoursesTab({
             <CardDescription>Todos los cursos únicos registrados en el sistema.</CardDescription>
           </div>
           <div className="flex gap-2 items-center">
+            <Button
+              variant="outline"
+              className="px-3 sm:px-4 focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setAuditOpen(true)}
+              aria-label="Auditoría Global"
+              title="Auditoría Global"
+            >
+              <Search className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Auditoría</span>
+            </Button>
             <Button
               variant="outline"
               className="px-3 sm:px-4 focus-visible:ring-2 focus-visible:ring-ring"
@@ -289,6 +301,14 @@ export function CapCoursesTab({
           totalCourses: courses.length,
           totalRecords: empCourses.length
         }}
+      />
+      
+      <CapCourseAuditDialog
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+        courses={courses}
+        employees={employees}
+        empCourses={empCourses}
       />
     </Card>
   )

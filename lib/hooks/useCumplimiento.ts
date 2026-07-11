@@ -24,7 +24,7 @@ export interface DepartmentRow { id: string; name: string }
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 export const META = 80
-const APROBADO_MIN = 70
+const APROBADO_MIN = 7
 
 export function colorPct(pct: number): string {
   if (pct >= META) return "hsl(var(--chart-2))"

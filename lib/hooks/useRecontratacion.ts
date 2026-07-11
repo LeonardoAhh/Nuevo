@@ -20,7 +20,7 @@ import type {
 } from '@/components/content/recontratacion-print'
 
 /** Umbral de calificación aprobatoria; por debajo se asume plan de seguimiento. */
-const APROBATORIA = 70
+const APROBATORIA = 7
 
 /**
  * Jefe de área por departamento, con la llave normalizada (sin acentos, minúsculas)

@@ -78,8 +78,8 @@ export function useCalificaciones() {
           withCal.length > 0
             ? Math.round(withCal.reduce((s, c) => s + (c.calificacion ?? 0), 0) / withCal.length)
             : null
-        const totalAprobados = cursos.filter((c) => c.calificacion !== null && c.calificacion >= 70).length
-        const totalReprobados = cursos.filter((c) => c.calificacion !== null && c.calificacion < 70).length
+        const totalAprobados = cursos.filter((c) => c.calificacion !== null && c.calificacion >= 7).length
+        const totalReprobados = cursos.filter((c) => c.calificacion !== null && c.calificacion < 7).length
         const totalPendientes = cursos.filter((c) => c.calificacion === null).length
 
         return {
