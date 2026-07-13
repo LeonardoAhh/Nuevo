@@ -28,16 +28,44 @@ function useDrawerAccessibility(open: boolean, onClose: () => void) {
     if (!open) return
     const previouslyFocused = document.activeElement as HTMLElement | null
 
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    const getFocusable = (): HTMLElement[] =>
+      Array.from(drawerRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
+        (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true",
+      )
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (e.key === "Escape") {
+        onClose()
+        return
+      }
+      if (e.key !== "Tab") return
+
+      const focusable = getFocusable()
+      if (focusable.length === 0) {
+        e.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement as HTMLElement | null
+
+      if (e.shiftKey) {
+        if (active === first || !drawerRef.current?.contains(active)) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else if (active === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener("keydown", handleKeyDown)
 
     // Mover foco al primer elemento interactivo
-    const firstFocusable = drawerRef.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    )
-    firstFocusable?.focus()
+    getFocusable()[0]?.focus()
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
@@ -49,13 +77,21 @@ function useDrawerAccessibility(open: boolean, onClose: () => void) {
   useEffect(() => {
     if (!open) return
     const scrollY = window.scrollY
-    document.body.style.cssText += `overflow:hidden;position:fixed;top:-${scrollY}px;width:100%`
+    const originalOverflow = document.body.style.overflow
+    const originalPosition = document.body.style.position
+    const originalTop = document.body.style.top
+    const originalWidth = document.body.style.width
+
+    document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
+
     return () => {
-      document.body.style.cssText = document.body.style.cssText
-        .replace(/overflow:[^;]+;/, "")
-        .replace(/position:[^;]+;/, "")
-        .replace(/top:[^;]+;/, "")
-        .replace(/width:[^;]+;/, "")
+      document.body.style.overflow = originalOverflow
+      document.body.style.position = originalPosition
+      document.body.style.top = originalTop
+      document.body.style.width = originalWidth
       window.scrollTo(0, scrollY)
     }
   }, [open])
@@ -69,7 +105,7 @@ function DrawerBackdrop({ onClose }: { onClose: () => void }) {
   return (
     <motion.div
       key="drawer-backdrop"
-      className="fixed inset-0 z-[99] bg-foreground/20 backdrop-blur-[2px] md:bg-foreground/10"
+      className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-[2px] md:bg-foreground/10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -115,8 +151,8 @@ export function PendientesDrawer({
               "top-[var(--header-height,50px)]",
               "h-[calc(100dvh-var(--header-height,50px))]",
 
-              // Z-index — por encima del backdrop (99), por debajo de modales críticos
-              "z-[100]",
+              // Z-index — por encima del backdrop (z-40), por debajo de modales críticos
+              "z-50",
 
               // Ancho responsivo — sin valores sueltos en el JSX
               // Añadir en globals.css:

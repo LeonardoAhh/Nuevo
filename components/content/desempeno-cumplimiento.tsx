@@ -43,27 +43,9 @@ import type { EmpleadoCumplimiento, DeptCumplimiento } from "@/lib/hooks/useCump
 import { useRole } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo"
+import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno"
+import { cardV, expandV } from "@/lib/animations"
 
-// ─── Motion variants ─────────────────────────────────────────────────────────
-
-const cardV = {
-  hidden: { opacity: 0, y: 6 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as const } },
-}
-
-const expandV = {
-  hidden: { opacity: 0, height: 0 },
-  show: {
-    opacity: 1,
-    height: "auto",
-    transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
-  },
-  exit: {
-    opacity: 0,
-    height: 0,
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const },
-  },
-}
 
 // ─── Deadline config ─────────────────────────────────────────────────────────
 
@@ -97,8 +79,8 @@ function calcularDeadline(periodo: DesempenoPeriodo): DeadlineInfo | null {
   const fechaFin = new Date(ventana.anio, ventana.fin.mes - 1, ventana.fin.dia)
   fechaFin.setHours(23, 59, 59, 999)
 
-  const diasTotales = 15
   const msPorDia = 1000 * 60 * 60 * 24
+  const diasTotales = Math.ceil((fechaFin.getTime() - fechaInicio.getTime()) / msPorDia)
 
   if (hoy < fechaInicio) {
     const diasParaInicio = Math.ceil((fechaInicio.getTime() - hoy.getTime()) / msPorDia)
@@ -314,7 +296,7 @@ function getSemaforo(pct: number): {
   progressBar: string
   pendText: string
 } {
-  if (pct >= 80)
+  if (pct >= UMBRAL_CALIFICACION_APROBATORIA)
     return {
       border: "border-l-[hsl(var(--success))]",
       text: "text-[hsl(var(--success))]",

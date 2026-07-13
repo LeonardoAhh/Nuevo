@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  HelpCircle,
   Loader2,
   Lock,
   Printer,
@@ -27,6 +28,7 @@ import {
   User,
   X,
 } from "lucide-react"
+import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { usePhaseLoop } from "@/lib/hooks/usePhaseLoop"
@@ -365,7 +367,7 @@ function Illus4({ active }: IllusProps) {
             <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5">
               <Lock className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
               <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                Calificación &lt; 80% &mdash; captura compromisos
+                Calificación &lt; {UMBRAL_CALIFICACION_APROBATORIA}% &mdash; captura compromisos
               </span>
             </div>
           </motion.div>
@@ -555,7 +557,7 @@ const STEPS: readonly Step[] = [
     num: "04",
     title: "Guarda la evaluación",
     description:
-      "Presiona el botón Guardar. Si la calificación final es menor a 80%, deberás capturar los compromisos de mejora antes de poder guardar e imprimir.",
+      `Presiona el botón Guardar. Si la calificación final es menor a ${UMBRAL_CALIFICACION_APROBATORIA}%, deberás capturar los compromisos de mejora antes de poder guardar e imprimir.`,
     Illus: Illus4,
   },
   {
@@ -680,7 +682,7 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
           <motion.div
             key="guia-backdrop"
             data-guia-backdrop=""
-            className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

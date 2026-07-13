@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Check } from "lucide-react"
+import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno"
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
-const AUTO_CLOSE_MS = 4500
+const AUTO_CLOSE_MS = 2800
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 const CONFETTI = Array.from({ length: 18 }, (_, i) => {
@@ -81,28 +82,22 @@ export function DesempenoSaveSuccess({
     return () => clearTimeout(t)
   }, [visible, onDone])
 
-  const handleBackdrop = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.target === e.currentTarget) onDone()
-    },
-    [onDone],
-  )
 
   if (!mounted) return null
 
   const score = calificacion !== undefined ? calificacion : undefined
-  const isGood = score !== undefined && score >= 80
+  const isGood = score !== undefined && score >= UMBRAL_CALIFICACION_APROBATORIA
 
   return createPortal(
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-[6px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[6px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onPointerDown={handleBackdrop}
+          onPointerDown={(e) => e.stopPropagation()}
           role="status"
           aria-live="polite"
           aria-label={`Evaluación guardada${nombre ? ` para ${nombre}` : ""}${score !== undefined ? `. Calificación: ${score}%` : ""}`}

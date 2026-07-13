@@ -1,6 +1,10 @@
 "use client"
 
-import { calcularPonderacion, type DesempenoData } from "@/lib/types/desempeno"
+import {
+  UMBRAL_CALIFICACION_APROBATORIA,
+  calcularPonderacion,
+  type DesempenoData,
+} from "@/lib/types/desempeno"
 import styles from "./desempeno-print.module.css"
 
 interface Props {
@@ -23,7 +27,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
   const pond = calcularPonderacion(data)
   const tieneCompromisos = !!(data.compromisos || data.fecha_revision || data.observaciones)
 
-  const forzarSaltoCompromisos = !blankMode && pond.calificacionFinal < 80 && tieneCompromisos
+  const forzarSaltoCompromisos = !blankMode && pond.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA && tieneCompromisos
 
   const totalFilas =
     objetivos.length +
@@ -61,7 +65,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                   <p>Periodo de evaluación: <span className={styles.periodBadge}>{data.periodo || "—"}</span></p>
                 </div>
                 <div className={styles.headerRight}>
-                  <img src="/logo-vino-plastic.png" alt="Logo" className={styles.logo} />
+                  <img src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" className={styles.logo} />
                 </div>
               </div>
 
@@ -78,15 +82,16 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
               {/* ── PARTE 1: Objetivos (40%) ───────────────────────── */}
               <div className={`${styles.sectionBlock} ${styles["sectionBlock--breakable"]}`}>
-                <div className={styles.sectionHeader}>Cumplimiento de Objetivos 40%</div>
+                <h3 className={styles.sectionHeader}>Cumplimiento de Objetivos 40%</h3>
                 <table className={`${styles.table} ${styles.tableObjetivos}`}>
+                  <caption className="sr-only">Objetivos SMART</caption>
                   <thead>
                     <tr>
-                      <th className={styles.thCenter}>CRITERIO</th>
-                      <th>OBJETIVOS SMART</th>
-                      <th className={styles.thCenter}>OBJETIVO</th>
-                      <th className={styles.thCenter}>% OBTENIDO</th>
-                      <th>COMENTARIOS</th>
+                      <th scope="col" className={styles.thCenter}>CRITERIO</th>
+                      <th scope="col">OBJETIVOS SMART</th>
+                      <th scope="col" className={styles.thCenter}>OBJETIVO</th>
+                      <th scope="col" className={styles.thCenter}>% OBTENIDO</th>
+                      <th scope="col">COMENTARIOS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -109,14 +114,15 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
               {/* ── PARTE 2: Responsabilidades (30%) ──────────────── */}
               <div className={`${styles.sectionBlock} ${styles["sectionBlock--breakable"]}`}>
-                <div className={styles.sectionHeader}>Responsabilidades 30%</div>
+                <h3 className={styles.sectionHeader}>Responsabilidades 30%</h3>
                 <table className={`${styles.table} ${styles.tableObjetivos}`}>
+                  <caption className="sr-only">Responsabilidades</caption>
                   <thead>
                     <tr>
-                      <th>Cumplimiento de responsabilidades</th>
-                      <th className={styles.thCenter}>% CUMP</th>
-                      <th className={styles.thCenter}>EVALÚA</th>
-                      <th>COMENTARIOS</th>
+                      <th scope="col">Cumplimiento de responsabilidades</th>
+                      <th scope="col" className={styles.thCenter}>% CUMP</th>
+                      <th scope="col" className={styles.thCenter}>EVALÚA</th>
+                      <th scope="col">COMENTARIOS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -138,14 +144,15 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
               {/* ── PARTE 3: Competencias Blandas (30%) ───────────── */}
               <div className={`${styles.sectionBlock} ${styles["sectionBlock--breakable"]}`}>
-                <div className={styles.sectionHeader}>Competencias Blandas 30%</div>
+                <h3 className={styles.sectionHeader}>Competencias Blandas 30%</h3>
                 <table className={`${styles.table} ${styles.tableCompetencias}`}>
+                  <caption className="sr-only">Competencias Blandas</caption>
                   <thead>
                     <tr>
-                      <th>Competencia</th>
-                      <th>Descripción</th>
-                      <th className={styles.thCenter}>Calificación (0-4)</th>
-                      <th className={styles.thCenter}>%</th>
+                      <th scope="col">Competencia</th>
+                      <th scope="col">Descripción</th>
+                      <th scope="col" className={styles.thCenter}>Calificación (0-4)</th>
+                      <th scope="col" className={styles.thCenter}>%</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -170,7 +177,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
                 {forzarSaltoCompromisos && (
                   <div className={styles.warningBox}>
-                    En caso de obtener menos del 80% en esta evaluación, se deberán establecer compromisos y acuerdos.
+                    En caso de obtener menos del {UMBRAL_CALIFICACION_APROBATORIA}% en esta evaluación, se deberán establecer compromisos y acuerdos.
                   </div>
                 )}
 

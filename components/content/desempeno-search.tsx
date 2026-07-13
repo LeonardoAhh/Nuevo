@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDesempeno } from "@/lib/hooks/useDesempeno"
@@ -20,6 +21,7 @@ import {
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS,
+  UMBRAL_CALIFICACION_APROBATORIA,
   calcularPonderacion,
   type DesempenoData,
 } from "@/lib/types/desempeno"
@@ -62,14 +64,17 @@ function ActionButton({
   animateBadge,
 }: ActionButtonProps) {
   const inner = (
-    <button
+    <motion.button
+      whileHover={disabled ? undefined : { scale: 1.03 }}
+      whileTap={disabled ? undefined : { scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
       onClick={onClick}
       disabled={disabled}
       className={[
         // Base
         "relative inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:pointer-events-none disabled:opacity-50 disabled:grayscale-[0.3]",
         // Variant styles
         variant === "default"
           ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
@@ -80,7 +85,6 @@ function ActionButton({
       ].join(" ")}
       aria-label={tooltip}
     >
-      {/* Badge */}
       {badge !== undefined && badge > 0 && (
         animateBadge ? (
           <motion.span
@@ -89,11 +93,11 @@ function ActionButton({
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 420, damping: 14 }}
           >
-            {badge > 99 ? "99+" : badge}
+            {badge}
           </motion.span>
         ) : (
           <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground">
-            {badge > 99 ? "99+" : badge}
+            {badge}
           </span>
         )
       )}
@@ -103,7 +107,7 @@ function ActionButton({
 
       {/* Label — solo en md+ */}
       <span className="hidden md:inline">{label}</span>
-    </button>
+    </motion.button>
   )
 
   const wrapped = href ? <Link href={href}>{inner}</Link> : inner
@@ -134,39 +138,28 @@ function NoticeCard({
   return (
     <div
       role="alert"
-      className="relative flex items-start gap-3 overflow-hidden rounded-xl border p-4 pl-5 shadow-sm sm:gap-4"
-      style={{
-        backgroundColor: `hsl(var(${v}) / 0.08)`,
-        borderColor: `hsl(var(${v}) / 0.30)`,
-      }}
+      className="flex items-center gap-1.5 py-1"
     >
-      {/* Barra de acento lateral */}
       <span
-        className="absolute inset-y-0 left-0 w-1.5"
-        style={{ backgroundColor: `hsl(var(${v}))` }}
-        aria-hidden
-      />
-      {/* Chip circular con ícono */}
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm"
-        style={{ backgroundColor: `hsl(var(${v}))`, color: `hsl(var(${v}-foreground))` }}
+        className="flex shrink-0 items-center justify-center"
+        style={{ color: `hsl(var(${v}))` }}
       >
         {icon}
       </span>
-      <div className="min-w-0 space-y-1 pt-0.5">
-        <p
-          className="text-sm font-semibold leading-tight sm:text-base"
+      <div className="flex flex-col sm:flex-row sm:items-center min-w-0 gap-x-1.5 gap-y-0.5 text-sm">
+        <span
+          className="font-medium whitespace-nowrap"
           style={{ color: `hsl(var(${v}))` }}
         >
-          {title}
-        </p>
-        <p className="text-sm leading-snug text-foreground/80">{children}</p>
+          {title}{title ? ":" : ""}
+        </span>
+        <span className="text-foreground/80">{children}</span>
       </div>
     </div>
   )
 }
 
-// ─── Botón "Guía" con animaciones especiales ──────────────────────────────────
+// ─── Botón "Guía" ─────────────────────────────────────────────────────────────
 
 interface GuiaButtonProps {
   onClick: () => void
@@ -174,53 +167,13 @@ interface GuiaButtonProps {
 
 function GuiaButton({ onClick }: GuiaButtonProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="relative">
-          {/* Pulse rings */}
-          <motion.span
-            className="pointer-events-none absolute inset-0 rounded-lg bg-primary/25"
-            animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-          />
-          <motion.span
-            className="pointer-events-none absolute inset-0 rounded-lg bg-primary/15"
-            animate={{ scale: [1, 1.9], opacity: [0.4, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.8 }}
-          />
-
-          <motion.button
-            className="relative flex h-[34px] items-center gap-1.5 overflow-hidden rounded-lg bg-primary px-2.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/30 transition-shadow hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.93 }}
-            transition={{ type: "spring", stiffness: 420, damping: 17 }}
-            onClick={onClick}
-            aria-label="Ver guía de evaluación"
-          >
-            {/* Shimmer */}
-            <motion.span
-              className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-              initial={{ x: "-130%" }}
-              animate={{ x: "230%" }}
-              transition={{ duration: 1.3, repeat: Infinity, repeatDelay: 3.2, ease: "easeInOut" }}
-            />
-
-            {/* Ícono con wobble */}
-            <motion.span
-              className="relative shrink-0"
-              animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.15, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 2.8, ease: "easeInOut" }}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-            </motion.span>
-
-            {/* Label — solo en md+ */}
-            <span className="relative hidden md:inline">Guía</span>
-          </motion.button>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>Ver guía de evaluación</TooltipContent>
-    </Tooltip>
+    <ActionButton
+      icon={<Sparkles className="h-3.5 w-3.5" />}
+      label="Guía"
+      tooltip="Ver guía de evaluación"
+      onClick={onClick}
+      variant="default"
+    />
   )
 }
 
@@ -228,6 +181,56 @@ function GuiaButton({ onClick }: GuiaButtonProps) {
 
 function ActionDivider() {
   return <div className="h-5 w-px bg-border" aria-hidden />
+}
+
+// ─── Skeletons ──────────────────────────────────────────────────────────────
+
+function DesempenoFormSkeleton() {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="space-y-6"
+    >
+      <Card>
+        <CardHeader className="pb-3 border-b">
+          <Skeleton className="h-6 w-48 mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-full max-w-[200px]" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-full max-w-[200px]" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-full max-w-[200px]" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-full max-w-[200px]" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          <Skeleton className="h-[280px] w-full rounded-xl" />
+          <Skeleton className="h-[280px] w-full rounded-xl" />
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-[280px] w-full rounded-xl" />
+          <Skeleton className="h-[140px] w-full rounded-xl" />
+          <Skeleton className="h-[200px] w-full rounded-xl" />
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -423,9 +426,10 @@ function DesempenoSearchContent() {
   }
 
   const ponderacion = data ? calcularPonderacion(data) : null
-  const requiereCompromisos = ponderacion !== null && ponderacion.calificacionFinal < 80
+  const requiereCompromisos = ponderacion !== null && ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA
   const tieneCompromisos = !!(data?.compromisos?.trim())
   const bloqueado = requiereCompromisos && !tieneCompromisos
+  const faltaEvaluador = data ? !data.evaluador_nombre : false
 
   // Elegibilidad por antigüedad para evaluaciones semestrales.
   // Empleados con < 2 meses respecto al fin del periodo no son evaluables.
@@ -525,16 +529,18 @@ function DesempenoSearchContent() {
                       }
                       label="Guardar"
                       tooltip={
-                        mismatchBloqueo
+                        faltaEvaluador
+                          ? "Selecciona un evaluador primero"
+                          : mismatchBloqueo
                           ? "Empleado de planta: evalúalo en modo Semestral, no Mensual"
                           : noElegible
                           ? "Empleado no elegible para este periodo semestral (< 2 meses)"
                           : bloqueado
-                          ? "Captura compromisos primero (calificación < 80%)"
+                          ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)`
                           : "Guardar evaluación"
                       }
                       onClick={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
-                      disabled={saving || bloqueado || noElegible || mismatchBloqueo}
+                      disabled={saving || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador}
                       variant="outline"
                     />
 
@@ -542,18 +548,20 @@ function DesempenoSearchContent() {
                       icon={<Printer className="h-3.5 w-3.5" />}
                       label="Imprimir"
                       tooltip={
-                        mismatchBloqueo
+                        faltaEvaluador
+                          ? "Selecciona un evaluador primero"
+                          : mismatchBloqueo
                           ? "Empleado de planta: evalúalo en modo Semestral, no Mensual"
                           : noElegible
                           ? "Empleado no elegible para este periodo semestral (< 2 meses)"
                           : bloqueado
-                          ? "Captura compromisos primero (calificación < 80%)"
+                          ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)`
                           : !guardado
                           ? "Guarda la evaluación primero para poder imprimir"
                           : "Imprimir evaluación"
                       }
                       onClick={() => window.print()}
-                      disabled={!guardado || bloqueado || noElegible || mismatchBloqueo}
+                      disabled={!guardado || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador}
                       variant="default"
                     />
                   </>
@@ -562,137 +570,132 @@ function DesempenoSearchContent() {
             </div>
           </CardHeader>
 
-          <CardContent className="pb-4 pt-2">
-            <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-              <div>
-                {/* Campo de búsqueda */}
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  <Input
-                    ref={inputRef}
-                    value={numeroBuscado}
-                    onChange={(e) => { setNumeroBuscado(e.target.value); setShowSugg(true) }}
-                    onFocus={() => setShowSugg(true)}
-                    onBlur={() => setTimeout(() => setShowSugg(false), 120)}
-                    onKeyDown={onInputKeyDown}
-                    placeholder="Buscar por número o nombre…  ( / )"
-                    className="pl-10 pr-9"
-                    autoComplete="off"
-                    role="combobox"
-                    aria-expanded={showSugg}
-                    aria-autocomplete="list"
-                  />
-                  {numeroBuscado && (
-                    <button
-                      type="button"
-                      onClick={() => { setNumeroBuscado(""); setSuggestions([]); inputRef.current?.focus() }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label="Limpiar búsqueda"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-
-                  {/* Dropdown de sugerencias */}
-                  {showSugg && numeroBuscado.trim().length >= 2 && (
-                    <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md overflow-hidden">
-                      {suggLoading ? (
-                        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando…
-                        </div>
-                      ) : suggestions.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-muted-foreground">Sin coincidencias</div>
-                      ) : (
-                        suggestions.map((s, idx) => (
-                          <button
-                            key={s.numero}
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); setNumeroBuscado(s.numero); doBuscar(s.numero, s.nombre) }}
-                            onMouseEnter={() => setActiveIdx(idx)}
-                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${idx === activeIdx ? "bg-accent" : "hover:bg-accent"}`}
-                          >
-                            <span className="font-mono text-xs text-muted-foreground shrink-0">{s.numero}</span>
-                            <span className="font-medium truncate">{s.nombre || "—"}</span>
-                            {s.puesto && <span className="ml-auto text-xs text-muted-foreground truncate max-w-[40%]">{s.puesto}</span>}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Búsquedas recientes */}
-                {!numeroBuscado && recientes.length > 0 && (
-                  <div className="mb-4 -mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" /> Recientes:
-                    </span>
-                    {recientes.map((r) => (
-                      <button
-                        key={r.numero}
-                        type="button"
-                        onClick={() => { setNumeroBuscado(r.numero); doBuscar(r.numero, r.nombre) }}
-                        className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs hover:bg-accent"
-                        title={`${r.numero}${r.nombre ? " · " + r.nombre : ""}`}
-                      >
-                        {r.nombre || r.numero}
-                      </button>
-                    ))}
-                  </div>
+          <CardContent className="pb-4 pt-3">
+            <div className="flex flex-col xl:flex-row gap-3 xl:items-center">
+              {/* Campo de búsqueda */}
+              <div className="relative flex-1 w-full min-w-[250px]">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  ref={inputRef}
+                  value={numeroBuscado}
+                  onChange={(e) => { setNumeroBuscado(e.target.value); setShowSugg(true) }}
+                  onFocus={() => setShowSugg(true)}
+                  onBlur={() => setTimeout(() => setShowSugg(false), 120)}
+                  onKeyDown={onInputKeyDown}
+                  placeholder="Buscar por número o nombre… ( / )"
+                  className="pl-9 pr-9"
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded={showSugg}
+                  aria-autocomplete="list"
+                />
+                {numeroBuscado && (
+                  <button
+                    type="button"
+                    onClick={() => { setNumeroBuscado(""); setSuggestions([]); inputRef.current?.focus() }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
 
-                {/* Periodo */}
-                <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
-                  <div className="space-y-2">
-                    <div className="text-sm font-semibold">Periodo de evaluación</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(["semestrales", "mensuales"] as const).map((modo) => (
-                        <Button
-                          key={modo}
-                          variant={periodoModo === modo ? "secondary" : "outline"}
-                          onClick={() => setPeriodoModo(modo)}
+                {/* Dropdown de sugerencias */}
+                {showSugg && numeroBuscado.trim().length >= 2 && (
+                  <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md overflow-hidden">
+                    {suggLoading ? (
+                      <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando…
+                      </div>
+                    ) : suggestions.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Sin coincidencias</div>
+                    ) : (
+                      suggestions.map((s, idx) => (
+                        <button
+                          key={s.numero}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); setNumeroBuscado(s.numero); doBuscar(s.numero, s.nombre) }}
+                          onMouseEnter={() => setActiveIdx(idx)}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${idx === activeIdx ? "bg-accent" : "hover:bg-accent"}`}
                         >
-                          {modo === "semestrales" ? "Semestral" : "Mensual"}
-                        </Button>
-                      ))}
-                    </div>
+                          <span className="font-mono text-xs text-muted-foreground shrink-0">{s.numero}</span>
+                          <span className="font-medium truncate">{s.nombre || "—"}</span>
+                          {s.puesto && <span className="ml-auto text-xs text-muted-foreground truncate max-w-[40%]">{s.puesto}</span>}
+                        </button>
+                      ))
+                    )}
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-foreground">
-                      Seleccionar periodo
-                    </label>
-                    <Select
-                      value={periodoSeleccionado}
-                      onValueChange={(value) => setPeriodoSeleccionado(value as DesempenoPeriodo)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar periodo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PERIODOS_DESEMPENO[periodoModo].map((periodo) => (
-                          <SelectItem key={periodo} value={periodo}>
-                            {periodo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Botón buscar */}
-              <div className="flex items-end justify-end">
+              {/* Controles de Periodo y Buscar */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full xl:w-auto shrink-0">
+                <div className="flex bg-muted/60 p-1 rounded-lg shrink-0 w-full sm:w-auto">
+                  {(["semestrales", "mensuales"] as const).map((modo) => (
+                    <button
+                      key={modo}
+                      type="button"
+                      onClick={() => setPeriodoModo(modo)}
+                      className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        periodoModo === modo
+                          ? "bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {modo === "semestrales" ? "Semestral" : "Mensual"}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="w-full sm:w-[170px] shrink-0">
+                  <Select
+                    value={periodoSeleccionado}
+                    onValueChange={(value) => setPeriodoSeleccionado(value as DesempenoPeriodo)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Periodo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERIODOS_DESEMPENO[periodoModo].map((periodo) => (
+                        <SelectItem key={periodo} value={periodo}>
+                          {periodo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button onClick={handleSearch} size="icon" aria-label="Buscar empleado" disabled={!numeroBuscado.trim()}>
-                      <Search className="h-4 w-4" />
+                    <Button onClick={handleSearch} aria-label="Buscar empleado" disabled={!numeroBuscado.trim()} className="w-full sm:w-auto shrink-0 px-5">
+                      <Search className="h-4 w-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Buscar</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Buscar empleado</TooltipContent>
                 </Tooltip>
               </div>
             </div>
+
+            {/* Búsquedas recientes */}
+            {!numeroBuscado && recientes.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" /> Recientes:
+                </span>
+                {recientes.map((r) => (
+                  <button
+                    key={r.numero}
+                    type="button"
+                    onClick={() => { setNumeroBuscado(r.numero); doBuscar(r.numero, r.nombre) }}
+                    className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs hover:bg-accent"
+                    title={`${r.numero}${r.nombre ? " · " + r.nombre : ""}`}
+                  >
+                    {r.nombre || r.numero}
+                  </button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -704,11 +707,21 @@ function DesempenoSearchContent() {
           </Alert>
         )}
 
+        {faltaEvaluador && (
+          <NoticeCard
+            tone="danger"
+            icon={<AlertCircle className="h-4 w-4" />}
+            title="Falta evaluador"
+          >
+            Selecciona al evaluador en el recuadro superior para poder capturar y guardar.
+          </NoticeCard>
+        )}
+
         {bloqueado && (
           <NoticeCard
             tone="danger"
             icon={<Lock className="h-5 w-5" />}
-            title="Calificación menor a 80%"
+            title={`Calificación menor a ${UMBRAL_CALIFICACION_APROBATORIA}%`}
           >
             No puedes <strong className="font-semibold text-foreground">guardar</strong>, <strong className="font-semibold text-foreground">imprimir</strong> ni <strong className="font-semibold text-foreground">descargar el PDF</strong> hasta capturar los compromisos de mejora.
           </NoticeCard>
@@ -744,7 +757,11 @@ function DesempenoSearchContent() {
           </NoticeCard>
         )}
 
-        <DesempenoForm data={previewData} onUpdate={data ? setData : undefined} />
+        {loading ? (
+          <DesempenoFormSkeleton />
+        ) : data ? (
+          <DesempenoForm data={data} onUpdate={setData} />
+        ) : null}
 
         {data && (
           <div className="print-area hidden print:block">

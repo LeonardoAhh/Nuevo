@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
 import {
-  OBJETIVOS_POR_PUESTO,
+
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
@@ -14,11 +14,43 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
+import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
 import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, PERIODOS_DESEMPENO } from "@/lib/catalogo"
 import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type OrigenEmpleado = "planta" | "nuevo_ingreso"
+
+// Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
+const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
+const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
+
+function calcularAsistenciaPorcentaje(incidencias: Record<string, unknown>[], targetPeriodo: string): number {
+  const mesesPeriodo = mesesDePeriodo(targetPeriodo)
+  const faltasDeMes = (mes: string): number =>
+    incidencias
+      .filter((i) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
+      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
+
+  if (mesesPeriodo.length > 0) {
+    const mesesConDatos = mesesPeriodo.filter((mes) =>
+      incidencias.some((i) => i.mes === mes),
+    )
+    if (mesesConDatos.length > 0) {
+      const promedio =
+        mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
+        mesesConDatos.length
+      return Math.round(promedio)
+    } else {
+      return 100
+    }
+  } else {
+    const totalFaltas = incidencias
+      .filter((i) => i.categoria === 'FALTA INJUSTIFICADA')
+      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
+    return aplicarEscala(totalFaltas)
+  }
+}
 export type PeriodoModo = "semestrales" | "mensuales"
 
 /** Resultado de `buscarEmpleado`: origen + modo/periodo recomendado para el selector. */
@@ -234,42 +266,14 @@ export function useDesempeno() {
       // Auto-calculate cumplimiento from incidencias using graduated scale
       const incidencias = incidenciaData ?? []
 
-      // Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
-      const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
-      const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
-
-      const faltasDeMes = (mes: string): number =>
-        incidencias
-          .filter((i: Record<string, unknown>) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
-          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
-
       // "Cumplir con asistencia": se evalúa por mes del periodo y se promedian
       // los % de los meses CON datos (≥1 incidencia registrada).
       //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
       //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
       // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
       const targetPeriodo = evalData?.periodo || periodoResuelto
-      const mesesPeriodo = mesesDePeriodo(targetPeriodo)
+      const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as Record<string, unknown>[], targetPeriodo)
 
-      let asistenciaPorcentaje: number
-      if (mesesPeriodo.length > 0) {
-        const mesesConDatos = mesesPeriodo.filter((mes) =>
-          incidencias.some((i: Record<string, unknown>) => i.mes === mes),
-        )
-        if (mesesConDatos.length > 0) {
-          const promedio =
-            mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
-            mesesConDatos.length
-          asistenciaPorcentaje = Math.round(promedio)
-        } else {
-          asistenciaPorcentaje = 100
-        }
-      } else {
-        const totalFaltas = incidencias
-          .filter((i: Record<string, unknown>) => i.categoria === 'FALTA INJUSTIFICADA')
-          .reduce((sum, i: Record<string, unknown>) => sum + ((i.valor as number) ?? 0), 0)
-        asistenciaPorcentaje = aplicarEscala(totalFaltas)
-      }
 
       // Map cumplimiento from saved data or use defaults (tipo-aware)
       const cumplimiento: CumplimientoItem[] = evalData?.cumplimiento_responsabilidades?.length
@@ -372,7 +376,7 @@ export function useDesempeno() {
 
       setData({ ...evalData, calificacion_final: ponderacion.calificacionFinal })
       setSaveSuccess(true)
-      notify.success("Evaluación guardada")
+      // notify.success ya no es necesario — el modal DesempenoSaveSuccess lo muestra
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message
         : typeof e === "object" && e !== null && "message" in e ? String((e as Record<string, unknown>).message)
@@ -590,35 +594,7 @@ export function useDesempeno() {
 
     const mesesPeriodo = mesesDePeriodo(nuevoPeriodo)
     const incidencias = currentData.incidencias ?? []
-
-    // Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
-    const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
-    const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
-
-    const faltasDeMes = (mes: string): number =>
-      incidencias
-        .filter((i) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
-        .reduce((sum, i) => sum + (i.valor ?? 0), 0)
-
-    let asistenciaPorcentaje: number
-    if (mesesPeriodo.length > 0) {
-      const mesesConDatos = mesesPeriodo.filter((mes) =>
-        incidencias.some((i) => i.mes === mes),
-      )
-      if (mesesConDatos.length > 0) {
-        const promedio =
-          mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
-          mesesConDatos.length
-        asistenciaPorcentaje = Math.round(promedio)
-      } else {
-        asistenciaPorcentaje = 100
-      }
-    } else {
-      const totalFaltas = incidencias
-        .filter((i) => i.categoria === 'FALTA INJUSTIFICADA')
-        .reduce((sum, i) => sum + (i.valor ?? 0), 0)
-      asistenciaPorcentaje = aplicarEscala(totalFaltas)
-    }
+    const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as unknown as Record<string, unknown>[], nuevoPeriodo)
 
     const tipoPuesto = getTipoDesempenoByPuesto(currentData.puesto)
     const cumplimiento = [...(currentData.cumplimiento_responsabilidades ?? [])]

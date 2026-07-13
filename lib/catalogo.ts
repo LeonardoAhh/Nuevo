@@ -4,6 +4,12 @@ export interface CatalogoJerarquia {
     puestos: string[];
   }
 }
+
+export const TIPO_LABEL: Record<string, string> = {
+  operativo: "Operativo",
+  administrativo: "Administrativo",
+  jefe: "Jefe",
+}
 //ACTUALIZADO
 export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
   "PRODUCCIÓN": {

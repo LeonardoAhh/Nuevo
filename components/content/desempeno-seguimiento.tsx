@@ -18,8 +18,10 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ScoreBadge } from "./desempeno-score-badge"
 import { supabase } from "@/lib/supabase/client"
-import { PERIODOS_DESEMPENO } from "@/lib/catalogo"
+import { PERIODOS_DESEMPENO, TIPO_LABEL } from "@/lib/catalogo"
 import { useRole } from "@/lib/hooks"
 
 // All period strings flattened into one array for filter dropdown
@@ -33,13 +35,8 @@ const ALL_PERIODOS: string[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Umbral de calificación reprobada */
-const SCORE_THRESHOLD = 80
+import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno"
 
-const TIPO_LABEL: Record<string, string> = {
-  operativo: "Operativo",
-  administrativo: "Administrativo",
-  jefe: "Jefe",
-}
 
 interface EvalRow {
   id: string
@@ -94,22 +91,6 @@ function getRevisionStatus(fechaRevision: string | null): RevisionStatus {
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ScoreBadge({ score }: { score: number }) {
-  const pct = Math.min(100, Math.max(0, score))
-  const color =
-    pct < 60 ? "bg-destructive/15 text-destructive border-destructive/30" :
-    pct < SCORE_THRESHOLD ? "bg-warning/15 text-warning border-warning/30" :
-    "bg-success/15 text-success border-success/30"
-  return (
-    <Badge
-      variant="outline"
-      aria-label={`Calificación final: ${pct} de 100`}
-      className={`text-sm font-bold tabular-nums px-2.5 py-0.5 ${color}`}
-    >
-      {pct}
-    </Badge>
-  )
-}
 
 const REVISION_CFG: Record<
   RevisionStatus,
@@ -141,7 +122,10 @@ function RevisionPill({ fechaRevision }: { fechaRevision: string | null }) {
 /** Card para móvil/tablet */
 function EvalCard({ row }: { row: EvalRow }) {
   return (
-    <Card className="bg-card border-border/60 hover:border-border transition-colors">
+    <Card 
+      className="bg-card border-border/60 hover:border-border transition-colors"
+      aria-label={`Evaluación de ${row.nombre ?? row.numero_empleado}`}
+    >
       <CardContent className="p-4 space-y-3">
         {/* Top: employee + score */}
         <div className="flex items-start gap-3">
@@ -217,8 +201,9 @@ function EvalTable({ rows }: { rows: EvalRow[] }) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map(row => (
+          <TooltipProvider delayDuration={300}>
+            <tbody className="divide-y divide-border">
+              {rows.map(row => (
               <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-foreground">
@@ -242,20 +227,31 @@ function EvalTable({ rows }: { rows: EvalRow[] }) {
                   <ScoreBadge score={row.calificacion_final} />
                 </td>
                 <td className="px-4 py-3 max-w-xs">
-                  <p
-                    className="text-sm text-foreground line-clamp-2 whitespace-pre-line"
-                    title={row.compromisos}
-                  >
-                    {row.compromisos}
-                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-sm text-foreground line-clamp-2 whitespace-pre-line cursor-help">
+                        {row.compromisos}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm whitespace-pre-line">
+                      <p className="text-sm">{row.compromisos}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <RevisionPill fechaRevision={row.fecha_revision} />
                 </td>
                 <td className="px-4 py-3 text-muted-foreground max-w-[10rem]">
-                  <p className="truncate" title={row.evaluador_nombre ?? undefined}>
-                    {row.evaluador_nombre ?? "—"}
-                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="truncate cursor-help">
+                        {row.evaluador_nombre ?? "—"}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-sm">{row.evaluador_nombre ?? "Sin evaluador registrado"}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1">
@@ -268,8 +264,9 @@ function EvalTable({ rows }: { rows: EvalRow[] }) {
                   </Button>
                 </td>
               </tr>
-            ))}
-          </tbody>
+              ))}
+            </tbody>
+          </TooltipProvider>
         </table>
       </div>
     </Card>
@@ -281,7 +278,7 @@ function EvalTable({ rows }: { rows: EvalRow[] }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SummaryCards({ rows }: { rows: EvalRow[] }) {
-  const reprobados = rows.filter(r => r.calificacion_final < SCORE_THRESHOLD).length
+  const reprobados = rows.filter(r => r.calificacion_final < UMBRAL_CALIFICACION_APROBATORIA).length
   const vencidos   = rows.filter(r => getRevisionStatus(r.fecha_revision) === "vencido").length
   const proximos   = rows.filter(r => getRevisionStatus(r.fecha_revision) === "proximo").length
   const sinFecha   = rows.filter(r => !r.fecha_revision).length
@@ -298,8 +295,8 @@ function SummaryCards({ rows }: { rows: EvalRow[] }) {
     <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {items.map(({ label, value, color, bg }) => (
         <div key={label} className={`rounded-xl p-3 ${bg} flex flex-col gap-1`}>
-          <dd className={`text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
           <dt className="text-xs text-muted-foreground">{label}</dt>
+          <dd className={`text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
         </div>
       ))}
     </dl>
@@ -312,7 +309,7 @@ function SummaryCards({ rows }: { rows: EvalRow[] }) {
 
 const STATUS_OPTIONS: { value: string; label: string; dot?: string }[] = [
   { value: "all",       label: "Todos" },
-  { value: "reprobado", label: `Reprobados (<${SCORE_THRESHOLD})`, dot: "bg-destructive" },
+  { value: "reprobado", label: `Reprobados (<${UMBRAL_CALIFICACION_APROBATORIA})`, dot: "bg-destructive" },
   { value: "vencido",   label: "Vencidos",                          dot: "bg-destructive" },
   { value: "proximo",   label: "Próximos (14 d)",                   dot: "bg-warning" },
   { value: "pendiente", label: "Pendientes",                        dot: "bg-muted-foreground" },
@@ -420,7 +417,7 @@ export default function DesempenoSeguimiento() {
       .filter(r => filterPeriodo === "all" || r.periodo === filterPeriodo)
       .filter(r => {
         if (filterStatus === "all") return true
-        if (filterStatus === "reprobado") return r.calificacion_final < SCORE_THRESHOLD
+        if (filterStatus === "reprobado") return r.calificacion_final < UMBRAL_CALIFICACION_APROBATORIA
         return getRevisionStatus(r.fecha_revision) === filterStatus
       })
   }, [rows, search, filterPeriodo, filterStatus])
@@ -453,7 +450,7 @@ export default function DesempenoSeguimiento() {
               <CardTitle className="text-base">Seguimiento de Compromisos</CardTitle>
               <CardDescription className="text-xs mt-0.5">
                 Evaluaciones con compromisos registrados. Reprobados
-                (calificación &lt; {SCORE_THRESHOLD}) se muestran primero.
+                (calificación &lt; {UMBRAL_CALIFICACION_APROBATORIA}) se muestran primero.
               </CardDescription>
             </div>
           </div>
@@ -522,7 +519,7 @@ export default function DesempenoSeguimiento() {
           {/* Periodo filter */}
           <Select value={filterPeriodo} onValueChange={setFilterPeriodo}>
             <SelectTrigger
-              className="w-full sm:w-48 bg-muted text-foreground text-sm"
+              className="w-full sm:w-[180px] bg-muted text-foreground text-sm"
               aria-label="Filtrar por período"
               data-testid="filter-periodo-select"
             >
@@ -540,7 +537,7 @@ export default function DesempenoSeguimiento() {
           {/* Status filter */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger
-              className="w-full sm:w-44 bg-muted text-foreground text-sm"
+              className="w-full sm:w-[180px] bg-muted text-foreground text-sm"
               aria-label="Filtrar por estado de revisión"
               data-testid="filter-status-select"
             >

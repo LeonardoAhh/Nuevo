@@ -11,7 +11,14 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { OBJETIVOS_POR_PUESTO, DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, type Objetivo } from "@/lib/types/desempeno"
+import { ScoreBadge } from "./desempeno-score-badge"
+import {
+  DEFAULT_OBJETIVOS_POR_TIPO,
+  calcularPonderacion,
+  UMBRAL_CALIFICACION_APROBATORIA,
+  type Objetivo,
+} from "@/lib/types/desempeno"
+import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR, PERIODOS_DESEMPENO } from "@/lib/catalogo"
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
 import { PrintInstructionDialog } from "./print-instruction-dialog"
@@ -32,11 +39,7 @@ function formatFecha(iso: string): string {
   return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-function calificacionColor(cal: number): string {
-  if (cal >= 80) return "text-success"
-  if (cal >= 60) return "text-warning"
-  return "text-destructive"
-}
+
 
 interface EmpleadoAgrupado {
   numero: string
@@ -66,7 +69,7 @@ export default function DesempenoObjetivos() {
   const hasPuestoObjetivos = puesto ? !!OBJETIVOS_POR_PUESTO[puesto] : false
   const tipoLabel = puesto ? getTipoDesempenoByPuesto(puesto) : null
 
-  const requiereCompromisos = data ? calcularPonderacion(data).calificacionFinal < 80 : false
+  const requiereCompromisos = data ? calcularPonderacion(data).calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA : false
   const tieneCompromisos = !!(data?.compromisos?.trim())
   const bloqueado = requiereCompromisos && !tieneCompromisos
 
@@ -256,7 +259,7 @@ export default function DesempenoObjetivos() {
                         <Printer className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{bloqueado ? "Captura compromisos primero (calificación < 80%)" : "Imprimir evaluación cargada"}</TooltipContent>
+                    <TooltipContent>{bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : "Imprimir evaluación cargada"}</TooltipContent>
                   </Tooltip>
                 )}
               </div>
@@ -310,40 +313,48 @@ export default function DesempenoObjetivos() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {empleados.map((e) => {
-                                const lastEval = e.evals[0];
-                                const isSemestral = lastEval?.periodo && (PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(lastEval.periodo);
-                                return (
-                                <TableRow
-                                  key={e.numero}
-                                  className="cursor-pointer hover:bg-muted/50"
-                                  onClick={() => setSelectedNumero(e.numero)}
-                                >
-                                  <TableCell className="font-mono text-xs">{e.numero}</TableCell>
-                                  <TableCell className="font-medium truncate max-w-[200px]">
-                                    <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2">
-                                      <span>{e.nombre}</span>
-                                      {e.origen === "nuevo_ingreso" && (
-                                        <Badge variant="secondary" className="text-[10px] h-4 px-1 w-fit">Nuevo Ingreso</Badge>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[160px]">{e.puesto || "—"}</TableCell>
-                                  <TableCell className="hidden md:table-cell">
-                                    {lastEval ? (
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-xs text-muted-foreground">{lastEval.periodo}</span>
-                                        <Badge variant={isSemestral ? "default" : "secondary"} className="text-[10px] h-4 px-1">
-                                          {isSemestral ? "Semestral" : "Mensual"}
-                                        </Badge>
-                                      </div>
-                                    ) : "—"}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    <Badge variant="outline" className="text-xs">{e.evals.length}</Badge>
+                              {empleados.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    No se encontraron empleados en este departamento.
                                   </TableCell>
                                 </TableRow>
-                              )})}
+                              ) : (
+                                empleados.map((e) => {
+                                  const lastEval = e.evals[0];
+                                  const isSemestral = lastEval?.periodo && (PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(lastEval.periodo);
+                                  return (
+                                  <TableRow
+                                    key={e.numero}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => setSelectedNumero(e.numero)}
+                                  >
+                                    <TableCell className="font-mono text-xs">{e.numero}</TableCell>
+                                    <TableCell className="font-medium truncate max-w-[200px]">
+                                      <div className="flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2">
+                                        <span>{e.nombre}</span>
+                                        {e.origen === "nuevo_ingreso" && (
+                                          <Badge variant="secondary" className="text-[10px] h-4 px-1 w-fit">Nuevo Ingreso</Badge>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[160px]">{e.puesto || "—"}</TableCell>
+                                    <TableCell className="hidden md:table-cell">
+                                      {lastEval ? (
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-xs text-muted-foreground">{lastEval.periodo}</span>
+                                          <Badge variant={isSemestral ? "default" : "secondary"} className="text-[10px] h-4 px-1">
+                                            {isSemestral ? "Semestral" : "Mensual"}
+                                          </Badge>
+                                        </div>
+                                      ) : "—"}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      <Badge variant="outline" className="text-xs">{e.evals.length}</Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                )})
+                              )}
                             </TableBody>
                           </Table>
                         </div>
@@ -392,7 +403,7 @@ export default function DesempenoObjetivos() {
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Calificación</span>
-                <p className={`font-bold text-lg ${calificacionColor(data.calificacion_final)}`}>{data.calificacion_final}%</p>
+                <ScoreBadge score={data.calificacion_final} className="text-lg px-3 py-1" />
               </div>
             </div>
           </CardContent>
@@ -427,7 +438,7 @@ export default function DesempenoObjetivos() {
                         {(PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(ev.periodo) ? "Semestral" : "Mensual"}
                       </Badge>
                     )}
-                    <span className={`text-sm font-bold ml-auto ${calificacionColor(ev.calificacion_final)}`}>{ev.calificacion_final}%</span>
+                    <ScoreBadge score={ev.calificacion_final} className="ml-auto" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{formatFecha(ev.created_at)}</p>
                 </div>
