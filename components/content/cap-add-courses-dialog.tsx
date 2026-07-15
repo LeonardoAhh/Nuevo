@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { Employee, Course } from "@/lib/hooks"
 
 type CourseRow = { course_id: string; course_name: string; fecha_aplicacion: string; calificacion: string }
@@ -61,13 +61,10 @@ export function CapAddCoursesDialog({ employee, open, saving, isReadOnly, course
 
   return (
     <ResponsiveShell open={open} onClose={onClose} title="Agregar cursos" description={employee.nombre}>
-      <ModalToolbar
+      <ModalHeader
         title="Agregar cursos"
         subtitle={`${employee.nombre}${employee.puesto ? ` · ${employee.puesto}` : ''}`}
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleConfirm}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -124,6 +121,12 @@ export function CapAddCoursesDialog({ employee, open, saving, isReadOnly, course
           )}
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }

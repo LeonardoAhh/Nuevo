@@ -5,7 +5,7 @@ import { BookOpen, X, Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { Position, PositionCourse, Course } from "@/lib/hooks"
 
 export interface CapPositionCoursesDialogProps {
@@ -31,10 +31,9 @@ export function CapPositionCoursesDialog({
 }: CapPositionCoursesDialogProps) {
   return (
     <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-lg" title={position?.name ?? 'Cursos del puesto'} description="Cursos requeridos">
-      <ModalToolbar
+      <ModalHeader
         title={position?.name ?? 'Cursos del puesto'}
         subtitle={`${(position?.department as any)?.name ?? ''} · Cursos requeridos`}
-        saving={false}
         onClose={onClose}
       />
 
@@ -106,6 +105,10 @@ export function CapPositionCoursesDialog({
           )}
         </div>
       )}
+      <ModalFooter
+        onCancel={onClose}
+        cancelLabel="Cerrar"
+      />
     </ResponsiveShell>
   )
 }

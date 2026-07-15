@@ -9,7 +9,7 @@ import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
-  DEFAULT_COMPETENCIAS,
+  DEFAULT_COMPETENCIAS_POR_TIPO,
   type DesempenoData,
   type DesempenoTipo,
 } from "@/lib/types/desempeno"
@@ -41,7 +41,7 @@ function buildBlankData(tipo: DesempenoTipo): DesempenoData {
       porcentaje: "",
       comentarios: "",
     })),
-    competencias: DEFAULT_COMPETENCIAS.map((c) => ({
+    competencias: (DEFAULT_COMPETENCIAS_POR_TIPO[tipo] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({
       ...c,
       calificacion: 0,
       comentarios: "",

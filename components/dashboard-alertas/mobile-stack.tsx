@@ -118,24 +118,7 @@ export function MobileStackEvals({
     const tone: "destructive" | "warning" = vencida ? "destructive" : "warning"
     const toneText = vencida ? "text-destructive" : "text-warning"
 
-    const [search, setSearch] = useState("")
-    const [depto, setDepto] = useState("")
     const [selectedId, setSelectedId] = useState<string | null>(null)
-
-    const deptos = useMemo(
-        () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
-        [items],
-    )
-
-    const filtrados = useMemo(() => {
-        const q = search.trim().toLowerCase()
-        return items.filter(i => {
-            const dep = i.departamento?.trim() || "Sin departamento"
-            if (depto && dep !== depto) return false
-            if (!q) return true
-            return i.nombre.toLowerCase().includes(q) || dep.toLowerCase().includes(q)
-        })
-    }, [items, search, depto])
 
     const seleccionado = useMemo(
         () => items.find(i => i.id === selectedId) ?? null,
@@ -144,8 +127,8 @@ export function MobileStackEvals({
 
     function avanzar() {
         if (!seleccionado) return
-        const idx = filtrados.findIndex(i => i.id === seleccionado.id)
-        const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+        const idx = items.findIndex(i => i.id === seleccionado.id)
+        const next = items[idx + 1] ?? items[idx - 1] ?? null
         setSelectedId(next?.id ?? null)
     }
 
@@ -156,18 +139,9 @@ export function MobileStackEvals({
 
     return (
         <>
-            <div className="flex h-full flex-col">
-                <MobileToolbar
-                    total={items.length}
-                    filtrados={filtrados.length}
-                    search={search}
-                    onSearchChange={setSearch}
-                    depto={depto}
-                    onDeptoChange={setDepto}
-                    deptos={deptos}
-                />
-                <div className="scrollbar-thin flex-1 overflow-y-auto">
-                    {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
+            <div className="flex h-full flex-col min-h-0">
+                <div className="scrollbar-thin flex-1 overflow-y-auto min-h-0">
+                    {items.length === 0 ? SIN_RESULTADOS : items.map(i => (
                         <MasterListItem
                             key={i.id}
                             nombre={i.nombre}
@@ -202,29 +176,8 @@ export function MobileStackFechas({
     const tone: "destructive" | "warning" =
         items.some(i => i.diasDiff < 0) ? "destructive" : "warning"
 
-    const [search, setSearch] = useState("")
-    const [depto, setDepto] = useState("")
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
-
-    const deptos = useMemo(
-        () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
-        [items],
-    )
-
-    const filtrados = useMemo(() => {
-        const q = search.trim().toLowerCase()
-        return items.filter(i => {
-            const dep = i.departamento?.trim() || "Sin departamento"
-            if (depto && dep !== depto) return false
-            if (!q) return true
-            return (
-                i.nombre.toLowerCase().includes(q) ||
-                dep.toLowerCase().includes(q) ||
-                (i.puesto ?? "").toLowerCase().includes(q)
-            )
-        })
-    }, [items, search, depto])
 
     const seleccionado = useMemo(
         () => items.find(i => i.id === selectedId) ?? null,
@@ -238,8 +191,8 @@ export function MobileStackFechas({
         setSaving(true)
         try {
             await action(seleccionado.id)
-            const idx = filtrados.findIndex(i => i.id === seleccionado.id)
-            const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+            const idx = items.findIndex(i => i.id === seleccionado.id)
+            const next = items[idx + 1] ?? items[idx - 1] ?? null
             setSelectedId(next?.id ?? null)
         } finally {
             setSaving(false)
@@ -297,27 +250,21 @@ export function MobileStackFechas({
     }
 
     return (
-        <div className="flex h-full flex-col">
-            <MobileToolbar
-                total={items.length}
-                filtrados={filtrados.length}
-                search={search}
-                onSearchChange={setSearch}
-                depto={depto}
-                onDeptoChange={setDepto}
-                deptos={deptos}
-            />
-            <div className="scrollbar-thin flex-1 overflow-y-auto">
-                {filtrados.length === 0 ? SIN_RESULTADOS : filtrados.map(i => (
+        <div className="flex h-full flex-col min-h-0">
+            <div className="scrollbar-thin flex-1 overflow-y-auto min-h-0">
+                {items.length === 0 ? SIN_RESULTADOS : items.map(i => (
                     <MasterListItem
                         key={i.id}
                         nombre={i.nombre}
-                        meta={[i.puesto, i.departamento].filter(Boolean).join(" · ") || "Sin información"}
+                        meta={[i.departamento, i.puesto, i.numero].filter(Boolean).join(" · ") || "Sin departamento"}
                         diasLabel={dias(i.diasDiff)}
                         fechaLabel={formatDate(i.fecha)}
-                        selected={false}
+                        selected={i.id === selectedId}
                         tone={tone}
-                        onSelect={() => setSelectedId(i.id)}
+                        onSelect={() => {
+                            if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+                            window.setTimeout(() => setSelectedId(i.id), 0)
+                        }}
                     />
                 ))}
             </div>

@@ -22,7 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals"
 import {
   Select,
@@ -844,32 +844,10 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
       description="Resumen de evaluaciones de nuevo ingreso"
       maxWidth="sm:max-w-2xl"
     >
-      <ModalToolbar
+      <ModalHeader
         title="Compartir pendientes"
         subtitle="Evaluaciones de nuevo ingreso"
-        saving={false}
         onClose={onClose}
-        secondaryAction={
-          format === "whatsapp"
-            ? {
-                label: copied ? "Copiado" : "Copiar",
-                icon: copied
-                  ? <Check className="h-4 w-4" aria-hidden="true" />
-                  : <Copy className="h-4 w-4" aria-hidden="true" />,
-                onClick: handleCopy,
-                variant: "outline",
-                iconOnly: true,
-              }
-            : undefined
-        }
-        onConfirm={format === "whatsapp" ? handleWhatsApp : handleCopy}
-        confirmIcon={
-          format === "whatsapp"
-            ? <MessageSquareShare className="h-4 w-4" aria-hidden="true" />
-            : copied
-              ? <Check className="h-4 w-4" aria-hidden="true" />
-              : <Copy className="h-4 w-4" aria-hidden="true" />
-        }
       />
 
       <div className="flex flex-col gap-4 p-4 sm:p-5 min-h-0 flex-1">
@@ -1009,6 +987,36 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           </Button>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={format === "whatsapp" ? handleWhatsApp : handleCopy}
+        saving={false}
+        confirmIcon={
+          format === "whatsapp"
+            ? <MessageSquareShare className="h-4 w-4" aria-hidden="true" />
+            : copied
+              ? <Check className="h-4 w-4" aria-hidden="true" />
+              : <Copy className="h-4 w-4" aria-hidden="true" />
+        }
+        confirmLabel={
+          format === "whatsapp"
+            ? "Enviar WhatsApp"
+            : copied ? "¡Copiado!" : "Copiar texto"
+        }
+        confirmDisabled={loading || activeEmployees.length === 0}
+        secondaryAction={
+          format === "whatsapp"
+            ? {
+                label: copied ? "Copiado" : "Copiar",
+                icon: copied
+                  ? <Check className="h-4 w-4" aria-hidden="true" />
+                  : <Copy className="h-4 w-4" aria-hidden="true" />,
+                onClick: handleCopy,
+                variant: "outline"
+              }
+            : undefined
+        }
+      />
     </ResponsiveShell>
   )
 }

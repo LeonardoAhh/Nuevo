@@ -50,13 +50,10 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
 
     const [selected, setSelected] = useState<EvalItem | null>(null)
 
-    const { search, setSearch, depto, setDepto, deptos, filtrados } =
-        useMasterState(items, (i, q) => (i.turno ?? "").toLowerCase().includes(q))
-
     function avanzar() {
         if (!selected) return
-        const idx = filtrados.findIndex(i => i.id === selected.id)
-        const next = filtrados[idx + 1] ?? filtrados[idx - 1] ?? null
+        const idx = items.findIndex(i => i.id === selected.id)
+        const next = items[idx + 1] ?? items[idx - 1] ?? null
         setSelected(next)
     }
 
@@ -68,22 +65,12 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
     return (
         <>
             <div className="flex flex-1 flex-col overflow-hidden rounded-b-xl border-t min-h-0">
-                <MasterHeader
-                    total={items.length}
-                    filtrados={filtrados.length}
-                    search={search}
-                    onSearchChange={setSearch}
-                    depto={depto}
-                    onDeptoChange={setDepto}
-                    deptos={deptos}
-                />
-
                 <div className="scrollbar-thin flex-1 divide-y overflow-y-auto min-h-0">
-                    {filtrados.length === 0 ? (
+                    {items.length === 0 ? (
                         <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                            Sin resultados con los filtros actuales.
+                            Sin resultados.
                         </p>
-                    ) : filtrados.map(item => (
+                    ) : items.map(item => (
                         <button
                             key={item.id}
                             onClick={() => openCalificacion(item)}

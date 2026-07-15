@@ -6,7 +6,7 @@ import { Check, X, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { formatDate } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG } from "@/lib/hooks"
 import { ESCOLARIDAD } from "@/lib/catalogo"
@@ -53,12 +53,10 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
       title={record.nombre}
       description={`${record.puesto} · ${record.departamento}`}
     >
-      <ModalToolbar
+      <ModalHeader
         title={record.nombre}
         subtitle={`${record.puesto} · ${record.departamento}`}
-        saving={saving}
         onClose={onClose}
-        onConfirm={() => onSave(record.id, form)}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -132,51 +130,34 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
 
         {/* Delete zone */}
         <div className="px-4 pb-3 border-t pt-3">
-          {confirmDelete ? (
-            <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center gap-3"
-            >
-              <span className="text-sm text-muted-foreground">¿Eliminar?</span>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.88 }}
-                onClick={() => onDelete(record.id)}
-                disabled={saving}
-                className="h-9 w-9 rounded-full flex items-center justify-center bg-destructive text-destructive-foreground shadow-md shadow-destructive/30 disabled:opacity-50"
-                aria-label="Confirmar eliminación"
-              >
-                {saving
-                  ? <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                  : <Check className="h-4 w-4" />}
-              </motion.button>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.88 }}
-                onClick={() => setConfirmDelete(false)}
-                disabled={saving}
-                className="h-9 w-9 rounded-full flex items-center justify-center bg-muted border border-border/40 shadow-sm disabled:opacity-50"
-                aria-label="Cancelar eliminación"
-              >
-                <X className="h-4 w-4" />
-              </motion.button>
-            </motion.div>
-          ) : (
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setConfirmDelete(true)}
-              disabled={saving}
-              className="flex items-center justify-center gap-2 w-full h-9 rounded-full border border-destructive/30 text-destructive hover:border-destructive/60 hover:bg-destructive/5 transition-colors text-sm font-medium disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Eliminar empleado
-            </motion.button>
-          )}
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={async () => {
+              const { notify } = await import("@/lib/notify")
+              const ok = await notify.confirm({
+                title: "Eliminar empleado",
+                description: `Se eliminará a ${record.nombre} y todos sus datos. No se puede deshacer.`,
+                confirmLabel: "Eliminar",
+                tone: "destructive",
+                requireInputText: "ELIMINAR"
+              })
+              if (ok) onDelete(record.id)
+            }}
+            disabled={saving}
+            className="flex items-center justify-center gap-2 w-full h-9 rounded-full border border-destructive/30 text-destructive hover:border-destructive/60 hover:bg-destructive/5 transition-colors text-sm font-medium disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            Eliminar empleado
+          </motion.button>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={() => onSave(record.id, form)}
+        saving={saving}
+      />
     </ResponsiveShell>
   )
 }

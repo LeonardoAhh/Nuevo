@@ -350,6 +350,7 @@ export default function CapacitacionContent() {
       description: `Se eliminará a ${emp.nombre} y todos sus datos. No se puede deshacer.`,
       confirmLabel: "Eliminar",
       tone: "destructive",
+      requireInputText: "ELIMINAR",
     })
     if (!ok) return
     const result = await deleteEmployee(emp.id, emp.numero)
@@ -365,16 +366,16 @@ export default function CapacitacionContent() {
   return (
     <>
       <ReadOnlyBanner />
-      <Tabs defaultValue="puestos" onValueChange={handleTabChange}>
+      <Tabs defaultValue="historial" onValueChange={handleTabChange}>
         <TabsList className="flex w-full mb-4">
-          <TabsTrigger value="puestos" className="flex-1 text-xs sm:text-sm">
-            <Briefcase className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
+          <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
+            <ClipboardList className="mr-1 sm:mr-2 h-4 w-4" /><span>Empleados</span>
           </TabsTrigger>
           <TabsTrigger value="cursos" className="flex-1 text-xs sm:text-sm">
             <BookOpen className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
           </TabsTrigger>
-          <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
-            <ClipboardList className="mr-1 sm:mr-2 h-4 w-4" /><span>Empleados</span>
+          <TabsTrigger value="puestos" className="flex-1 text-xs sm:text-sm">
+            <Briefcase className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
           </TabsTrigger>
           <TabsTrigger value="importar" className="hidden">
             <Upload className="mr-1 sm:mr-2 h-4 w-4" /><span>Importar</span>

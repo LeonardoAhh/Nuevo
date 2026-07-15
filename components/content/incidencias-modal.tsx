@@ -6,9 +6,7 @@ import {
   Calendar, Save, ChevronLeft, ChevronRight,
   AlertCircle, Plus, Loader2, X,
 } from "lucide-react"
-import {
-  Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -144,48 +142,18 @@ export function IncidenciasModal({
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="sm:max-w-lg" hideClose>
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogClose asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                aria-label="Cerrar"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-5 w-5 text-primary" />
-              Incidencias
-            </DialogTitle>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={handleSave}
-              disabled={!dirty || saving}
-              aria-label="Guardar"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          <DialogDescription className="flex items-center gap-2">
-            <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-              #{numeroEmpleado}
-            </span>
-            <span className="truncate">{nombreEmpleado}</span>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
+    <ResponsiveShell
+      open={open}
+      onClose={() => { if (!open) onClose() }}
+      title="Incidencias"
+      description={`#${numeroEmpleado} ${nombreEmpleado}`}
+      maxWidth="sm:max-w-lg"
+    >
+      <ModalHeader
+        title="Incidencias"
+        subtitle={`#${numeroEmpleado} ${nombreEmpleado}`}
+      />
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {/* Month selector */}
           <div className="flex items-center justify-between gap-2">
             <Button variant="ghost" size="icon" onClick={handlePrevMonth} aria-label="Mes anterior">
@@ -277,16 +245,12 @@ export function IncidenciasModal({
             </details>
           )}
 
-          {/* Error */}
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-xs">{error}</AlertDescription>
             </Alert>
           )}
-
-
-        </div>
 
         {/* Month history summary at bottom */}
         {allRecords.length > 0 && (
@@ -318,7 +282,17 @@ export function IncidenciasModal({
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      <ModalFooter
+        onCancel={onClose}
+        cancelLabel="Cancelar"
+        onConfirm={handleSave}
+        confirmLabel="Guardar"
+        confirmIcon={<Save className="h-4 w-4" />}
+        confirmDisabled={!dirty || saving}
+        saving={saving}
+      />
+    </ResponsiveShell>
   )
 }

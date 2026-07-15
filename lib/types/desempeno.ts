@@ -209,6 +209,57 @@ export const DEFAULT_COMPETENCIAS: Competencia[] = [
     },
 ];
 
+export const DEFAULT_COMPETENCIAS_JEFE: Competencia[] = [
+    {
+        nombre: "Flexibilidad y adaptación",
+        descripcion: "Capacidad para trabajar con eficacia en situaciones variadas y/o inusuales, con personas o grupos diversos. Implica comprender y valorar posturas distintas a las propias, incluso puntos de vista encontrados, modificar su propio enfoque a medida que la situación cambiante lo requiera, y promover dichos cambios en su ámbito de actuación.",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Respeto",
+        descripcion: "Capacidad para dar a los otros y a uno mismo un trato digno, franco y tolerante, y comportarse de acuerdo con los valores morales, las buenas costumbres y las buenas",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Innovación",
+        descripcion: "Capacidad para idear soluciones nuevas y diferentes dirigidas a resolver problemas o situaciones que se presentan en el propio puesto, la organización y/o los clientes, con el objeto de agregar valor a la organización.",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Perseverancia en la consecución de objetivos",
+        descripcion: "Capacidad para obrar con firmeza y constancia en la ejecución de proyectos y en la consecución de objetivos. Capacidad para actuar con fuerza interior, insistir cuando es necesario, repetir una acción y mantener un comportamiento constante para lograr un objetivo, tanto personal como de la organización.",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Gestión y logro de objetivos",
+        descripcion: "Capacidad para orientarse al logro de los objetivos, seleccionar y formar personas, delegar, generar directrices, planificar, diseñar, analizar información, movilizar recursos organizacionales, controlar la gestión, sopesar riesgos e integrar las actividades a manera de lograr la eficacia, eficiencia y calidad en el cumplimiento de la misión y funciones de la organización.",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Capacidad de planificación",
+        descripcion: "Capacidad para determinar eficazmente metas y prioridades de su tarea, área o proyecto, y especificar las etapas, acciones, plazos y recursos requeridos para el logro de los objetivos. Incluye utilizar mecanismos de seguimiento y verificación de los grados de avance de las distintas tareas para mantener el control del proceso y aplicar las medidas correctivas necesarias.",
+        calificacion: 0,
+        comentarios: "",
+    },
+    {
+        nombre: "Trabajo en equipo",
+        descripcion: "Capacidad para colaborar con los demás, formar parte de un grupo y trabajar con otras áreas de la organización con el propósito de alcanzar, en conjunto, la estrategia organizacional, subordinar los intereses personales a los objetivos grupales.\nImplica tener expectativas positivas respecto de los demás, comprender a los otros, y generar y mantener un buen clima de trabajo.\nIncluye su compromiso y participación en las reuniones de trabajo con otras áreas.",
+        calificacion: 0,
+        comentarios: "",
+    }
+];
+
+export const DEFAULT_COMPETENCIAS_POR_TIPO: Record<DesempenoTipo, Competencia[]> = {
+    operativo: DEFAULT_COMPETENCIAS,
+    administrativo: DEFAULT_COMPETENCIAS,
+    jefe: DEFAULT_COMPETENCIAS_JEFE,
+};
+
 // ═══════════════════════════════════════════════════════════════
 // CÁLCULOS DE PONDERACIÓN
 // ═══════════════════════════════════════════════════════════════

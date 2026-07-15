@@ -484,8 +484,6 @@ input[type="color"]::-webkit-color-swatch {
 /* Header */
 .density-compact header {
     min-height: 40px;
-    padding-top: max(env(safe-area-inset-top, 0px), 0.25rem);
-    padding-bottom: 0.25rem;
 }
 
 /* Sidebar header */

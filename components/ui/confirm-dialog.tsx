@@ -20,6 +20,7 @@ export interface ConfirmOptions {
   cancelLabel?: string
   tone?: ConfirmTone
   icon?: React.ReactNode
+  requireInputText?: string
 }
 
 interface ConfirmState extends ConfirmOptions {
@@ -93,32 +94,32 @@ interface ToolbarProps {
   cancelLabel: string
   onCancel: () => void
   onConfirm: () => void
+  confirmDisabled?: boolean
 }
 
-function ConfirmToolbar({ tone, confirmLabel, cancelLabel, onCancel, onConfirm }: ToolbarProps) {
+function ConfirmToolbar({ tone, confirmLabel, cancelLabel, onCancel, onConfirm, confirmDisabled }: ToolbarProps) {
   const styles = TONE_STYLES[tone]
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-card/80 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <div className="flex items-center justify-center gap-3 px-6 pb-6 pt-2">
       <button
         type="button"
         onClick={onCancel}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/60 bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={cancelLabel}
+        className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <X className="h-4 w-4" />
-        <span className="hidden sm:inline">{cancelLabel}</span>
+        {cancelLabel}
       </button>
       <button
         type="button"
         onClick={onConfirm}
+        disabled={confirmDisabled}
         className={cn(
-          "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm",
           styles.btn,
+          confirmDisabled && "opacity-50 cursor-not-allowed"
         )}
         autoFocus
       >
-        <Check className="h-4 w-4" />
-        <span>{confirmLabel}</span>
+        {confirmLabel}
       </button>
     </div>
   )
@@ -135,9 +136,12 @@ interface BodyProps {
   icon?: React.ReactNode
   TitleEl: React.ComponentType<React.HTMLAttributes<HTMLHeadingElement>>
   DescriptionEl: React.ComponentType<React.HTMLAttributes<HTMLParagraphElement>>
+  requireInputText?: string
+  inputValue: string
+  onInputChange: (v: string) => void
 }
 
-function ConfirmBody({ tone, title, description, icon, TitleEl, DescriptionEl }: BodyProps) {
+function ConfirmBody({ tone, title, description, icon, TitleEl, DescriptionEl, requireInputText, inputValue, onInputChange }: BodyProps) {
   const styles = TONE_STYLES[tone]
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-6 text-center">
@@ -147,6 +151,20 @@ function ConfirmBody({ tone, title, description, icon, TitleEl, DescriptionEl }:
       <TitleEl className="text-base font-semibold leading-tight text-foreground">{title}</TitleEl>
       {description ? (
         <DescriptionEl className="max-w-sm text-sm leading-relaxed text-muted-foreground">{description}</DescriptionEl>
+      ) : null}
+      {requireInputText ? (
+        <div className="w-full mt-4 flex flex-col gap-2 text-left">
+          <label className="text-sm font-medium text-foreground">
+            Escribe <span className="font-bold select-all">{requireInputText}</span> para confirmar:
+          </label>
+          <input
+            type="text"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            placeholder={requireInputText}
+          />
+        </div>
       ) : null}
     </div>
   )
@@ -159,9 +177,13 @@ function ConfirmBody({ tone, title, description, icon, TitleEl, DescriptionEl }:
 export function ConfirmProvider() {
   const [state, setLocalState] = React.useState<ConfirmState>(currentState)
   const isMobile = useIsMobile()
+  const [inputValue, setInputValue] = React.useState("")
 
   React.useEffect(() => {
-    const listener: Listener = (s) => setLocalState(s)
+    const listener: Listener = (s) => {
+      setLocalState(s)
+      setInputValue("")
+    }
     listeners.add(listener)
     return () => {
       listeners.delete(listener)
@@ -180,18 +202,12 @@ export function ConfirmProvider() {
   const tone = state.tone ?? "default"
   const confirmLabel = state.confirmLabel ?? "Confirmar"
   const cancelLabel = state.cancelLabel ?? "Cancelar"
+  const confirmDisabled = state.requireInputText ? inputValue !== state.requireInputText : false
 
   if (isMobile) {
     return (
       <Drawer open={state.open} onOpenChange={handleOpenChange}>
         <DrawerContent className="border-border bg-card p-0">
-          <ConfirmToolbar
-            tone={tone}
-            confirmLabel={confirmLabel}
-            cancelLabel={cancelLabel}
-            onCancel={() => close(false)}
-            onConfirm={() => close(true)}
-          />
           <ConfirmBody
             tone={tone}
             title={state.title}
@@ -199,6 +215,17 @@ export function ConfirmProvider() {
             icon={state.icon}
             TitleEl={DrawerTitle as React.ComponentType<React.HTMLAttributes<HTMLHeadingElement>>}
             DescriptionEl={DrawerDescription as React.ComponentType<React.HTMLAttributes<HTMLParagraphElement>>}
+            requireInputText={state.requireInputText}
+            inputValue={inputValue}
+            onInputChange={setInputValue}
+          />
+          <ConfirmToolbar
+            tone={tone}
+            confirmLabel={confirmLabel}
+            cancelLabel={cancelLabel}
+            onCancel={() => close(false)}
+            onConfirm={() => close(true)}
+            confirmDisabled={confirmDisabled}
           />
           <div className="safe-bottom" aria-hidden />
         </DrawerContent>
@@ -209,16 +236,10 @@ export function ConfirmProvider() {
   return (
     <Dialog open={state.open} onOpenChange={handleOpenChange}>
       <DialogContent
+        hideClose
         className="max-w-sm gap-0 overflow-hidden border-border bg-card p-0"
         onEscapeKeyDown={() => close(false)}
       >
-        <ConfirmToolbar
-          tone={tone}
-          confirmLabel={confirmLabel}
-          cancelLabel={cancelLabel}
-          onCancel={() => close(false)}
-          onConfirm={() => close(true)}
-        />
         <ConfirmBody
           tone={tone}
           title={state.title}
@@ -226,6 +247,17 @@ export function ConfirmProvider() {
           icon={state.icon}
           TitleEl={DialogTitle as React.ComponentType<React.HTMLAttributes<HTMLHeadingElement>>}
           DescriptionEl={DialogDescription as React.ComponentType<React.HTMLAttributes<HTMLParagraphElement>>}
+          requireInputText={state.requireInputText}
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+        />
+        <ConfirmToolbar
+          tone={tone}
+          confirmLabel={confirmLabel}
+          cancelLabel={cancelLabel}
+          onCancel={() => close(false)}
+          onConfirm={() => close(true)}
+          confirmDisabled={confirmDisabled}
         />
       </DialogContent>
     </Dialog>

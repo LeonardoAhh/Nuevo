@@ -25,7 +25,7 @@ import {
   Tooltip, TooltipContent,
   TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 
 import { useUser }    from "@/lib/hooks/useUser"
 import { useProfile } from "@/lib/hooks/useProfile"
@@ -465,12 +465,9 @@ function NoteFormDialog({
       description={`Formulario para ${title.toLowerCase()}`}
       maxWidth="sm:max-w-md"
     >
-      <ModalToolbar
+      <ModalHeader
         title={title}
-        saving={submitting || uploading}
         onClose={() => onOpenChange(false)}
-        onConfirm={onSubmit}
-        confirmDisabled={submitting || uploading || !isFormValid(form)}
       />
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -557,6 +554,12 @@ function NoteFormDialog({
 
         </form>
       </div>
+      <ModalFooter
+        onCancel={() => onOpenChange(false)}
+        onConfirm={onSubmit}
+        saving={submitting || uploading}
+        confirmDisabled={submitting || uploading || !isFormValid(form)}
+      />
     </ResponsiveShell>
   )
 }

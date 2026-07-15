@@ -5,7 +5,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ModalToolbar, ResponsiveShell } from "@/components/ui/responsive-shell"
+import { ModalHeader, ModalFooter, ResponsiveShell } from "@/components/ui/responsive-shell"
 import {
     EVAL_UMBRAL_DIAS,
     RG_UMBRAL_DIAS,
@@ -181,10 +181,9 @@ export default function DashboardAlertas() {
             >
                 {dialogActivo && (
                     <>
-                        <ModalToolbar
+                        <ModalHeader
                             title={dialogActivo.titulo}
                             subtitle={dialogActivo.descripcion}
-                            saving={false}
                             onClose={() => setDialogTipo(null)}
                         />
 
@@ -271,6 +270,10 @@ export default function DashboardAlertas() {
                                 )
                             )}
                         </div>
+                        <ModalFooter
+                            onCancel={() => setDialogTipo(null)}
+                            cancelLabel="Cerrar"
+                        />
                     </>
                 )}
             </ResponsiveShell>

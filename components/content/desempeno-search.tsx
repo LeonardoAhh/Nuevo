@@ -20,7 +20,7 @@ import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
-  DEFAULT_COMPETENCIAS,
+  DEFAULT_COMPETENCIAS_POR_TIPO,
   UMBRAL_CALIFICACION_APROBATORIA,
   calcularPonderacion,
   type DesempenoData,
@@ -458,7 +458,7 @@ function DesempenoSearchContent() {
       tipo: "operativo",
       objetivos: DEFAULT_OBJETIVOS_POR_TIPO["operativo"],
       cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
-      competencias: DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
+      competencias: (DEFAULT_COMPETENCIAS_POR_TIPO["operativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c })),
       compromisos: "",
       fecha_revision: "",
       observaciones: "",
@@ -573,7 +573,8 @@ function DesempenoSearchContent() {
           <CardContent className="pb-4 pt-3">
             <div className="flex flex-col xl:flex-row gap-3 xl:items-center">
               {/* Campo de búsqueda */}
-              <div className="relative flex-1 w-full min-w-[250px]">
+              <div className="flex gap-2 flex-1 w-full min-w-[250px]">
+                <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
                   ref={inputRef}
@@ -627,6 +628,16 @@ function DesempenoSearchContent() {
                   </div>
                 )}
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSearch} aria-label="Buscar empleado" disabled={!numeroBuscado.trim()} className="shrink-0 px-4">
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Buscar</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Buscar empleado</TooltipContent>
+              </Tooltip>
+            </div>
 
               {/* Controles de Periodo y Buscar */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full xl:w-auto shrink-0">
@@ -636,10 +647,10 @@ function DesempenoSearchContent() {
                       key={modo}
                       type="button"
                       onClick={() => setPeriodoModo(modo)}
-                      className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                         periodoModo === modo
-                          ? "bg-background shadow-sm text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20"
+                          : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                       }`}
                     >
                       {modo === "semestrales" ? "Semestral" : "Mensual"}
@@ -665,15 +676,7 @@ function DesempenoSearchContent() {
                   </Select>
                 </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button onClick={handleSearch} aria-label="Buscar empleado" disabled={!numeroBuscado.trim()} className="w-full sm:w-auto shrink-0 px-5">
-                      <Search className="h-4 w-4 sm:mr-0 mr-2" />
-                      <span className="sm:hidden">Buscar</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Buscar empleado</TooltipContent>
-                </Tooltip>
+
               </div>
             </div>
 
@@ -705,26 +708,6 @@ function DesempenoSearchContent() {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        )}
-
-        {faltaEvaluador && (
-          <NoticeCard
-            tone="danger"
-            icon={<AlertCircle className="h-4 w-4" />}
-            title="Falta evaluador"
-          >
-            Selecciona al evaluador en el recuadro superior para poder capturar y guardar.
-          </NoticeCard>
-        )}
-
-        {bloqueado && (
-          <NoticeCard
-            tone="danger"
-            icon={<Lock className="h-5 w-5" />}
-            title={`Calificación menor a ${UMBRAL_CALIFICACION_APROBATORIA}%`}
-          >
-            No puedes <strong className="font-semibold text-foreground">guardar</strong>, <strong className="font-semibold text-foreground">imprimir</strong> ni <strong className="font-semibold text-foreground">descargar el PDF</strong> hasta capturar los compromisos de mejora.
-          </NoticeCard>
         )}
 
         {noElegible && (
@@ -760,7 +743,23 @@ function DesempenoSearchContent() {
         {loading ? (
           <DesempenoFormSkeleton />
         ) : data ? (
-          <DesempenoForm data={data} onUpdate={setData} />
+          <DesempenoForm 
+            data={data} 
+            onUpdate={setData} 
+            onGuardar={() => guardar({ ...data, periodo: data.periodo || periodoSeleccionado })}
+            guardarDisabled={saving || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador}
+            guardarTooltip={
+              faltaEvaluador
+                ? "Selecciona un evaluador primero"
+                : mismatchBloqueo
+                ? "Empleado de planta: evalúalo en modo Semestral, no Mensual"
+                : noElegible
+                ? "Empleado no elegible para este periodo semestral (< 2 meses)"
+                : bloqueado
+                ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)`
+                : "Guardar evaluación"
+            }
+          />
         ) : null}
 
         {data && (

@@ -11,14 +11,7 @@ import {
   AlertTriangle,
   ArrowLeft,
 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -284,18 +277,18 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto bg-card">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Carga masiva de empleados
-          </DialogTitle>
-          <DialogDescription>
-            Crea múltiples empleados desde un archivo JSON. Skip duplicados por número,
-            validación estricta contra catálogo.
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveShell
+      open={open}
+      onClose={handleClose}
+      title="Carga masiva de empleados"
+      description="Crea múltiples empleados desde un archivo JSON. Skip duplicados por número, validación estricta contra catálogo."
+      maxWidth="sm:max-w-3xl"
+    >
+      <ModalHeader
+        title="Carga masiva de empleados"
+        subtitle="Crea múltiples empleados desde un archivo JSON. Skip duplicados por número, validación estricta contra catálogo."
+      />
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
         {error && (
           <Alert variant="destructive">
@@ -486,33 +479,26 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
             </p>
           </div>
         )}
+      </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          {step === "preview" && (
-            <Button variant="outline" onClick={reset} disabled={saving}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Volver
-            </Button>
-          )}
-          {step === "preview" && (
-            <Button onClick={handleApply} disabled={saving || valid.length === 0}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  Creando...
-                </>
-              ) : (
-                `Crear ${valid.length} empleado(s)`
-              )}
-            </Button>
-          )}
-          {step !== "preview" && (
-            <Button variant="outline" onClick={handleClose} disabled={saving || loading}>
-              {step === "done" ? "Cerrar" : "Cancelar"}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <ModalFooter
+        onCancel={handleClose}
+        cancelLabel={step === "done" ? "Cerrar" : "Cancelar"}
+        onConfirm={step === "preview" ? handleApply : undefined}
+        confirmLabel={`Crear ${valid.length} empleado(s)`}
+        confirmDisabled={saving || valid.length === 0}
+        secondaryAction={
+          step === "preview"
+            ? {
+                label: "Volver",
+                onClick: reset,
+                disabled: saving,
+                icon: <ArrowLeft className="h-4 w-4" />
+              }
+            : undefined
+        }
+        saving={saving}
+      />
+    </ResponsiveShell>
   )
 }

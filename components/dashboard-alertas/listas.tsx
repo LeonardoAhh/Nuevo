@@ -56,7 +56,7 @@ export function ListaEvals({ items, vencida, vacio, evalNum, onCalificar }: List
                 ))}
             </div>
 
-            <div className="hidden lg:block">
+            <div className="hidden min-h-0 flex-1 flex-col lg:flex">
                 <MasterDetailEvals items={items} vencida={vencida} evalNum={evalNum} onCalificar={onCalificar} />
             </div>
         </>

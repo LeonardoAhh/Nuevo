@@ -6,7 +6,7 @@ import DesempenoPrint from "@/components/content/desempeno-print"
 import {
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
-  DEFAULT_COMPETENCIAS,
+  DEFAULT_COMPETENCIAS_POR_TIPO,
   type DesempenoData,
 } from "@/lib/types/desempeno"
 
@@ -25,7 +25,7 @@ const BLANK_OPERATIVO: DesempenoData = {
   tipo: "operativo",
   objetivos: Array.from({ length: 5 }, (_, i) => emptyObj(i + 1)),
   cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["operativo"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
-  competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
+  competencias: (DEFAULT_COMPETENCIAS_POR_TIPO["operativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map(c => ({ ...c, calificacion: 4 })),
   compromisos: "", fecha_revision: "", observaciones: "",
   calificacion_final: 100, incidencias: [],
 }
@@ -36,7 +36,7 @@ const BLANK_ADMIN: DesempenoData = {
   tipo: "administrativo",
   objetivos: Array.from({ length: 7 }, (_, i) => emptyObj(i + 1)),
   cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["administrativo"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
-  competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
+  competencias: (DEFAULT_COMPETENCIAS_POR_TIPO["administrativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map(c => ({ ...c, calificacion: 4 })),
   compromisos: "", fecha_revision: "", observaciones: "",
   calificacion_final: 100, incidencias: [],
 }
@@ -47,7 +47,7 @@ const BLANK_JEFE: DesempenoData = {
   tipo: "jefe",
   objetivos: Array.from({ length: 7 }, (_, i) => emptyObj(i + 1)),
   cumplimiento_responsabilidades: (DEFAULT_CUMPLIMIENTO_POR_TIPO["jefe"] ?? DEFAULT_CUMPLIMIENTO).map(c => ({ ...c })),
-  competencias: DEFAULT_COMPETENCIAS.map(c => ({ ...c, calificacion: 4 })),
+  competencias: (DEFAULT_COMPETENCIAS_POR_TIPO["jefe"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map(c => ({ ...c, calificacion: 4 })),
   compromisos: "", fecha_revision: "", observaciones: "",
   calificacion_final: 100, incidencias: [],
 }

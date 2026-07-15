@@ -469,23 +469,16 @@ function DetalleDialog({
   const isOpen = state.status !== "closed"
   const data   = state.status === "ready" ? state.data : null
   const reco   = data ? evaluarRecomendacion(data) : null
-  const titleId = useId()
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent
-        className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto bg-card p-0"
-        aria-labelledby={titleId}
-      >
+      <DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto bg-card p-0">
         {/* Sticky header */}
         <div className="sticky top-0 z-10 border-b bg-card px-4 sm:px-6 py-4">
           <DialogHeader>
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0">
-                <DialogTitle
-                  id={titleId}
-                  className="flex flex-wrap items-center gap-2 text-base"
-                >
+                <DialogTitle className="flex flex-wrap items-center gap-2 text-base">
                   {data?.nombre ?? "Detalle de empleado"}
                   {reco && (
                     <Badge

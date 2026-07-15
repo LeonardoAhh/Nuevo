@@ -7,9 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Course } from "@/lib/hooks"
@@ -65,19 +63,19 @@ export function CapBulkImportDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-background">
-        <DialogHeader className="flex-shrink-0 p-6 border-b bg-card">
-          <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-            <Layers className="h-6 w-6 text-primary" />
-            Carga masiva de cursos
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            Importa múltiples cursos de forma simultánea desde un archivo de formato JSON.
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveShell
+      open={open}
+      onClose={() => onOpenChange(false)}
+      title="Carga masiva de cursos"
+      description="Importa múltiples cursos de forma simultánea desde un archivo de formato JSON."
+      maxWidth="sm:max-w-5xl"
+    >
+      <ModalHeader
+        title="Carga masiva de cursos"
+        subtitle="Importa múltiples cursos de forma simultánea desde un archivo de formato JSON."
+      />
 
-        <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto min-h-0 p-6 bg-background">
           {success !== null && (
             <Alert className="border-success/30 bg-success/10 mb-6 shadow-sm">
               <CheckCircle2 className="h-5 w-5 text-success" />
@@ -141,17 +139,6 @@ export function CapBulkImportDialog({
                   className="w-full rounded-xl border border-input bg-muted/30 text-foreground p-4 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-primary shadow-inner placeholder:text-muted-foreground/60 transition-shadow"
                   aria-label="Contenido JSON"
                 />
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleSimulatedParse} 
-                  disabled={!text.trim()} 
-                  className="px-6 h-11 rounded-full shadow-sm text-sm font-medium transition-transform active:scale-95"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Analizar JSON
-                </Button>
               </div>
             </div>
           )}
@@ -298,37 +285,46 @@ export function CapBulkImportDialog({
           )}
         </div>
 
-        {(rows.length > 0 || success !== null) && !isSimulating && (
-          <DialogFooter className="flex-shrink-0 p-4 border-t bg-card">
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
-              className="px-6 h-10 rounded-full"
-            >
-              {success !== null ? 'Cerrar' : 'Cancelar'}
-            </Button>
-            {rows.length > 0 && (
-              <Button
-                onClick={onImport}
-                disabled={isReadOnly || saving || validCount === 0}
-                className="px-6 h-10 rounded-full shadow-sm relative overflow-hidden transition-all"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Importando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Importar {validCount} registros
-                  </>
-                )}
-              </Button>
-            )}
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+      <ModalFooter
+        onCancel={() => onOpenChange(false)}
+        cancelLabel={success !== null ? 'Cerrar' : 'Cancelar'}
+        cancelDisabled={saving || isSimulating}
+        onConfirm={
+          success !== null
+            ? undefined
+            : rows.length === 0
+            ? handleSimulatedParse
+            : onImport
+        }
+        confirmLabel={
+          success !== null
+            ? ""
+            : rows.length === 0
+            ? "Analizar JSON"
+            : `Importar ${validCount} registros`
+        }
+        confirmIcon={
+          rows.length === 0 ? <Search className="h-4 w-4" /> : <Upload className="h-4 w-4" />
+        }
+        confirmDisabled={
+          success !== null
+            ? true
+            : rows.length === 0
+            ? (!text.trim() || isSimulating)
+            : (isReadOnly || saving || validCount === 0 || isSimulating)
+        }
+        secondaryAction={
+          rows.length > 0 && success === null
+            ? {
+                label: "Volver",
+                onClick: onBack,
+                disabled: saving || isSimulating,
+                icon: <ArrowLeft className="h-4 w-4" />
+              }
+            : undefined
+        }
+        saving={saving || isSimulating}
+      />
+    </ResponsiveShell>
   )
 }

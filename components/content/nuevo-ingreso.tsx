@@ -98,10 +98,8 @@ export default function NuevoIngresoContent() {
   }).sort((a, b) => {
     const na = a.numero ? parseInt(a.numero, 10) : Infinity
     const nb = b.numero ? parseInt(b.numero, 10) : Infinity
-    if (isNaN(na) && isNaN(nb)) return (a.numero ?? '').localeCompare(b.numero ?? '')
-    if (isNaN(na)) return 1
-    if (isNaN(nb)) return -1
-    return na - nb
+    if (na !== nb && !Number.isNaN(na) && !Number.isNaN(nb)) return nb - na
+    return a.nombre.localeCompare(b.nombre)
   })
 
   // Paginación
@@ -178,19 +176,21 @@ export default function NuevoIngresoContent() {
             </div>
             {!isReadOnly && (
               <div className="flex items-center gap-1.5 shrink-0">
-                <Button size="icon" variant="outline" onClick={() => setWhatsappModalOpen(true)} aria-label="Compartir Pendientes" title="Compartir Pendientes por WhatsApp">
-                  <div className="flex relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square-share h-4 w-4"><path d="M21 12v3a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-6 6"/></svg>
-                  </div>
+                <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={() => setWhatsappModalOpen(true)} aria-label="Compartir Pendientes" title="Compartir Pendientes por WhatsApp">
+                  <span className="hidden sm:inline">Pendientes</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square-share h-4 w-4 sm:hidden"><path d="M21 12v3a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h7"/><path d="M16 3h5v5"/><path d="m21 3-6 6"/></svg>
                 </Button>
-                <Button size="icon" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
-                  <FileUp className="h-4 w-4" />
+                <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={() => setBulkImportOpen(true)} aria-label="Importar Incidencias" title="Importar Incidencias">
+                  <span className="hidden sm:inline">Incidencias</span>
+                  <FileUp className="h-4 w-4 sm:hidden" />
                 </Button>
-                <Button size="icon" variant="outline" onClick={() => setIngresosJsonOpen(true)} aria-label="Importar empleados desde JSON" title="Importar empleados desde JSON">
-                  <Upload className="h-4 w-4" />
+                <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={() => setIngresosJsonOpen(true)} aria-label="Importar empleados desde JSON" title="Importar empleados desde JSON">
+                  <span className="hidden sm:inline">Cargar</span>
+                  <Upload className="h-4 w-4 sm:hidden" />
                 </Button>
-                <Button size="icon" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
-                  <UserPlus className="h-4 w-4" />
+                <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" onClick={() => setNuevoOpen(true)} aria-label="Nuevo Empleado" title="Nuevo Empleado">
+                  <span className="hidden sm:inline">Nuevo empleado</span>
+                  <UserPlus className="h-4 w-4 sm:hidden" />
                 </Button>
               </div>
             )}

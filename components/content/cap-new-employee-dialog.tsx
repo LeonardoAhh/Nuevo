@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 import type { Course } from "@/lib/hooks"
 
@@ -75,14 +75,10 @@ export function CapNewEmployeeDialog({ open, saving, isReadOnly, courses, loadin
 
   return (
     <ResponsiveShell open={open} onClose={onClose} title="Nuevo empleado" description={`Paso ${step} de 2`}>
-      <ModalToolbar
+      <ModalHeader
         title="Nuevo empleado"
         subtitle={`Paso ${step} de 2 — ${step === 1 ? 'Datos' : 'Cursos (opcional)'}`}
-        saving={saving}
-        onClose={step === 2 ? handleBack : onClose}
-        onConfirm={handleConfirm}
-        confirmIcon={step === 1 ? <ChevronRight className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-        confirmDisabled={isReadOnly}
+        onClose={onClose}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -237,6 +233,22 @@ export function CapNewEmployeeDialog({ open, saving, isReadOnly, courses, loadin
           )}
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+        confirmDisabled={isReadOnly}
+        confirmLabel={step === 1 ? "Siguiente" : "Guardar"}
+        confirmIcon={step === 1 ? <ChevronRight className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+        secondaryAction={
+          step === 2 ? {
+            label: "Atrás",
+            icon: <ChevronLeft className="h-4 w-4" />,
+            onClick: handleBack,
+            variant: 'outline'
+          } : undefined
+        }
+      />
     </ResponsiveShell>
   )
 }

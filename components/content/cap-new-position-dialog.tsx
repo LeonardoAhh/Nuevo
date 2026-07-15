@@ -5,7 +5,7 @@ import { Check, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { Department } from "@/lib/hooks"
 
 export interface CapNewPositionDialogProps {
@@ -34,11 +34,9 @@ export function CapNewPositionDialog({ open, saving, departments, onClose, onSav
 
   return (
     <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo puesto" description="Agrega un puesto al catálogo">
-      <ModalToolbar
+      <ModalHeader
         title="Nuevo puesto"
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleConfirm}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -69,8 +67,13 @@ export function CapNewPositionDialog({ open, saving, departments, onClose, onSav
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-        </div>
       </div>
+      </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+      />
     </ResponsiveShell>
   )
 }

@@ -24,7 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import {
   Dialog,
   DialogContent,
@@ -209,11 +209,9 @@ function CursoDialog({ open, saving, inicial, onClose, onSave }: CursoDialogProp
       title={isEdit ? "Editar curso" : "Nuevo curso"}
       description="Completa los datos del curso público"
     >
-      <ModalToolbar
+      <ModalHeader
         title={isEdit ? "Editar curso" : "Nuevo curso"}
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleSave}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -324,6 +322,11 @@ function CursoDialog({ open, saving, inicial, onClose, onSave }: CursoDialogProp
           )}
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleSave}
+        saving={saving}
+      />
     </ResponsiveShell>
   )
 }
@@ -586,12 +589,9 @@ export default function CursosAdminContent() {
         title="Eliminar curso"
         description="Esta acción no se puede deshacer"
       >
-        <ModalToolbar
+        <ModalHeader
           title="Eliminar curso"
-          saving={deleting}
           onClose={() => setDeleteTarget(null)}
-          onConfirm={handleDelete}
-          confirmVariant="destructive"
         />
         <div className="px-4 py-5 space-y-3">
           <Alert variant="destructive">
@@ -601,6 +601,12 @@ export default function CursosAdminContent() {
             </AlertDescription>
           </Alert>
         </div>
+        <ModalFooter
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+          saving={deleting}
+          confirmVariant="destructive"
+        />
       </ResponsiveShell>
 
       {/* Public QR dialog */}

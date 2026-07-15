@@ -8,7 +8,7 @@ import {
   DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
-  DEFAULT_COMPETENCIAS,
+  DEFAULT_COMPETENCIAS_POR_TIPO,
   calcularPonderacion,
   type DesempenoData,
   type CumplimientoItem,
@@ -289,7 +289,7 @@ export function useDesempeno() {
       // Map competencias from saved data or use defaults
       const competencias: Competencia[] = evalData?.competencias?.length
         ? (evalData.competencias as Competencia[])
-        : DEFAULT_COMPETENCIAS.map((c) => ({ ...c }))
+        : (DEFAULT_COMPETENCIAS_POR_TIPO[tipoPuesto] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c }))
 
       const result: DesempenoData = {
         numero_empleado: empleadoData.numero,
@@ -530,7 +530,7 @@ export function useDesempeno() {
           : (DEFAULT_CUMPLIMIENTO_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
         competencias: evalRow.competencias?.length
           ? (evalRow.competencias as Competencia[])
-          : DEFAULT_COMPETENCIAS.map((c) => ({ ...c })),
+          : (DEFAULT_COMPETENCIAS_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c })),
         compromisos: evalRow.compromisos || "",
         fecha_revision: evalRow.fecha_revision || "",
         observaciones: evalRow.observaciones || "",

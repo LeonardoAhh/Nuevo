@@ -3,7 +3,7 @@
 import React from "react"
 import { Upload } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { ReglaPromocionJSON, DatosPromocionJSON } from "@/lib/promociones/types"
 
 // ─── Preview de Reglas ─────────────────────────────────────────────────────
@@ -31,14 +31,10 @@ export function PromReglasPreview({
       title="Vista previa — Reglas de Promoción"
       description={`${reglasPreview.length} regla${reglasPreview.length !== 1 ? "s" : ""}`}
     >
-      <ModalToolbar
+      <ModalHeader
         title="Reglas de Promoción"
         subtitle={`${reglasPreview.length} regla${reglasPreview.length !== 1 ? "s" : ""} a cargar`}
-        saving={cargando}
         onClose={onClose}
-        onConfirm={onConfirmar}
-        confirmIcon={<Upload size={16} />}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -73,6 +69,13 @@ export function PromReglasPreview({
           </Table>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={onConfirmar}
+        saving={cargando}
+        confirmIcon={<Upload size={16} />}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }
@@ -102,14 +105,10 @@ export function PromDatosPreview({
       title="Vista previa — Datos de Empleados"
       description={`${datosPreview.length} registro${datosPreview.length !== 1 ? "s" : ""}`}
     >
-      <ModalToolbar
+      <ModalHeader
         title="Datos de Empleados"
         subtitle={`${datosPreview.length} registro${datosPreview.length !== 1 ? "s" : ""} a cargar`}
-        saving={datosCargando}
         onClose={onClose}
-        onConfirm={onConfirmar}
-        confirmIcon={<Upload size={16} />}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -154,6 +153,13 @@ export function PromDatosPreview({
           </Table>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={onConfirmar}
+        saving={datosCargando}
+        confirmIcon={<Upload size={16} />}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }

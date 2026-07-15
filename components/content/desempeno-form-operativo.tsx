@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Pencil, ChevronLeft, ChevronRight, Check, Search, ChevronsUpDown } from "lucide-react"
+import { X, Save, Pencil, ChevronLeft, ChevronRight, Check, Search, ChevronsUpDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { confirm } from "@/components/ui/confirm-dialog"
 
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { slideVariants } from "@/lib/animations"
 import {
   calcularPonderacion,
@@ -48,6 +50,9 @@ function getTipoLabel(tipo: string | undefined): string {
 interface Props {
   data: DesempenoData
   onUpdate?: (data: DesempenoData) => void
+  onGuardar?: () => void
+  guardarDisabled?: boolean
+  guardarTooltip?: string
 }
 
 type ModalType = "objetivos" | "cumplimiento" | "competencias" | "compromisos" | null
@@ -112,7 +117,7 @@ function InfoField({ label, children }: InfoFieldProps) {
 }
 // ─── Componente principal ────────────────────────────────────────────────────
 
-export function DesempenoForm({ data, onUpdate }: Props) {
+export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guardarTooltip }: Props) {
   const { isEvaluador } = useRole()
   const [modal, setModal] = useState<ModalType>(null)
   const [step, setStep] = useState(0)
@@ -180,9 +185,16 @@ export function DesempenoForm({ data, onUpdate }: Props) {
     return false
   }
 
-  const closeModal = () => {
+  const closeModal = async () => {
     if (hasChanges()) {
-      if (!window.confirm("Tienes cambios sin guardar. ¿Deseas descartarlos?")) return
+      const isConfirmed = await confirm({
+        title: "Cambios sin guardar",
+        description: "¿Estás seguro de que deseas descartar los cambios que has hecho?",
+        confirmLabel: "Descartar",
+        cancelLabel: "Cancelar",
+        tone: "warning",
+      })
+      if (!isConfirmed) return
     }
     setModal(null)
   }
@@ -566,9 +578,26 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                 <motion.div key="v1" {...viewAnimProps} className="space-y-6">
                   {renderHeaderCard()}
                   <div className="flex justify-end pt-2">
-                    <Button type="button" onClick={goNextView} size="lg">
-                      Siguiente <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    {faltaEvaluador ? (
+                      <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <span tabIndex={0} style={{ display: "inline-block", cursor: "not-allowed" }}>
+                              <Button type="button" size="lg" disabled className="pointer-events-none">
+                                Siguiente <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-destructive text-destructive-foreground text-sm max-w-sm text-center">
+                            Debes seleccionar un evaluador antes de continuar
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Button type="button" onClick={goNextView} size="lg">
+                        Siguiente <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -623,7 +652,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                       <ChevronLeft className="mr-2 h-4 w-4" /> Atrás
                     </Button>
                     <Button onClick={goNextView} disabled={!isObjetivosCompletado} size="lg">
-                      Siguiente: Responsabilidades <ChevronRight className="ml-2 h-4 w-4" />
+                      Siguiente <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -675,7 +704,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                       <ChevronLeft className="mr-2 h-4 w-4" /> Atrás
                     </Button>
                     <Button onClick={goNextView} disabled={!step2Complete} size="lg">
-                      Siguiente: Competencias <ChevronRight className="ml-2 h-4 w-4" />
+                      Siguiente <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -732,7 +761,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                       <ChevronLeft className="mr-2 h-4 w-4" /> Atrás
                     </Button>
                     <Button onClick={goNextView} disabled={!step3Complete} size="lg">
-                      Siguiente: Compromisos y Calificación <ChevronRight className="ml-2 h-4 w-4" />
+                      Siguiente <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -780,9 +809,32 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     <Button variant="outline" onClick={goPrevView} size="lg">
                       <ChevronLeft className="mr-2 h-4 w-4" /> Atrás
                     </Button>
-                    <p className="text-sm text-muted-foreground">
-                      Usa el botón superior para <strong>Guardar Evaluación</strong>
-                    </p>
+                    {onGuardar ? (
+                      guardarDisabled ? (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0} style={{ display: "inline-block", cursor: "not-allowed" }}>
+                                <Button type="button" size="lg" disabled className="pointer-events-none">
+                                  Guardar Evaluación <Save className="ml-2 h-4 w-4" />
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="bg-destructive text-destructive-foreground text-sm max-w-sm text-center">
+                              {guardarTooltip || "No se puede guardar"}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <Button type="button" onClick={onGuardar} size="lg">
+                          Guardar Evaluación <Save className="ml-2 h-4 w-4" />
+                        </Button>
+                      )
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Usa el botón superior para <strong>Guardar Evaluación</strong>
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -800,18 +852,10 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           title="Objetivos SMART"
           description="Captura resultado y porcentaje por objetivo"
         >
-          <ModalToolbar
+          <ModalHeader
             title="Objetivos SMART"
             subtitle={`Paso ${step + 1} de ${editObjetivos.length}`}
-            saving={false}
             onClose={closeModal}
-            onConfirm={goNext}
-            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={
-              step > 0
-                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
-                : undefined
-            }
           />
           <StepDots total={editObjetivos.length} current={step} onSelect={handleStepSelect} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -846,6 +890,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                         type="tel"
                         value={editObjetivos[step].porcentaje === "NA" ? "" : editObjetivos[step].porcentaje}
                         onChange={(e) => handlePorcentajeChange(e, step, "objetivos")}
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); goNext(); } }}
                         placeholder="0-100"
                       />
                     </div>
@@ -854,6 +900,17 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               )}
             </AnimatePresence>
           </div>
+          <ModalFooter
+            onConfirm={isLastStep ? saveModal : goNext}
+            confirmLabel={isLastStep ? "Guardar" : "Siguiente"}
+            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            secondaryAction={{
+              label: "Atrás",
+              onClick: goPrev,
+              disabled: step === 0,
+              variant: 'outline'
+            }}
+          />
         </ResponsiveShell>
 
         {/* Modal Cumplimiento */}
@@ -864,18 +921,10 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           title="Responsabilidades"
           description="Porcentaje de cumplimiento"
         >
-          <ModalToolbar
+          <ModalHeader
             title="Responsabilidades"
             subtitle={`Paso ${step + 1} de ${editCumplimiento.length}`}
-            saving={false}
             onClose={closeModal}
-            onConfirm={goNext}
-            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={
-              step > 0
-                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
-                : undefined
-            }
           />
           <StepDots total={editCumplimiento.length} current={step} onSelect={handleStepSelect} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -910,6 +959,8 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                         type="tel"
                         value={editCumplimiento[step].porcentaje === "NA" ? "" : editCumplimiento[step].porcentaje}
                         onChange={(e) => handlePorcentajeChange(e, step, "cumplimiento")}
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); goNext(); } }}
                         placeholder="0-100"
                       />
                     )}
@@ -918,6 +969,17 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               )}
             </AnimatePresence>
           </div>
+          <ModalFooter
+            onConfirm={isLastStep ? saveModal : goNext}
+            confirmLabel={isLastStep ? "Guardar" : "Siguiente"}
+            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            secondaryAction={{
+              label: "Atrás",
+              onClick: goPrev,
+              disabled: step === 0,
+              variant: 'outline'
+            }}
+          />
         </ResponsiveShell>
 
         {/* Modal Competencias */}
@@ -928,18 +990,10 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           title="Competencias"
           description="Calificación del 0 al 4"
         >
-          <ModalToolbar
+          <ModalHeader
             title="Competencias"
             subtitle={`Paso ${step + 1} de ${editCompetencias.length}`}
-            saving={false}
             onClose={closeModal}
-            onConfirm={goNext}
-            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            secondaryAction={
-              step > 0
-                ? { icon: <ChevronLeft className="h-4 w-4" />, label: "Anterior", onClick: goPrev, iconOnly: true }
-                : undefined
-            }
           />
           <StepDots total={editCompetencias.length} current={step} onSelect={handleStepSelect} />
           <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -959,13 +1013,14 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     <p className="text-sm font-medium">{editCompetencias[step].nombre}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{editCompetencias[step].descripcion}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-start gap-8">
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Calificación (0-4)</Label>
-                                            <Input
+                      <Input
                         type="number"
                         min={0}
                         max={4}
+                        className="w-32"
                         value={editCompetencias[step].calificacion === 0 ? "" : editCompetencias[step].calificacion}
                         onChange={(e) => {
                           const val = Math.min(4, Math.max(0, parseInt(e.target.value) || 0))
@@ -978,7 +1033,7 @@ export function DesempenoForm({ data, onUpdate }: Props) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">% Equivalente</Label>
-                      <div className="mt-2 text-sm font-semibold">
+                      <div className="flex h-9 items-center text-base font-semibold text-primary">
                         {Math.round((editCompetencias[step].calificacion / 4) * 100)}%
                       </div>
                     </div>
@@ -987,6 +1042,17 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               )}
             </AnimatePresence>
           </div>
+          <ModalFooter
+            onConfirm={isLastStep ? saveModal : goNext}
+            confirmLabel={isLastStep ? "Guardar" : "Siguiente"}
+            confirmIcon={isLastStep ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            secondaryAction={{
+              label: "Atrás",
+              onClick: goPrev,
+              disabled: step === 0,
+              variant: 'outline'
+            }}
+          />
         </ResponsiveShell>
 
         {/* Modal Compromisos */}
@@ -997,13 +1063,10 @@ export function DesempenoForm({ data, onUpdate }: Props) {
           title="Compromisos"
           description="Registra compromisos, acuerdos y fechas"
         >
-          <ModalToolbar
+          <ModalHeader
             title="Compromisos"
             subtitle="Acuerdos y observaciones"
-            saving={false}
             onClose={closeModal}
-            onConfirm={saveModal}
-            confirmIcon={<Check className="h-4 w-4" />}
           />
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             <div className="space-y-1.5">
@@ -1040,6 +1103,11 @@ export function DesempenoForm({ data, onUpdate }: Props) {
               />
             </div>
           </div>
+          <ModalFooter
+            onCancel={closeModal}
+            onConfirm={saveModal}
+            confirmIcon={<Check className="h-4 w-4" />}
+          />
         </ResponsiveShell>
 
       </div>

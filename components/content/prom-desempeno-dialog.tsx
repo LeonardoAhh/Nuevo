@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { Star } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
 import { ultimaEvaluacion } from "@/lib/promociones/utils"
 
@@ -61,14 +61,10 @@ export function PromDesempenoDialog({
       title="Evaluación de Desempeño"
       description={empleado.nombre}
     >
-      <ModalToolbar
+      <ModalHeader
         title="Evaluación de Desempeño"
         subtitle={empleado.nombre}
-        saving={guardando}
         onClose={onClose}
-        onConfirm={handleGuardar}
-        confirmIcon={<Star size={16} />}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -109,6 +105,13 @@ export function PromDesempenoDialog({
           </div>
         )}
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleGuardar}
+        saving={guardando}
+        confirmIcon={<Star size={16} />}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }

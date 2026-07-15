@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { addDays } from "@/lib/hooks"
 import type { NuevoIngreso, TipoContrato } from "@/lib/hooks"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, ESCOLARIDAD, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
@@ -128,13 +128,9 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
       title="Nuevo Empleado"
       description="Formulario para registrar a un nuevo trabajador en el sistema."
     >
-      <ModalToolbar
+      <ModalHeader
         title="Nuevo Empleado"
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleCreate}
-        confirmIcon={<UserPlus className="h-4 w-4" />}
-        confirmDisabled={!form.nombre.trim()}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -258,6 +254,13 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
           </fieldset>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleCreate}
+        saving={saving}
+        confirmIcon={<UserPlus className="h-4 w-4" />}
+        confirmDisabled={!form.nombre.trim()}
+      />
     </ResponsiveShell>
   )
 }

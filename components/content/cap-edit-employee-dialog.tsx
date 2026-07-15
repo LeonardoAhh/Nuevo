@@ -6,7 +6,7 @@ import { AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA } from "@/lib/catalogo"
 import type { Employee } from "@/lib/hooks"
 
@@ -57,14 +57,10 @@ export function CapEditEmployeeDialog({ employee, open, saving, isReadOnly, onCl
 
   return (
     <ResponsiveShell open={open} onClose={onClose} title="Editar empleado" description={`Modifica los datos de ${employee.nombre}`}>
-      <ModalToolbar
+      <ModalHeader
         title="Editar empleado"
         subtitle={employee.nombre}
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleConfirm}
-        confirmIcon={<Pencil className="h-4 w-4" />}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -157,6 +153,13 @@ export function CapEditEmployeeDialog({ employee, open, saving, isReadOnly, onCl
           </div>
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+        confirmIcon={<Pencil className="h-4 w-4" />}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }

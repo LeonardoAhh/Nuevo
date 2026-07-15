@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef, useState } from "react"
 import { AlertCircle, CheckCircle2, FileUp, Loader2, Upload, ArrowLeft } from "lucide-react"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -317,17 +317,19 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
   const duplicateCount = duplicateEntries.length
 
   return (
-    <Dialog open={open} onOpenChange={(openState) => { if (!openState) closeDialog() }}>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto bg-card">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileUp className="h-5 w-5 text-primary" />
-            Importar empleados desde JSON
-          </DialogTitle>
-          <DialogDescription>
-            Selecciona un archivo <strong>JSON</strong> para crear nuevos registros de ingresos.
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveShell
+      open={open}
+      onClose={() => { if (!open) closeDialog() }}
+      title="Importar empleados desde JSON"
+      description="Selecciona un archivo JSON para crear nuevos registros de ingresos."
+      maxWidth="sm:max-w-4xl"
+    >
+      <ModalHeader
+        title="Importar empleados desde JSON"
+        subtitle="Selecciona un archivo JSON para crear nuevos registros de ingresos."
+        onClose={closeDialog}
+      />
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
         {(error || importError) && (
           <Alert variant="destructive" className="mb-4">
@@ -486,31 +488,15 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
           </div>
         )}
 
-        <DialogFooter>
-          {step === "preview" ? (
-            <>
-              <Button variant="outline" onClick={reset} disabled={saving}>
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Button>
-              <Button onClick={handleImport} disabled={saving || validCount === 0}>
-                {saving ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Importando...
-                  </span>
-                ) : (
-                  `Importar ${validCount} empleado(s)`
-                )}
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" onClick={closeDialog} disabled={saving || loading}>
-              {step === "done" ? "Cerrar" : "Cancelar"}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <ModalFooter
+        onCancel={step === "preview" ? reset : closeDialog}
+        cancelLabel={step === "preview" ? "Volver" : step === "done" ? "Cerrar" : "Cancelar"}
+        onConfirm={step === "preview" ? handleImport : undefined}
+        confirmLabel={`Importar ${validCount} empleado(s)`}
+        confirmDisabled={saving || validCount === 0}
+        saving={saving}
+      />
+    </ResponsiveShell>
   )
 }

@@ -16,7 +16,7 @@ import { getTipoCursoByName } from "@/lib/catalogo"
 import { motion, AnimatePresence } from "framer-motion"
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 16
 
 interface CapCoursesTabProps {
   courses: Course[]
@@ -73,28 +73,25 @@ export function CapCoursesTab({
           <div className="flex gap-2 items-center">
             <Button
               variant="outline"
-              className="px-3 sm:px-4 focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setAuditOpen(true)}
               aria-label="Auditoría Global"
               title="Auditoría Global"
             >
-              <Search className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Auditoría</span>
+              Auditoría
             </Button>
             <Button
               variant="outline"
-              className="px-3 sm:px-4 focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setPreviewOpen(true)}
               aria-label="Descargar reporte Excel"
               title="Descargar Excel"
             >
-              <Download className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Reporte</span>
+              Reporte
             </Button>
             {!isReadOnly && (
-              <Button onClick={onNewCourse} className="px-3 sm:px-4" aria-label="Nuevo curso" title="Nuevo curso">
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Curso</span>
+              <Button onClick={onNewCourse} className="h-9 px-3" aria-label="Nuevo curso" title="Nuevo curso">
+                Nuevo curso
               </Button>
             )}
           </div>
@@ -165,120 +162,19 @@ export function CapCoursesTab({
                       {filtered.length > PAGE_SIZE && (
                         <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCoursePage} />
                       )}
-                      {/* Encabezados Desktop */}
-                      <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_100px_60px_24px] gap-4 px-4 py-3 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 text-right pr-1">#</span>
-                          <span>Curso</span>
-                        </div>
-                        <div>Detalles</div>
-                        <div className="text-center">Asignados</div>
-                        <div className="text-center">Acción</div>
-                        <div></div>
-                      </div>
-                      
-                      <div className="w-full space-y-2">
-                        {paginated.map((course, idx) => {
-                          const puestosAsignados = positions
-                            .filter(pos => positionCourses.some(pc => pc.course_id === course.id && pc.position_id === pos.id))
-                            .map(pos => pos.name)
-                          
-                          const asignadosCount = employees.filter(emp => puestosAsignados.includes(emp.puesto ?? '')).length
-
-                          return (
-                            <div 
-                              key={course.id} 
-                              className="border rounded-xl px-2 hover:bg-muted/30 hover:border-border transition-all cursor-pointer group"
-                              onClick={() => setSelectedCourseId(course.id)}
-                            >
-                              <div className="py-3 px-2">
-                                <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_120px_100px_60px] w-full gap-4 items-center text-left">
-                                  {/* Index & Name */}
-                                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                                    <span className="text-xs font-mono text-muted-foreground w-6 text-right shrink-0">
-                                      {(safePage - 1) * PAGE_SIZE + idx + 1}
-                                    </span>
-                                    <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                                    <span className="text-sm font-medium text-foreground leading-tight flex-1 line-clamp-2 pr-2 group-hover:text-primary transition-colors">{course.name}</span>
-                                  </div>
-                                  
-                                  {/* Details */}
-                                  <div className="flex flex-row sm:flex-col gap-2 sm:gap-1.5 items-center sm:items-start w-full sm:w-auto mt-2 sm:mt-0 pl-9 sm:pl-0">
-                                    <Badge variant="outline" className="text-[10px] w-fit">
-                                      {course.tipo || getTipoCursoByName(course.name)}
-                                    </Badge>
-                                    {course.duration_hours != null ? (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-[10px] gap-1 bg-primary/10 text-primary border-primary/20 w-fit"
-                                      >
-                                        <Clock className="h-3 w-3" />
-                                        {course.duration_hours} h
-                                      </Badge>
-                                    ) : (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[10px] text-muted-foreground border-dashed w-fit"
-                                      >
-                                        sin duración
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  {/* Assignees */}
-                                  <div className="hidden sm:flex justify-center items-center">
-                                    <Badge variant="secondary" className="bg-muted text-foreground">
-                                      {asignadosCount}
-                                    </Badge>
-                                  </div>
-
-                                  {/* Actions */}
-                                  <div className="hidden sm:flex justify-center items-center">
-                                    {!isReadOnly && (
-                                      <span
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={e => { e.stopPropagation(); onEditCourse(course) }}
-                                        onKeyDown={e => {
-                                          if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault(); e.stopPropagation(); onEditCourse(course)
-                                          }
-                                        }}
-                                        className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors"
-                                        aria-label="Editar curso"
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Mobile Actions (Visible only on small screens) */}
-                                  <div className="flex sm:hidden items-center justify-between w-full mt-2 pl-9">
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <span>Asignados:</span>
-                                      <Badge variant="secondary" className="bg-muted text-foreground">
-                                        {asignadosCount}
-                                      </Badge>
-                                    </div>
-                                    {!isReadOnly && (
-                                      <span
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={e => { e.stopPropagation(); onEditCourse(course) }}
-                                        onKeyDown={e => {
-                                          if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onEditCourse(course) }
-                                        }}
-                                        className="h-7 w-7 flex items-center justify-center rounded border bg-background text-muted-foreground hover:bg-muted z-10"
-                                      >
-                                        <Pencil className="h-3.5 w-3.5" />
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
+                      <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {paginated.map((course) => (
+                          <div 
+                            key={course.id} 
+                            className="border rounded-xl px-4 py-3 hover:bg-muted/30 hover:border-primary/50 transition-all cursor-pointer group flex items-center gap-3"
+                            onClick={() => setSelectedCourseId(course.id)}
+                          >
+                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-sm font-medium text-foreground leading-tight flex-1 line-clamp-2 group-hover:text-primary transition-colors">
+                              {course.name}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </>
                   )}

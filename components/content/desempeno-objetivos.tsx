@@ -23,7 +23,7 @@ import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPue
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno"
 import { PrintInstructionDialog } from "./print-instruction-dialog"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import DesempenoPrint from "./desempeno-print"
 
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
@@ -418,10 +418,9 @@ export default function DesempenoObjetivos() {
           description="Evaluaciones guardadas"
           maxWidth="sm:max-w-lg"
         >
-          <ModalToolbar
+          <ModalHeader
             title={empleadoSel.nombre}
             subtitle={`${empleadoSel.numero} · ${empleadoSel.puesto || "—"}`}
-            saving={false}
             onClose={() => setSelectedNumero(null)}
           />
           <div className="overflow-y-auto p-4 space-y-2">
@@ -491,6 +490,10 @@ export default function DesempenoObjetivos() {
               </div>
             ))}
           </div>
+          <ModalFooter
+            onCancel={() => setSelectedNumero(null)}
+            cancelLabel="Cerrar"
+          />
         </ResponsiveShell>
       )}
 

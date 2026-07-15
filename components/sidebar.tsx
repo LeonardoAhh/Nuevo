@@ -8,7 +8,7 @@ import {
   Award, BookOpen, CalendarRange, ChevronRight, ClipboardCheck,
   FileText, GraduationCap, ImageIcon, LayoutDashboard,
   LayoutGrid, ListChecks, Settings,
-  TrendingUp, UserPlus, X, FileWarning, FileCheck2, ChevronsUpDown, LogOut, Briefcase
+  TrendingUp, UserPlus, X, FileWarning, FileCheck2, ChevronsUpDown, LogOut, Briefcase, ChevronDown, ChevronsLeft, ChevronsRight, User
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -43,28 +43,27 @@ const NAV_PARENTS: NavParent[] = [
     label: "Personal",
     icon: UserPlus,
     items: [
-      { label: "Nuevo Ingreso", href: "/ingresos" },
+      { label: "Ingresos", href: "/ingresos" },
       { label: "Recontratación", href: "/recontratacion" },
-      { label: "Ingresos Semanales", href: "/ingresos-semanales" },
     ]
   },
   {
     label: "Capacitación",
     icon: GraduationCap,
     items: [
-      { label: "Base Capacitación", href: "/capacitacion" },
-      { label: "Base Categorias", href: "/promociones" },
-      { label: "Genera Exámenes", href: "/examenes" },
-      { label: "Matriz de habilidades", href: "/reportes" },
+      { label: "Empleados", href: "/capacitacion" },
+      { label: "Categorías", href: "/promociones" },
+      { label: "Exámenes", href: "/examenes" },
+      { label: "Matriz Habilidades", href: "/reportes" },
     ],
   },
   {
     label: "Desempeño",
     icon: Award,
     items: [
-      { label: "Evaluación Desempeño", href: "/desempeno" },
-      { label: "Cumplimiento Evaluaciones", href: "/desempeno/cumplimiento" },
-      { label: "Seguimiento Compromisos", href: "/desempeno/seguimiento" },
+      { label: "Evaluaciones", href: "/desempeno" },
+      { label: "Cumplimiento", href: "/desempeno/cumplimiento" },
+      { label: "Compromisos", href: "/desempeno/seguimiento" },
       { label: "Guía Evaluador", href: "/guia-evaluador" },
     ],
   },
@@ -84,6 +83,12 @@ const itemVariants: Variants = {
     opacity: 1, x: 0,
     transition: { delay: i * 0.025, duration: 0.2, ease: "easeOut" },
   }),
+}
+
+const accordionVariants: Variants = {
+  hidden: { height: 0, opacity: 0, overflow: "hidden" },
+  visible: { height: "auto", opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
+  exit: { height: 0, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -128,37 +133,95 @@ function isActive(pathname: string, href: string) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-/** Icon-only button used in the collapsed desktop sidebar */
-function IconNavItem({ parent, active, index }: { parent: NavParent; active: boolean; index: number }) {
+function DesktopNavItem({ parent, pathname, isExpanded, index }: { parent: NavParent; pathname: string; isExpanded: boolean; index: number }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const activeSubHref = parent.items
+    ?.filter(sub => isActive(pathname, sub.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href
+
+  const active = parent.href
+    ? isActive(pathname, parent.href)
+    : !!activeSubHref
+
+  useEffect(() => {
+    if (active) setIsOpen(true)
+  }, [active])
+
   const content = (
-    <div
+    <button
+      type={parent.href ? "button" : "button"}
+      onClick={() => { if (!parent.href && isExpanded) setIsOpen(!isOpen) }}
       className={cn(
-        "relative flex h-10 w-full items-center justify-center rounded-md transition-colors",
+        "relative flex h-10 w-full items-center rounded-md transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+        isExpanded ? "px-3 justify-between" : "justify-center",
         active
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
       )}
     >
-      {active && (
+      {active && !isExpanded && (
         <motion.span
           layoutId="sidebar-indicator"
           className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary"
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
         />
       )}
-      <parent.icon size={20} strokeWidth={active ? 1.75 : 2} />
-    </div>
+      <div className="flex items-center gap-3">
+        <parent.icon size={20} strokeWidth={active ? 1.75 : 2} className="shrink-0" />
+        {isExpanded && <span className={cn("text-sm whitespace-nowrap", active ? "font-medium" : "font-normal")}>{parent.label}</span>}
+      </div>
+      {isExpanded && parent.items?.length && (
+        <ChevronDown size={16} className={cn("transition-transform duration-200", isOpen && "rotate-180")} />
+      )}
+    </button>
   )
 
+  const wrappedContent = parent.href ? (
+    <Link href={parent.href} aria-label={parent.label} className="block w-full">
+      {content}
+    </Link>
+  ) : content
+
+  if (isExpanded) {
+    return (
+      <motion.div custom={index} variants={itemVariants} initial="hidden" animate="visible" className="flex flex-col gap-1 mb-1">
+        {wrappedContent}
+        {parent.items?.length && (
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div variants={accordionVariants} initial="hidden" animate="visible" exit="exit" className="pl-9 pr-2 space-y-1 overflow-hidden">
+                {parent.items.map(sub => {
+                  const subActive = sub.href === activeSubHref
+                  return (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className={cn(
+                        "flex h-8 w-full items-center rounded-md px-3 text-sm transition-colors whitespace-nowrap",
+                        subActive ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                      )}
+                    >
+                      {sub.label}
+                    </Link>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </motion.div>
+    )
+  }
+
+  // Collapsed state (Icons + Tooltip + Dropdown)
   if (!parent.items?.length && parent.href) {
     return (
       <motion.div custom={index} variants={itemVariants} initial="hidden" animate="visible">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link href={parent.href} aria-label={parent.label}>
-              {content}
-            </Link>
+            {wrappedContent}
           </TooltipTrigger>
           <TooltipContent side="right" className="font-medium">
             {parent.label}
@@ -174,14 +237,14 @@ function IconNavItem({ parent, active, index }: { parent: NavParent; active: boo
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              {content}
+              {wrappedContent}
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent side="right" className="font-medium">
             {parent.label}
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent side="right" align="start" sideOffset={12} className="w-56 rounded-xl border-border/50 bg-background/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] p-1.5">
+        <DropdownMenuContent side="right" align="start" sideOffset={12} className="w-56 rounded-xl border-border/50 bg-background/80 backdrop-blur-xl shadow-xl p-1.5">
           <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{parent.label}</DropdownMenuLabel>
           <DropdownMenuSeparator className="mx-1" />
           {parent.items?.map(sub => (
@@ -197,18 +260,11 @@ function IconNavItem({ parent, active, index }: { parent: NavParent; active: boo
   )
 }
 
-/** Full-width link/accordion used in the mobile drawer */
-function DrawerNavItem({
-  parent,
-  pathname,
-  onNavigate,
-  index,
-}: {
-  parent:     NavParent
-  pathname:   string
-  onNavigate: () => void
-  index:      number
-}) {
+function DrawerNavItem({ parent, pathname, onNavigate, index }: { parent: NavParent; pathname: string; onNavigate: () => void; index: number }) {
+  const activeSubHref = parent.items
+    ?.filter(sub => isActive(pathname, sub.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href
+
   if (!parent.items?.length && parent.href) {
     const active = isActive(pathname, parent.href)
     return (
@@ -236,7 +292,7 @@ function DrawerNavItem({
       </div>
       <div className="mt-1 ml-9 flex flex-col gap-1 border-l border-border/50 pl-2">
         {parent.items?.map(sub => {
-          const active = isActive(pathname, sub.href)
+          const active = sub.href === activeSubHref
           return (
             <Link
               key={sub.href}
@@ -272,6 +328,20 @@ export default function Sidebar({
   const pathname = usePathname()
   const { canEdit, isEvaluador, loading: roleLoading } = useRole()
   const closeMobile = () => setShowMobileSidebar(false)
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar_expanded")
+    if (saved !== null) setIsExpanded(saved === "true")
+  }, [])
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(prev => {
+      const next = !prev
+      localStorage.setItem("sidebar_expanded", String(next))
+      return next
+    })
+  }, [])
 
   // Filter sections and items based on role
   const visibleParents = NAV_PARENTS
@@ -296,7 +366,6 @@ export default function Sidebar({
   return (
     <TooltipProvider delayDuration={0}>
 
-      {/* ── Mobile backdrop ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {isMobileView && showMobileSidebar && (
           <motion.div
@@ -311,18 +380,15 @@ export default function Sidebar({
         )}
       </AnimatePresence>
 
-      {/* ── Sidebar / Drawer ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {(isDesktop || showMobileSidebar) && (
           <motion.aside
             role="navigation"
             aria-label="Menú principal"
             className={cn(
-              "flex flex-col border-r bg-card",
-              // Mobile: fixed drawer
+              "flex flex-col border-r bg-card transition-[width] duration-300 ease-in-out",
               isMobileView && "fixed left-0 top-0 z-50 w-64 shadow-xl",
-              // Desktop: static icon strip
-              isDesktop && "md:w-[68px]",
+              isDesktop && (isExpanded ? "w-[260px]" : "w-[68px]"),
             )}
             style={{
               height:      isMobileView ? "100dvh"                          : undefined,
@@ -335,10 +401,10 @@ export default function Sidebar({
             )}
           >
             {/* Logo bar */}
-            <div className="flex h-[50px] shrink-0 items-center justify-center border-b px-2">
+            <div className="flex h-[50px] shrink-0 items-center border-b px-2 overflow-hidden">
               {isMobileView ? (
                 <div className="flex w-full items-center justify-between">
-                  <span className="select-none text-lg font-bold tracking-tight px-2">
+                  <span className="select-none text-lg font-bold tracking-tight px-2 whitespace-nowrap">
                     <span className="text-primary">VIÑO</span>
                     <span className="text-foreground">PLASTIC</span>
                   </span>
@@ -346,46 +412,51 @@ export default function Sidebar({
                     type="button"
                     onClick={closeMobile}
                     aria-label="Cerrar menú"
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
                   >
                     <X size={16} />
                   </button>
                 </div>
               ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex h-10 w-full items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/20">
-                      <Briefcase className="h-5 w-5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start" sideOffset={16} className="w-56 rounded-xl border-border/50 bg-background/80 backdrop-blur-xl shadow-xl p-1.5">
-                    <div className="px-2 py-2 flex items-center gap-3">
-                      <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                <div className="flex items-center justify-between w-full h-full px-2">
+                  {isExpanded && (
+                    <Link href="/" className="flex items-center gap-3 outline-none rounded-md focus-visible:ring-2 focus-visible:ring-ring">
+                      <div className="flex shrink-0 h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <Briefcase className="h-5 w-5" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold leading-none">VIÑOPLASTIC</span>
-                        <span className="text-xs text-muted-foreground mt-1">Enterprise</span>
-                      </div>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <span className="select-none text-lg font-bold tracking-tight whitespace-nowrap overflow-hidden">
+                        <span className="text-primary">VIÑO</span>
+                        <span className="text-foreground">PLASTIC</span>
+                      </span>
+                    </Link>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={toggleExpanded}
+                        className={cn(
+                          "flex h-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground shrink-0",
+                          isExpanded ? "w-8" : "w-full"
+                        )}
+                      >
+                        {isExpanded ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{isExpanded ? "Colapsar menú" : "Expandir menú"}</TooltipContent>
+                  </Tooltip>
+                </div>
               )}
             </div>
 
             {/* Nav items */}
             <nav
               className={cn(
-                "flex-1 overflow-y-auto scrollbar-thin p-2 transition-opacity duration-200 mt-2",
+                "flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin p-2 transition-opacity duration-200 mt-2",
                 roleLoading && "pointer-events-none opacity-0",
               )}
             >
-              <div className="space-y-1">
+              <div className={cn("space-y-1", isExpanded ? "px-1" : "")}>
                 {visibleParents.map((parent, pIdx) => {
-                  const active = parent.href
-                    ? isActive(pathname, parent.href)
-                    : parent.items?.some(sub => isActive(pathname, sub.href)) ?? false
-
                   return isMobileView ? (
                     <DrawerNavItem
                       key={parent.label}
@@ -395,10 +466,11 @@ export default function Sidebar({
                       index={pIdx}
                     />
                   ) : (
-                    <IconNavItem
+                    <DesktopNavItem
                       key={parent.label}
                       parent={parent}
-                      active={active}
+                      pathname={pathname}
+                      isExpanded={isExpanded}
                       index={pIdx}
                     />
                   )
@@ -406,35 +478,8 @@ export default function Sidebar({
               </div>
             </nav>
 
-            {/* Bottom: Settings (desktop) | safe-area spacer (mobile) */}
-            {isDesktop ? (
-              <div className="shrink-0 border-t p-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href="/settings"
-                      aria-label="Configuración"
-                      aria-current={pathname === "/settings" ? "page" : undefined}
-                      className={cn(
-                        "flex h-10 w-full items-center justify-center rounded-md transition-colors",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        pathname === "/settings"
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                      )}
-                    >
-                      <Settings
-                        size={20}
-                        strokeWidth={pathname === "/settings" ? 1.75 : 2}
-                      />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="font-medium">
-                    Configuración
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
+            {/* Mobile safe area spacer */}
+            {!isDesktop && (
               <div
                 className="shrink-0"
                 style={{ height: "env(safe-area-inset-bottom, 0px)" }}

@@ -6,9 +6,7 @@ import {
   FileUp, Upload, RotateCcw, AlertCircle, CheckCircle2,
   Loader2, Users, ChevronDown, ChevronUp,
 } from "lucide-react"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -276,17 +274,18 @@ export function IncidenciasBulkImport({
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <FileUp className="h-5 w-5 text-primary" />
-            Importar Incidencias
-          </DialogTitle>
-          <DialogDescription>
-            Carga masiva de incidencias por empleado y mes vía archivo JSON.
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveShell
+      open={open}
+      onClose={handleClose}
+      title="Importar Incidencias"
+      description="Carga masiva de incidencias por empleado y mes vía archivo JSON."
+      maxWidth="sm:max-w-2xl"
+    >
+      <ModalHeader
+        title="Importar Incidencias"
+        subtitle="Carga masiva de incidencias por empleado y mes vía archivo JSON."
+      />
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
         <div className="space-y-4">
           {/* Upload + text area */}
@@ -459,7 +458,9 @@ export function IncidenciasBulkImport({
             </div>
           </details>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      <ModalFooter onCancel={handleClose} cancelLabel="Cerrar" />
+    </ResponsiveShell>
   )
 }

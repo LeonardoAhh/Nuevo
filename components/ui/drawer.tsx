@@ -41,8 +41,8 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { raw?: boolean }
+>(({ className, children, raw, ...props }, ref) => {
   // Detecta cuando el teclado está visible para ajustar la altura
   const [keyboardVisible, setKeyboardVisible] = React.useState(false)
   const contentRef = React.useRef<HTMLDivElement>(null)
@@ -111,22 +111,20 @@ const DrawerContent = React.forwardRef<
         {/* Drag handle — shrink-0 para que nunca desaparezca */}
         <div className="mx-auto mt-4 mb-1 h-2 w-[100px] shrink-0 rounded-full bg-border" />
 
-        {/*
-          Contenedor scrollable interno.
-          - overflow-y-auto: scroll ocurre DENTRO del drawer, no mueve el drawer
-          - overscroll-contain: el scroll no se propaga al documento
-          - padding-bottom con env(): un solo punto de safe-area, sin duplicados
-        */}
-        <div
-          className="flex-1 overflow-y-auto overscroll-contain"
-          style={{
-            paddingBottom: "env(safe-area-inset-bottom, 20px)",
-            // Scroll suave en iOS
-            WebkitOverflowScrolling: "touch",
-          }}
-        >
-          {children}
-        </div>
+        {raw ? (
+          children
+        ) : (
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain"
+            style={{
+              paddingBottom: "env(safe-area-inset-bottom, 20px)",
+              // Scroll suave en iOS
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {children}
+          </div>
+        )}
       </DrawerPrimitive.Content>
     </DrawerPortal>
   )

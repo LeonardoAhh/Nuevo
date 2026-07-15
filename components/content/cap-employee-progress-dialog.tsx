@@ -7,7 +7,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { getTipoCursoByName } from "@/lib/catalogo"
 import type { Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 
@@ -27,10 +27,9 @@ export function CapEmployeeProgressDialog({
 }: CapEmployeeProgressDialogProps) {
   return (
     <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-xl" title={employee?.nombre ?? 'Progreso'} description={employee?.puesto ?? ''}>
-      <ModalToolbar
+      <ModalHeader
         title={employee?.nombre ?? 'Progreso'}
         subtitle={`${employee?.puesto ?? ''}${employee?.departamento ? ` · ${employee.departamento}` : ''}`}
-        saving={false}
         onClose={onClose}
       />
 
@@ -174,6 +173,10 @@ export function CapEmployeeProgressDialog({
           )}
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        cancelLabel="Cerrar"
+      />
     </ResponsiveShell>
   )
 }

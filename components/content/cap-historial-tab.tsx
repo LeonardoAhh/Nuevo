@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning } from "lucide-react"
+import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning, MoreHorizontal } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import { CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
 import type { Employee } from "@/lib/hooks"
@@ -80,23 +81,26 @@ export function CapHistorialTab({
               <CardTitle>Empleados</CardTitle>
               <CardDescription>Registro de cursos tomados por empleado.</CardDescription>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button size="icon" variant="outline" onClick={onBulkImport} aria-label="Carga masiva de cursos" title="Carga masiva de cursos">
-                <Layers className="h-4 w-4" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={onBulkImport} aria-label="Carga masiva de cursos" title="Carga masiva de cursos">
+                <span className="hidden sm:inline">Cargar cursos</span>
+                <Layers className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button size="icon" variant="outline" onClick={onBulkCreateEmployees} aria-label="Carga masiva de empleados" title="Carga masiva de empleados">
-                <Users className="h-4 w-4" />
+              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={onBulkCreateEmployees} aria-label="Carga masiva de empleados" title="Carga masiva de empleados">
+                <span className="hidden sm:inline">Cargar empleados</span>
+                <Users className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button size="icon" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
-                <UserPlus className="h-4 w-4" />
+              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
+                <span className="hidden sm:inline">Nuevo empleado</span>
+                <UserPlus className="h-4 w-4 sm:hidden" />
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             {/* Search */}
-            <div className="relative">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={empSearch}
@@ -116,7 +120,7 @@ export function CapHistorialTab({
               )}
             </div>
             {/* Filters row */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
               <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
                 <SelectTrigger className="flex-1 sm:w-44 sm:flex-none bg-muted text-foreground text-sm">
                   <SelectValue placeholder="Departamento" />
@@ -223,64 +227,56 @@ export function CapHistorialTab({
                         </TableCell>
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
-                            {emp.numero && (
-                              <Button
-                                variant="outline" size="icon"
-                                className="h-9 w-9 text-destructive/70 hover:text-destructive hover:border-destructive/40 focus-visible:ring-2 focus-visible:ring-ring"
-                                onClick={() => onActasSeguimiento(emp)}
-                                title="Actas y Seguimiento"
-                                aria-label={`Actas y seguimiento de ${emp.nombre}`}
-                              >
-                                <FileWarning className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {emp.numero && (
-                              <Button
-                                variant="outline" size="icon"
-                                className="h-9 w-9 text-info focus-visible:ring-2 focus-visible:ring-ring"
-                                onClick={() => onIncidencias(emp)}
-                                title="Incidencias"
-                                aria-label={`Incidencias de ${emp.nombre}`}
-                              >
-                                <CalendarDays className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline" size="icon"
-                              className="h-9 w-9 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                              onClick={() => onAddCourses(emp)}
-                              title="Agregar cursos"
-                              aria-label={`Agregar cursos a ${emp.nombre}`}
-                            >
-                              <BookOpen className="h-4 w-4" />
-                            </Button>
                             <Button
                               variant="ghost" size="sm"
-                              className="h-9 w-9 p-0 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                              onClick={() => onEditEmployee(emp)}
-                              title="Editar"
-                              aria-label={`Editar ${emp.nombre}`}
+                              className="h-9 px-2 text-foreground focus-visible:ring-2 focus-visible:ring-ring hidden sm:flex"
+                              onClick={() => onViewEmployee(emp)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              Matriz
+                              <ChevronRight className="h-4 w-4 ml-1" />
                             </Button>
                             <Button
-                              variant="ghost" size="sm"
-                              className="h-9 w-9 p-0 text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                              variant="ghost" size="icon"
+                              className="h-9 w-9 text-foreground focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
                               onClick={() => onViewEmployee(emp)}
                               title="Ver detalle"
-                              aria-label={`Ver detalle de ${emp.nombre}`}
                             >
                               <ChevronRight className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost" size="sm"
-                              className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring"
-                              onClick={() => onDeleteEmployee(emp)}
-                              title="Eliminar"
-                              aria-label={`Eliminar ${emp.nombre}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" title="Más opciones">
+                                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => onAddCourses(emp)} className="cursor-pointer">
+                                  <BookOpen className="mr-2 h-4 w-4" />
+                                  <span>Agregar cursos</span>
+                                </DropdownMenuItem>
+                                {emp.numero && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => onIncidencias(emp)} className="cursor-pointer">
+                                      <CalendarDays className="mr-2 h-4 w-4 text-info" />
+                                      <span>Incidencias</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onActasSeguimiento(emp)} className="cursor-pointer">
+                                      <FileWarning className="mr-2 h-4 w-4 text-destructive/70" />
+                                      <span>Actas y Seguimiento</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => onEditEmployee(emp)} className="cursor-pointer">
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  <span>Editar empleado</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDeleteEmployee(emp)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>Eliminar</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>

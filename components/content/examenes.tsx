@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -365,14 +365,10 @@ export default function ExamenesContent({
         title={editingId ? "Editar Pregunta" : "Nueva Pregunta"}
         description={editingId ? "Modifica los campos y guarda los cambios." : "Llena los campos para agregar una nueva pregunta al banco."}
       >
-        <ModalToolbar
+        <ModalHeader
           title={editingId ? "Editar Pregunta" : "Nueva Pregunta"}
           subtitle={form.departamento || "Sin departamento"}
-          saving={saving}
           onClose={() => setDialogOpen(false)}
-          onConfirm={handleSave}
-          confirmIcon={<Check size={16} />}
-          confirmDisabled={isReadOnly || !form.departamento || !form.pregunta || !form.opcion_a || !form.opcion_b || !form.opcion_c}
         />
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -456,6 +452,13 @@ export default function ExamenesContent({
               </Select>
             </div>
         </div>
+        <ModalFooter
+          onCancel={() => setDialogOpen(false)}
+          onConfirm={handleSave}
+          saving={saving}
+          confirmIcon={<Check size={16} />}
+          confirmDisabled={isReadOnly || !form.departamento || !form.pregunta || !form.opcion_a || !form.opcion_b || !form.opcion_c}
+        />
       </ResponsiveShell>
 
       {/* Dialog confirmar eliminación */}

@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
 import {
   calcularAptitud,
@@ -48,10 +48,9 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
       title="Detalle del empleado"
       description={`${empleado.nombre} · ${empleado.puesto}`}
     >
-      <ModalToolbar
+      <ModalHeader
         title={empleado.nombre}
         subtitle={`${empleado.puesto} · ${empleado.departamento}`}
-        saving={false}
         onClose={onClose}
       />
 
@@ -184,6 +183,10 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
             </div>
           </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        cancelLabel="Cerrar"
+      />
     </ResponsiveShell>
   )
 }

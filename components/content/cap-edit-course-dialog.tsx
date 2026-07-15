@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { AlertCircle, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { TIPOS_CURSOS } from "@/lib/catalogo"
 import type { Course } from "@/lib/hooks"
 
@@ -55,11 +55,9 @@ export function CapEditCourseDialog({ course, open, saving, onClose, onSave }: C
       title="Editar curso"
       description="Actualiza nombre, tipo y duración del curso"
     >
-      <ModalToolbar
+      <ModalHeader
         title="Editar curso"
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleConfirm}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -120,6 +118,11 @@ export function CapEditCourseDialog({ course, open, saving, onClose, onSave }: C
           )}
         </div>
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+      />
     </ResponsiveShell>
   )
 }

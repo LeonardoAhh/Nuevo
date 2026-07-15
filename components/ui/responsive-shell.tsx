@@ -24,101 +24,121 @@ export function useIsMobile(breakpoint = 639) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ModalToolbar — pill icon-only buttons for close / confirm
+// ModalHeader / ModalFooter
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface ModalToolbarSecondaryAction {
+export interface ModalHeaderProps {
+  title: string
+  subtitle?: string
+  onClose?: () => void
+}
+
+export function ModalHeader({ title, subtitle }: ModalHeaderProps) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-background sticky top-0 z-10 shrink-0">
+      <div className="flex-1 min-w-0">
+        <h2 className="text-lg font-semibold leading-tight text-foreground truncate">{title}</h2>
+        {subtitle && (
+          <p className="text-sm text-muted-foreground truncate mt-1">{subtitle}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ModalFooter — action buttons at the bottom
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ModalSecondaryAction {
   icon?: React.ReactNode
   label: string
   onClick: () => void
   disabled?: boolean
-  variant?: 'secondary' | 'outline'
-  iconOnly?: boolean
+  variant?: 'secondary' | 'outline' | 'ghost'
 }
 
-export interface ModalToolbarProps {
-  title: string
-  subtitle?: string
-  saving: boolean
-  onClose: () => void
+export interface ModalFooterProps {
+  onCancel?: () => void
+  cancelLabel?: string
+  cancelDisabled?: boolean
   onConfirm?: () => void
+  confirmLabel?: string
   confirmIcon?: React.ReactNode
   confirmDisabled?: boolean
   confirmVariant?: 'primary' | 'destructive'
-  secondaryAction?: ModalToolbarSecondaryAction
+  saving?: boolean
+  secondaryAction?: ModalSecondaryAction
 }
 
-export function ModalToolbar({
-  title, subtitle, saving, onClose, onConfirm, confirmIcon, confirmDisabled, confirmVariant = 'primary', secondaryAction,
-}: ModalToolbarProps) {
+export function ModalFooter({
+  onCancel,
+  cancelLabel = "Cancelar",
+  cancelDisabled,
+  onConfirm,
+  confirmLabel = "Guardar",
+  confirmIcon,
+  confirmDisabled,
+  confirmVariant = 'primary',
+  saving,
+  secondaryAction,
+}: ModalFooterProps) {
   const confirmClasses = confirmVariant === 'destructive'
-    ? "bg-destructive text-destructive-foreground shadow-md shadow-destructive/30"
-    : "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md shadow-destructive/30"
+    : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/30"
 
   const secondaryClasses = secondaryAction?.variant === 'outline'
-    ? "bg-background border border-border text-foreground shadow-sm"
-    : "bg-muted text-foreground border border-border/40 shadow-sm"
+    ? "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+    : secondaryAction?.variant === 'ghost'
+    ? "hover:bg-accent hover:text-accent-foreground"
+    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
 
   return (
-    <div className="flex items-center justify-between gap-2 px-4 py-3 border-b bg-card backdrop-blur-sm sticky top-0 z-10 shrink-0 rounded-t-xl">
-      <motion.button
-        type="button"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.88 }}
-        onClick={onClose}
-        disabled={saving}
-        className="h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center bg-muted hover:bg-muted-foreground/15 border border-border/40 shadow-sm transition-colors shrink-0 disabled:opacity-50"
-        aria-label="Cancelar"
-      >
-        <X className="h-4 w-4" />
-      </motion.button>
-
-      <div className="flex-1 text-center min-w-0 px-1">
-        <p className="text-sm font-semibold leading-tight truncate">{title}</p>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground leading-tight truncate mt-0.5">{subtitle}</p>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
+    <div className="flex items-center justify-between gap-3 px-6 py-4 border-t bg-background shrink-0 mt-auto">
+      <div className="flex-1">
         {secondaryAction && (
-          <motion.button
+          <button
             type="button"
-            title={secondaryAction.iconOnly ? secondaryAction.label : undefined}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: secondaryAction.iconOnly ? 0.88 : 0.95 }}
             onClick={secondaryAction.onClick}
             disabled={saving || secondaryAction.disabled}
             className={cn(
-              "rounded-full flex items-center transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shrink-0",
-              secondaryAction.iconOnly
-                ? "h-10 w-10 sm:h-9 sm:w-9 justify-center"
-                : "h-10 sm:h-9 px-3 gap-1.5 text-xs font-medium",
+              "inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
               secondaryClasses
             )}
-            aria-label={secondaryAction.label}
           >
-            {secondaryAction.icon}
-            {!secondaryAction.iconOnly && <span className="hidden sm:inline">{secondaryAction.label}</span>}
-          </motion.button>
+            {secondaryAction.icon && <span className="mr-2">{secondaryAction.icon}</span>}
+            {secondaryAction.label}
+          </button>
         )}
-
-        {onConfirm ? (
-          <motion.button
+      </div>
+      <div className="flex items-center gap-2">
+        {onCancel && (
+          <button
             type="button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.88 }}
+            onClick={onCancel}
+            disabled={saving || cancelDisabled}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          >
+            {cancelLabel}
+          </button>
+        )}
+        {onConfirm && (
+          <button
+            type="button"
             onClick={onConfirm}
             disabled={saving || confirmDisabled}
-            className={cn("h-10 w-10 sm:h-9 sm:w-9 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shrink-0", confirmClasses)}
-            aria-label="Confirmar"
+            className={cn(
+              "inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm",
+              confirmClasses
+            )}
           >
-            {saving
-              ? <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-              : (confirmIcon ?? <Check className="h-4 w-4" />)}
-          </motion.button>
-        ) : (
-          <div className="h-10 w-10 sm:h-9 sm:w-9 shrink-0" />
+            {saving ? (
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : confirmIcon ? (
+              <span className="mr-2">{confirmIcon}</span>
+            ) : null}
+            {confirmLabel}
+          </button>
         )}
       </div>
     </div>
@@ -146,7 +166,7 @@ export function ResponsiveShell({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent className={cn("max-h-[92dvh] flex flex-col outline-none bg-card")}>
+        <DrawerContent raw className={cn("max-h-[92dvh] flex flex-col outline-none bg-card !overflow-hidden")}>
           <DrawerTitle className="sr-only">{title}</DrawerTitle>
           <DrawerDescription className="sr-only">{description ?? title}</DrawerDescription>
           {children}

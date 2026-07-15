@@ -5,7 +5,7 @@ import { Save } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { ReglaPromocionInput, ReglaPromocionRow } from "@/lib/hooks/useReglasPromocionCRUD"
 
 export interface PromReglaDialogProps {
@@ -105,14 +105,10 @@ export function PromReglaDialog({
       title={isEdit ? "Editar regla" : "Nueva regla"}
       description={regla?.puesto ?? "Regla de promoción"}
     >
-      <ModalToolbar
+      <ModalHeader
         title={isEdit ? "Editar regla" : "Nueva regla"}
         subtitle={isEdit ? regla?.puesto : "Regla de promoción"}
-        saving={guardando}
         onClose={onClose}
-        onConfirm={handleGuardar}
-        confirmIcon={<Save size={16} />}
-        confirmDisabled={isReadOnly}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -220,6 +216,13 @@ export function PromReglaDialog({
           </div>
         )}
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleGuardar}
+        saving={guardando}
+        confirmIcon={<Save size={16} />}
+        confirmDisabled={isReadOnly}
+      />
     </ResponsiveShell>
   )
 }

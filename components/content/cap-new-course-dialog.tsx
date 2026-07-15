@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { AlertCircle, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { TIPOS_CURSOS } from "@/lib/catalogo"
 
 export interface CapNewCourseDialogProps {
@@ -41,11 +41,9 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
 
   return (
     <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo curso" description="Agrega un curso al catálogo">
-      <ModalToolbar
+      <ModalHeader
         title="Nuevo curso"
-        saving={saving}
         onClose={onClose}
-        onConfirm={handleConfirm}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -106,8 +104,13 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-        </div>
       </div>
+      </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirm}
+        saving={saving}
+      />
     </ResponsiveShell>
   )
 }

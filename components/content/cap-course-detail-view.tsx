@@ -73,27 +73,29 @@ export function CapCourseDetailView({
     >
       {/* Encabezado del Detalle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0 mt-1 sm:mt-0" title="Volver">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0" title="Volver">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold leading-tight">{course.name}</h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-2">
-              <Badge variant="outline">{courseType}</Badge>
-              {course.duration_hours != null ? (
-                <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/20">
-                  <Clock className="h-3 w-3" />
-                  {course.duration_hours} h
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-muted-foreground border-dashed">
-                  Sin duración
-                </Badge>
-              )}
+          <div className="flex flex-col justify-center">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary shrink-0" />
+                <h2 className="text-xl font-bold leading-tight">{course.name}</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline">{courseType}</Badge>
+                {course.duration_hours != null ? (
+                  <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/20">
+                    <Clock className="h-3 w-3" />
+                    {course.duration_hours} h
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground border-dashed">
+                    Sin duración
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>

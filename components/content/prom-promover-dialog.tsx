@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { TrendingUp, AlertTriangle, ArrowRight, Save } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
 import {
   calcularAptitud,
@@ -110,25 +110,10 @@ export function PromPromoverDialog({
       title="Cambio de Puesto"
       description={empleado.nombre}
     >
-      <ModalToolbar
+      <ModalHeader
         title="Cambio de Puesto"
         subtitle={empleado.nombre}
-        saving={guardando}
         onClose={onClose}
-        onConfirm={handleConfirmar}
-        confirmIcon={<TrendingUp size={16} />}
-        confirmDisabled={isReadOnly || !puedePromover}
-        secondaryAction={
-          calExamen !== ""
-            ? {
-                icon: <Save size={16} />,
-                label: "Guardar",
-                iconOnly: true,
-                onClick: handleSoloExamen,
-                disabled: isReadOnly,
-              }
-            : undefined
-        }
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -237,6 +222,24 @@ export function PromPromoverDialog({
           </div>
         )}
       </div>
+      <ModalFooter
+        onCancel={onClose}
+        onConfirm={handleConfirmar}
+        saving={guardando}
+        confirmIcon={<TrendingUp size={16} />}
+        confirmDisabled={isReadOnly || !puedePromover}
+        secondaryAction={
+          calExamen !== ""
+            ? {
+                icon: <Save size={16} />,
+                label: "Guardar solo examen",
+                onClick: handleSoloExamen,
+                disabled: isReadOnly,
+                variant: 'outline'
+              }
+            : undefined
+        }
+      />
     </ResponsiveShell>
   )
 }

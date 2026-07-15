@@ -155,17 +155,17 @@ export default function Header({
 
             {/* User menu */}
             <div className="ml-2 flex items-center gap-3 pl-2 sm:border-l sm:ml-4 sm:pl-4">
-              <div className="hidden items-center gap-2 sm:flex">
+              <Link href="/settings" className="hidden items-center gap-2 sm:flex hover:opacity-80 transition-opacity" title="Configuración">
                 <Avatar className="h-7 w-7 shrink-0">
                   <AvatarImage src={profile?.avatar || undefined} />
                   <AvatarFallback className="text-[10px] font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="max-w-[110px] truncate text-sm font-medium">
+                <span className="max-w-[110px] truncate text-sm font-medium hover:underline">
                   {displayName}
                 </span>
-              </div>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}

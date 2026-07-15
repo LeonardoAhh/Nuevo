@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { ResponsiveShell, ModalToolbar } from "@/components/ui/responsive-shell"
+import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -327,14 +327,10 @@ export default function NotificationBell() {
         description="Ingresa el número del empleado para buscar sus datos automáticamente."
         maxWidth="sm:max-w-md"
       >
-        <ModalToolbar
+        <ModalHeader
           title="Nueva notificación de Baja"
           subtitle="Busca por número de empleado"
-          saving={submitting}
           onClose={() => { resetForm(); setDialogOpen(false) }}
-          onConfirm={handleCreate}
-          confirmDisabled={!form.employee_name.trim() || !form.fecha_baja || submitting}
-          confirmVariant="destructive"
         />
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -406,6 +402,13 @@ export default function NotificationBell() {
             </div>
           </div>
         </div>
+        <ModalFooter
+          onCancel={() => { resetForm(); setDialogOpen(false) }}
+          onConfirm={handleCreate}
+          saving={submitting}
+          confirmDisabled={!form.employee_name.trim() || !form.fecha_baja || submitting}
+          confirmVariant="destructive"
+        />
       </ResponsiveShell>
     </>
   )
