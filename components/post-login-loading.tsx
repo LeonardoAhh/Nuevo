@@ -56,28 +56,17 @@ export function PostLoginLoading() {
       animate={{ opacity: exiting ? 0 : 1 }}
       transition={prefersReducedMotion ? undefined : { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const }}
     >
-      <div className="mx-auto w-full max-w-[28rem] px-5">
-        <div className="rounded-3xl border border-border/70 bg-background/95 p-6 shadow-sm backdrop-blur-sm">
-          <div className="space-y-4 text-center">
-            <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-              Cargando
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              {APP_NAME}
-            </h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              {statusLabel}
-            </p>
-          </div>
-
-          <div className="mt-6 h-2 overflow-hidden rounded-full bg-muted/20">
-            <motion.div
-              className="h-full rounded-full bg-primary"
-              initial={{ width: prefersReducedMotion ? "100%" : "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: prefersReducedMotion ? 0 : 1.4, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </div>
+      <div className="mx-auto w-full max-w-xs px-5 text-center">
+        <p className="text-sm font-medium text-muted-foreground mb-4">
+          {statusLabel}
+        </p>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted/20">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            initial={{ width: prefersReducedMotion ? "100%" : "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: prefersReducedMotion ? 0 : 1.4, ease: [0.22, 1, 0.36, 1] }}
+          />
         </div>
       </div>
     </motion.div>
