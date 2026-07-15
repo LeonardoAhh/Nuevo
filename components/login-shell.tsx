@@ -46,17 +46,14 @@ export default function LoginShell() {
       <motion.div
         aria-live="polite"
         aria-busy={!isReady}
-        className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+        className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-background"
         initial={{ opacity: 1 }}
         animate={{ opacity: isReady ? 0 : 1 }}
         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: "linear" }}
       >
-        <div className="pointer-events-auto flex w-full max-w-xs flex-col items-center gap-4 rounded-3xl border border-border/70 bg-background/95 px-6 py-8 text-center shadow-lg">
-          <div className="h-12 w-12 rounded-full border-4 border-muted/40 border-t-primary animate-spin" />
-          <div>
-            <p className="text-sm font-semibold text-foreground">Cargando inicio de sesión</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Espera un momento mientras se prepara la interfaz.</p>
-          </div>
+        <div className="pointer-events-auto flex flex-col items-center gap-4 text-center">
+          <div className="h-10 w-10 rounded-full border-4 border-muted/40 border-t-primary animate-spin" />
+          <p className="text-sm font-medium text-muted-foreground">Cargando...</p>
         </div>
       </motion.div>
     </div>
