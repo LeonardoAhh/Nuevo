@@ -1,11 +1,11 @@
 "use client"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles } from "lucide-react"
+import { Sparkles, CheckIcon } from "lucide-react"
 
 export function UpdateBanner() {
   const [hasUpdate, setHasUpdate] = useState(false)
-  const [isReloading, setIsReloading] = useState(false)
+  const [status, setStatus] = useState<"idle" | "success">("idle")
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return
@@ -48,13 +48,16 @@ export function UpdateBanner() {
     }
   }, [])
 
-  const handleUpdate = () => {
-    setIsReloading(true)
+  const handleUpdate = async () => {
+    setStatus("success")
+    // Wait for the animation to play before reloading
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
     navigator.serviceWorker.getRegistration().then((reg) => {
       if (reg?.waiting) {
         reg.waiting.postMessage({ type: "SKIP_WAITING" })
       } else {
-        setTimeout(() => window.location.reload(), 400)
+        window.location.reload()
       }
     })
   }
@@ -123,12 +126,18 @@ export function UpdateBanner() {
       <AnimatePresence>
         {hasUpdate && (
           <motion.div
-            initial={{ y: 80, opacity: 0, scale: 0.96 }}
-            animate={{ y: 0,  opacity: 1, scale: 1    }}
-            exit={{   y: 80, opacity: 0, scale: 0.96  }}
-            transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed bottom-4 inset-x-0 mx-4 z-50 max-w-sm sm:mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4"
           >
+            <motion.div
+              initial={{ y: 20, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0,  opacity: 1, scale: 1    }}
+              exit={{   y: 20, opacity: 0, scale: 0.96  }}
+              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              className="w-full max-w-sm"
+            >
             {/*
               Wrapper con borde animado.
               La capa de fondo está en ::after para que quede
@@ -182,34 +191,44 @@ export function UpdateBanner() {
                 {/* Botón */}
                 <button
                   onClick={handleUpdate}
-                  disabled={isReloading}
-                  className="update-btn shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                  disabled={status !== "idle"}
+                  className="update-btn shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center justify-center min-w-[90px]"
                   style={{
-                    background: "hsl(var(--primary))",
-                    color: "hsl(var(--primary-foreground))",
-                    boxShadow: "0 2px 8px hsl(var(--primary) / 0.35)",
-                    opacity: isReloading ? 0.7 : 1,
+                    background: status === "success" ? "hsl(var(--success))" : "hsl(var(--primary))",
+                    color: status === "success" ? "hsl(var(--success-foreground))" : "hsl(var(--primary-foreground))",
+                    boxShadow: status === "success" ? "none" : "0 2px 8px hsl(var(--primary) / 0.35)",
+                    transition: "all 0.2s ease"
                   }}
                 >
-                  {isReloading ? (
-                    <span className="flex items-center gap-1.5">
-                      <svg
-                        className="h-3 w-3 animate-spin"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                  <AnimatePresence mode="wait">
+                    {status === "success" ? (
+                      <motion.span
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.5 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        className="flex items-center gap-1.5"
                       >
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                      </svg>
-                      Cargando…
-                    </span>
-                  ) : (
-                    "Actualizar"
-                  )}
+                        <CheckIcon className="h-3.5 w-3.5" />
+                        ¡Listo!
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="idle"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center"
+                      >
+                        Actualizar
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </button>
               </div>
             </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

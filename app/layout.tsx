@@ -7,7 +7,6 @@ import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
 import { ConfirmProvider } from "@/components/ui/confirm-dialog"
 import { ConnectionStatus } from "@/components/connection-status"
-import { InstallPrompt } from "@/components/install-prompt"
 import { UpdateBanner } from "@/components/update-banner"
 import { MaintenanceGuard } from "@/components/maintenance-guard"
 
@@ -120,7 +119,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SonnerProvider />
         <ConfirmProvider />
         <ConnectionStatus />
-        <InstallPrompt />
       </body>
     </html>
   )

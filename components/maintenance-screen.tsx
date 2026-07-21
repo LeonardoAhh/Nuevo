@@ -135,12 +135,12 @@ export function MaintenanceScreen() {
 
         {/* Título principal */}
         <h1 className="text-2xl md:text-3xl font-semibold text-foreground leading-tight">
-          Volvemos pronto
+          Estamos aplicando una actualización.
         </h1>
 
         {/* Descripción */}
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Estamos aplicando una actualización. El sistema estará disponible en unos minutos.
+          El sistema estará disponible en unos minutos.
         </p>
 
         {/* Barra de progreso indeterminada */}
@@ -150,10 +150,6 @@ export function MaintenanceScreen() {
           </div>
         </div>
 
-        {/* Nota de contacto — útil para usuarios internos */}
-        <p className="font-mono text-[11px] text-muted-foreground/60">
-          Si el problema persiste, contacta a Recursos Humanos
-        </p>
       </motion.div>
     </div>
   )
