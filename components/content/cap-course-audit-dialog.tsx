@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ResponsiveShell } from "@/components/ui/responsive-shell"
+import { RedesignModalHeader } from "@/components/redesign/modal-header"
+import { RedesignModalFooter } from "@/components/redesign/modal-footer"
 import type { Course, Employee, EmployeeCourse } from "@/lib/hooks"
 import { getTipoCursoByName } from "@/lib/catalogo"
 import { normalizeCourseName } from "@/lib/hooks/useCapacitacion"
@@ -82,8 +85,8 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
     // Filtro de búsqueda por nombre o puesto
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase()
-      return results.filter(r => 
-        r.nombre.toLowerCase().includes(q) || 
+      return results.filter(r =>
+        r.nombre.toLowerCase().includes(q) ||
         r.puesto.toLowerCase().includes(q) ||
         r.numero.toLowerCase().includes(q)
       )
@@ -101,7 +104,7 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
   const handleExport = async () => {
     if (auditData.length === 0) return
     setIsExporting(true)
-    
+
     try {
       const ExcelJS = await import('exceljs')
       // @ts-ignore
@@ -135,7 +138,7 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
       sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Daytona', size: 12 }
       sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF18181B' } }
       sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' }
-      
+
       const buffer = await workbook.xlsx.writeBuffer()
       const today = new Date().toISOString().slice(0, 10)
       saveAs(new Blob([buffer]), `auditoria-${selectedCourseName.replace(/[^a-zA-Z0-9]/g, '-')}-${today}.xlsx`)
@@ -147,127 +150,120 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl h-[85vh] flex flex-col p-0 overflow-hidden bg-background">
-        <div className="p-6 border-b flex-shrink-0 bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Users className="h-6 w-6 text-primary" />
-              Auditoría Global de Cursos
-            </DialogTitle>
-            <DialogDescription>
-              Selecciona un curso para ver a todas las personas que lo han tomado en la historia de la empresa, sin importar su puesto actual ni si lo tienen asignado o no.
-            </DialogDescription>
-          </DialogHeader>
+    <ResponsiveShell open={open} onClose={() => onOpenChange(false)} maxWidth="sm:max-w-4xl h-[85vh]" title="Auditoría de Cursos">
+      <RedesignModalHeader
+        title="Auditoría Global de Cursos"
+        icon={<Users className="h-5 w-5 text-muted-foreground" />}
+        onClose={() => onOpenChange(false)}
+      />
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-6">
-            <div className="flex-1">
-              <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                <SelectTrigger className="w-full h-11 text-base">
-                  <SelectValue placeholder="Selecciona el curso a auditar..." />
-                </SelectTrigger>
-                <SelectContent className="max-h-[40vh]">
-                  <SelectItem value="all" disabled>Selecciona un curso...</SelectItem>
-                  {sortedCourses.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {selectedCourseId !== "all" && (
-              <>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar empleado..." 
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-9 h-11"
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                <Button 
-                  variant="default" 
-                  className="h-11 px-6 shadow-sm"
-                  onClick={handleExport}
-                  disabled={auditData.length === 0 || isExporting}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {isExporting ? "Exportando..." : "Exportar Excel"}
-                </Button>
-              </>
-            )}
+      <div className="flex-none p-4 sm:p-6 border-b border-border/60 bg-card">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+              <SelectTrigger className="w-full h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
+                <SelectValue placeholder="Selecciona el curso a auditar..." />
+              </SelectTrigger>
+              <SelectContent className="rounded-md border-border/60 shadow-sm bg-card max-h-[40vh]">
+                <SelectItem value="all" disabled>Selecciona un curso...</SelectItem>
+                {sortedCourses.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-auto bg-muted/10 p-6">
-          {selectedCourseId === "all" ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground opacity-60">
-              <Users className="h-16 w-16 mb-4" />
-              <p className="text-lg">Selecciona un curso en la parte superior<br/>para comenzar la auditoría.</p>
-            </div>
-          ) : auditData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-              <p className="text-lg font-medium">No hay registros</p>
-              <p className="text-sm">Nadie ha tomado este curso (o no coincide con tu búsqueda).</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {auditData.map((row, i) => (
-                <div key={row.empleadoId + i} className="flex items-center justify-between p-4 bg-card border rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                  
-                  {/* Left Side: Avatar & Info */}
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg flex-shrink-0">
-                      {getInitials(row.nombre)}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-foreground truncate">{row.nombre}</span>
-                      <span className="text-sm text-muted-foreground truncate flex items-center gap-2">
-                        <span>{row.puesto}</span>
-                        <span className="opacity-50">•</span>
-                        <span className="font-mono text-xs">#{row.numero}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Right Side: Status & Grade */}
-                  <div className="flex items-center gap-3 flex-shrink-0 pl-4">
-                    <div className="hidden sm:flex flex-col text-right">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Fecha</span>
-                      <span className="text-sm">{row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</span>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge className={row.clase}>
-                        {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
-                      </Badge>
-                      {row.calificacion != null && (
-                        <div className="text-xs font-mono font-medium text-muted-foreground">
-                          Calificación: <span className={row.calificacion >= 7 ? "text-primary" : "text-destructive"}>{row.calificacion}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              ))}
+          {selectedCourseId !== "all" && (
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre, número o puesto..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-primary text-base"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
         </div>
-        
-        {selectedCourseId !== "all" && (
-          <div className="p-4 border-t bg-card text-sm text-muted-foreground flex justify-between items-center">
-            <span>Auditando: <strong>{selectedCourseName}</strong></span>
-            <span>Total de registros encontrados: <strong>{auditData.length}</strong></span>
+      </div>
+
+      <div className="flex-1 overflow-auto bg-muted/10 p-4 sm:p-6">
+        {selectedCourseId === "all" ? (
+          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground opacity-60">
+            <Users className="h-16 w-16 mb-4" />
+            <p className="text-lg">Selecciona un curso en la parte superior<br/>para comenzar la auditoría.</p>
+          </div>
+        ) : auditData.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+            <p className="text-lg font-medium">No hay registros</p>
+            <p className="text-sm">Nadie ha tomado este curso (o no coincide con tu búsqueda).</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {auditData.map((row, i) => (
+              <div key={row.empleadoId + i} className="flex items-center justify-between p-4 bg-transparent border border-border/60 rounded-md shadow-none hover:bg-muted/30 hover:border-border transition-all">
+
+                {/* Left Side: Avatar & Info */}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="h-10 w-10 rounded-full bg-muted border border-border/60 text-ink flex items-center justify-center font-medium text-sm flex-shrink-0">
+                    {getInitials(row.nombre)}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-ink truncate">{row.nombre}</span>
+                    <span className="text-sm text-muted-foreground truncate flex items-center gap-2">
+                      <span>{row.puesto}</span>
+                      <span className="opacity-50">•</span>
+                      <span className="font-mono text-xs">#{row.numero}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Side: Status & Grade */}
+                <div className="flex items-center gap-3 flex-shrink-0 pl-4">
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-[11px] text-muted-foreground tracking-wider font-normal">Fecha</span>
+                    <span className="text-sm text-ink">{row.fecha ? row.fecha.split('-').reverse().join('/') : '—'}</span>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge className={`${row.clase} shadow-none font-normal border-border/60`}>
+                      {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
+                    </Badge>
+                    {row.calificacion != null && (
+                      <div className="text-xs font-mono font-normal text-muted-foreground">
+                        Calif: <span className={row.calificacion >= 7 ? "text-success" : "text-destructive"}>{row.calificacion}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            ))}
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      {selectedCourseId !== "all" && (
+        <div className="p-4 border-t border-border/60 bg-card text-sm text-muted-foreground flex justify-between items-center shrink-0">
+          <span>Auditando: <strong>{selectedCourseName}</strong></span>
+          <span>Total de registros encontrados: <strong>{auditData.length}</strong></span>
+        </div>
+      )}
+
+      <RedesignModalFooter
+        onCancel={() => onOpenChange(false)}
+        cancelLabel="Cerrar"
+        onConfirm={handleExport}
+        saving={isExporting}
+        confirmLabel="Exportar Excel"
+        confirmIcon={<Download className="h-4 w-4" />}
+        confirmDisabled={auditData.length === 0}
+      />
+    </ResponsiveShell>
   )
 }

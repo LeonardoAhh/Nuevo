@@ -1,0 +1,26 @@
+# Project Rules & Design System
+
+Esta guía unifica los estándares técnicos y estéticos del proyecto. Aplica a todo el código nuevo y modificaciones.
+
+## 1. Reglas Técnicas Core
+- **Stack:** Next.js, TypeScript, Tailwind CSS, shadcn/ui, framer-motion.
+- **Design Tokens:** Prohibido usar valores literales (`#FF0000`, `16px`). Todo sale de tokens del tema consumidos vía clases de Tailwind (`bg-primary`, `text-ink`, `bg-canvas`).
+- **Mobile-first:** Componentes 100% responsivos usando `flex`, `grid` y media queries lógicas (`sm:`, `md:`). Evitar anchos fijos.
+- **Estandarizar y Reutilizar:** Mantener una única fuente de verdad. No duplicar variantes ad-hoc. Usar `cva` y componentes base (shadcn/ui o de `components/ui`).
+- **Código Limpio:** Tipado estricto (cero `any`), responsabilidades separadas, eliminación de código muerto.
+- **Accesibilidad:** Cumplir WCAG 2.2 AA. Uso de HTML semántico, `aria-labels` donde sea necesario y navegación por teclado.
+
+## 2. Estética y Marca (Basado en Cursor Design System)
+- **Fondo y Texto:** Lienzo crema cálido (`canvas` #f7f7f4) y texto casi negro (`ink` #26251e). Evitar blanco puro o negro puro como fondos globales.
+- **Color Principal:** Naranja Cursor (`primary` #f54e00) usado **escasamente** solo para CTAs principales.
+- **Paleta Pastel (Timeline):** Durazno, menta, azul pastel, lavanda, oro. Reservado estrictamente para visualizaciones de estado/progreso, NO para botones de acción.
+- **Elevación (Profundidad):** Sin sombras (`drop shadows`). La profundidad se logra mediante bordes finos de 1px (`hairline`) y sutiles contrastes de fondo (`canvas-soft` o `surface-card`).
+- **Radios (Border Radius):** Botones CTA usan 8px (`rounded-md`). Tarjetas usan 12px (`rounded-lg`).
+- **Tipografía:**
+  - Encabezados: Peso 400 (nunca bold), estilo editorial/revista, tracking negativo sutil.
+  - Bloques de código: JetBrains Mono (`font-mono`).
+
+## 3. Arquitectura del Rediseño (New Flow)
+- Los componentes que están pasando por la transición al nuevo Design System se colocarán en la carpeta `components/redesign/`.
+- Uso de CSS Modules para estilos ultra-específicos si no es viable solo con Tailwind, manteniendo la especificidad alta para no pisar globales.
+- Se debe llevar registro del avance en `redesign_progress.md`.

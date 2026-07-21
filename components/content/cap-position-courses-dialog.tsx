@@ -5,7 +5,9 @@ import { BookOpen, X, Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
+import { ResponsiveShell } from "@/components/ui/responsive-shell"
+import { RedesignModalHeader } from "@/components/redesign/modal-header"
+import { RedesignModalFooter } from "@/components/redesign/modal-footer"
 import type { Position, PositionCourse, Course } from "@/lib/hooks"
 
 export interface CapPositionCoursesDialogProps {
@@ -31,9 +33,8 @@ export function CapPositionCoursesDialog({
 }: CapPositionCoursesDialogProps) {
   return (
     <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-lg" title={position?.name ?? 'Cursos del puesto'} description="Cursos requeridos">
-      <ModalHeader
+      <RedesignModalHeader
         title={position?.name ?? 'Cursos del puesto'}
-        subtitle={`${(position?.department as any)?.name ?? ''} · Cursos requeridos`}
         onClose={onClose}
       />
 
@@ -52,15 +53,10 @@ export function CapPositionCoursesDialog({
             ) : (
               <div className="space-y-1.5">
                 {positionCourses.map((pc) => (
-                  <div key={pc.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border">
+                  <div key={pc.id} className="flex items-center gap-3 p-2.5 rounded-md border border-border/60 bg-transparent hover:bg-muted/30 transition-colors shadow-none">
                     <span className="text-xs font-mono text-muted-foreground w-5 text-right shrink-0">{pc.order_index}</span>
                     <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm flex-1 min-w-0 truncate">{pc.course.name}</span>
-                    {(pc.course as any).tipo && (
-                      <Badge variant="outline" className="text-xs shrink-0 hidden sm:inline-flex">
-                        {(pc.course as any).tipo}
-                      </Badge>
-                    )}
+                    <span className="text-sm font-medium text-ink flex-1 min-w-0 truncate">{pc.course.name}</span>
                     {!isReadOnly && (
                       <Button
                         variant="ghost" size="icon"
@@ -78,15 +74,15 @@ export function CapPositionCoursesDialog({
 
           {/* Assign section — fixed at bottom */}
           {!isReadOnly && (
-            <div className="shrink-0 border-t bg-card px-4 py-4 space-y-3">
+            <div className="shrink-0 border-t border-border/60 bg-card px-4 py-4 space-y-3">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Asignar curso</p>
               <div className="flex gap-2">
                 <Select value={assignCourseId} onValueChange={onAssignCourseChange}>
-                  <SelectTrigger className="bg-muted flex-1 text-sm min-w-0">
+                  <SelectTrigger className="bg-transparent border-border/60 shadow-none flex-1 text-sm min-w-0">
                     <SelectValue placeholder="Selecciona un curso…" />
                   </SelectTrigger>
                   <SelectContent
-                    className="bg-card"
+                    className="bg-card border-border/60 shadow-md"
                     position="popper" side="top" sideOffset={6}
                     avoidCollisions collisionPadding={12}
                     style={{ width: 'var(--radix-select-trigger-width)', maxHeight: '40dvh' }}
@@ -96,7 +92,7 @@ export function CapPositionCoursesDialog({
                       .map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Button size="sm" className="shrink-0" disabled={!assignCourseId || assignSaving} onClick={onAssignCourse}>
+                <Button size="sm" className="shrink-0 shadow-none" disabled={!assignCourseId || assignSaving} onClick={onAssignCourse}>
                   {assignSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 </Button>
               </div>
@@ -105,7 +101,7 @@ export function CapPositionCoursesDialog({
           )}
         </div>
       )}
-      <ModalFooter
+      <RedesignModalFooter
         onCancel={onClose}
         cancelLabel="Cerrar"
       />

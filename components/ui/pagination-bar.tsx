@@ -13,18 +13,15 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
   return (
     <nav
       aria-label="Paginación"
-      className="flex items-center justify-between mb-3"
+      className="flex items-center justify-end mb-3"
     >
-      <span className="text-sm text-muted-foreground" aria-live="polite">
-        Página {safePage} de {totalPages}
-      </span>
       <div className="flex items-center gap-1">
         <Button
           variant="outline"
           size="sm"
           disabled={safePage <= 1}
           onClick={() => onPageChange(safePage - 1)}
-          className="h-10 w-10 p-0 sm:h-8 sm:w-8"
+          className="h-10 w-10 p-0 sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -45,7 +42,7 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
                   variant={item === safePage ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onPageChange(item)}
-                  className="h-10 w-10 p-0 text-xs sm:h-8 sm:w-8"
+                  className="h-10 w-10 p-0 text-xs sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
                   aria-label={`Ir a la página ${item}`}
                   aria-current={item === safePage ? 'page' : undefined}
                 >
@@ -58,7 +55,7 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
           size="sm"
           disabled={safePage >= totalPages}
           onClick={() => onPageChange(safePage + 1)}
-          className="h-10 w-10 p-0 sm:h-8 sm:w-8"
+          className="h-10 w-10 p-0 sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
           aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />

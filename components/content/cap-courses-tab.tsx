@@ -63,17 +63,15 @@ export function CapCoursesTab({
   }, [courses, selectedCourseId])
 
   return (
-    <Card className="bg-card">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
+    <div className="bg-card border border-border/60 shadow-none rounded-xl overflow-hidden">
+      <div className="pb-6 pt-6 px-6 border-b border-border/60">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <CardTitle>Catálogo de cursos</CardTitle>
-            <CardDescription>Todos los cursos únicos registrados en el sistema.</CardDescription>
+            <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Catálogo de cursos</h2>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
-              variant="outline"
-              className="h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors"
               onClick={() => setAuditOpen(true)}
               aria-label="Auditoría Global"
               title="Auditoría Global"
@@ -81,8 +79,7 @@ export function CapCoursesTab({
               Auditoría
             </Button>
             <Button
-              variant="outline"
-              className="h-9 px-3 focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors"
               onClick={() => setPreviewOpen(true)}
               aria-label="Descargar reporte Excel"
               title="Descargar Excel"
@@ -90,27 +87,28 @@ export function CapCoursesTab({
               Reporte
             </Button>
             {!isReadOnly && (
-              <Button onClick={onNewCourse} className="h-9 px-3" aria-label="Nuevo curso" title="Nuevo curso">
+              <Button onClick={onNewCourse} className="h-10 px-4 rounded-md bg-primary text-primary-foreground shadow-none font-medium transition-colors" aria-label="Nuevo curso" title="Nuevo curso">
                 Nuevo curso
               </Button>
             )}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      <div className="p-6 space-y-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
           <Input
             value={courseSearch}
             onChange={e => setCourseSearch(e.target.value)}
-            className={`pl-9 bg-muted text-foreground ${courseSearch ? "pr-9" : ""}`}
+            placeholder="Buscar curso..."
+            className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${courseSearch ? "pr-11" : ""}`}
           />
           {courseSearch && (
             <button
               type="button"
               aria-label="Limpiar búsqueda"
               onClick={() => setCourseSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -118,12 +116,11 @@ export function CapCoursesTab({
         </div>
 
         {loadingCourses ? (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl border px-4 py-3 flex items-center gap-3">
-                <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-5 w-16 rounded-full" />
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-md border border-border/60 bg-transparent px-4 py-3 flex items-center gap-3 shadow-none">
+                <Skeleton className="h-4 w-4 rounded bg-muted" />
+                <Skeleton className="h-4 flex-1 bg-muted" />
               </div>
             ))}
           </div>
@@ -159,34 +156,34 @@ export function CapCoursesTab({
                     </div>
                   ) : (
                     <>
-                      {filtered.length > PAGE_SIZE && (
-                        <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCoursePage} />
-                      )}
                       <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {paginated.map((course) => (
                           <div 
                             key={course.id} 
-                            className="border rounded-xl px-4 py-3 hover:bg-muted/30 hover:border-primary/50 transition-all cursor-pointer group flex items-center gap-3"
+                            className="rounded-md border border-border/60 bg-transparent px-4 py-3 hover:bg-muted/30 hover:border-border transition-all cursor-pointer group flex items-center gap-3 shadow-none"
                             onClick={() => setSelectedCourseId(course.id)}
                           >
-                            <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                            <span className="text-sm font-medium text-foreground leading-tight flex-1 line-clamp-2 group-hover:text-primary transition-colors">
+                            <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm font-medium text-ink leading-tight flex-1 line-clamp-2">
                               {course.name}
                             </span>
                           </div>
                         ))}
                       </div>
+                      
+                      {filtered.length > PAGE_SIZE && (
+                        <div className="mt-4 flex justify-end">
+                          <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCoursePage} />
+                        </div>
+                      )}
                     </>
                   )}
-                  <p className="text-xs text-muted-foreground mt-4">
-                    {filtered.length} de {courses.length} cursos
-                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         )}
-      </CardContent>
+      </div>
 
       <CapReportPreviewDialog
         open={previewOpen}
@@ -206,6 +203,6 @@ export function CapCoursesTab({
         employees={employees}
         empCourses={empCourses}
       />
-    </Card>
+    </div>
   )
 }

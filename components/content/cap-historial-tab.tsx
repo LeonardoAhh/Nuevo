@@ -1,9 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning, MoreHorizontal } from "lucide-react"
+import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning, MoreVertical, GraduationCap } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -14,12 +13,11 @@ import { PaginationBar } from "@/components/ui/pagination-bar"
 import { CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
 import type { Employee } from "@/lib/hooks"
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 10
 
 interface CapHistorialTabProps {
   employees: Employee[]
   loadingEmployees: boolean
-  progressMap: Record<string, { aprobados: number; reprobados: number; total: number }>
   isReadOnly: boolean
   newEmpSuccess: boolean
   addCoursesSuccess: boolean
@@ -35,7 +33,7 @@ interface CapHistorialTabProps {
 }
 
 export function CapHistorialTab({
-  employees, loadingEmployees, progressMap, isReadOnly,
+  employees, loadingEmployees, isReadOnly,
   newEmpSuccess, addCoursesSuccess,
   onNewEmployee, onBulkImport, onBulkCreateEmployees,
   onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee, onIncidencias,
@@ -74,58 +72,58 @@ export function CapHistorialTab({
         </Alert>
       )}
 
-      <Card className="bg-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
+      <div className="bg-card border border-border/60 shadow-none rounded-xl overflow-hidden">
+        <div className="pb-6 pt-6 px-6 border-b border-border/60">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <CardTitle>Empleados</CardTitle>
-              <CardDescription>Registro de cursos tomados por empleado.</CardDescription>
+              <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Empleados</h2>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={onBulkImport} aria-label="Carga masiva de cursos" title="Carga masiva de cursos">
+            <div className="flex items-center gap-3 shrink-0">
+              <Button className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
                 <span className="hidden sm:inline">Cargar cursos</span>
                 <Layers className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={onBulkCreateEmployees} aria-label="Carga masiva de empleados" title="Carga masiva de empleados">
+              <Button className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
                 <span className="hidden sm:inline">Cargar empleados</span>
                 <Users className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
+              <Button className="h-10 px-4 rounded-md shadow-none font-medium transition-colors" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
                 <span className="hidden sm:inline">Nuevo empleado</span>
                 <UserPlus className="h-4 w-4 sm:hidden" />
               </Button>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2">
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             {/* Search */}
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
               <Input
                 value={empSearch}
                 onChange={e => setEmpSearch(e.target.value)}
                 placeholder="Buscar empleado..."
-                className={`pl-9 bg-muted text-foreground ${empSearch ? "pr-9" : ""}`}
+                className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${empSearch ? "pr-11" : ""}`}
               />
               {empSearch && (
                 <button
                   type="button"
                   aria-label="Limpiar búsqueda"
                   onClick={() => setEmpSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink transition-colors"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-[18px] w-[18px]" />
                 </button>
               )}
             </div>
             {/* Filters row */}
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
               <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
-                <SelectTrigger className="flex-1 sm:w-44 sm:flex-none bg-muted text-foreground text-sm">
+                <SelectTrigger className="h-11 flex-1 sm:w-48 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
                   <SelectValue placeholder="Departamento" />
                 </SelectTrigger>
-                <SelectContent className="bg-card">
+                <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
                   <SelectItem value="all">Departamentos</SelectItem>
                   {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
                     <SelectItem key={d} value={d}>{d}</SelectItem>
@@ -133,10 +131,10 @@ export function CapHistorialTab({
                 </SelectContent>
               </Select>
               <Select value={empFilterTurno} onValueChange={setEmpFilterTurno}>
-                <SelectTrigger className="flex-1 sm:w-36 sm:flex-none bg-muted text-foreground text-sm">
+                <SelectTrigger className="h-11 flex-1 sm:w-40 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
-                <SelectContent className="bg-card">
+                <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
                   <SelectItem value="all">Turnos</SelectItem>
                   {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
@@ -145,17 +143,17 @@ export function CapHistorialTab({
           </div>
 
           {loadingEmployees ? (
-            <div className="rounded-xl border overflow-hidden">
-              <div className="divide-y">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3">
-                    <Skeleton className="h-4 w-8 hidden sm:block" />
-                    <Skeleton className="h-4 flex-1" />
-                    <Skeleton className="h-4 w-24 hidden sm:block" />
-                    <Skeleton className="h-5 w-28 rounded-full" />
-                    <Skeleton className="h-4 w-4 rounded" />
-                  </div>
-                ))}
+            <div className="rounded-md border border-border/60 shadow-none overflow-hidden bg-transparent">
+              <div className="divide-y divide-border/60">
+                {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-3">
+                  <Skeleton className="h-4 w-8 hidden sm:block bg-muted" />
+                  <Skeleton className="h-4 flex-1 bg-muted" />
+                  <Skeleton className="h-4 w-24 hidden sm:block bg-muted" />
+                  <Skeleton className="h-4 w-28 bg-muted" />
+                  <Skeleton className="h-4 w-4 rounded bg-muted" />
+                </div>
+              ))}
               </div>
             </div>
           ) : filtered.length === 0 ? (
@@ -166,28 +164,25 @@ export function CapHistorialTab({
             </div>
           ) : (
             <>
-              {filtered.length > PAGE_SIZE && (
-                <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setEmpPage} />
-              )}
-              <div className="rounded-xl border overflow-hidden">
+              <div className="rounded-md border border-border/60 shadow-none overflow-hidden bg-transparent">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-background/50">
-                      <TableHead className="w-14 hidden sm:table-cell">N.N.</TableHead>
-                      <TableHead>Empleado</TableHead>
+                    <TableRow className="bg-transparent hover:bg-transparent border-border/60">
+                      <TableHead className="w-14 hidden sm:table-cell">No.</TableHead>
+                      <TableHead>Nombre</TableHead>
                       <TableHead className="hidden sm:table-cell">Puesto</TableHead>
                       <TableHead className="hidden md:table-cell">Departamento</TableHead>
-                      <TableHead className="hidden sm:table-cell w-28">Avance</TableHead>
-                      <TableHead className="text-right w-28 sm:w-auto">Acciones</TableHead>
+                      <TableHead className="text-center w-28">Matriz</TableHead>
+                      <TableHead className="text-right w-16">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginated.map(emp => (
-                      <TableRow key={emp.id} className="hover:bg-muted/50">
+                      <TableRow key={emp.id} className="hover:bg-muted/30 border-border/60">
                         <TableCell className="text-sm text-muted-foreground font-mono hidden sm:table-cell">
                           {emp.numero ?? "—"}
                         </TableCell>
-                        <TableCell className="font-medium text-foreground">
+                        <TableCell className="text-sm font-medium text-ink">
                           <div className="flex flex-col">
                             <span>{emp.nombre}</span>
                             <span className="text-xs text-muted-foreground font-mono sm:hidden">
@@ -195,58 +190,30 @@ export function CapHistorialTab({
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">{emp.puesto ?? "—"}</TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {emp.departamento && (
-                            <Badge variant="secondary" className="bg-muted text-foreground text-xs">
+                            <span>
                               {emp.departamento}
-                            </Badge>
+                            </span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell w-32">
-                          {(() => {
-                            const p = progressMap[emp.id]
-                            if (!p || p.total === 0) return null
-                            const pct = Math.round((p.aprobados / p.total) * 100)
-                            return (
-                              <div className="flex items-center gap-2">
-                                <div className="flex h-1.5 flex-1 rounded-full overflow-hidden bg-muted">
-                                  {p.aprobados > 0 && (
-                                    <div className="bg-success transition-all" style={{ width: `${(p.aprobados / p.total) * 100}%` }} />
-                                  )}
-                                  {p.reprobados > 0 && (
-                                    <div className="bg-destructive transition-all" style={{ width: `${(p.reprobados / p.total) * 100}%` }} />
-                                  )}
-                                </div>
-                                <span className="text-[11px] tabular-nums text-muted-foreground w-7 text-right">
-                                  {pct}%
-                                </span>
-                              </div>
-                            )
-                          })()}
+                        <TableCell className="text-center p-2">
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 mx-auto text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                            onClick={() => onViewEmployee(emp)}
+                            title="Ver matriz de capacitación"
+                          >
+                            <GraduationCap className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost" size="sm"
-                              className="h-9 px-2 text-foreground focus-visible:ring-2 focus-visible:ring-ring hidden sm:flex"
-                              onClick={() => onViewEmployee(emp)}
-                            >
-                              Matriz
-                              <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                            <Button
-                              variant="ghost" size="icon"
-                              className="h-9 w-9 text-foreground focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
-                              onClick={() => onViewEmployee(emp)}
-                              title="Ver detalle"
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-9 w-9" title="Más opciones">
-                                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
@@ -284,13 +251,16 @@ export function CapHistorialTab({
                   </TableBody>
                 </Table>
               </div>
+              
+              {filtered.length > PAGE_SIZE && (
+                <div className="mt-4 flex justify-end">
+                  <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setEmpPage} />
+                </div>
+              )}
             </>
           )}
-          <p className="text-xs text-muted-foreground">
-            {filtered.length} de {employees.length} empleados
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

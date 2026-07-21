@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Moon, Monitor, Palette, Sun, User, Check, AlertCircle,
-  Upload, RotateCcw, Bell, Loader2, BellOff, Save, X,
+  Upload, RotateCcw, Loader2, Save, X,
   ChevronRight, Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,11 +19,9 @@ import { useTheme, ACCENT_COLOR_MAP, type AccentColor, type Theme } from "@/comp
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useProfile, useUser, useNotificationPreferences } from "@/lib/hooks"
+import { useProfile, useUser } from "@/lib/hooks"
 import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
 import { AuthForm } from "@/components/auth-form"
-import NotificationHistory from "@/components/notification-history"
-import { requestPushPermission, unsubscribeFromPush, isPushSubscribed } from "@/lib/supabase/push"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
@@ -32,12 +30,11 @@ const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "green", "teal", "cyan", "slate",
 ]
 
-type Tab = "profile" | "appearance" | "notifications" | "developer"
+type Tab = "profile" | "appearance" | "developer"
 
 const NAV_ITEMS_BASE: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
   { id: "profile",       label: "Perfil",          icon: User,    description: "Nombre, avatar y datos personales" },
   { id: "appearance",    label: "Apariencia",       icon: Palette, description: "Tema, colores y densidad" },
-  { id: "notifications", label: "Notificaciones",   icon: Bell,    description: "Alertas y preferencias de push" },
 ]
 
 // ─── Shared section header ────────────────────────────────────────────────────
@@ -501,127 +498,6 @@ function AppearanceTab() {
 }
 
 // ─── NOTIFICATIONS TAB ────────────────────────────────────────────────────────
-function NotificationsTab({ userId }: { userId?: string }) {
-  const [notifSaved, setNotifSaved] = useState(false)
-  const [pushSubscribed, setPushSubscribed] = useState(false)
-  const [pushLoading, setPushLoading] = useState(false)
-  const { preferences: notifPrefs, loading: notifLoading, saving: notifSaving, updatePreference, savePreferences } = useNotificationPreferences(userId)
-
-  React.useEffect(() => {
-    isPushSubscribed().then(setPushSubscribed).catch(() => {})
-  }, [])
-
-  const handleTogglePush = async () => {
-    setPushLoading(true)
-    try {
-      if (pushSubscribed) {
-        await unsubscribeFromPush()
-        setPushSubscribed(false)
-      } else {
-        const ok = await requestPushPermission()
-        setPushSubscribed(ok)
-      }
-    } finally {
-      setPushLoading(false)
-    }
-  }
-
-  const alertItems = [
-    { key: "pushBajas",        label: "Baja registrada",           desc: "Push inmediato al registrar una baja" },
-    { key: "pushBajasWarning", label: "Aviso anticipado de baja",  desc: "3 días, 1 día y el día exacto" },
-    { key: "pushRg",           label: "RG-REC-048 por vencer",     desc: "7 días, 3 días y el día del vencimiento" },
-    { key: "pushContrato",     label: "Término de contrato",       desc: "7 días, 3 días y el día del vencimiento" },
-  ] as const
-
-  return (
-    <div className="space-y-5">
-      <SectionHeader title="Notificaciones" description="Gestiona alertas y permisos de notificación push." />
-
-      {notifSaved && (
-        <Alert className="border-success/30 bg-success/10">
-          <Check className="h-4 w-4 text-success" />
-          <AlertDescription className="text-success">Preferencias guardadas.</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Push device toggle */}
-      <SettingGroup title="Este dispositivo">
-        <SettingRow
-          label={pushSubscribed ? "Push activadas" : "Push desactivadas"}
-          description={
-            pushSubscribed
-              ? "Recibirás alertas aunque la app esté cerrada."
-              : "Actívalas para recibir alertas en segundo plano."
-          }
-        >
-          <div className="flex items-center gap-2">
-            {pushSubscribed
-              ? <Badge variant="outline" className="text-xs border-success/40 text-success bg-success/10">Activo</Badge>
-              : <Badge variant="outline" className="text-xs">Inactivo</Badge>
-            }
-            <Button
-              variant={pushSubscribed ? "outline" : "default"}
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              disabled={pushLoading}
-              onClick={handleTogglePush}
-            >
-              {pushLoading
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : pushSubscribed
-                  ? <><BellOff className="h-3.5 w-3.5" />Desactivar</>
-                  : <><Bell className="h-3.5 w-3.5" />Activar</>
-              }
-            </Button>
-          </div>
-        </SettingRow>
-      </SettingGroup>
-
-      {/* Alert preferences */}
-      <SettingGroup title="Alertas de empleados">
-        {alertItems.map(({ key, label, desc }) => (
-          <SettingRow key={key} label={label} description={desc} htmlFor={`notif-${key}`}>
-            <Switch
-              id={`notif-${key}`}
-              checked={notifPrefs[key]}
-              onCheckedChange={(v) => updatePreference(key, v)}
-              disabled={notifLoading}
-            />
-          </SettingRow>
-        ))}
-        <div className="py-3 flex justify-between items-center">
-          <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Solo aplica a roles admin y dev.
-          </p>
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            disabled={notifSaving || notifLoading}
-            onClick={async () => {
-              const result = await savePreferences()
-              if (result?.success) {
-                setNotifSaved(true)
-                setTimeout(() => setNotifSaved(false), 3000)
-              }
-            }}
-          >
-            {notifSaving
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : notifSaved
-                ? <Check className="h-3.5 w-3.5" />
-                : <Save className="h-3.5 w-3.5" />
-            }
-            Guardar
-          </Button>
-        </div>
-      </SettingGroup>
-
-      {/* History */}
-      <NotificationHistory />
-    </div>
-  )
-}
-
 // ─── DEVELOPER TAB ────────────────────────────────────────────────────────────
 function DeveloperTab() {
   const { isMaintenance, toggleMaintenance, loading } = useMaintenanceMode()
@@ -758,7 +634,6 @@ export default function SettingsContent() {
             />
           )}
           {activeTab === "appearance" && <AppearanceTab />}
-          {activeTab === "notifications" && <NotificationsTab userId={user?.id} />}
           {activeTab === "developer" && isDev && <DeveloperTab />}
         </div>
       </div>

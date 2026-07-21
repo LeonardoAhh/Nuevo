@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, ChevronRight, X } from "lucide-react"
+import { Search, Plus, ChevronRight, X, BookOpen } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,65 +46,64 @@ export function CapPositionsTab({
   useEffect(() => { setPosPage(1) }, [posSearch, selectedDept])
 
   return (
-    <Card className="bg-card">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
+    <div className="bg-card border border-border/60 shadow-none rounded-xl overflow-hidden">
+      <div className="pb-6 pt-6 px-6 border-b border-border/60">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <CardTitle>Puestos registrados</CardTitle>
-            <CardDescription>
-              Consulta los puestos y sus cursos requeridos por departamento.
-            </CardDescription>
+            <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Puestos registrados</h2>
           </div>
           {!isReadOnly && (
-            <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" onClick={onNewPosition} aria-label="Nuevo puesto" title="Nuevo puesto">
+            <Button onClick={onNewPosition} className="h-10 px-4 rounded-md bg-primary text-primary-foreground shadow-none font-medium transition-colors" aria-label="Nuevo puesto" title="Nuevo puesto">
               <span className="hidden sm:inline">Nuevo puesto</span>
               <Plus className="h-4 w-4 sm:hidden" />
             </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Search + dept filter — single row */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
             <Input
               value={posSearch}
               onChange={e => setPosSearch(e.target.value)}
-              className={`pl-9 bg-muted text-foreground ${posSearch ? "pr-9" : ""}`}
+              placeholder="Buscar puesto..."
+              className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${posSearch ? "pr-11" : ""}`}
             />
             {posSearch && (
               <button
                 type="button"
                 aria-label="Limpiar búsqueda"
                 onClick={() => setPosSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-          <Select value={selectedDept} onValueChange={setSelectedDept}>
-            <SelectTrigger className="w-36 shrink-0 bg-muted text-foreground text-sm">
-              <SelectValue placeholder="Depto." />
-            </SelectTrigger>
-            <SelectContent className="bg-card">
-              <SelectItem value="all">Departamentos</SelectItem>
-              {departments.map(d => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+            <Select value={selectedDept} onValueChange={setSelectedDept}>
+              <SelectTrigger className="h-11 flex-1 sm:w-48 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
+                <SelectValue placeholder="Departamento" />
+              </SelectTrigger>
+              <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
+                <SelectItem value="all">Departamentos</SelectItem>
+                {departments.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {loadingPositions ? (
-          <div className="rounded-xl border overflow-hidden">
-            <div className="divide-y">
+          <div className="rounded-md border border-border/60 overflow-hidden bg-transparent shadow-none">
+            <div className="divide-y divide-border/60">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-3">
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-4 flex-1 bg-muted" />
+                  <Skeleton className="h-4 w-32 hidden sm:block bg-muted" />
+                  <Skeleton className="h-8 w-24 rounded-md bg-muted" />
                 </div>
               ))}
             </div>
@@ -117,34 +116,30 @@ export function CapPositionsTab({
           </div>
         ) : (
           <>
-            {filtered.length > PAGE_SIZE && (
-              <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setPosPage} />
-            )}
-            <div className="rounded-xl border overflow-x-auto">
+            <div className="rounded-md border border-border/60 shadow-none overflow-hidden bg-transparent">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-background/50">
+                  <TableRow className="bg-transparent hover:bg-transparent border-border/60">
                     <TableHead>Puesto</TableHead>
-                    <TableHead>Departamento</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead className="hidden sm:table-cell">Departamento</TableHead>
+                    <TableHead className="text-center w-24">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginated.map(pos => (
-                    <TableRow key={pos.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium text-foreground">{pos.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-muted text-foreground">
-                          {getDeptName(pos) ?? "—"}
-                        </Badge>
+                    <TableRow key={pos.id} className="hover:bg-muted/30 border-border/60">
+                      <TableCell className="text-sm font-medium text-ink">{pos.name}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground font-normal">
+                        <span>{getDeptName(pos) ?? "—"}</span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-center p-2">
                         <Button
                           variant="ghost" size="sm"
-                          className="gap-1 text-foreground hover:bg-muted"
+                          className="h-8 mx-auto text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors gap-1.5"
                           onClick={() => onViewCourses(pos)}
                         >
-                          Ver cursos <ChevronRight className="h-4 w-4" />
+                          <BookOpen className="h-4 w-4" />
+                          <span>Ver</span>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -152,12 +147,14 @@ export function CapPositionsTab({
                 </TableBody>
               </Table>
             </div>
+            {filtered.length > PAGE_SIZE && (
+              <div className="mt-4 flex justify-end">
+                <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setPosPage} />
+              </div>
+            )}
           </>
         )}
-        <p className="text-xs text-muted-foreground">
-          {filtered.length} de {positions.length} puestos
-        </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

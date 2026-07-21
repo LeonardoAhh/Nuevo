@@ -5,7 +5,9 @@ import { Check, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
+import { ResponsiveShell } from "@/components/ui/responsive-shell"
+import { RedesignModalHeader } from "@/components/redesign/modal-header"
+import { RedesignModalFooter } from "@/components/redesign/modal-footer"
 import type { Department } from "@/lib/hooks"
 
 export interface CapNewPositionDialogProps {
@@ -33,46 +35,49 @@ export function CapNewPositionDialog({ open, saving, departments, onClose, onSav
   }
 
   return (
-    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo puesto" description="Agrega un puesto al catálogo">
-      <ModalHeader
+    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md">
+      <RedesignModalHeader
         title="Nuevo puesto"
+        subtitle="Agrega un puesto al catálogo"
         onClose={onClose}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="space-y-4 px-4 py-5">
+        <div className="space-y-5 px-6 py-6">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Nombre del puesto</label>
+            <label className="text-sm font-medium text-ink">Nombre del puesto</label>
             <Input
               placeholder="Ej. Operador de producción"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm() }}
-              className="bg-muted"
+              className="h-11 rounded-md border-border/60 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-primary text-base"
               autoFocus
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Departamento</label>
+            <label className="text-sm font-medium text-ink">Departamento</label>
             <Select value={deptId} onValueChange={setDeptId}>
-              <SelectTrigger className="bg-muted"><SelectValue placeholder="Selecciona departamento" /></SelectTrigger>
-              <SelectContent className="bg-card">
+              <SelectTrigger className="h-11 rounded-md border-border/60 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-primary text-base"><SelectValue placeholder="Selecciona departamento" /></SelectTrigger>
+              <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
                 {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           {error && (
-            <Alert variant="destructive" className="py-2">
+            <Alert variant="destructive" className="py-2 border-destructive/30 bg-destructive/10 text-destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+        </div>
       </div>
-      </div>
-      <ModalFooter
+      
+      <RedesignModalFooter
         onCancel={onClose}
         onConfirm={handleConfirm}
         saving={saving}
+        confirmLabel="Guardar puesto"
       />
     </ResponsiveShell>
   )

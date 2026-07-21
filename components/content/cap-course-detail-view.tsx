@@ -100,7 +100,7 @@ export function CapCourseDetailView({
           </div>
         </div>
         {!isReadOnly && (
-          <Button onClick={() => onEdit(course)} variant="secondary" className="shrink-0">
+          <Button onClick={() => onEdit(course)} variant="ghost" className="shrink-0">
             <Pencil className="h-4 w-4 mr-2" />
             Editar curso
           </Button>

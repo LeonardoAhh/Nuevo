@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Briefcase, BookOpen, ClipboardList, Upload } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { motion } from "framer-motion"
 import { useCapacitacion, useRole } from "@/lib/hooks"
 import type { Department, Position, Course, PositionCourse, Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
@@ -10,10 +11,10 @@ import { notify } from "@/lib/notify"
 
 // Existing dialogs
 import { CapEditEmployeeDialog } from "@/components/content/cap-edit-employee-dialog"
-import { CapNewEmployeeDialog } from "@/components/content/cap-new-employee-dialog"
+import { CapNewEmployeeDialog } from "@/components/redesign/cap-new-employee-dialog"
 import { CapAddCoursesDialog } from "@/components/content/cap-add-courses-dialog"
 import { CapPositionCoursesDialog } from "@/components/content/cap-position-courses-dialog"
-import { CapEmployeeProgressDialog } from "@/components/content/cap-employee-progress-dialog"
+import { CapEmployeeProgressDialog } from "@/components/redesign/cap-employee-progress-dialog"
 import { CapNewPositionDialog } from "@/components/content/cap-new-position-dialog"
 import { CapNewCourseDialog } from "@/components/content/cap-new-course-dialog"
 import { CapEditCourseDialog } from "@/components/content/cap-edit-course-dialog"
@@ -22,9 +23,8 @@ import { CapEditCourseDialog } from "@/components/content/cap-edit-course-dialog
 import { CapPositionsTab } from "@/components/content/cap-positions-tab"
 import { CapCoursesTab } from "@/components/content/cap-courses-tab"
 import { CapHistorialTab } from "@/components/content/cap-historial-tab"
-import { CapImportTab } from "@/components/content/cap-import-tab"
-import { CapBulkImportDialog } from "@/components/content/cap-bulk-import-dialog"
-import { CapBulkCreateEmployees } from "@/components/content/cap-bulk-create-employees"
+import { CapBulkImportDialog } from "@/components/redesign/cap-bulk-import-dialog"
+import { CapBulkCreateEmployees } from "@/components/redesign/cap-bulk-create-employees"
 import { IncidenciasModal } from "@/components/content/incidencias-modal"
 import { ActasSeguimientoModal } from "@/components/content/actas-seguimiento-modal"
 
@@ -52,8 +52,6 @@ export default function CapacitacionContent() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [empCourses, setEmpCourses] = useState<EmployeeCourse[]>([])
   const [positionCourses, setPositionCourses] = useState<PositionCourse[]>([])
-  const [progressMap, setProgressMap] = useState<Record<string, { aprobados: number; reprobados: number; total: number }>>({})
-
   const [loadingPositions, setLoadingPositions] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [loadingEmployees, setLoadingEmployees] = useState(false)
@@ -113,19 +111,7 @@ export default function CapacitacionContent() {
     finally { setLoadingCourses(false) }
   }, [])
 
-  const loadProgressInBackground = useCallback(async (emps: Employee[]) => {
-    const BATCH = 8
-    for (let i = 0; i < emps.length; i += BATCH) {
-      const batch = emps.slice(i, i + BATCH)
-      const results = await Promise.allSettled(batch.map(e => fetchEmployeeProgress(e)))
-      const chunk: Record<string, { aprobados: number; reprobados: number; total: number }> = {}
-      results.forEach((r, idx) => {
-        if (r.status === 'fulfilled')
-          chunk[batch[idx].id] = { aprobados: r.value.aprobados, reprobados: r.value.reprobados, total: r.value.totalRequired }
-      })
-      setProgressMap(prev => ({ ...prev, ...chunk }))
-    }
-  }, [fetchEmployeeProgress])
+
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadEmployees = useCallback(async () => {
@@ -134,13 +120,12 @@ export default function CapacitacionContent() {
       const emps = await fetchEmployees()
       setEmployees(emps)
       setLoadingEmployees(false)
-      loadProgressInBackground(emps)
     } catch (err) {
       console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
       notify.error("Error al cargar empleados")
       setLoadingEmployees(false)
     }
-  }, [loadProgressInBackground])
+  }, [fetchEmployees])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadPositionData = useCallback(async () => {
@@ -152,7 +137,11 @@ export default function CapacitacionContent() {
     finally { setLoadingPositions(false) }
   }, [])
 
-  useEffect(() => { loadPositionData() }, [loadPositionData])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    loadPositionData()
+    loadEmployees()
+  }, [])
 
   const bulkImport = useBulkImport({ employees, courses, bulkImportCourseRecords, onLoadCourses: loadCoursesData })
 
@@ -367,83 +356,68 @@ export default function CapacitacionContent() {
     <>
       <ReadOnlyBanner />
       <Tabs defaultValue="historial" onValueChange={handleTabChange}>
-        <TabsList className="flex w-full mb-4">
-          <TabsTrigger value="historial" className="flex-1 text-xs sm:text-sm">
-            <ClipboardList className="mr-1 sm:mr-2 h-4 w-4" /><span>Empleados</span>
+        <TabsList className="flex w-full mb-6 bg-muted rounded-md p-1 border-0 shadow-none">
+          <TabsTrigger value="historial" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+            <ClipboardList className="mr-2 h-[18px] w-[18px]" /><span>Empleados</span>
           </TabsTrigger>
-          <TabsTrigger value="cursos" className="flex-1 text-xs sm:text-sm">
-            <BookOpen className="mr-1 sm:mr-2 h-4 w-4" /><span>Cursos</span>
+          <TabsTrigger value="cursos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+            <BookOpen className="mr-2 h-[18px] w-[18px]" /><span>Cursos</span>
           </TabsTrigger>
-          <TabsTrigger value="puestos" className="flex-1 text-xs sm:text-sm">
-            <Briefcase className="mr-1 sm:mr-2 h-4 w-4" /><span>Puestos</span>
-          </TabsTrigger>
-          <TabsTrigger value="importar" className="hidden">
-            <Upload className="mr-1 sm:mr-2 h-4 w-4" /><span>Importar</span>
+          <TabsTrigger value="puestos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+            <Briefcase className="mr-2 h-[18px] w-[18px]" /><span>Puestos</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="puestos">
-          <CapPositionsTab
-            departments={departments}
-            positions={positions}
-            loadingPositions={loadingPositions}
-            isReadOnly={isReadOnly}
-            onNewPosition={() => setNewPosOpen(true)}
-            onViewCourses={handleViewCourses}
-          />
+        <TabsContent value="puestos" className="mt-0 outline-none">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <CapPositionsTab
+              departments={departments}
+              positions={positions}
+              loadingPositions={loadingPositions}
+              isReadOnly={isReadOnly}
+              onNewPosition={() => setNewPosOpen(true)}
+              onViewCourses={handleViewCourses}
+            />
+          </motion.div>
         </TabsContent>
 
-        <TabsContent value="cursos">
-          <CapCoursesTab
-            courses={courses}
-            loadingCourses={loadingCourses}
-            isReadOnly={isReadOnly}
-            positions={positions}
-            positionCourses={positionCourses}
-            employees={employees}
-            empCourses={empCourses}
-            onNewCourse={() => setNewCourseOpen(true)}
-            onEditCourse={(c) => { setEditCourseTarget(c); setEditCourseOpen(true) }}
-          />
+        <TabsContent value="cursos" className="mt-0 outline-none">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <CapCoursesTab
+              courses={courses}
+              loadingCourses={loadingCourses}
+              isReadOnly={isReadOnly}
+              positions={positions}
+              positionCourses={positionCourses}
+              employees={employees}
+              empCourses={empCourses}
+              onNewCourse={() => setNewCourseOpen(true)}
+              onEditCourse={(c) => { setEditCourseTarget(c); setEditCourseOpen(true) }}
+            />
+          </motion.div>
         </TabsContent>
 
-        <TabsContent value="historial">
-          <CapHistorialTab
-            employees={employees}
-            loadingEmployees={loadingEmployees}
-            progressMap={progressMap}
-            isReadOnly={isReadOnly}
-            newEmpSuccess={newEmpSuccess}
-            addCoursesSuccess={addCoursesSuccess}
-            onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
-            onBulkImport={bulkImport.openDialog}
-            onBulkCreateEmployees={() => setBulkCreateEmpOpen(true)}
-            onViewEmployee={handleViewEmployee}
-            onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
-            onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
-            onDeleteEmployee={handleDeleteEmployee}
-            onIncidencias={handleOpenIncidencias}
-            onActasSeguimiento={handleOpenActas}
-          />
+        <TabsContent value="historial" className="mt-0 outline-none">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <CapHistorialTab
+              employees={employees}
+              loadingEmployees={loadingEmployees}
+              isReadOnly={isReadOnly}
+              newEmpSuccess={newEmpSuccess}
+              addCoursesSuccess={addCoursesSuccess}
+              onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
+              onBulkImport={bulkImport.openDialog}
+              onBulkCreateEmployees={() => setBulkCreateEmpOpen(true)}
+              onViewEmployee={handleViewEmployee}
+              onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
+              onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
+              onDeleteEmployee={handleDeleteEmployee}
+              onIncidencias={handleOpenIncidencias}
+              onActasSeguimiento={handleOpenActas}
+            />
+          </motion.div>
         </TabsContent>
 
-        <TabsContent value="importar">
-          <CapImportTab
-            jsonText={jsonImport.jsonText}
-            setJsonText={jsonImport.setJsonText}
-            preview={jsonImport.preview}
-            parseError={jsonImport.parseError}
-            importSuccess={jsonImport.importSuccess}
-            fileInputRef={jsonImport.fileInputRef}
-            isReadOnly={isReadOnly}
-            importing={importing}
-            importError={importError}
-            handleParse={jsonImport.handleParse}
-            handleFileUpload={jsonImport.handleFileUpload}
-            handleImport={jsonImport.handleImport}
-            handleReset={jsonImport.handleReset}
-          />
-        </TabsContent>
       </Tabs>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
