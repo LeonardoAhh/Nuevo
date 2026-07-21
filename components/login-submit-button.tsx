@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { CheckIcon, XIcon } from "lucide-react"
 
 export type LoginSubmitStatus = "idle" | "loading" | "success" | "error"
@@ -17,7 +17,7 @@ export function LoginSubmitButton({ status, children, className, ...props }: Log
   const isLoading = status === "loading"
 
   // Variants for the shake animation on error
-  const shakeVariants = {
+  const shakeVariants: Variants = {
     idle: { x: 0 },
     error: {
       x: [0, -6, 6, -4, 4, 0],

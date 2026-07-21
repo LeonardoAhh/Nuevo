@@ -35,7 +35,7 @@ export function CapNewPositionDialog({ open, saving, departments, onClose, onSav
   }
 
   return (
-    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md">
+    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo puesto">
       <RedesignModalHeader
         title="Nuevo puesto"
         subtitle="Agrega un puesto al catálogo"
