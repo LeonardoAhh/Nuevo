@@ -54,6 +54,7 @@ export function CapEditCourseDialog({ course, open, saving, onClose, onSave }: C
       open={open}
       onClose={onClose}
       maxWidth="sm:max-w-md"
+      title="Editar curso"
     >
       <RedesignModalHeader
         title="Editar curso"
