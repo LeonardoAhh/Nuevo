@@ -97,7 +97,7 @@ export function MaintenanceScreen() {
         />
 
         {/* Contenedor del ícono */}
-        <div className="relative bg-card border border-border rounded-full p-7 shadow-sm">
+        <div className="relative bg-card border border-border/60 rounded-full p-7 shadow-none">
           {/* Engrane girando — única animación de movimiento */}
           <motion.div
             animate={{ rotate: 360 }}
@@ -110,7 +110,7 @@ export function MaintenanceScreen() {
 
           {/* Badge de estado — esquina inferior derecha */}
           <div
-            className="absolute -bottom-1.5 -right-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-card border border-border shadow-sm"
+            className="absolute -bottom-1.5 -right-1.5 flex items-center justify-center w-8 h-8 rounded-full bg-card border border-border/60 shadow-none"
             aria-hidden="true"
           >
             <Clock
@@ -134,7 +134,7 @@ export function MaintenanceScreen() {
         </p>
 
         {/* Título principal */}
-        <h1 className="text-2xl md:text-3xl font-semibold text-foreground leading-tight">
+        <h1 className="text-2xl md:text-3xl font-medium tracking-tight text-foreground leading-tight">
           Estamos aplicando una actualización.
         </h1>
 

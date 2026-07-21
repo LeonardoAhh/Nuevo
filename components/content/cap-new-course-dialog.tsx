@@ -42,7 +42,7 @@ export function CapNewCourseDialog({ open, saving, onClose, onSave }: CapNewCour
   }
 
   return (
-    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md">
+    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo curso">
       <RedesignModalHeader
         title="Nuevo curso"
         subtitle="Agrega un curso al catálogo"
