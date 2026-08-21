@@ -1,0 +1,43 @@
+/* 
+  cap-employee-progress-dialog.module.css
+  Tokens and layout specifics for the redesign adhering to design.md
+*/
+
+.modalWrapper {
+  /* No drop shadows, hairline-only depth via border */
+  border: 1px solid hsl(var(--border) / 0.8);
+  /* The canvas color is meant to be warm cream (#f7f7f4), assuming it's mapped to var(--background) or similar, but let's enforce it if needed. 
+     According to rules: surface-card is pure white, canvas is cream. */
+  background-color: #ffffff; /* surface-card */
+  border-radius: 12px; /* rounded-lg for cards */
+  box-shadow: none !important;
+}
+
+.pane {
+  background-color: #fafaf7; /* canvas-soft */
+  border-radius: 8px; /* rounded-md */
+  border: 1px solid #e6e5e0; /* hairline */
+}
+
+/* Typography Overrides */
+.displayTitle {
+  font-weight: 400 !important;
+  letter-spacing: -0.325px; /* like display-md */
+  color: #26251e; /* ink */
+}
+
+/* Semantic colors for progress */
+.statusAprobado {
+  color: #1f8a65; /* semantic-success */
+}
+
+.statusReprobado {
+  color: #cf2d56; /* semantic-error */
+}
+
+/* Base resets */
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* 16px gap for spacing */
+}
