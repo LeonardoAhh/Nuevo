@@ -228,10 +228,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Update CSS variables when accent color changes
   useEffect(() => {
     const colors = ACCENT_COLOR_MAP[accentColor] ?? ACCENT_COLOR_MAP.blue
-    document.documentElement.style.setProperty("--primary", colors.primary)
-    document.documentElement.style.setProperty("--primary-foreground", colors.primaryForeground)
+    const primaryColor = resolvedTheme === "dark" ? colors.primaryDark : colors.primaryLight
+    const primaryFgColor = (resolvedTheme === "dark" && colors.primaryForegroundDark) ? colors.primaryForegroundDark : colors.primaryForeground
+    document.documentElement.style.setProperty("--primary", primaryColor)
+    document.documentElement.style.setProperty("--primary-foreground", primaryFgColor)
     localStorage.setItem(THEME_STORAGE_KEYS.accentColor, accentColor)
-  }, [accentColor])
+  }, [accentColor, resolvedTheme])
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light")

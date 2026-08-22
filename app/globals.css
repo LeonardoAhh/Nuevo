@@ -4,16 +4,23 @@
 
 @layer base {
     :root {
-        --font-serif: "Georgia", "Times New Roman", serif; /* ejemplo */
+        /* Theme overrides & scales */
+        --font-base-size: 16px;
+        --density-scale: 1;
+
+        /* System fonts fallback */
+        --font-sans: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-serif: "Georgia", "Times New Roman", serif;
         --font-mono: "JetBrains Mono", "Fira Code", monospace;
-        /* Premium warm-neutral palette — 220° tint reduces coldness, lower saturation reduces fatigue */
-        --background: 220 14% 96%;
+
+        /* Premium warm-neutral palette — softer light theme to reduce eye strain */
+        --background: 220 14% 94%;
         --foreground: 222 14% 16%;
 
-        --card: 0 0% 100%;
+        --card: 220 14% 98%;
         --card-foreground: 222 14% 16%;
 
-        --popover: 0 0% 100%;
+        --popover: 220 14% 98%;
         --popover-foreground: 222 14% 16%;
 
         --primary: 221 62% 55%;
@@ -330,6 +337,9 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* ─── Density: Compact ────────────────────────────────── */
+.density-compact {
+    line-height: 1.35;
+}
 
 /* Main content area */
 .density-compact main {
@@ -510,6 +520,19 @@ input[type="color"]::-webkit-color-swatch {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* Sonner toasts — full-width on mobile, fixed width on desktop */
+@layer components {
+    [data-sonner-toaster] {
+        --width: 356px;
+    }
+
+    @media (max-width: 640px) {
+        [data-sonner-toaster] {
+            --width: calc(100vw - 2rem);
+        }
     }
 }
 

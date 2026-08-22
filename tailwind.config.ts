@@ -1,4 +1,16 @@
 import type { Config } from "tailwindcss"
+import plugin from "tailwindcss/plugin"
+import defaultTheme from "tailwindcss/defaultTheme"
+
+// Automágicamente multiplicamos todos los espaciados en 'rem' por la variable --density-scale
+const dynamicSpacing = Object.fromEntries(
+  Object.entries(defaultTheme.spacing).map(([key, value]) => {
+    if (typeof value === "string" && value.endsWith("rem")) {
+      return [key, `calc(${value} * var(--density-scale, 1))`]
+    }
+    return [key, value]
+  })
+)
 
 const config: Config = {
   darkMode: "class",
@@ -11,6 +23,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      spacing: dynamicSpacing,
       screens: {
         xs: "480px",
       },
@@ -103,7 +116,12 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function({ addVariant }) {
+      // Agrega la variante 'compact:' para usar en las clases de Tailwind
+      addVariant('compact', '.density-compact &')
+    })
+  ],
 }
 
 export default config

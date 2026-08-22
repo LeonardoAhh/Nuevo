@@ -258,11 +258,6 @@ export default function ExamenesContent({
         </div>
       ) : (
         <>
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <PaginationBar currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          )}
-
           {/* Vista móvil: tarjetas */}
           <div className="flex flex-col gap-3 md:hidden">
             {paginadas.map((p) => (
@@ -354,6 +349,13 @@ export default function ExamenesContent({
               </Table>
             </CardContent>
           </Card>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-end">
+              <PaginationBar currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
+          )}
         </>
       )}
 

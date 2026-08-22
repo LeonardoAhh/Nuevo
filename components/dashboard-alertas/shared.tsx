@@ -45,6 +45,14 @@ interface MetricaProps {
 }
 
 export function Metrica({ label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
+    // Use semantic colors instead of arbitrary category colors to unify the palette
+    const isVencida = label.toLowerCase().includes('vencida')
+    const isProxima = label.toLowerCase().includes('próxima') || label.toLowerCase().includes('proxima')
+    
+    const solidBg = isVencida ? 'bg-destructive text-destructive-foreground' :
+                    isProxima ? 'bg-warning text-warning-foreground' :
+                    'bg-primary text-primary-foreground'
+
     return (
         <button
             onClick={e => {
@@ -54,10 +62,10 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
             disabled={loading || valor === 0}
             aria-label={`${label}: ${valor}`}
             className={`
-        group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-primary/10 dark:bg-primary/20
+        group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-md shadow-sm transition-all text-left
         ${valor > 0 && !loading
-                    ? "cursor-pointer hover:bg-primary/15 dark:hover:bg-primary/25"
-                    : "cursor-default opacity-75"
+                    ? `cursor-pointer hover:opacity-90 ${solidBg}`
+                    : "cursor-default bg-muted text-muted-foreground opacity-75"
                 }
       `}
         >
@@ -65,12 +73,12 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
                 {loading ? (
                     <div className="h-6 w-8 bg-current/10 rounded animate-pulse" />
                 ) : (
-                    <span className="text-xl font-bold leading-none text-foreground">{valor}</span>
+                    <span className="text-xl font-bold leading-none">{valor}</span>
                 )}
-                <span className="text-xs text-muted-foreground mt-1 leading-snug text-wrap">{label}</span>
+                <span className={`text-xs mt-1 leading-snug text-wrap ${valor > 0 && !loading ? 'opacity-90' : ''}`}>{label}</span>
             </div>
             {valor > 0 && !loading && (
-                <ChevronRight size={13} className={`${colorValor} opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0`} />
+                <ChevronRight size={13} className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
             )}
         </button>
     )
@@ -107,7 +115,7 @@ export function Seccion({
     umbrales, onVencidas, onPorVencer, loading,
 }: SeccionProps) {
     return (
-        <div className="rounded-2xl border border-primary/10 bg-primary/5 dark:border-primary/20 dark:bg-primary/10 p-4">
+        <div className="rounded-md border border-border bg-card p-4 shadow-sm">
             <SeccionHeader label={label} />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                 <Metrica
@@ -331,7 +339,7 @@ export function FilaEval({ item, evalNum, colorDias, colorBadge, colorBorde, bad
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-2xl border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+        <div className={`flex flex-col gap-2 rounded-md border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
@@ -387,7 +395,7 @@ export function FilaFecha({ item, colorBadge, colorDias, colorBorde, onEntregado
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-2xl border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+        <div className={`flex flex-col gap-2 rounded-md border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>

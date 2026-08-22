@@ -265,11 +265,6 @@ export default function NuevoIngresoContent() {
         </CardContent>
       </Card>
 
-      {/* Paginación superior */}
-      {filtered.length > PAGE_SIZE && (
-        <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
-      )}
-
       {/* Tabla */}
       <Card className="bg-card mb-6">
         <CardContent className="p-0">
@@ -326,12 +321,12 @@ export default function NuevoIngresoContent() {
                           <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.puesto}</p>
                           <p className="text-xs text-muted-foreground">{r.departamento}</p>
                         </div>
-                        <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
-                          ? 'bg-success/10 text-success'
-                          : rgUrgente
-                            ? 'bg-destructive/10 text-destructive'
-                            : 'bg-warning/10 text-warning'
-                          }`}>
+                          <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md shadow-sm ${r.rg_rec_048 === 'Entregado'
+                            ? 'bg-success text-success-foreground'
+                            : rgUrgente
+                              ? 'bg-destructive text-destructive-foreground'
+                              : 'bg-warning text-warning-foreground'
+                            }`}>
                           <span className="flex items-center gap-1">
                             {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                             RG
@@ -427,11 +422,11 @@ export default function NuevoIngresoContent() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-full ${r.rg_rec_048 === 'Entregado'
-                              ? 'bg-success/10 text-success'
+                            <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md shadow-sm ${r.rg_rec_048 === 'Entregado'
+                              ? 'bg-success text-success-foreground'
                               : rgUrgente
-                                ? 'bg-destructive/10 text-destructive'
-                                : 'bg-warning/10 text-warning'
+                                ? 'bg-destructive text-destructive-foreground'
+                                : 'bg-warning text-warning-foreground'
                               }`}>
                               <span className="flex items-center gap-1">
                                 {r.rg_rec_048 === 'Entregado' ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
@@ -457,19 +452,14 @@ export default function NuevoIngresoContent() {
         {filtered.length} de {records.length} empleados
       </p>
 
-      {/* Leyenda */}
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-6">
-        <div className="flex items-center gap-1.5">
-          <Info className="h-3.5 w-3.5" />
-          <span>Haz clic en una fila para editar calificaciones y estado</span>
+      {/* Paginación inferior */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="mb-6 flex justify-end">
+          <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
-        {Object.entries(EVAL_STATUS_META).map(([key, { label, icon: Icon, classes }]) => (
-          <div key={key} className="flex items-center gap-1">
-            <Icon className={`h-3.5 w-3.5 ${classes}`} />
-            <span>{label}</span>
-          </div>
-        ))}
-      </div>
+      )}
+
+
 
       {/* Dialog de creación de nuevo empleado */}
       <CreateEmployeeDialog

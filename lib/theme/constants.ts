@@ -21,31 +21,34 @@ export type AccentColor =
   | "green"
   | "teal"
   | "cyan"
+  | "monochrome"
+
 export type FontSize = "small" | "medium" | "large"
 export type Density = "comfortable" | "compact"
 
 export const ACCENT_COLOR_MAP: Record<
   AccentColor,
-  { primary: string; primaryForeground: string; label: string }
+  { primaryLight: string; primaryDark: string; primaryForeground: string; primaryForegroundDark?: string; label: string }
 > = {
-  slate: { primary: "220 14% 46%", primaryForeground: "0 0% 98%", label: "Slate" },
-  blue: { primary: "221 62% 55%", primaryForeground: "0 0% 98%", label: "Blue" },
-  indigo: { primary: "234 56% 58%", primaryForeground: "0 0% 98%", label: "Indigo" },
-  purple: { primary: "262 52% 56%", primaryForeground: "0 0% 98%", label: "Purple" },
-  violet: { primary: "271 58% 55%", primaryForeground: "0 0% 98%", label: "Violet" },
-  rose: { primary: "350 55% 52%", primaryForeground: "0 0% 98%", label: "Rose" },
-  pink: { primary: "330 50% 55%", primaryForeground: "0 0% 98%", label: "Pink" },
-  orange: { primary: "25 68% 50%", primaryForeground: "0 0% 98%", label: "Copper" },
-  amber: { primary: "40 62% 44%", primaryForeground: "0 0% 98%", label: "Amber" },
-  green: { primary: "152 48% 38%", primaryForeground: "0 0% 98%", label: "Sage" },
-  teal: { primary: "172 50% 36%", primaryForeground: "0 0% 98%", label: "Teal" },
-  cyan: { primary: "192 55% 42%", primaryForeground: "0 0% 98%", label: "Cyan" },
+  slate: { primaryLight: "220 14% 36%", primaryDark: "220 14% 60%", primaryForeground: "0 0% 98%", label: "Slate" },
+  blue: { primaryLight: "221 62% 45%", primaryDark: "221 72% 65%", primaryForeground: "0 0% 98%", label: "Blue" },
+  indigo: { primaryLight: "234 56% 48%", primaryDark: "234 66% 68%", primaryForeground: "0 0% 98%", label: "Indigo" },
+  purple: { primaryLight: "262 52% 46%", primaryDark: "262 62% 66%", primaryForeground: "0 0% 98%", label: "Purple" },
+  violet: { primaryLight: "271 58% 45%", primaryDark: "271 68% 65%", primaryForeground: "0 0% 98%", label: "Violet" },
+  rose: { primaryLight: "350 55% 42%", primaryDark: "350 65% 62%", primaryForeground: "0 0% 98%", label: "Rose" },
+  pink: { primaryLight: "330 50% 45%", primaryDark: "330 60% 65%", primaryForeground: "0 0% 98%", label: "Pink" },
+  orange: { primaryLight: "25 68% 45%", primaryDark: "25 78% 60%", primaryForeground: "0 0% 98%", label: "Copper" },
+  amber: { primaryLight: "40 62% 38%", primaryDark: "40 72% 54%", primaryForeground: "0 0% 98%", label: "Amber" },
+  green: { primaryLight: "152 48% 34%", primaryDark: "152 58% 48%", primaryForeground: "0 0% 98%", label: "Sage" },
+  teal: { primaryLight: "172 50% 32%", primaryDark: "172 60% 46%", primaryForeground: "0 0% 98%", label: "Teal" },
+  cyan: { primaryLight: "192 55% 38%", primaryDark: "192 65% 52%", primaryForeground: "0 0% 98%", label: "Cyan" },
+  monochrome: { primaryLight: "220 14% 12%", primaryDark: "0 0% 100%", primaryForeground: "0 0% 100%", primaryForegroundDark: "220 14% 12%", label: "Monochrome" },
 }
 
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
-  small: "16px",
-  medium: "18px",
-  large: "20px",
+  small: "14px",
+  medium: "16px",
+  large: "18px",
 }
 
 export const DENSITY_SCALE_MAP: Record<Density, string> = {
@@ -77,7 +80,7 @@ export const OS_THEME_COLOR_FALLBACK: Record<"light" | "dark", string> = {
 
 /** Post-hydration status-bar colors (match --card in app/globals.css). */
 export const APP_THEME_COLOR: Record<"light" | "dark", string> = {
-  light: "#ffffff",
+  light: "#f8f9fa",
   dark: "#161619",
 }
 
@@ -92,7 +95,7 @@ const DEFAULT_ACCENT: AccentColor = "blue"
 export function buildThemeBootstrapScript(): string {
   const accents = JSON.stringify(
     Object.fromEntries(
-      Object.entries(ACCENT_COLOR_MAP).map(([key, value]) => [key, value.primary])
+      Object.entries(ACCENT_COLOR_MAP).map(([key, value]) => [key, value])
     )
   )
   const fontSizes = JSON.stringify(FONT_SIZE_MAP)
@@ -105,15 +108,16 @@ export function buildThemeBootstrapScript(): string {
   var fs=${fontSizes};
   var k=${k};
   var t=localStorage.getItem(k.theme);
-  if(t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches))d.classList.add("dark");
+  var isDark = t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  if(isDark)d.classList.add("dark");
   var f=localStorage.getItem(k.fontSize);
   if(f&&fs[f])d.style.setProperty("--font-base-size",fs[f]);
   var dn=localStorage.getItem(k.density);
   if(dn==="compact"){d.classList.add("density-compact");d.style.setProperty("--density-scale","${compactScale}");}
   var a=localStorage.getItem(k.accentColor);
   if(a&&c[a]){
-    d.style.setProperty("--primary",c[a]);
-    d.style.setProperty("--primary-foreground",${JSON.stringify(ACCENT_COLOR_MAP[DEFAULT_ACCENT].primaryForeground)});
+    d.style.setProperty("--primary", isDark ? c[a].primaryDark : c[a].primaryLight);
+    d.style.setProperty("--primary-foreground", (isDark && c[a].primaryForegroundDark) ? c[a].primaryForegroundDark : c[a].primaryForeground);
   }
   if(localStorage.getItem(k.reducedMotion)==="true")d.classList.add("reduce-motion");
 }catch(e){}})();`

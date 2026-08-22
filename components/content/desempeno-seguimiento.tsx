@@ -284,18 +284,18 @@ function SummaryCards({ rows }: { rows: EvalRow[] }) {
   const sinFecha   = rows.filter(r => !r.fecha_revision).length
 
   const items = [
-    { label: "Total",         value: rows.length, color: "text-foreground",       bg: "bg-muted/60" },
-    { label: "Reprobados",    value: reprobados,  color: "text-destructive",      bg: "bg-destructive/10" },
-    { label: "Vencidos",      value: vencidos,    color: "text-destructive",      bg: "bg-destructive/10" },
-    { label: "Próximos 14 d", value: proximos,    color: "text-warning",          bg: "bg-warning/10" },
-    { label: "Sin fecha",     value: sinFecha,    color: "text-muted-foreground", bg: "bg-muted/40" },
+    { label: "Total",         value: rows.length, color: "text-primary-foreground",     labelColor: "text-primary-foreground/90",       bg: "bg-primary shadow-sm" },
+    { label: "Reprobados",    value: reprobados,  color: "text-destructive-foreground", labelColor: "text-destructive-foreground/90",   bg: "bg-destructive shadow-sm" },
+    { label: "Vencidos",      value: vencidos,    color: "text-destructive-foreground", labelColor: "text-destructive-foreground/90",   bg: "bg-destructive shadow-sm" },
+    { label: "Próximos 14 d", value: proximos,    color: "text-warning-foreground",     labelColor: "text-warning-foreground/90",       bg: "bg-warning shadow-sm" },
+    { label: "Sin fecha",     value: sinFecha,    color: "text-secondary-foreground",   labelColor: "text-secondary-foreground/90",     bg: "bg-secondary shadow-sm" },
   ]
 
   return (
     <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {items.map(({ label, value, color, bg }) => (
-        <div key={label} className={`rounded-xl p-3 ${bg} flex flex-col gap-1`}>
-          <dt className="text-xs text-muted-foreground">{label}</dt>
+      {items.map(({ label, value, color, labelColor, bg }) => (
+        <div key={label} className={`rounded-md p-3 ${bg} flex flex-col gap-1`}>
+          <dt className={`text-xs ${labelColor}`}>{label}</dt>
           <dd className={`text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
         </div>
       ))}
@@ -443,7 +443,7 @@ export default function DesempenoSeguimiento() {
       <Card className="bg-gradient-to-br from-destructive/5 to-warning/5 border-destructive/20">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-destructive/15 text-destructive">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-destructive text-destructive-foreground shadow-sm">
               <TrendingDown size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">

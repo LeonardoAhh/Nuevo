@@ -104,7 +104,7 @@ function ConfirmToolbar({ tone, confirmLabel, cancelLabel, onCancel, onConfirm, 
       <button
         type="button"
         onClick={onCancel}
-        className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {cancelLabel}
       </button>
@@ -113,7 +113,7 @@ function ConfirmToolbar({ tone, confirmLabel, cancelLabel, onCancel, onConfirm, 
         onClick={onConfirm}
         disabled={confirmDisabled}
         className={cn(
-          "inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm",
+          "inline-flex h-10 flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-sm",
           styles.btn,
           confirmDisabled && "opacity-50 cursor-not-allowed"
         )}

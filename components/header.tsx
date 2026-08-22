@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useAppUpdate } from "@/lib/hooks/useAppUpdate"
+import { toast } from "sonner"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Menu, Moon, Sun, Monitor, Settings, LogOut,
-  RefreshCw, ChevronDown, Palette,
+  RefreshCw, ChevronDown, Palette, Loader2, CheckCircle2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -49,6 +51,7 @@ export default function Header({
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
   const [signingOut, setSigningOut] = useState(false)
+  const { status: updateStatus, checkForUpdate, applyUpdate, getLatestStatus } = useAppUpdate()
 
   const initials = profile
     ? `${profile.firstName?.[0] ?? ""}${profile.lastName?.[0] ?? ""}`.toUpperCase() || "U"
@@ -110,13 +113,13 @@ export default function Header({
                   type="button"
                   aria-label={`Cuenta de ${displayName}`}
                   className={cn(
-                    "flex h-10 items-center gap-2 rounded-full pr-1.5 pl-1 transition-colors",
+                    "flex h-10 items-center gap-2 rounded-xl pr-2 pl-1 transition-colors",
                     "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   )}
                 >
-                  <Avatar className="size-8 shrink-0 rounded-full ring-2 ring-primary/15">
+                  <Avatar className="size-8 shrink-0 rounded-lg ring-2 ring-primary/15">
                     <AvatarImage src={profile?.avatar || undefined} alt="" />
-                    <AvatarFallback className="rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                    <AvatarFallback className="rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -169,9 +172,30 @@ export default function Header({
                 {/* Session */}
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem onSelect={() => window.location.reload()}>
+                <DropdownMenuItem onSelect={async () => {
+                  if (updateStatus === "available") {
+                    applyUpdate()
+                    toast.loading("Actualizando…", { id: "app-update" })
+                    return
+                  }
+                  toast.loading("Buscando actualización…", { id: "app-update" })
+                  await checkForUpdate()
+                  // Read the live status from the store (not the stale closure value)
+                  const latest = getLatestStatus()
+                  if (latest === "available") {
+                    toast.success("¡Nueva versión disponible!", {
+                      id: "app-update",
+                      description: "Abre el menú de nuevo para actualizar.",
+                    })
+                  } else {
+                    toast.success("Estás al día", {
+                      id: "app-update",
+                      description: "No hay actualizaciones disponibles.",
+                    })
+                  }
+                }}>
                   <RefreshCw size={16} aria-hidden="true" />
-                  Buscar Actualización
+                  {updateStatus === "available" ? "Actualizar ahora" : "Buscar Actualización"}
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

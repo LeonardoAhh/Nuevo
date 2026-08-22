@@ -78,16 +78,6 @@ function VideoStage({ sources, poster }: { sources: string[]; poster?: string })
             <div className="lhv-veil" aria-hidden />
             <div className="lhv-veil-bottom" aria-hidden />
 
-            {/* Curva lateral derecha (solo desktop) — empata con el diseño previo */}
-            <div className="lhv-curve" aria-hidden>
-                <svg viewBox="0 0 80 900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M80 0H0C40 150 0 300 40 450C80 600 0 750 40 900H80V0Z"
-                        className="fill-background"
-                    />
-                </svg>
-            </div>
-
             <style jsx>{`
         .lhv-stage {
           position: relative;
@@ -124,30 +114,6 @@ function VideoStage({ sources, poster }: { sources: string[]; poster?: string })
           height: 28%;
           background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
           pointer-events: none;
-        }
-        .lhv-curve {
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 4rem;
-          overflow: hidden;
-          z-index: 2;
-          display: none;
-        }
-        .lhv-curve svg {
-          height: 100%;
-          width: 100%;
-        }
-        @media (min-width: 1024px) {
-          .lhv-curve {
-            display: block;
-          }
-        }
-        @media (min-width: 1280px) {
-          .lhv-curve {
-            width: 5rem;
-          }
         }
       `}</style>
         </div>

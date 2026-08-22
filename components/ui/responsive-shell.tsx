@@ -102,7 +102,7 @@ export function ModalFooter({
             onClick={secondaryAction.onClick}
             disabled={saving || secondaryAction.disabled}
             className={cn(
-              "inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+              "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
               secondaryClasses
             )}
           >
@@ -117,7 +117,7 @@ export function ModalFooter({
             type="button"
             onClick={onCancel}
             disabled={saving || cancelDisabled}
-            className="inline-flex h-9 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -128,7 +128,7 @@ export function ModalFooter({
             onClick={onConfirm}
             disabled={saving || confirmDisabled}
             className={cn(
-              "inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm",
+              "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm",
               confirmClasses
             )}
           >

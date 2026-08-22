@@ -389,11 +389,13 @@ export default function CalificacionesMural() {
       {/* Mural grid */}
       {!loading && filtered.length > 0 && (
         <div className="space-y-4">
-          <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {paginated.map((emp) => (
               <EmpleadoCard key={emp.id} emp={emp} />
             ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <PaginationBar currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
       )}

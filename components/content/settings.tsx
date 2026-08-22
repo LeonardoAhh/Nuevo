@@ -27,7 +27,7 @@ import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "blue", "indigo", "purple", "violet",
   "rose", "pink", "orange", "amber",
-  "green", "teal", "cyan", "slate",
+  "green", "teal", "cyan", "slate", "monochrome"
 ]
 
 type Tab = "profile" | "appearance" | "developer"
@@ -342,7 +342,7 @@ function ProfileTab({
 
 // ─── APPEARANCE TAB ───────────────────────────────────────────────────────────
 function AppearanceTab() {
-  const { theme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
+  const { theme, resolvedTheme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
 
   return (
     <div className="space-y-5">
@@ -393,7 +393,8 @@ function AppearanceTab() {
         <div className="py-3 space-y-3">
           <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
             {ALL_ACCENTS.map((name) => {
-              const { primary, label } = ACCENT_COLOR_MAP[name]
+              const { primaryLight, primaryDark, label } = ACCENT_COLOR_MAP[name]
+              const swatchColor = resolvedTheme === "dark" ? primaryDark : primaryLight
               return (
                 <TooltipProvider key={name}>
                   <Tooltip>
@@ -409,10 +410,10 @@ function AppearanceTab() {
                             ? "border-foreground scale-110 shadow-md"
                             : "border-transparent hover:scale-105 hover:shadow-sm",
                         )}
-                        style={{ backgroundColor: `hsl(${primary})` }}
+                        style={{ backgroundColor: `hsl(${swatchColor})` }}
                         onClick={() => setAccentColor(name)}
                       >
-                        {accentColor === name && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}
+                        {accentColor === name && <Check className={name === "monochrome" && resolvedTheme === "dark" ? "h-3.5 w-3.5 text-black" : "h-3.5 w-3.5 text-white drop-shadow"} />}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent><p>{label}</p></TooltipContent>

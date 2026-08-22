@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 import { MaintenanceScreen } from "./maintenance-screen"
 import { AlertTriangle } from "lucide-react"
@@ -15,31 +15,31 @@ import { AlertTriangle } from "lucide-react"
    · Local/Red   → la app sigue funcionando con una barra de aviso
                    en la parte superior (sin interrumpir el trabajo)
 
-   El estado isLocalhost arranca en `true` para evitar un destello
-   donde la app se muestra brevemente antes de que el efecto corra
-   en el cliente.
+   El estado del entorno se lee como un store externo vía
+   useSyncExternalStore: el snapshot de servidor es `true` para
+   evitar un destello donde la app se muestra brevemente antes de
+   hidratar en el cliente.
 ──────────────────────────────────────────────────────────────────── */
 
 /* Hosts que se consideran entorno de desarrollo local */
 const LOCAL_HOSTNAMES = ["localhost", "127.0.0.1"]
-const isLocalHost = (hostname: string) =>
-  LOCAL_HOSTNAMES.includes(hostname) ||
-  hostname.startsWith("192.168.") // red local para pruebas en dispositivos
+
+function getIsLocal(): boolean {
+  if (process.env.NODE_ENV === "development") return true
+  const { hostname } = window.location
+  return (
+    LOCAL_HOSTNAMES.includes(hostname) ||
+    hostname.startsWith("192.168.") // red local para pruebas en dispositivos
+  )
+}
+
+// El entorno de ejecución no cambia durante la sesión del navegador.
+const noopSubscribe = () => () => {}
+const SERVER_SNAPSHOT = true
 
 export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const { isMaintenance, loading } = useMaintenanceMode()
-
-  // Inicia en true para evitar destello al cargar en producción
-  const [isLocal, setIsLocal] = useState(true)
-
-  useEffect(() => {
-    setIsLocal(
-      process.env.NODE_ENV === "development" ||
-      window.location.hostname === "localhost" || 
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.includes("192.168.")
-    )
-  }, [])
+  const isLocal = useSyncExternalStore(noopSubscribe, getIsLocal, () => SERVER_SNAPSHOT)
 
   // Mientras carga el estado de mantenimiento, renderiza la app
   // normalmente para no penalizar el tiempo de carga inicial
@@ -53,14 +53,9 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
     // Desarrollo / red local: aviso no bloqueante
     return (
       <div className="flex flex-col min-h-screen">
-        {/* Barra de aviso — usa tokens de destructive para máxima
-            visibilidad sin colores hardcodeados */}
+        {/* Barra de aviso — tokens destructive, sin estilos inline */}
         <div
-          className="relative z-[99999] flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium"
-          style={{
-            backgroundColor: "hsl(var(--destructive))",
-            color: "hsl(var(--destructive-foreground))",
-          }}
+          className="relative z-[99999] flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground"
           role="alert"
           aria-live="polite"
         >

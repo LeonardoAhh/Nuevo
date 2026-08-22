@@ -320,13 +320,7 @@ export default function PromocionesContent({
         </>
       )}
 
-      {/* Leyenda */}
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-1">
-        <div className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-success" /> Criterio cumplido</div>
-        <div className="flex items-center gap-1.5"><XCircle size={12} className="text-destructive" /> Criterio no cumplido</div>
-        <div className="flex items-center gap-1.5"><MousePointerClick size={12} /> Clic en fila: Capturar / Promover</div>
-        <div className="flex items-center gap-1.5"><MoreVertical size={12} /> Opciones</div>
-      </div>
+
 
       {/* Dialogs */}
       <PromDetalleDialog
