@@ -79,7 +79,7 @@ export default function Header({
         role="banner"
         className={cn(
           "sticky top-0 z-20 rounded-2xl border border-border/60 bg-card/95",
-          "supports-[backdrop-filter]:bg-card/80 backdrop-blur shadow-sm safe-top",
+          "supports-[backdrop-filter]:bg-card/80 backdrop-blur shadow-sm",
           "mx-2 mt-2 sm:mx-3 sm:mt-3",
         )}
       >

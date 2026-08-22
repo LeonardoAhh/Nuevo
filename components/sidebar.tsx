@@ -340,6 +340,7 @@ export default function Sidebar({
         <Drawer direction="left" open={showMobileSidebar} onOpenChange={(open) => !open && closeMobile()}>
           <DrawerContent
             raw
+            showHandle={false}
             // Anchor BOTH top and bottom so the panel always spans the viewport.
             className="inset-y-0 left-0 right-auto mt-0 w-[286px] max-w-[86vw] rounded-none rounded-r-2xl border-y-0 border-l-0"
           >

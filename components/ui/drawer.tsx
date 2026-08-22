@@ -41,8 +41,8 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { raw?: boolean }
->(({ className, children, raw, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { raw?: boolean; showHandle?: boolean }
+>(({ className, children, raw, showHandle = true, ...props }, ref) => {
   // Detecta cuando el teclado está visible para ajustar la altura
   const [keyboardVisible, setKeyboardVisible] = React.useState(false)
   const contentRef = React.useRef<HTMLDivElement>(null)
@@ -109,7 +109,9 @@ const DrawerContent = React.forwardRef<
         {...props}
       >
         {/* Drag handle — shrink-0 para que nunca desaparezca */}
-        <div className="mx-auto mt-4 mb-1 h-2 w-[100px] shrink-0 rounded-full bg-border" />
+        {showHandle && (
+          <div className="mx-auto mt-4 mb-1 h-2 w-[100px] shrink-0 rounded-full bg-border" />
+        )}
 
         {raw ? (
           children

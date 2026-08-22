@@ -1,6 +1,7 @@
 "use client"
 
-import { Toaster } from "sonner"
+import { useEffect } from "react"
+import { Toaster, toast } from "sonner"
 
 // position="bottom-right" en desktop (no interfiere con modales centrados);
 // en móvil el ancho lo controla --width en globals.css (@layer components)
@@ -9,6 +10,14 @@ import { Toaster } from "sonner"
 // que el script inline de layout.tsx ya aplica antes de hidratación (sin FOUC).
 
 export function SonnerProvider() {
+  // Dev-only handle: lets you trigger toasts from the browser console
+  // (window.__toast.success(...)) to verify styles per variant.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      ;(window as unknown as { __toast: typeof toast }).__toast = toast
+    }
+  }, [])
+
   return (
     <Toaster
       theme="system"

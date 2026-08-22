@@ -34,7 +34,10 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
   }, [pathname, isEvaluador, roleLoading, router])
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] bg-background overflow-hidden">
+    <div 
+      className="flex flex-col md:flex-row h-[100dvh] bg-background overflow-hidden"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+    >
       {/* Skip link accesible */}
       <a
         href="#main-content"

@@ -503,11 +503,7 @@ input[type="color"]::-webkit-color-swatch {
 
 /* Hero dashboard density handled by component Tailwind classes */
 
-@media (max-width: 1024px) and (display-mode: standalone) {
-    .density-compact header {
-        padding-top: max(env(safe-area-inset-top, 0px), 36px);
-    }
-}
+
 
 /* ─── Fin Density: Compact ───────────────────────────── */
 
