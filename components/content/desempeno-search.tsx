@@ -376,6 +376,18 @@ function DesempenoSearchContent() {
     addReciente({ numero: v, nombre: nombre ?? "" })
   }, [buscarEmpleado, departamentosScope, periodoSeleccionado, addReciente])
 
+  // Realizar búsqueda inicial si existe el parámetro 'q'
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) {
+      setNumeroBuscado(q)
+      doBuscar(q)
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('q')
+      router.replace(`/desempeno?${newParams.toString()}`, { scroll: false })
+    }
+  }, [searchParams, router, doBuscar])
+
   const handleSearch = () => doBuscar(numeroBuscado)
 
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 import {
   usePendingEvals,
   type EmployeePending,
@@ -74,9 +76,9 @@ function periodoLabel(fechaIso: string): string {
 type Periodo = PendingEvalEntry["periodo"]
 
 const PERIODO_BADGE: Record<Periodo, { bg: string; text: string }> = {
-  "1er Mes": { bg: "bg-info/15",    text: "text-info" },
-  "2° Mes":  { bg: "bg-chart-4/15", text: "text-chart-4" },
-  "3er Mes": { bg: "bg-warning/15", text: "text-warning" },
+  "1er Mes": { bg: "bg-blue-600",   text: "text-white" },
+  "2° Mes":  { bg: "bg-purple-600", text: "text-white" },
+  "3er Mes": { bg: "bg-orange-600", text: "text-white" },
 }
 
 // Asegúrate de añadir en tu tailwind.config.js:
@@ -121,46 +123,41 @@ function buildStats(item: EmployeePending) {
   ] as const
 }
 
-function DetailCard({ item, onClose }: DetailCardProps) {
+function DetailModal({ item }: Omit<DetailCardProps, 'onClose'>) {
   const stats = buildStats(item)
+  const router = useRouter()
 
   return (
-    <motion.div variants={detailV} initial="hidden" animate="show" exit="exit" className="overflow-hidden">
-      <div className="mt-2 rounded-xl border border-border bg-card p-3 shadow-sm">
+    <DialogContent className="sm:max-w-xl">
+      <DialogHeader className="border-b border-border pb-4">
+        <DialogTitle className="text-left text-lg">{item.nombre}</DialogTitle>
+        <DialogDescription className="text-left">
+          #{item.numero ?? "—"}
+        </DialogDescription>
+      </DialogHeader>
 
-        {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold leading-tight text-foreground">{item.nombre}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">#{item.numero ?? "—"}</p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar detalle"
-            className="flex-shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <X size={12} />
-          </button>
-        </div>
-
+      <div className="flex flex-col gap-6 pb-2">
         {/* Info grid */}
-        <dl className="mb-3 grid grid-cols-2 gap-1.5">
+        <dl className="grid grid-cols-2 gap-3 sm:gap-4">
           {stats.map(({ icon, label, value }) => (
-            <div key={label} className="rounded-lg border border-border/50 bg-muted/40 px-2.5 py-2">
-              <dt className="mb-0.5 flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div key={label} className="flex flex-col gap-1 rounded-xl border bg-muted/30 p-3 shadow-sm">
+              <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {icon} {label}
               </dt>
-              <dd className="truncate text-xs font-semibold text-foreground">{value}</dd>
+              <dd className="truncate text-sm font-semibold text-foreground">{value}</dd>
             </div>
           ))}
         </dl>
 
+        {/* Separador */}
+        <div className="h-px w-full bg-border" />
+
         {/* Evaluaciones pendientes */}
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Evaluaciones pendientes
-          </p>
-          <div className="grid grid-cols-3 gap-2">
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(["1er Mes", "2° Mes", "3er Mes"] as const).map((p) => {
               const entry = item.evals.find((e) => e.periodo === p)
               const vencida = entry && entry.diasDiff < 0
@@ -169,23 +166,23 @@ function DetailCard({ item, onClose }: DetailCardProps) {
               return (
                 <div
                   key={p}
-                  className="flex flex-col items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-center"
+                  className="flex flex-col items-center gap-3 rounded-xl border bg-card p-4 text-center shadow-sm"
                 >
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${bg} ${text}`}>
-                    <GraduationCap size={11} /> {p}
+                  <span className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold uppercase ${bg} ${text}`}>
+                    <GraduationCap size={14} /> {p}
                   </span>
                   {entry ? (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-xs font-bold tracking-wide text-foreground">
+                    <div className="flex flex-col items-center gap-1.5 mt-1">
+                      <span className="text-sm font-semibold tracking-tight text-foreground leading-tight">
                         {periodoLabel(entry.fecha)}
                       </span>
                       <span className="text-xs text-muted-foreground">{formatDate(entry.fecha)}</span>
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${vencida ? "text-destructive" : "text-success"}`}>
-                        <Clock3 size={11} /> {dias(entry.diasDiff)}
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${vencida ? "text-destructive" : "text-emerald-600 dark:text-emerald-500"}`}>
+                        <Clock3 size={14} /> {dias(entry.diasDiff)}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-xs italic text-muted-foreground">Sin pendiente</span>
+                    <span className="text-xs italic text-muted-foreground mt-3">Sin pendiente</span>
                   )}
                 </div>
               )
@@ -193,7 +190,21 @@ function DetailCard({ item, onClose }: DetailCardProps) {
           </div>
         </div>
       </div>
-    </motion.div>
+      <DialogFooter className="border-t border-border bg-transparent">
+        <Button 
+          className="w-full sm:w-auto gap-2" 
+          onClick={() => {
+            if (item.numero) {
+              router.push(`/desempeno?q=${item.numero}`)
+            }
+          }}
+          disabled={!item.numero}
+        >
+          <FileText size={16} />
+          Evaluar empleado
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   )
 }
 
@@ -215,14 +226,14 @@ function EmployeeBadge({ item, isSelected, onSelect }: EmployeeBadgeProps) {
         aria-label={`Empleado ${item.numero ?? item.nombre} — ${item.evals.length} pendiente${item.evals.length !== 1 ? "s" : ""}`}
         className={[
           "relative flex w-full items-center justify-between gap-3 p-3",
-          "rounded-xl border text-left",
+          "rounded-xl border text-left shadow-sm",
           "select-none transition-all duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isSelected
-            ? "scale-[1.02] border-primary bg-primary/10 shadow-sm"
+            ? "scale-[1.02] border-primary bg-primary/5"
             : item.hasVencida
             ? "border-destructive/30 bg-destructive/5 hover:scale-[1.02] hover:border-destructive/60 hover:bg-destructive/10 active:scale-100"
-            : "border-border/60 bg-card hover:scale-[1.02] hover:border-primary/50 hover:bg-primary/5 active:scale-100",
+            : "border-border/60 bg-card hover:scale-[1.02] hover:border-primary/30 hover:bg-muted/50 active:scale-100",
         ].join(" ")}
       >
         <div className="min-w-0 flex-1">
@@ -234,12 +245,12 @@ function EmployeeBadge({ item, isSelected, onSelect }: EmployeeBadgeProps) {
           </p>
         </div>
         <div className="flex-shrink-0">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${
+          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-bold shadow-sm ${
             item.hasVencida 
-              ? "bg-destructive/15 text-destructive" 
-              : "bg-success/15 text-success"
+              ? "bg-destructive text-destructive-foreground" 
+              : "bg-emerald-600 text-white"
           }`}>
-            <Clock3 size={11} />
+            <Clock3 size={14} />
             {item.evals.length} eval{item.evals.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -260,7 +271,7 @@ interface DeptTabProps {
 function DeptTab({ label, count, isActive, onClick }: DeptTabProps) {
   return (
     <Button
-      variant={isActive ? "secondary" : "outline"}
+      variant={isActive ? "default" : "outline"}
       size="sm"
       role="tab"
       aria-selected={isActive}
@@ -270,7 +281,7 @@ function DeptTab({ label, count, isActive, onClick }: DeptTabProps) {
       {label}
       <span className={[
         "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-bold",
-        isActive ? "bg-foreground/10 text-foreground" : "bg-muted text-muted-foreground",
+        isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground",
       ].join(" ")}>
         {count}
       </span>
@@ -330,8 +341,8 @@ function VistaMensual({ loading, deptGroups, totalEmployees, activeTab, onTabCha
           {/* Badge grid */}
           <AnimatePresence mode="wait">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Array.from({ length: 6 }).map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => (
                   <Skeleton key={i} className="h-14 w-full rounded-xl" />
                 ))}
               </div>
@@ -353,25 +364,72 @@ function VistaMensual({ loading, deptGroups, totalEmployees, activeTab, onTabCha
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {activeGroup.items.map((item) => (
-                    <EmployeeBadge
-                      key={item.dbId}
-                      item={item}
-                      isSelected={selectedId === item.dbId}
-                      onSelect={() => onSelectId(selectedId === item.dbId ? null : item.dbId)}
-                    />
-                  ))}
+                <div className="space-y-6">
+                  {(() => {
+                    const getGroupKey = (item: EmployeePending) => {
+                      const cleanString = (str: string) => {
+                        return str
+                          .toUpperCase()
+                          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+                          .replace(/[^A-Z0-9\s]/g, "") // Quitar puntuación (puntos, comas, guiones)
+                          .replace(/\s+/g, " ") // Normalizar espacios
+                          .trim()
+                      }
+
+                      const parts = []
+                      if (item.area && item.area.trim() !== "" && item.area !== "N/A") {
+                        parts.push(cleanString(item.area))
+                      }
+                      if (item.turno && item.turno.trim() !== "" && item.turno !== "N/A") {
+                        const t = cleanString(item.turno)
+                        parts.push(t.startsWith("TURNO") ? t : `TURNO ${t}`)
+                      }
+                      return parts.length > 0 ? parts.join(" · ") : "GENERAL"
+                    }
+
+                    const grouped = activeGroup.items.reduce((acc, item) => {
+                      const key = getGroupKey(item)
+                      if (!acc[key]) acc[key] = []
+                      acc[key].push(item)
+                      return acc
+                    }, {} as Record<string, EmployeePending[]>)
+
+                    const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                      if (a === "GENERAL") return 1
+                      if (b === "GENERAL") return -1
+                      return a.localeCompare(b, "es")
+                    })
+
+                    return sortedKeys.map((key) => (
+                      <div key={key} className="space-y-2">
+                        <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <Layers size={14} />
+                          {key}
+                          <span className="text-xs font-normal opacity-70">({grouped[key].length})</span>
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {grouped[key].map((item) => (
+                            <EmployeeBadge
+                              key={item.dbId}
+                              item={item}
+                              isSelected={selectedId === item.dbId}
+                              onSelect={() => onSelectId(selectedId === item.dbId ? null : item.dbId)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  })()}
                 </div>
 
-                <AnimatePresence>
+                <Dialog open={!!selectedId} onOpenChange={(open) => !open && onSelectId(null)}>
                   {(() => {
                     const current = activeGroup.items.find((i) => i.dbId === selectedId)
                     return current ? (
-                      <DetailCard key={current.dbId} item={current} onClose={() => onSelectId(null)} />
+                      <DetailModal key={current.dbId} item={current} />
                     ) : null
                   })()}
-                </AnimatePresence>
+                </Dialog>
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -472,7 +530,7 @@ export default function DesempenoPendientes({ filterDepartamentos, periodoSemest
         {/* Toggle de vista */}
         <div className="grid grid-cols-2 gap-2">
           <Button
-            variant={vista === "mensual" ? "secondary" : "outline"}
+            variant={vista === "mensual" ? "default" : "outline"}
             size="sm"
             onClick={() => setVista("mensual")}
             className="gap-1.5"
@@ -481,7 +539,7 @@ export default function DesempenoPendientes({ filterDepartamentos, periodoSemest
             Nuevo Ingreso
           </Button>
           <Button
-            variant={vista === "semestral" ? "secondary" : "outline"}
+            variant={vista === "semestral" ? "default" : "outline"}
             size="sm"
             onClick={() => setVista("semestral")}
             className="gap-1.5"

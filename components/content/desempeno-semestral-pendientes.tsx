@@ -29,21 +29,21 @@ const itemV = {
 function EstadoBadge({ item }: { item: SemestralEmployee }) {
   if (item.estado === "completado") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-sm font-bold text-success">
-        <CheckCircle2 size={11} /> Completado · {item.calificacion}%
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow-sm">
+        <CheckCircle2 size={14} /> Completado · {item.calificacion}%
       </span>
     )
   }
   if (item.estado === "no_elegible") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-sm font-medium text-muted-foreground">
-        <Ban size={11} /> No aplica (&lt; 3 meses)
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+        <Ban size={14} /> No aplica (&lt; 3 meses)
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-sm font-bold text-warning">
-      <Clock3 size={11} /> Pendiente
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
+      <Clock3 size={14} /> Pendiente
     </span>
   )
 }
@@ -107,7 +107,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
                 return (
                   <Button
                     key={g.departamento}
-                    variant={isActive ? "secondary" : "outline"}
+                    variant={isActive ? "default" : "outline"}
                     size="sm"
                     role="tab"
                     aria-selected={isActive}
@@ -116,7 +116,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
                   >
                     {g.departamento}
                     <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-sm font-bold ${isActive
-                      ? "bg-foreground/10 text-foreground"
+                      ? "bg-primary-foreground/20 text-primary-foreground"
                       : "bg-muted-foreground/15 text-muted-foreground"
                       }`}>
                       {pendCount}
@@ -129,8 +129,8 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
           {/* Employee list */}
           <AnimatePresence mode="wait">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Array.from({ length: 6 }).map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {Array.from({ length: 8 }).map((_, i) => (
                   <Skeleton key={i} className="h-12 w-full rounded-xl" />
                 ))}
               </div>
@@ -141,7 +141,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
                 initial="hidden"
                 animate="show"
                 exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
               >
                 {activeGroup.items.map((item) => (
                   <motion.li
