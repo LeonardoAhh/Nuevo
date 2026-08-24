@@ -3,7 +3,7 @@ import Dashboard from "@/components/Dashboard"
 import DashboardHome from "@/components/dashboard-home"
 
 export const metadata: Metadata = {
-  title: "Dashboard | Capacitación Qro",
+  title: "Dashboard",
 }
 
 export default function Page() {

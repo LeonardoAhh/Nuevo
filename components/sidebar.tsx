@@ -59,9 +59,7 @@ export function useSidebar(): SidebarApi & {
 
 // ─── Role filtering ───────────────────────────────────────────────────────────
 
-function useVisibleSections(): NavSection[] {
-  const { isEvaluador } = useRole()
-
+function useVisibleSections(isEvaluador: boolean): NavSection[] {
   return useMemo(() => {
     if (!isEvaluador) return NAV_SECTIONS
     return NAV_SECTIONS
@@ -319,15 +317,17 @@ interface SidebarProps {
   isMobileView: boolean
   showMobileSidebar: boolean
   setShowMobileSidebar: (v: boolean) => void
+  isEvaluador?: boolean
 }
 
 export default function Sidebar({
   isMobileView,
   showMobileSidebar,
   setShowMobileSidebar,
+  isEvaluador = false,
 }: SidebarProps) {
   const pathname = usePathname()
-  const sections = useVisibleSections()
+  const sections = useVisibleSections(isEvaluador)
   const closeMobile = useCallback(() => setShowMobileSidebar(false), [setShowMobileSidebar])
   const [isExpanded, toggleExpanded] = useExpandedPreference()
 

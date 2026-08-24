@@ -9,6 +9,8 @@ import { useRole } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 
 
+import { Loader2 } from "lucide-react"
+
 interface DashboardProps {
   content?: ReactNode
   pageTitle?: string
@@ -33,6 +35,14 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
     }
   }, [pathname, isEvaluador, roleLoading, router])
 
+  if (roleLoading) {
+    return (
+      <div className="flex h-[100dvh] items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <div 
       className="flex flex-col md:flex-row h-[100dvh] bg-background overflow-hidden"
@@ -53,6 +63,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         isMobileView={isMobileView}
         showMobileSidebar={showMobileSidebar}
         setShowMobileSidebar={setShowMobileSidebar}
+        isEvaluador={isEvaluador}
       />
 
       {/* Área principal con scroll controlado */}

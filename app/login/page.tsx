@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import LoginShell from "@/components/login-shell"
 
 export const metadata: Metadata = {
-  title: "Login | Capacitación Qro",
+  title: "Login",
   description: "Login to your dashboard account",
 }
 

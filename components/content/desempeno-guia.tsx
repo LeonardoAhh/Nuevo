@@ -95,19 +95,19 @@ function Illus1({ active }: IllusProps) {
   return (
     <div className="flex w-full flex-col items-center gap-3">
       {/* Mini action bar */}
-      <div className="flex w-full max-w-[260px] items-center justify-between rounded-lg border bg-card px-2.5 py-1.5 shadow-sm">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex w-full max-w-[280px] items-center justify-between rounded-lg border bg-card px-3 py-2 shadow-sm">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Acciones
         </span>
-        <div className="flex items-center gap-1">
-          <div className="flex h-6 items-center gap-1 rounded-md bg-primary px-1.5 text-[10px] font-bold text-primary-foreground shadow-sm">
-            <Sparkles className="h-2.5 w-2.5" />
+        <div className="flex items-center gap-1.5">
+          <div className="flex h-7 items-center gap-1 rounded-md bg-primary px-2 text-xs font-bold text-primary-foreground shadow-sm">
+            <Sparkles className="h-3 w-3" />
             <span>Guía</span>
           </div>
-          <div className="h-3 w-px bg-border" />
-          <div className="relative flex h-6 items-center gap-1 rounded-md border bg-background px-1.5 text-[10px] font-medium text-foreground">
-            <ClipboardList className="h-2.5 w-2.5" />
-            <span className="absolute -right-1 -top-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-destructive px-0.5 text-[8px] font-bold text-destructive-foreground">
+          <div className="h-4 w-px bg-border" />
+          <div className="relative flex h-7 items-center gap-1 rounded-md border bg-background px-2 text-xs font-medium text-foreground">
+            <ClipboardList className="h-3 w-3" />
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md bg-destructive px-1 text-xs font-bold text-destructive-foreground shadow-sm">
               3
             </span>
           </div>
@@ -296,9 +296,9 @@ function Illus3({ active }: IllusProps) {
               {bar.pct}%
             </motion.span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-2 overflow-hidden rounded-sm bg-muted">
             <motion.div
-              className="h-full rounded-full bg-primary"
+              className="h-full rounded-sm bg-primary"
               animate={{ width: filled ? `${bar.pct}%` : "0%" }}
               transition={{
                 duration: filled ? 1.1 : 0.25,
@@ -315,16 +315,16 @@ function Illus3({ active }: IllusProps) {
           {phase === "done" && (
             <motion.div
               key="score"
-              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5"
+              className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-primary-foreground shadow-sm"
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 18 }}
             >
-              <span className="text-[10px] font-medium uppercase tracking-wider text-primary/80">
+              <span className="text-xs font-medium uppercase tracking-wider opacity-90">
                 Final
               </span>
-              <span className="text-lg font-bold tabular-nums text-primary">85%</span>
+              <span className="text-lg font-bold tabular-nums">85%</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -386,7 +386,7 @@ function Illus4({ active }: IllusProps) {
             className="w-full overflow-hidden"
           >
             <div className="rounded-md border bg-background px-3 py-2">
-              <p className="text-[11px] leading-relaxed text-foreground">
+              <p className="text-xs leading-relaxed text-foreground">
                 Capacitación módulo X &middot; seguimiento mensual
               </p>
             </div>
@@ -501,7 +501,7 @@ function Illus5({ active }: IllusProps) {
               )}
             />
           </motion.div>
-          <span className="text-[10px] font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             Capacitación
           </span>
         </div>
@@ -513,14 +513,14 @@ function Illus5({ active }: IllusProps) {
           {phase === "done" && (
             <motion.div
               key="done"
-              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1"
+              className="flex items-center gap-2 rounded-md bg-primary px-3 py-1 text-primary-foreground shadow-sm"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: "spring", stiffness: 320, damping: 20 }}
             >
-              <Check className="h-3 w-3 text-primary" />
-              <span className="text-xs font-semibold text-primary">Entregado</span>
+              <Check className="h-3 w-3" />
+              <span className="text-xs font-semibold">Entregado</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -720,7 +720,7 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
               </div>
 
               {/* Barras de progreso clickeables */}
-              <div className="flex gap-1.5 px-5 pt-4">
+              <div className="flex gap-2 px-6 pt-5">
                 {STEPS.map((_, i) => (
                   <button
                     key={i}
@@ -728,10 +728,10 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
                     onClick={() => goTo(i)}
                     aria-label={`Ir al paso ${i + 1}`}
                     aria-current={i === step ? "step" : undefined}
-                    className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative h-1.5 flex-1 overflow-hidden rounded-sm bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <motion.div
-                      className="absolute inset-y-0 left-0 rounded-full bg-primary"
+                      className="absolute inset-y-0 left-0 rounded-sm bg-primary"
                       animate={{ width: i <= step ? "100%" : "0%" }}
                       transition={{ duration: 0.35, ease: "easeOut" }}
                     />
@@ -740,32 +740,36 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
               </div>
 
               {/* Header: etiqueta de paso + Saltar + cerrar */}
-              <div className="flex items-center justify-between gap-2 px-5 pb-1 pt-3">
+              <div className="flex items-center justify-between gap-2 px-6 pb-2 pt-4">
                 <motion.span
                   key={step}
-                  className="text-xs font-bold tabular-nums text-muted-foreground"
+                  className="text-sm font-semibold tracking-wide tabular-nums text-foreground"
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                 >
                   PASO {current.num} DE {STEPS.length.toString().padStart(2, "0")}
                 </motion.span>
-                <div className="flex items-center gap-1">
-                  <button
+                <div className="flex items-center gap-2">
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={handleClose}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-8 text-muted-foreground"
                   >
                     Saltar guía
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={handleClose}
-                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-8 w-8 text-muted-foreground"
                     aria-label="Cerrar guía"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -790,7 +794,7 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
               {/* Texto — contenedor estático con id para aria-labelledby */}
               <div
                 id="guia-title-container"
-                className="min-h-[5.5rem] px-6 pb-2"
+                className="min-h-[6rem] px-6 pb-2"
                 aria-live="polite"
               >
                 <AnimatePresence mode="wait">
@@ -801,10 +805,10 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <h3 className="text-base font-bold text-foreground">
+                    <h3 className="text-lg font-bold text-foreground">
                       {current.title}
                     </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-1.5 text-sm leading-relaxed text-foreground/80">
                       {current.description}
                     </p>
                   </motion.div>
@@ -812,13 +816,13 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
               </div>
 
               {/* Navegación */}
-              <div className="flex items-center justify-between gap-2 px-5 py-4">
+              <div className="flex items-center justify-between gap-4 px-6 py-6 pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => goTo(step - 1)}
                   disabled={step === 0}
-                  className="gap-1"
+                  className="gap-1.5"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span className="hidden sm:inline">Anterior</span>
@@ -827,7 +831,7 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
                 <Button
                   size="sm"
                   onClick={isLast ? handleClose : () => goTo(step + 1)}
-                  className="gap-1"
+                  className="gap-1.5"
                 >
                   {isLast ? (
                     <>

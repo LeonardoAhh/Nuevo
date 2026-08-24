@@ -10,6 +10,8 @@ import { ConnectionStatus } from "@/components/connection-status"
 import { UpdateBanner } from "@/components/update-banner"
 import { MaintenanceGuard } from "@/components/maintenance-guard"
 import { ViewportFix } from "@/components/viewport-fix"
+import { UserProvider } from "@/lib/hooks/useUser"
+import { RoleProvider } from "@/lib/hooks/useRole"
 import {
   buildThemeBootstrapScript,
   OS_THEME_COLOR_FALLBACK as THEME_FALLBACK,
@@ -94,14 +96,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Client-side viewport metrics (--initial/visual-viewport-height) */}
         <ViewportFix />
         <ThemeProvider>
-          <MaintenanceGuard>{children}</MaintenanceGuard>
-          {/* App-wide overlays live inside ThemeProvider so any theme-aware
-              consumer (toasts, dialogs) resolves the active theme correctly. */}
-          <PWARegister />
-          <UpdateBanner />
-          <SonnerProvider />
-          <ConfirmProvider />
-          <ConnectionStatus />
+          <UserProvider>
+            <RoleProvider>
+              <MaintenanceGuard>{children}</MaintenanceGuard>
+              {/* App-wide overlays live inside ThemeProvider so any theme-aware
+                  consumer (toasts, dialogs) resolves the active theme correctly. */}
+              <PWARegister />
+              <UpdateBanner />
+              <SonnerProvider />
+              <ConfirmProvider />
+              <ConnectionStatus />
+            </RoleProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>
