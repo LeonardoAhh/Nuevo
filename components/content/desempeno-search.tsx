@@ -716,6 +716,32 @@ function DesempenoSearchContent() {
           </CardContent>
         </Card>
 
+        {/* Banner de Pendientes en estado vacío */}
+        {!data && totalEvals > 0 && (
+          <div
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-warning/30 bg-warning/10 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300"
+          >
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="rounded-full bg-warning/20 p-2.5 text-warning shrink-0">
+                <ClipboardList className="h-6 w-6" />
+              </div>
+              <div className="space-y-1 text-left">
+                <h3 className="font-bold text-base text-foreground leading-none">
+                  Tienes {totalEvals} {totalEvals === 1 ? "empleado pendiente" : "empleados pendientes"} de evaluación
+                </h3>
+                <p className="text-sm text-muted-foreground leading-snug">
+                  Revisa tu lista de pendientes para asegurar el seguimiento oportuno del personal a tu cargo.
+                </p>
+              </div>
+            </div>
+            <Button asChild className="w-full sm:w-auto shrink-0 shadow-sm">
+              <Link href="/desempeno/pendientes">
+                Revisar mis pendientes
+              </Link>
+            </Button>
+          </div>
+        )}
+
         {/* Alertas */}
         {error && (
           <Alert variant="destructive">
