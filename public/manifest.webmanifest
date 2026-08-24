@@ -1,7 +1,7 @@
 {
-  "name": "Capacitacion VINOPLASTIC",
+  "name": "Capacitacion",
   "short_name": "Capacitacion",
-  "description": "Sistema de gestion de capacitacion y nuevo ingreso",
+  "description": "Sistema de gestion de capacitacion.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
