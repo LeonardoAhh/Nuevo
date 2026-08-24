@@ -46,6 +46,9 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
   const [deptGroups, setDeptGroups] = useState<DeptGroup[]>([])
   const [totalEmployees, setTotalEmployees] = useState(0)
   const [totalEvals, setTotalEvals] = useState(0)
+  const [totalVencidas, setTotalVencidas] = useState(0)
+  const [totalProximas, setTotalProximas] = useState(0)
+  const [totalATiempo, setTotalATiempo] = useState(0)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -109,6 +112,9 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
       // Build one EmployeePending per employee (only if they have pending evals)
       const employeeMap = new Map<string, EmployeePending>()
       let evalCount = 0
+      let vencidasCount = 0
+      let proximasCount = 0
+      let aTiempoCount = 0
 
       for (const r of registrosScope) {
         // Empleados con contrato indeterminado ya no requieren evaluaciones de nuevo ingreso
@@ -126,6 +132,10 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
           const diff = daysFromToday(fecha)
           if (diff === null) continue
           pendingEvals.push({ periodo, fecha, diasDiff: diff })
+          
+          if (diff < 0) vencidasCount++
+          else if (diff <= 7) proximasCount++
+          else aTiempoCount++
         }
 
         const rgDiff = r.fecha_vencimiento_rg ? daysFromToday(r.fecha_vencimiento_rg) : null
@@ -173,6 +183,9 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
       setDeptGroups(groups)
       setTotalEmployees(employeeMap.size)
       setTotalEvals(evalCount)
+      setTotalVencidas(vencidasCount)
+      setTotalProximas(proximasCount)
+      setTotalATiempo(aTiempoCount)
     } catch (err) {
       console.error("usePendingEvals:", err)
       notify.error("No se pudieron cargar las evaluaciones pendientes")
@@ -183,5 +196,5 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
 
   useEffect(() => { cargar() }, [cargar])
 
-  return { loading, deptGroups, totalEmployees, totalEvals, cargar }
+  return { loading, deptGroups, totalEmployees, totalEvals, totalVencidas, totalProximas, totalATiempo, cargar }
 }

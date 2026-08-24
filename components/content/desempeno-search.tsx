@@ -31,6 +31,7 @@ import { DesempenoSaveSuccess } from "./desempeno-save-success"
 import { DesempenoGuia, guiaYaVista } from "./desempeno-guia"
 import { useRole } from "@/lib/hooks"
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals"
+import { cn } from "@/lib/utils"
 
 // ─── Sub-componente: botón de acción con ícono + label responsivo ─────────────
 
@@ -245,7 +246,7 @@ function DesempenoSearchContent() {
   const { data, setData, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error, buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia, cargarEvaluacion } =
     useDesempeno()
   const { isEvaluador, departamentosScope } = useRole()
-  const { totalEvals } = usePendingEvals(departamentosScope)
+  const { totalEvals, totalVencidas, totalProximas, totalATiempo } = usePendingEvals(departamentosScope)
   const [guiaOpen, setGuiaOpen] = useState(false)
   const [modoEdicion, setModoEdicion] = useState(false)
 
@@ -502,38 +503,54 @@ function DesempenoSearchContent() {
               {/* ── Barra de acciones ────────────────────────────────────── */}
               <div className="flex items-center gap-1">
 
-                {/* Grupo 1: Onboarding */}
-                <GuiaButton onClick={() => setGuiaOpen(true)} />
+                {/* Acciones globales (solo visibles si no hay evaluación activa) */}
+                {!data && (
+                  <>
+                    <GuiaButton onClick={() => setGuiaOpen(true)} />
 
-                <ActionDivider />
+                    <ActionDivider />
 
-                {/* Grupo 2: Navegación */}
-                {!isEvaluador && (
-                  <ActionButton
-                    icon={<FolderOpen className="h-3.5 w-3.5" />}
-                    label="Guardadas"
-                    tooltip="Evaluaciones guardadas"
-                    href="/desempeno/objetivos"
-                  />
+                    {!isEvaluador && (
+                      <ActionButton
+                        icon={<FolderOpen className="h-3.5 w-3.5" />}
+                        label="Guardadas"
+                        tooltip="Evaluaciones guardadas"
+                        href="/desempeno/objetivos"
+                      />
+                    )}
+
+                    <ActionButton
+                      icon={<ClipboardList className="h-3.5 w-3.5" />}
+                      label="Pendientes"
+                      tooltip={
+                        totalEvals > 0
+                          ? `${totalEvals} evaluación${totalEvals !== 1 ? "es" : ""} pendiente${totalEvals !== 1 ? "s" : ""}`
+                          : "Sin evaluaciones pendientes"
+                      }
+                      href="/desempeno/pendientes"
+                      badge={totalEvals}
+                      animateBadge
+                    />
+                  </>
                 )}
-
-                <ActionButton
-                  icon={<ClipboardList className="h-3.5 w-3.5" />}
-                  label="Pendientes"
-                  tooltip={
-                    totalEvals > 0
-                      ? `${totalEvals} evaluación${totalEvals !== 1 ? "es" : ""} pendiente${totalEvals !== 1 ? "s" : ""}`
-                      : "Sin evaluaciones pendientes"
-                  }
-                  href="/desempeno/pendientes"
-                  badge={totalEvals}
-                  animateBadge
-                />
 
                 {/* Grupo 3: Acciones sobre la evaluación activa */}
                 {data && (
                   <>
-                    <ActionDivider />
+                    <ActionButton
+                      icon={<X className="h-3.5 w-3.5" />}
+                      label="Cerrar"
+                      tooltip="Descartar y volver al buscador"
+                      onClick={() => {
+                        setData(null)
+                        setNumeroBuscado("")
+                        const newParams = new URLSearchParams(searchParams.toString())
+                        newParams.delete('q')
+                        router.replace(`/desempeno?${newParams.toString()}`, { scroll: false })
+                      }}
+                      variant="outline"
+                      className="text-foreground"
+                    />
 
                     <ActionButton
                       icon={
@@ -718,27 +735,82 @@ function DesempenoSearchContent() {
 
         {/* Banner de Pendientes en estado vacío */}
         {!data && totalEvals > 0 && (
-          <div
-            className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-warning/30 bg-warning/10 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300"
-          >
-            <div className="flex items-start sm:items-center gap-4">
-              <div className="rounded-full bg-warning/20 p-2.5 text-warning shrink-0">
-                <ClipboardList className="h-6 w-6" />
-              </div>
-              <div className="space-y-1 text-left">
-                <h3 className="font-bold text-base text-foreground leading-none">
-                  Tienes {totalEvals} {totalEvals === 1 ? "empleado pendiente" : "empleados pendientes"} de evaluación
-                </h3>
-                <p className="text-sm text-muted-foreground leading-snug">
-                  Revisa tu lista de pendientes para asegurar el seguimiento oportuno del personal a tu cargo.
-                </p>
-              </div>
-            </div>
-            <Button asChild className="w-full sm:w-auto shrink-0 shadow-sm">
-              <Link href="/desempeno/pendientes">
-                Revisar mis pendientes
-              </Link>
-            </Button>
+          <div className="w-full">
+            {(() => {
+              const hasVencidas = totalVencidas > 0
+              const hasProximas = totalProximas > 0
+              
+              let bgClass = "bg-card border-success"
+              let iconBgClass = "bg-success text-success-foreground"
+              let titleText = "Evaluaciones al día"
+              let descText = `Tienes ${totalEvals} ${totalEvals === 1 ? 'evaluación pendiente' : 'evaluaciones pendientes'} con tiempo suficiente.`
+
+              if (hasVencidas) {
+                bgClass = "bg-card border-destructive"
+                iconBgClass = "bg-destructive text-destructive-foreground"
+                titleText = `${totalVencidas} ${totalVencidas === 1 ? 'evaluación atrasada' : 'evaluaciones atrasadas'}`
+                descText = "Ya pasaron su fecha límite. Atiéndelas primero para regularizar el seguimiento."
+              } else if (hasProximas) {
+                bgClass = "bg-card border-warning"
+                iconBgClass = "bg-warning text-warning-foreground"
+                titleText = `${totalProximas} ${totalProximas === 1 ? 'evaluación vence' : 'evaluaciones vencen'} pronto`
+                descText = "Revisa tu lista para asegurar su evaluación oportuna esta semana."
+              }
+
+              return (
+                <div
+                  className={cn(
+                    "flex flex-col sm:flex-row items-center justify-between gap-6 rounded-xl border p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300",
+                    bgClass
+                  )}
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
+                    <div className={cn("rounded-lg p-3 shrink-0 hidden sm:flex", iconBgClass)}>
+                      <ClipboardList className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-4 w-full flex-1">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-base text-foreground leading-none flex items-center gap-2">
+                           <span className="sm:hidden" aria-hidden="true">
+                              {hasVencidas ? "🔴" : hasProximas ? "🟠" : "🟢"}
+                           </span>
+                           {titleText}
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-snug">
+                          {descText}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 w-full sm:w-auto">
+                        {/* Vencidas */}
+                        <div className="flex flex-col bg-background border rounded-lg p-3 relative overflow-hidden shadow-sm">
+                          <span className="text-2xl font-bold leading-none text-destructive">{totalVencidas}</span>
+                          <span className="text-xs text-muted-foreground mt-1 font-medium">Vencidas</span>
+                        </div>
+                        
+                        {/* Próximas */}
+                        <div className="flex flex-col bg-background border rounded-lg p-3 relative overflow-hidden shadow-sm">
+                          <span className="text-2xl font-bold leading-none text-warning">{totalProximas}</span>
+                          <span className="text-xs text-muted-foreground mt-1 font-medium truncate" title="Próximas (7d)">Próximas</span>
+                        </div>
+                        
+                        {/* A tiempo */}
+                        <div className="flex flex-col bg-background border rounded-lg p-3 relative overflow-hidden shadow-sm">
+                          <span className="text-2xl font-bold leading-none text-success">{totalATiempo}</span>
+                          <span className="text-xs text-muted-foreground mt-1 font-medium">A tiempo</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                  <Button asChild size="lg" className="w-full sm:w-auto shrink-0 shadow-sm whitespace-nowrap self-stretch sm:self-center mt-2 sm:mt-0">
+                    <Link href="/desempeno/pendientes">
+                      Revisar pendientes
+                    </Link>
+                  </Button>
+                </div>
+              )
+            })()}
           </div>
         )}
 
