@@ -26,6 +26,8 @@ import {
 import { EVALUADORES_PUESTO, DEPARTAMENTOS_EVALUADORES, TIPO_LABEL } from "@/lib/catalogo"
 import { useRole } from "@/lib/hooks"
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 
@@ -301,7 +303,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   <h1 className="text-base font-bold uppercase tracking-wide sm:text-lg">
                     EVALUACIÓN DE DESEMPEÑO PERSONAL {getTipoLabel(data.tipo)}
                   </h1>
-                  <Badge variant="secondary" className="text-xs">{data.periodo || "—"}</Badge>
+                  <Badge variant="default" className="text-xs">{data.periodo || "—"}</Badge>
                 </div>
               </div>
               <img
@@ -382,29 +384,29 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Objetivos SMART</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">#</th>
-                        <th scope="col" className="p-2 text-left">Objetivos SMART</th>
-                        <th scope="col" className="p-2 text-left">Objetivos</th>
-                        <th scope="col" className="p-2 text-left">% Obtenido</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>Objetivos SMART</TableHead>
+                        <TableHead>Objetivos</TableHead>
+                        <TableHead className="w-[120px]">% Obtenido</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.objetivos.map((obj, i) => (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="px-2 py-2 text-muted-foreground">{obj.numero}</td>
-                          <td className="px-2 py-2">{obj.descripcion}</td>
-                          <td className="px-2 py-2">{obj.resultado}</td>
-                          <td className="px-2 py-2">{obj.porcentaje}</td>
-                        </tr>
+                        <TableRow key={i}>
+                          <TableCell className="text-muted-foreground">{obj.numero}</TableCell>
+                          <TableCell>{obj.descripcion}</TableCell>
+                          <TableCell>{obj.resultado}</TableCell>
+                          <TableCell>{obj.porcentaje}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
+                <div className="mt-4 flex justify-between border-t pt-4 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte1}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte1}%</span>
                 </div>
@@ -417,33 +419,33 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   <CardTitle className="text-base">Cumplimiento de Responsabilidades (30%)</CardTitle>
                   <EditButton section="cumplimiento" canEdit={canEdit} isDisabled={faltaEvaluador} openModal={openModal} />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Algunos datos de esta sección son prellenados por el sistema.
                 </p>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Cumplimiento de Responsabilidades</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">Responsabilidad</th>
-                        <th scope="col" className="p-2 text-left">% Cump</th>
-                        <th scope="col" className="p-2 text-left">Evalúa</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Responsabilidad</TableHead>
+                        <TableHead className="w-[120px]">% Cump</TableHead>
+                        <TableHead className="w-[120px]">Evalúa</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.cumplimiento_responsabilidades.map((item, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="px-2 py-2">{item.descripcion}</td>
-                          <td className="px-2 py-2">{item.porcentaje}</td>
-                          <td className="px-2 py-2">{item.evalua}</td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell>{item.descripcion}</TableCell>
+                          <TableCell>{item.porcentaje}</TableCell>
+                          <TableCell>{item.evalua}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
+                <div className="mt-4 flex justify-between border-t pt-4 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte2}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte2}%</span>
                 </div>
@@ -456,7 +458,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   <CardTitle className="text-base">Competencias Blandas (30%)</CardTitle>
                   <EditButton section="competencias" canEdit={canEdit} isDisabled={faltaEvaluador} openModal={openModal} />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                   <strong>Escala de evaluación (0 al 4):</strong>{" "}
                   <strong>0:</strong> Competencia no demostrada;{" "}
                   <strong>1:</strong> Aplicación ocasional;{" "}
@@ -467,27 +469,27 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Competencias Blandas</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">Competencia</th>
-                        <th scope="col" className="p-2 text-left">Cal.</th>
-                        <th scope="col" className="p-2 text-left">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Competencia</TableHead>
+                        <TableHead className="w-[120px]">Cal.</TableHead>
+                        <TableHead className="w-[120px]">%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.competencias.map((comp, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="px-2 py-2">{comp.nombre}</td>
-                          <td className="px-2 py-2">{comp.calificacion}/4</td>
-                          <td className="px-2 py-2">{Math.round((comp.calificacion / 4) * 100)}%</td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell>{comp.nombre}</TableCell>
+                          <TableCell>{comp.calificacion}/4</TableCell>
+                          <TableCell>{Math.round((comp.calificacion / 4) * 100)}%</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
+                <div className="mt-4 flex justify-between border-t pt-4 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte3}%</span>
                   <span>Ponderado: {ponderacion.ponderadoParte3}%</span>
                 </div>
@@ -619,27 +621,27 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Objetivos SMART</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">#</th>
-                        <th scope="col" className="p-2 text-left">Objetivos SMART</th>
-                        <th scope="col" className="p-2 text-left">Objetivos</th>
-                        <th scope="col" className="p-2 text-left">% Obtenido</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>Objetivos SMART</TableHead>
+                        <TableHead>Objetivos</TableHead>
+                        <TableHead className="w-[120px]">% Obtenido</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.objetivos.map((obj, i) => (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="px-2 py-2 text-muted-foreground">{obj.numero}</td>
-                          <td className="px-2 py-2">{obj.descripcion}</td>
-                          <td className="px-2 py-2">{obj.resultado}</td>
-                          <td className="px-2 py-2">{obj.porcentaje}</td>
-                        </tr>
+                        <TableRow key={i}>
+                          <TableCell className="text-muted-foreground">{obj.numero}</TableCell>
+                          <TableCell>{obj.descripcion}</TableCell>
+                          <TableCell>{obj.resultado}</TableCell>
+                          <TableCell>{obj.porcentaje}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
                 <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte1}%</span>
@@ -673,25 +675,25 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Cumplimiento de Responsabilidades</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">Responsabilidad</th>
-                        <th scope="col" className="p-2 text-left">% Cump</th>
-                        <th scope="col" className="p-2 text-left">Evalúa</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Responsabilidad</TableHead>
+                        <TableHead className="w-[120px]">% Cump</TableHead>
+                        <TableHead className="w-[120px]">Evalúa</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.cumplimiento_responsabilidades.map((item, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="px-2 py-2">{item.descripcion}</td>
-                          <td className="px-2 py-2">{item.porcentaje}</td>
-                          <td className="px-2 py-2">{item.evalua}</td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell>{item.descripcion}</TableCell>
+                          <TableCell>{item.porcentaje}</TableCell>
+                          <TableCell>{item.evalua}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
                 <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte2}%</span>
@@ -730,25 +732,25 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <Table>
                     <caption className="sr-only">Evaluación de Competencias Blandas</caption>
-                    <thead>
-                      <tr className="border-b">
-                        <th scope="col" className="p-2 text-left">Competencia</th>
-                        <th scope="col" className="p-2 text-left">Cal.</th>
-                        <th scope="col" className="p-2 text-left">%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Competencia</TableHead>
+                        <TableHead className="w-[120px]">Cal.</TableHead>
+                        <TableHead className="w-[120px]">%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {data.competencias.map((comp, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="px-2 py-2">{comp.nombre}</td>
-                          <td className="px-2 py-2">{comp.calificacion}/4</td>
-                          <td className="px-2 py-2">{Math.round((comp.calificacion / 4) * 100)}%</td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell>{comp.nombre}</TableCell>
+                          <TableCell>{comp.calificacion}/4</TableCell>
+                          <TableCell>{Math.round((comp.calificacion / 4) * 100)}%</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
                 <div className="mt-3 flex justify-between border-t pt-2 text-sm font-semibold">
                   <span>Resultado promedio: {ponderacion.promedioParte3}%</span>
@@ -858,7 +860,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
             onClose={closeModal}
           />
           <StepDots total={editObjetivos.length} current={step} onSelect={handleStepSelect} />
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
             <AnimatePresence mode="wait" custom={direction} initial={false}>
               {editObjetivos[step] && (
                 <motion.div
@@ -869,23 +871,23 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
-                  <div className="rounded-lg bg-muted px-3 py-2">
-                    <p className="text-sm font-medium">Objetivo {editObjetivos[step].numero}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{editObjetivos[step].descripcion}</p>
+                  <div className="rounded-lg bg-muted p-4">
+                    <p className="text-sm font-semibold">Objetivo {editObjetivos[step].numero}</p>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{editObjetivos[step].descripcion}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Resultado del periodo</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Resultado del periodo</Label>
                       <Input
                         value={editObjetivos[step].resultado}
                         readOnly
                         className="cursor-not-allowed bg-muted"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">% Obtenido (1-100)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">% Obtenido (1-100)</Label>
                       <Input
                         type="tel"
                         value={editObjetivos[step].porcentaje === "NA" ? "" : editObjetivos[step].porcentaje}
@@ -927,7 +929,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
             onClose={closeModal}
           />
           <StepDots total={editCumplimiento.length} current={step} onSelect={handleStepSelect} />
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
             <AnimatePresence mode="wait" custom={direction} initial={false}>
               {editCumplimiento[step] && (
                 <motion.div
@@ -938,16 +940,16 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
-                  <div className="rounded-lg bg-muted px-3 py-2">
-                    <p className="text-sm font-medium">{editCumplimiento[step].descripcion}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                  <div className="rounded-lg bg-muted p-4">
+                    <p className="text-sm font-semibold">{editCumplimiento[step].descripcion}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
                       Evalúa: {editCumplimiento[step].evalua}
                     </p>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">% Cumplimiento</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">% Cumplimiento</Label>
                     {data.tipo !== "jefe" && CUMPLIMIENTO_READONLY_STEPS.has(step) ? (
                       <Input
                         value={editCumplimiento[step].porcentaje}
@@ -996,7 +998,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
             onClose={closeModal}
           />
           <StepDots total={editCompetencias.length} current={step} onSelect={handleStepSelect} />
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
             <AnimatePresence mode="wait" custom={direction} initial={false}>
               {editCompetencias[step] && (
                 <motion.div
@@ -1007,15 +1009,15 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
-                  <div className="rounded-lg bg-muted px-3 py-2">
-                    <p className="text-sm font-medium">{editCompetencias[step].nombre}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{editCompetencias[step].descripcion}</p>
+                  <div className="rounded-lg bg-muted p-4">
+                    <p className="text-sm font-semibold">{editCompetencias[step].nombre}</p>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{editCompetencias[step].descripcion}</p>
                   </div>
                   <div className="flex items-start gap-8">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Calificación (0-4)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Calificación (0-4)</Label>
                       <Input
                         type="number"
                         min={0}
@@ -1031,8 +1033,8 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                         placeholder="0"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">% Equivalente</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">% Equivalente</Label>
                       <div className="flex h-9 items-center text-base font-semibold text-primary">
                         {Math.round((editCompetencias[step].calificacion / 4) * 100)}%
                       </div>
@@ -1068,18 +1070,18 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
             subtitle="Acuerdos y observaciones"
             onClose={closeModal}
           />
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Compromisos / Acuerdos</Label>
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Compromisos / Acuerdos</Label>
               <Textarea
                 value={editCompromisos}
                 onChange={(e) => setEditCompromisos(e.target.value)}
                 placeholder="Compromisos del evaluado..."
-                className="min-h-[80px]"
+                className="min-h-20"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Fecha de revisión</Label>
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Fecha de revisión</Label>
               <Input
                 type="date"
                 value={dateValue}
@@ -1094,8 +1096,8 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
                 }}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Observaciones</Label>
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Observaciones</Label>
               <Textarea
                 value={editObservaciones}
                 onChange={(e) => setEditObservaciones(e.target.value)}

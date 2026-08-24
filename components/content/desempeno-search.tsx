@@ -71,7 +71,7 @@ function ActionButton({
       disabled={disabled}
       className={[
         // Base
-        "relative inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+        "relative inline-flex items-center justify-center gap-1.5 rounded-md h-8 px-3 text-xs font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         "disabled:pointer-events-none disabled:opacity-50 disabled:grayscale-[0.3]",
         // Variant styles
@@ -79,7 +79,7 @@ function ActionButton({
           ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
           : variant === "ghost"
           ? "text-muted-foreground hover:bg-accent hover:text-foreground"
-          : "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+          : "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground shadow-sm",
         className,
       ].join(" ")}
       aria-label={tooltip}
@@ -87,7 +87,7 @@ function ActionButton({
       {badge !== undefined && badge > 0 && (
         animateBadge ? (
           <motion.span
-            className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground"
+            className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold tabular-nums text-destructive-foreground shadow-sm"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 420, damping: 14 }}
@@ -95,7 +95,7 @@ function ActionButton({
             {badge}
           </motion.span>
         ) : (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold tabular-nums text-destructive-foreground">
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold tabular-nums text-destructive-foreground shadow-sm">
             {badge}
           </span>
         )
@@ -661,9 +661,9 @@ function DesempenoSearchContent() {
                       key={modo}
                       type="button"
                       onClick={() => setPeriodoModo(modo)}
-                      className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      className={`flex-1 sm:flex-none h-8 px-4 flex items-center justify-center text-sm font-medium rounded-md transition-all ${
                         periodoModo === modo
-                          ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20"
+                          ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20"
                           : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                       }`}
                     >
@@ -705,7 +705,7 @@ function DesempenoSearchContent() {
                     key={r.numero}
                     type="button"
                     onClick={() => { setNumeroBuscado(r.numero); doBuscar(r.numero, r.nombre) }}
-                    className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs hover:bg-accent"
+                    className="rounded-md border bg-muted/60 px-2.5 py-1 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                     title={`${r.numero}${r.nombre ? " · " + r.nombre : ""}`}
                   >
                     {r.nombre || r.numero}
