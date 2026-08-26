@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ResponsiveShell } from "@/components/ui/responsive-shell"
 import { RedesignModalHeader } from "./modal-header"
 import { RedesignModalFooter } from "./modal-footer"
-import { getTipoCursoByName } from "@/lib/catalogo"
 import type { Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 
 export interface CapEmployeeProgressDialogProps {
@@ -79,7 +78,7 @@ export function CapEmployeeProgressDialog({
               )}
 
               {/* Tabs */}
-              <Tabs value={tab} onValueChange={v => onTabChange(v as any)}>
+              <Tabs value={tab} onValueChange={v => onTabChange(v as 'requeridos' | 'historial')}>
                 <TabsList className="flex w-full mb-2 bg-muted rounded-md p-1 border-0 shadow-none">
                   <TabsTrigger value="requeridos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
                     <Briefcase className="mr-2 h-[16px] w-[16px]" />
@@ -143,8 +142,8 @@ export function CapEmployeeProgressDialog({
                     <p className="text-sm text-muted-foreground py-6 text-center">No hay cursos registrados para este empleado.</p>
                   ) : (
                     <div className={`pb-2 ${styles.cardList}`}>
-                      {courses.map((ec, idx) => (
-                        <div key={idx} className={`flex items-center gap-3 p-3 ${styles.pane}`}>
+                      {courses.map((ec) => (
+                        <div key={ec.id} className={`flex items-center gap-3 p-3 ${styles.pane}`}>
                           <BookOpen className="h-4 w-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

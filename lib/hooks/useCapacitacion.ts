@@ -73,6 +73,7 @@ export interface EmployeeCourse {
   raw_course_name: string
   fecha_aplicacion: string | null
   calificacion: number | null
+  created_at?: string | null
   course?: { name: string; tipo: string | null } | null
 }
 
@@ -152,6 +153,42 @@ export function normalizeCourseName(s: string): string {
     .replace(/[^A-Z0-9\s]/g, ' ')      // quita puntuación
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/**
+ * Devuelve un solo intento por empleado y curso, conservando el de fecha más
+ * reciente. El nombre canónico permite unir variantes importadas con distinto
+ * raw_course_name que apuntan al mismo curso.
+ */
+export function getLatestEmployeeCourseAttempts(courseHistory: EmployeeCourse[]): EmployeeCourse[] {
+  const latestByEmployeeAndCourse = new Map<string, EmployeeCourse>()
+
+  for (const attempt of courseHistory) {
+    const displayName = attempt.course?.name ?? attempt.raw_course_name
+    const normalizedName = normalizeCourseName(displayName)
+    const courseKey = normalizedName || attempt.course_id || attempt.id
+    const key = `${attempt.employee_id}|${courseKey}`
+    const current = latestByEmployeeAndCourse.get(key)
+
+    const attemptDate = attempt.fecha_aplicacion ?? ''
+    const currentDate = current?.fecha_aplicacion ?? ''
+    const attemptCreatedAt = attempt.created_at ?? ''
+    const currentCreatedAt = current?.created_at ?? ''
+
+    if (
+      !current ||
+      attemptDate > currentDate ||
+      (attemptDate === currentDate && attemptCreatedAt > currentCreatedAt)
+    ) {
+      latestByEmployeeAndCourse.set(key, attempt)
+    }
+  }
+
+  return Array.from(latestByEmployeeAndCourse.values()).sort((a, b) => {
+    const dateComparison = (b.fecha_aplicacion ?? '').localeCompare(a.fecha_aplicacion ?? '')
+    if (dateComparison !== 0) return dateComparison
+    return (b.created_at ?? '').localeCompare(a.created_at ?? '')
+  })
 }
 
 /**
@@ -608,11 +645,18 @@ export function useCapacitacion() {
       .select('course_id, calificacion, fecha_aplicacion')
       .eq('employee_id', employee.id)
       .not('course_id', 'is', null)
+      .order('fecha_aplicacion', { ascending: false, nullsFirst: false })
     if (takenError) throw new Error(takenError.message)
 
-    const takenMap = new Map(
-      (takenData ?? []).map(t => [t.course_id, t])
-    )
+    // La consulta viene de la fecha más nueva a la más antigua. Conservamos
+    // la primera fila de cada curso para que el progreso refleje el último
+    // intento, incluso si existen variantes de raw_course_name en la tabla.
+    const takenMap = new Map<string, NonNullable<typeof takenData>[number]>()
+    for (const taken of takenData ?? []) {
+      if (taken.course_id && !takenMap.has(taken.course_id)) {
+        takenMap.set(taken.course_id, taken)
+      }
+    }
 
     const courses: CourseProgress[] = reqData.map(rc => {
       const taken = takenMap.get(rc.course_id)

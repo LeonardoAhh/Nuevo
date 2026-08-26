@@ -1,8 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { X, Check } from "lucide-react"
+import React, { useCallback, useSyncExternalStore } from "react"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
@@ -12,15 +10,18 @@ import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/compone
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useIsMobile(breakpoint = 639) {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
+  const subscribe = useCallback((onStoreChange: () => void) => {
     const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
-    setIsMobile(mq.matches)
-    const h = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener("change", h)
-    return () => mq.removeEventListener("change", h)
+    mq.addEventListener("change", onStoreChange)
+    return () => mq.removeEventListener("change", onStoreChange)
   }, [breakpoint])
-  return isMobile
+
+  const getSnapshot = useCallback(
+    () => window.matchMedia(`(max-width: ${breakpoint}px)`).matches,
+    [breakpoint]
+  )
+
+  return useSyncExternalStore(subscribe, getSnapshot, () => false)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,16 +155,17 @@ export interface ResponsiveShellProps {
   onClose: () => void
   children: React.ReactNode
   maxWidth?: string
+  mobileVariant?: 'drawer' | 'dialog'
   title: string
   description?: string
 }
 
 export function ResponsiveShell({
-  open, onClose, children, maxWidth = "sm:max-w-lg", title, description,
+  open, onClose, children, maxWidth = "sm:max-w-lg", mobileVariant = 'drawer', title, description,
 }: ResponsiveShellProps) {
   const isMobile = useIsMobile()
 
-  if (isMobile) {
+  if (isMobile && mobileVariant === 'drawer') {
     return (
       <Drawer open={open} onOpenChange={onClose}>
         <DrawerContent onOpenAutoFocus={(e) => e.preventDefault()} raw className={cn("max-h-[92dvh] flex flex-col outline-none bg-card !overflow-hidden")}>
@@ -180,7 +182,12 @@ export function ResponsiveShell({
       <DialogContent
         raw
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className={cn(maxWidth, "flex flex-col overflow-hidden p-0 gap-0 [&>button.absolute]:hidden")}
+        className={cn(
+          maxWidth,
+          "flex flex-col overflow-hidden p-0 gap-0 [&>button.absolute]:hidden",
+          mobileVariant === 'dialog' &&
+            "!inset-x-4 !bottom-auto !top-1/2 !w-auto !-translate-y-1/2 !rounded-xl !border !max-h-[calc(100dvh-2rem)] sm:!left-1/2 sm:!right-auto sm:!w-full sm:!-translate-x-1/2"
+        )}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{title}</DialogTitle>

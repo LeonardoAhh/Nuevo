@@ -1,11 +1,9 @@
 "use client"
-import React, { useState } from "react"
-import { Upload, FileJson, Search, CheckCircle2, AlertCircle, AlertTriangle, Layers, Loader2, X, ArrowLeft } from "lucide-react"
+import React from "react"
+import { Upload, FileJson, Search, CheckCircle2, AlertCircle, AlertTriangle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveShell } from "@/components/ui/responsive-shell"
 import { RedesignModalHeader } from "./modal-header"
@@ -44,23 +42,13 @@ export function CapBulkImportDialog({
   const validCount   = rows.filter(r => r.employeeId && r.courseId).length
   const invalidCount = rows.length - validCount
 
-  // Estado local para animación de procesamiento (Skeletons)
-  const [isSimulating, setIsSimulating] = useState(false)
-
-  const handleSimulatedParse = () => {
-    setIsSimulating(true)
-    setTimeout(() => {
-      onParse()
-      setIsSimulating(false)
-    }, 600)
-  }
-
   return (
     <ResponsiveShell
       open={open}
       onClose={() => onOpenChange(false)}
       title="Cargar cursos"
-      maxWidth="sm:max-w-5xl"
+      maxWidth={rows.length > 0 ? "sm:max-w-5xl" : "sm:max-w-2xl"}
+      mobileVariant="dialog"
     >
       <RedesignModalHeader
         title="Carga masiva de cursos"
@@ -68,7 +56,7 @@ export function CapBulkImportDialog({
         onClose={() => onOpenChange(false)}
       />
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-6 bg-surface-card">
+      <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-6 bg-surface-card">
           {success !== null && (
             <Alert className="border-success/30 bg-success/10 mb-6 shadow-sm">
               <CheckCircle2 className="h-5 w-5 text-success" />
@@ -86,63 +74,54 @@ export function CapBulkImportDialog({
           )}
 
           {/* FASE 1: Entrada JSON (Carga) */}
-          {rows.length === 0 && success === null && !isSimulating && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {rows.length === 0 && success === null && (
+            <div className="space-y-5">
+              <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-background">
+                  <FileJson className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-ink">Importar historial de cursos</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Pega el contenido o selecciona un archivo JSON. Podrás revisar y corregir los registros antes de guardarlos.
+                  </p>
+                </div>
+              </div>
 
-              <div className="space-y-3 relative">
+              <div className="space-y-2">
                 {parseError && (
-                  <Alert variant="destructive" className="py-2.5 animate-in fade-in slide-in-from-top-1 absolute -top-16 left-0 right-0 z-10 shadow-md">
+                  <Alert variant="destructive" className="py-2.5">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="ml-2 font-medium">{parseError}</AlertDescription>
                   </Alert>
                 )}
 
+                <div className="flex items-center justify-between gap-3">
+                  <label htmlFor="json-input" className="text-sm font-medium text-ink">Datos de cursos</label>
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Seleccionar JSON
+                  </Button>
+                  <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" onChange={onFile} />
+                </div>
                 <textarea
                   id="json-input"
                   value={text}
                   onChange={e => onTextChange(e.target.value)}
                   placeholder={'Formato esperado:\n[\n  { "numero": "1234", "curso": "Seguridad Industrial", "fecha": "2025-03-15", "calificacion": 85 }\n]'}
-                  rows={6}
-                  className="w-full rounded-md border border-border/60 bg-transparent text-foreground p-4 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-primary shadow-none placeholder:text-muted-foreground/60 transition-shadow"
+                  rows={7}
+                  className="w-full min-h-44 rounded-md border border-border/60 bg-transparent text-foreground p-4 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-primary shadow-none placeholder:text-muted-foreground/60 transition-shadow"
                   aria-label="Contenido JSON"
                 />
-              </div>
-            </div>
-          )}
-
-          {/* FASE INTERMEDIA: Skeletons de Carga */}
-          {isSimulating && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-3">
-                  <Skeleton className="h-7 w-32 rounded-full" />
-                  <Skeleton className="h-7 w-24 rounded-full" />
-                </div>
-                <Skeleton className="h-9 w-32 rounded-md" />
-              </div>
-              <div className="rounded-md border border-border/60 shadow-none bg-surface-card overflow-hidden">
-                <div className="bg-transparent border-b border-border/60 p-4 grid grid-cols-6 gap-4">
-                  <Skeleton className="h-5 w-full rounded-md" />
-                  <Skeleton className="h-5 w-full rounded-md col-span-2" />
-                  <Skeleton className="h-5 w-full rounded-md col-span-2" />
-                  <Skeleton className="h-5 w-full rounded-md" />
-                </div>
-                <div className="p-4 space-y-4">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="grid grid-cols-6 gap-4 items-center">
-                      <Skeleton className="h-9 w-full rounded-md" />
-                      <Skeleton className="h-9 w-full rounded-md col-span-2" />
-                      <Skeleton className="h-9 w-full rounded-md col-span-2" />
-                      <Skeleton className="h-9 w-12 rounded-full mx-auto" />
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Campos: numero, curso, fecha (YYYY-MM-DD) y calificacion.
+                </p>
               </div>
             </div>
           )}
 
           {/* FASE 2: Preview Editable */}
-          {rows.length > 0 && !isSimulating && (
+          {rows.length > 0 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
@@ -169,7 +148,7 @@ export function CapBulkImportDialog({
               </div>
 
               <div className="rounded-md border border-border/60 shadow-none bg-surface-card overflow-hidden">
-                <div className="overflow-y-auto max-h-[50vh]">
+                <div className="overflow-auto max-h-[50vh]">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-transparent hover:bg-transparent sticky top-0 z-10">
@@ -201,12 +180,12 @@ export function CapBulkImportDialog({
                             </TableCell>
                             <TableCell className="p-2 align-middle">
                               <Select value={row.courseId ?? ''} onValueChange={v => onSelectCourse(row.id, v)}>
-                                <SelectTrigger className="h-9 text-sm shadow-none rounded-md border-border/60 bg-transparent" aria-label={`Curso fila ${row.id}`}>
+                                <SelectTrigger className="h-9 min-w-0 text-sm shadow-none rounded-md border-border/60 bg-transparent [&>span]:min-w-0 [&>span]:truncate" aria-label={`Curso fila ${row.id}`}>
                                   <SelectValue placeholder={row.cursoRaw || 'Selecciona curso'} />
                                 </SelectTrigger>
-                                <SelectContent className="max-h-[40vh]">
+                                <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)] max-h-[40vh]">
                                   {courses.map(c => (
-                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    <SelectItem key={c.id} value={c.id} className="min-w-0" title={c.name}>{c.name}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -255,12 +234,12 @@ export function CapBulkImportDialog({
       <RedesignModalFooter
         onCancel={() => onOpenChange(false)}
         cancelLabel={success !== null ? 'Cerrar' : 'Cancelar'}
-        cancelDisabled={saving || isSimulating}
+        cancelDisabled={saving}
         onConfirm={
           success !== null
             ? undefined
             : rows.length === 0
-            ? handleSimulatedParse
+            ? onParse
             : onImport
         }
         confirmLabel={
@@ -277,20 +256,20 @@ export function CapBulkImportDialog({
           success !== null
             ? true
             : rows.length === 0
-            ? (!text.trim() || isSimulating)
-            : (isReadOnly || saving || validCount === 0 || isSimulating)
+            ? !text.trim()
+            : (isReadOnly || saving || validCount === 0)
         }
         secondaryAction={
           rows.length > 0 && success === null
             ? {
                 label: "Volver",
                 onClick: onBack,
-                disabled: saving || isSimulating,
+                disabled: saving,
                 icon: <ArrowLeft className="h-4 w-4" />
               }
             : undefined
         }
-        saving={saving || isSimulating}
+        saving={saving}
       />
     </ResponsiveShell>
   )

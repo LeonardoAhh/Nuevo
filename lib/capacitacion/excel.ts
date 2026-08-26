@@ -1,5 +1,5 @@
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
-import { normalizeCourseName } from "@/lib/hooks/useCapacitacion"
+import { getLatestEmployeeCourseAttempts, normalizeCourseName } from "@/lib/hooks/useCapacitacion"
 import { supabase } from "@/lib/supabase/client"
 
 type FilaRow = {
@@ -30,7 +30,7 @@ export async function downloadExcelReport({
   empCourses: EmployeeCourse[]
 }) {
   const ExcelJS = await import('exceljs')
-  // @ts-ignore
+  // @ts-expect-error file-saver no incluye declaraciones de tipos en este proyecto
   const { saveAs } = await import('file-saver')
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Reporte')
@@ -50,16 +50,17 @@ export async function downloadExcelReport({
   ]
 
   const filas: FilaRow[] = []
+  const latestEmpCourses = getLatestEmployeeCourseAttempts(empCourses)
 
   // Generar una fila por cada combinación empleado × curso del catálogo.
   const norm = (s: string) => normalizeCourseName(s || '')
 
   // Cargar aliases para mejorar matching (alias -> course_id)
-  let aliasMap = new Map<string, string>()
+  const aliasMap = new Map<string, string>()
   try {
     const { data: aliases, error } = await supabase.from('course_aliases').select('alias, course_id')
     if (!error && aliases) {
-      aliases.forEach((a: any) => aliasMap.set((a.alias || '').toString(), a.course_id))
+      aliases.forEach(a => aliasMap.set((a.alias || '').toString(), a.course_id))
     }
   } catch (e) {
     console.error('No se pudo cargar course_aliases para diagnóstico:', e)
@@ -77,7 +78,7 @@ export async function downloadExcelReport({
     const assignedCourses = courses.filter(c => assignedCourseIds.includes(c.id))
     
     // Obtener los cursos que el empleado realmente ha tomado
-    const myEmpCourses = empCourses.filter(ec => ec.employee_id === emp.id)
+    const myEmpCourses = latestEmpCourses.filter(ec => ec.employee_id === emp.id)
     
     // Si no tiene cursos asignados y no ha tomado ningún curso extra, omitimos
     if (assignedCourses.length === 0 && myEmpCourses.length === 0) continue
@@ -95,7 +96,6 @@ export async function downloadExcelReport({
         const ecNorm = norm(ecCourseName)
         if (!ecNorm) return false
         if (ecNorm === courseNorm) return true
-        if (ecNorm.includes(courseNorm) || courseNorm.includes(ecNorm)) return true
         if (aliasMap.get(ecNorm) === course.id) return true
         return false
       })
@@ -128,13 +128,7 @@ export async function downloadExcelReport({
       if (!ecNorm) continue
 
       // Verificar si ya fue procesado como curso requerido
-      let isRequerido = false
-      for (const reqNorm of Array.from(processedCourseNorms)) {
-        if (ecNorm === reqNorm || ecNorm.includes(reqNorm) || reqNorm.includes(ecNorm)) {
-          isRequerido = true
-          break
-        }
-      }
+      let isRequerido = processedCourseNorms.has(ecNorm)
       if (!isRequerido && ec.course_id && assignedCourseIds.includes(ec.course_id)) {
         isRequerido = true
       }
@@ -143,6 +137,7 @@ export async function downloadExcelReport({
       }
 
       if (isRequerido) continue // Ya se procesó en el bloque anterior
+      if (processedCourseNorms.has(ecNorm)) continue
 
       // Añadir al set para evitar posibles duplicados si el historial tiene el mismo extra dos veces
       processedCourseNorms.add(ecNorm)
@@ -184,36 +179,6 @@ export async function downloadExcelReport({
   })
 
   filas.forEach(row => sheet.addRow(row))
-
-  // Hoja de diagnóstico: contar registros y mostrar muestra de `empCourses` para depuración
-  try {
-    const diag = workbook.addWorksheet('Diagnostico')
-    diag.columns = [
-      { header: 'Clave', key: 'k', width: 24 },
-      { header: 'Valor', key: 'v', width: 80 },
-    ]
-    diag.addRow({ k: 'empleados_count', v: employees.length })
-    diag.addRow({ k: 'cursos_count', v: courses.length })
-    diag.addRow({ k: 'empCourses_count', v: empCourses.length })
-    diag.addRow({ k: 'muestra_empCourses (primeros 20)', v: '' })
-    const sample = empCourses.slice(0, 20)
-    sample.forEach((ec, idx) => {
-      diag.addRow({ k: `#${idx + 1}`, v: JSON.stringify({ id: ec.id, employee_id: ec.employee_id, course_id: ec.course_id, course_name: ec.course?.name ?? null, raw_course_name: ec.raw_course_name, fecha_aplicacion: ec.fecha_aplicacion, calificacion: ec.calificacion }) })
-    })
-    diag.addRow({ k: '', v: '' })
-    diag.addRow({ k: 'positions (name:id)', v: '' })
-    positions.forEach((p: any) => diag.addRow({ k: p.name, v: p.id }))
-    diag.addRow({ k: '', v: '' })
-    diag.addRow({ k: 'employees (nombre | puesto | matched_position_id | assigned_courses_count)', v: '' })
-    employees.forEach((e: any) => {
-      const matched = positions.find((p: any) => normPos(p.name) === normPos(e.puesto))
-      const assignedCount = matched ? positionCourses.filter((pc: any) => pc.position_id === matched.id).length : 0
-      diag.addRow({ k: e.nombre, v: `${e.puesto} | ${matched ? matched.id : 'NO_MATCH'} | ${assignedCount}` })
-    })
-  } catch (e) {
-    // no bloquear la exportación por errores de diagnóstico
-    console.error('Error creando hoja Diagnostico:', e)
-  }
 
   sheet.getRow(1).font      = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Daytona', size: 12 }
   sheet.getRow(1).fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF18181B' } }

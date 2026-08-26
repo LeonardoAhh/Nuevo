@@ -1,18 +1,14 @@
 "use client"
-import { useState, useEffect, useMemo } from "react"
-import { Search, Plus, BookOpen, X, Download, Clock, Pencil } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Search, BookOpen, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import { downloadExcelReport } from "@/lib/capacitacion/excel"
 import { CapReportPreviewDialog } from "@/components/content/cap-report-preview-dialog"
 import { CapCourseAuditDialog } from "@/components/content/cap-course-audit-dialog"
 import { CapCourseDetailView } from "@/components/content/cap-course-detail-view"
-import { getTipoCursoByName } from "@/lib/catalogo"
 import { motion, AnimatePresence } from "framer-motion"
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
 
@@ -30,13 +26,6 @@ interface CapCoursesTabProps {
   onEditCourse: (course: Course) => void
 }
 
-function courseStatus(calificacion: number | null): { estado: string; clase: string } {
-  if (calificacion == null) return { estado: 'pendiente', clase: 'bg-muted text-muted-foreground border' }
-  return calificacion >= 7
-    ? { estado: 'aprobado', clase: 'bg-success/15 text-success border border-success/30' }
-    : { estado: 'reprobado', clase: 'bg-destructive/15 text-destructive border border-destructive/30' }
-}
-
 export function CapCoursesTab({
   courses, loadingCourses, isReadOnly, positions, positionCourses, employees, empCourses, onNewCourse, onEditCourse,
 }: CapCoursesTabProps) {
@@ -47,8 +36,6 @@ export function CapCoursesTab({
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(coursePage, totalPages)
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
-
-  useEffect(() => { setCoursePage(1) }, [courseSearch])
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [auditOpen, setAuditOpen] = useState(false)
@@ -99,7 +86,7 @@ export function CapCoursesTab({
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
           <Input
             value={courseSearch}
-            onChange={e => setCourseSearch(e.target.value)}
+            onChange={e => { setCourseSearch(e.target.value); setCoursePage(1) }}
             placeholder="Buscar curso..."
             className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${courseSearch ? "pr-11" : ""}`}
           />
@@ -189,11 +176,6 @@ export function CapCoursesTab({
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         onDownload={handleDownload}
-        metrics={{
-          totalEmployees: employees.length,
-          totalCourses: courses.length,
-          totalRecords: empCourses.length
-        }}
       />
       
       <CapCourseAuditDialog

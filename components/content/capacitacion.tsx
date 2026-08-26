@@ -5,6 +5,7 @@ import { Briefcase, BookOpen, ClipboardList, Upload } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
 import { useCapacitacion, useRole } from "@/lib/hooks"
+import { getLatestEmployeeCourseAttempts } from "@/lib/hooks/useCapacitacion"
 import type { Department, Position, Course, PositionCourse, Employee, EmployeeCourse, EmployeeProgress } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { notify } from "@/lib/notify"
@@ -241,7 +242,7 @@ export default function CapacitacionContent() {
     setEmpDlgTab('requeridos')
     try {
       const [c, p] = await Promise.all([fetchEmployeeCourses(emp.id), fetchEmployeeProgress(emp)])
-      setSelectedEmpCourses(c); setEmpProgress(p)
+      setSelectedEmpCourses(getLatestEmployeeCourseAttempts(c)); setEmpProgress(p)
     } catch (err) { console.error(err) }
     finally { setLoadingEmpDlg(false) }
   }, [fetchEmployeeCourses, fetchEmployeeProgress])
