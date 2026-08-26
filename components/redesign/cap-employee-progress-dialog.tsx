@@ -106,8 +106,8 @@ export function CapEmployeeProgressDialog({
                     <div className={`pb-2 ${styles.cardList}`}>
                       {progress.courses.map((c) => (
                         <div key={c.courseId} className={`flex items-center gap-2.5 p-3 ${styles.pane}
-                          ${c.status === 'aprobado' ? 'bg-success/5 border-success/30' : ''}
-                          ${c.status === 'reprobado' ? 'bg-destructive/5 border-destructive/30' : ''}
+                          ${c.status === 'aprobado' ? styles.paneApproved : ''}
+                          ${c.status === 'reprobado' ? styles.paneFailed : ''}
                         `}>
                           {c.status === 'aprobado' && <CheckCircle2 className="h-4 w-4 text-success shrink-0" />}
                           {c.status === 'reprobado' && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
