@@ -182,7 +182,7 @@ export default function TrainingHoursKPI() {
               <LabelList
                 dataKey="totalHours"
                 position="right"
-                formatter={(v: number) => `${v} h`}
+                formatter={(v: unknown) => `${v} h`}
                 style={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
               />
             </Bar>
@@ -359,7 +359,7 @@ export default function TrainingHoursKPI() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={years} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     <XAxis dataKey="year" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{ fill: "transparent" }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(val: number) => [`${val} h`, "Total"]} labelStyle={{ fontWeight: "bold", color: "hsl(var(--foreground))" }} />
+                    <Tooltip cursor={{ fill: "transparent" }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(val: unknown) => [`${val} h`, "Total"]} labelStyle={{ fontWeight: "bold", color: "hsl(var(--foreground))" }} />
                     <Bar dataKey="totalHours" radius={[4, 4, 0, 0]}>
                       {years.map((y, i) => (
                         <Cell key={i} fill={y.year === currentYear ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />

@@ -251,7 +251,7 @@ export default function DashboardCumplimiento() {
                           background={{ fill: "hsl(var(--muted) / 0.2)", radius: 4 }}
                           animationBegin={skip ? undefined : 100} animationDuration={skip ? 0 : 700} animationEasing="ease-out">
                           {filteredDeptData.map((e, i) => <Cell key={i} fill={colorPct(e.pct)} />)}
-                          <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v}%`}
+                          <LabelList dataKey="pct" position="right" formatter={(v: unknown) => `${v}%`}
                             style={{ fontSize: 11, fontWeight: 700 }} />
                         </Bar>
                       </BarChart>

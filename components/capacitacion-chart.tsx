@@ -215,16 +215,22 @@ export default function CapacitacionChart() {
                     <Tooltip content={<CustomTooltip />} />
                     <Legend
                       wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-                      formatter={(value) => {
-                        if (value.includes("_trend")) return null
-                        return <span style={{ color: COLORS[value] }}>{value}</span>
+                      content={() => {
+                        const items = [
+                          ...YEARS.map(y => ({ value: y as string, color: COLORS[y] })),
+                          { value: "Tendencia", color: "hsl(var(--muted-foreground))" },
+                        ]
+                        return (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", fontSize: 12, paddingTop: 8 }}>
+                            {items.map(item => (
+                              <span key={item.value} style={{ color: item.color, display: "flex", alignItems: "center", gap: 4 }}>
+                                <svg width="12" height="2" style={{ display: "inline" }}><line x1="0" y1="1" x2="12" y2="1" stroke={item.color} strokeWidth="2" /></svg>
+                                {item.value}
+                              </span>
+                            ))}
+                          </div>
+                        )
                       }}
-                      payload={([...YEARS.map(y => ({
-                        value: y as string,
-                        type: "line" as const,
-                        color: COLORS[y],
-                        id: y as string,
-                      })), { value: "Tendencia", type: "line" as const, color: "hsl(var(--muted-foreground))", id: "trend" }])}
                     />
 
                     {/* Líneas principales con animación draw */}

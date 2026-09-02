@@ -212,7 +212,7 @@ export default function RetardosCharts({ analyses }: Props) {
                                             color: "hsl(var(--popover-foreground))",
                                             border: "1px solid hsl(var(--border))",
                                         }}
-                                        formatter={(value: number, name: string) => [value, name === "retardos" ? "Retardos" : "Total"]}
+                                        formatter={(value: unknown, name: unknown) => [String(value), name === "retardos" ? "Retardos" : "Total"] as [string, string]}
                                     />
                                     <Bar dataKey="retardos" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="Retardos" />
                                     <Bar dataKey="total" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="Total registros" />
@@ -243,7 +243,7 @@ export default function RetardosCharts({ analyses }: Props) {
                                             color: "hsl(var(--popover-foreground))",
                                             border: "1px solid hsl(var(--border))",
                                         }}
-                                        formatter={(value: number) => [`${value}%`, "Puntualidad"]}
+                                        formatter={(value: unknown) => [`${value}%`, "Puntualidad"]}
                                     />
                                     <Line
                                         type="monotone"
