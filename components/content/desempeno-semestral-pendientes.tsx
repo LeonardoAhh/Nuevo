@@ -29,21 +29,21 @@ const itemV = {
 function EstadoBadge({ item }: { item: SemestralEmployee }) {
   if (item.estado === "completado") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-2 py-1 text-xs font-bold text-white shadow-sm">
-        <CheckCircle2 size={14} /> Completado · {item.calificacion}%
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-success px-2 py-1 text-xs font-bold text-success-foreground shadow-sm">
+        <CheckCircle2 className="size-3.5" aria-hidden="true" /> Completado · {item.calificacion}%
       </span>
     )
   }
   if (item.estado === "no_elegible") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-        <Ban size={14} /> No aplica (&lt; 3 meses)
+        <Ban className="size-3.5" aria-hidden="true" /> No aplica (&lt; 3 meses)
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
-      <Clock3 size={14} /> Pendiente
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-warning px-2 py-1 text-xs font-bold text-warning-foreground shadow-sm">
+      <Clock3 className="size-3.5" aria-hidden="true" /> Pendiente
     </span>
   )
 }
@@ -73,7 +73,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
         <Button
           variant="outline"
           size="icon"
-          className="h-7 w-7 flex-shrink-0"
+          className="shrink-0"
           onClick={cargar}
           disabled={loading}
           aria-label="Actualizar semestrales"
@@ -84,7 +84,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
 
       {!loading && deptGroups.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-muted/30 py-8 text-muted-foreground">
-          <Users size={26} className="opacity-60" />
+          <Users className="size-6 opacity-60" aria-hidden="true" />
           <p className="text-sm font-medium">Sin personal de planta en tu área.</p>
         </div>
       )}
@@ -93,7 +93,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
         <div className="space-y-4">
           {/* Dept tabs */}
           <div
-            role="tablist"
+            role="group"
             aria-label="Departamentos"
             className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin"
           >
@@ -109,8 +109,8 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
                     key={g.departamento}
                     variant={isActive ? "default" : "outline"}
                     size="sm"
-                    role="tab"
-                    aria-selected={isActive}
+
+                    aria-pressed={isActive}
                     onClick={() => setActiveTab(g.departamento)}
                     className="flex-shrink-0 gap-1.5"
                   >
@@ -147,11 +147,11 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
                   <motion.li
                     key={item.dbId}
                     variants={itemV}
-                    className={`flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5 ${item.estado === "no_elegible" ? "opacity-60" : ""
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5 ${item.estado === "no_elegible" ? "opacity-60" : ""
                       }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-foreground leading-tight">{item.nombre}</p>
+                      <p className="break-words text-sm font-medium text-foreground leading-snug">{item.nombre}</p>
                       <p className="text-sm text-muted-foreground mt-0.5">
                         #{item.numero ?? "—"}{item.puesto ? ` · ${item.puesto}` : ""}
                       </p>

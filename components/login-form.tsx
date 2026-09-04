@@ -5,16 +5,20 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { EyeIcon, EyeOffIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { LoginSubmitButton, type LoginSubmitStatus } from "@/components/login-submit-button"
+import LoginWelcome from "@/components/login-welcome"
+import { LOGIN, loginStyles } from "@/lib/login/presentation"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<LoginSubmitStatus>("idle")
-  
+
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -48,78 +52,73 @@ export default function LoginForm() {
     }
   }
 
+
   return (
-    <div className="w-full flex flex-col items-center">
-      {/* Títulos fuera de la caja */}
-      <div className="text-center mb-8 px-2">
-        <h1 className="text-4xl sm:text-5xl tracking-tight text-foreground mb-4 font-serif">
-          Bienvenido de vuelta
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground/80">
-          Inicia sesión para continuar.
-        </p>
-      </div>
+    <div className={loginStyles.form}>
+      <LoginWelcome />
+          <form onSubmit={handleLogin} className={loginStyles.fields} noValidate aria-labelledby="login-title" aria-describedby="login-description">
+            <div className={loginStyles.field}>
+              <Label htmlFor="email">{LOGIN.email}</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                aria-required="true"
+                placeholder={LOGIN.emailPlaceholder}
+                enterKeyHint="next"
+                className={loginStyles.input}
+                value={email}
+                onChange={event => setEmail(event.target.value)}
+                data-testid="login-email-input"
+              />
+            </div>
 
-      {/* Caja del formulario */}
-      <div className="w-full max-w-sm rounded-[1.5rem] border border-border/80 bg-card/20 backdrop-blur-sm p-6 sm:p-8">
-        <form onSubmit={handleLogin} className="space-y-4" noValidate>
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="sr-only">
-              Correo electrónico
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoFocus
-              placeholder="Ingresa tu correo electrónico"
-              enterKeyHint="next"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-background/50 border-border/60 transition-colors focus:border-foreground shadow-none rounded-xl px-4 text-foreground placeholder:text-muted-foreground/70"
-              data-testid="login-email-input"
-            />
-          </div>
+            <div className={loginStyles.field}>
+              <Label htmlFor="password">{LOGIN.password}</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  aria-required="true"
+                  placeholder={LOGIN.passwordPlaceholder}
+                  enterKeyHint="go"
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  className={loginStyles.passwordInput}
+                  data-testid="login-password-input"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={loginStyles.passwordToggle}
+                  onClick={() => setShowPassword(value => !value)}
+                  aria-label={showPassword ? LOGIN.hidePassword : LOGIN.showPassword}
+                  aria-controls="password"
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </Button>
+              </div>
+            </div>
 
-          <div className="space-y-1.5 relative">
-            <Label htmlFor="password" className="sr-only">
-              Contraseña
-            </Label>
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              placeholder="Ingresa tu contraseña"
-              enterKeyHint="go"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 bg-background/50 border-border/60 transition-colors focus:border-foreground shadow-none rounded-xl pl-4 pr-12 text-foreground placeholder:text-muted-foreground/70"
-              data-testid="login-password-input"
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-            </button>
-          </div>
+            {submitStatus === "error" && <Alert variant="destructive">
+              <AlertCircle className="size-4" aria-hidden="true" />
+              <AlertDescription>{LOGIN.error}</AlertDescription>
+            </Alert>}
 
-          <div className="pt-2">
-            <LoginSubmitButton
-              status={submitStatus}
-              className="h-12 w-full rounded-xl font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
-              data-testid="login-submit"
-            >
-              Continuar con correo electrónico
+            <LoginSubmitButton status={submitStatus} data-testid="login-submit">
+              {LOGIN.submit}
             </LoginSubmitButton>
-          </div>
-        </form>
-      </div>
+            <p role="status" className="sr-only">
+              {submitStatus === "loading" ? LOGIN.submitting : submitStatus === "success" ? LOGIN.success : ""}
+            </p>
+          </form>
     </div>
   )
 }

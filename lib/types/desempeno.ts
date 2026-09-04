@@ -1,3 +1,4 @@
+import { EVALUATION_WEIGHTS } from "@/lib/desempeno/presentation"
 
 export interface Objetivo {
     numero: number;
@@ -300,7 +301,7 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
 
     // 3. Aplicamos la ponderacion del 40%.
     // Multiplicamos el promedio por 0.4 y redondeamos el resultado a un numero entero.
-    const ponderadoParte1 = Math.round(promedioParte1 * 0.4);
+    const ponderadoParte1 = Math.round(promedioParte1 * EVALUATION_WEIGHTS.objetivos);
 
     // --- Parte 2: Cumplimiento de Responsabilidades (30% de la nota final) ---
 
@@ -332,7 +333,7 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
 
     // 4. Aplicamos la ponderacion del 30%.
     // Multiplicamos por 0.3 y redondeamos a un entero.
-    const ponderadoParte2 = Math.round(promedioParte2 * 0.3);
+    const ponderadoParte2 = Math.round(promedioParte2 * EVALUATION_WEIGHTS.cumplimiento);
 
     // --- Parte 3: Competencias (30% de la nota final) ---
 
@@ -352,7 +353,7 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
 
     // 3. Aplicamos la ponderacion final del 30%.
     // Multiplicamos por 0.3 y redondeamos a un entero.
-    const ponderadoParte3 = Math.round(promedioParte3 * 0.3);
+    const ponderadoParte3 = Math.round(promedioParte3 * EVALUATION_WEIGHTS.competencias);
 
     // --- Resultado Final ---
 

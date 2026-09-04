@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 import { MaintenanceScreen } from "./maintenance-screen"
-import { AlertTriangle } from "lucide-react"
+import { MaintenanceLocalIndicator } from "./maintenance-local-indicator"
 
 /* ─────────────────────────────────────────────────────────────────
    MaintenanceGuard
@@ -12,8 +12,8 @@ import { AlertTriangle } from "lucide-react"
    el entorno cuando el modo mantenimiento está activo:
 
    · Producción  → bloqueo total con <MaintenanceScreen />
-   · Local/Red   → la app sigue funcionando con una barra de aviso
-                   en la parte superior (sin interrumpir el trabajo)
+   · Local/Red   → la app sigue funcionando con un indicador flotante
+                   cuyo detalle se consulta bajo demanda
 
    El estado del entorno se lee como un store externo vía
    useSyncExternalStore: el snapshot de servidor es `true` para
@@ -52,26 +52,10 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 
     // Desarrollo / red local: aviso no bloqueante
     return (
-      <div className="flex flex-col min-h-screen">
-        {/* Barra de aviso — tokens destructive, sin estilos inline */}
-        <div
-          className="relative z-[99999] flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground"
-          role="alert"
-          aria-live="polite"
-        >
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>
-            Mantenimiento activo —{" "}
-            <strong className="font-semibold">producción bloqueada</strong>,
-            acceso local permitido
-          </span>
-        </div>
-
-        {/* Contenido normal de la app */}
-        <div className="flex-1 min-h-0 flex flex-col relative">
-          {children}
-        </div>
-      </div>
+      <>
+        {children}
+        <MaintenanceLocalIndicator />
+      </>
     )
   }
 

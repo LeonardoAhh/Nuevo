@@ -20,7 +20,7 @@ const DialogOverlay = React.forwardRef<
     className={cn(
       "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
-      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:animate-none",
       className,
     )}
     {...props}
@@ -37,31 +37,12 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // ── Base ────────────────────────────────────────────────────────
-        "fixed z-50 bg-card shadow-xl",
+        "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-xl",
+        "max-h-[80dvh]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "duration-300 ease-out",
-
-        // ── Mobile: bottom-sheet ─────────────────────────────────────────
-        // Ocupa todo el ancho, sube desde abajo, esquinas superiores redondeadas
-        "inset-x-0 bottom-0 w-full rounded-t-2xl border-t",
-        "max-h-[92dvh] flex flex-col",
-        "data-[state=open]:slide-in-from-bottom-4",
-        "data-[state=closed]:slide-out-to-bottom-4",
-
-        // ── Desktop ≥ sm: dialog centrado ────────────────────────────────
-        "sm:inset-auto sm:bottom-auto",
-        "sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
-        "sm:rounded-xl sm:border sm:max-w-lg sm:w-full",
-        "sm:max-h-[85dvh]",
-        "sm:data-[state=open]:slide-in-from-left-1/2",
-        "sm:data-[state=open]:slide-in-from-top-[48%]",
-        "sm:data-[state=closed]:slide-out-to-left-1/2",
-        "sm:data-[state=closed]:slide-out-to-top-[48%]",
-        "sm:data-[state=closed]:zoom-out-95",
-        "sm:data-[state=open]:zoom-in-95",
-
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "duration-200 motion-reduce:animate-none",
         className,
       )}
       {...props}
@@ -70,14 +51,9 @@ const DialogContent = React.forwardRef<
         children
       ) : (
         <>
-          {/* Drag handle — solo en móvil */}
-          <div className="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
-          </div>
-
           {/* Área scrollable */}
           <div
-            className="flex-1 overflow-y-auto overscroll-contain px-6 pt-1 sm:pt-6 safe-bottom-content"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 safe-bottom-content"
             style={{ scrollbarGutter: "stable" }}
           >
             {children}
@@ -85,7 +61,7 @@ const DialogContent = React.forwardRef<
 
           {/* Botón cerrar */}
           {!hideClose && (
-            <DialogPrimitive.Close className="absolute right-4 top-4 z-50 rounded-full bg-muted/50 p-2 text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-muted hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+            <DialogPrimitive.Close className="absolute right-3 top-3 z-50 flex size-10 items-center justify-center rounded-md bg-card p-2 text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-muted hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Cerrar</span>
             </DialogPrimitive.Close>
@@ -100,12 +76,20 @@ DialogContent.displayName = DialogPrimitive.Content.displayName
 const DialogHeader = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn("flex flex-col space-y-1.5 text-center sm:text-left mb-4", className)}
-    {...props}
-  />
-)
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  if (className?.split(/\s+/).includes("sr-only")) {
+    return <div {...props} className={className} />
+  }
+  const children = React.Children.toArray(props.children)
+  const descriptions = children.filter(child => React.isValidElement(child) && child.type === DialogDescription)
+  const heading = children.filter(child => !React.isValidElement(child) || child.type !== DialogDescription)
+  return <>
+    <div {...props} className={cn("mb-4 flex flex-col gap-2 border-b pb-4 pr-10 text-left", className)}>
+      {heading}
+    </div>
+    {descriptions.length > 0 && <div className="mb-4">{descriptions}</div>}
+  </>
+}
 DialogHeader.displayName = "DialogHeader"
 
 const DialogFooter = ({
@@ -132,7 +116,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("break-words text-base font-semibold leading-snug tracking-tight", className)}
     {...props}
   />
 ))

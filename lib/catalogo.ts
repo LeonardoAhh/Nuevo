@@ -438,14 +438,15 @@ export function getDepartamentoByPuesto(puesto: string | null | undefined): stri
 }
 
 export const PERIODOS_DESEMPENO = {
-  semestrales: ["DIC-MAY 2026", "JUN-NOV 2026"] as const,
+  semestrales: ["JUN-NOV 2026"] as const,
   mensuales: [
-    "ENE-FEB 2026",
-    "FEB-MAR 2026",
-    "MAR-ABR 2026",
-    "ABR-MAY 2026",
-    "MAY-JUN 2026",
-    "JUN-JUL 2026",
+    "DIC-ENE 2027",
+    "ENE-FEB 2027",
+    "FEB-MAR 2027",
+    "MAR-ABR 2027",
+    "ABR-MAY 2027",
+    "MAY-JUN 2027",
+    "JUN-JUL 2027",
     "JUL-AGO 2026",
     "AGO-SEP 2026",
     "SEP-OCT 2026",

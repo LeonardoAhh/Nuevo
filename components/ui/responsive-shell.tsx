@@ -2,8 +2,9 @@
 
 import React, { useCallback, useSyncExternalStore } from "react"
 import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
+import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // useIsMobile
@@ -34,15 +35,18 @@ export interface ModalHeaderProps {
   onClose?: () => void
 }
 
-export function ModalHeader({ title, subtitle }: ModalHeaderProps) {
+export function ModalHeader({ title, subtitle, onClose }: ModalHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-background sticky top-0 z-10 shrink-0">
       <div className="flex-1 min-w-0">
-        <h2 className="text-lg font-semibold leading-tight text-foreground truncate">{title}</h2>
+        <h2 className="break-words text-base font-semibold leading-snug text-foreground">{title}</h2>
         {subtitle && (
-          <p className="text-sm text-muted-foreground truncate mt-1">{subtitle}</p>
+          <p className="sr-only">{subtitle}</p>
         )}
       </div>
+      {onClose && <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={onClose} aria-label="Cerrar modal">
+        <X aria-hidden="true" />
+      </Button>}
     </div>
   )
 }
@@ -147,7 +151,7 @@ export function ModalFooter({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ResponsiveShell — Drawer on mobile, Dialog on desktop
+// ResponsiveShell — shared centered Dialog on every screen
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ResponsiveShellProps {
@@ -155,44 +159,36 @@ export interface ResponsiveShellProps {
   onClose: () => void
   children: React.ReactNode
   maxWidth?: string
+  contentClassName?: string
+  /** @deprecated Modals now use the same centered Dialog on every screen. */
   mobileVariant?: 'drawer' | 'dialog'
   title: string
   description?: string
 }
 
 export function ResponsiveShell({
-  open, onClose, children, maxWidth = "sm:max-w-lg", mobileVariant = 'drawer', title, description,
+  open, onClose, children, maxWidth = "sm:max-w-lg", contentClassName, title, description,
 }: ResponsiveShellProps) {
-  const isMobile = useIsMobile()
-
-  if (isMobile && mobileVariant === 'drawer') {
-    return (
-      <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent onOpenAutoFocus={(e) => e.preventDefault()} raw className={cn("max-h-[92dvh] flex flex-col outline-none bg-card !overflow-hidden")}>
-          <DrawerTitle className="sr-only">{title}</DrawerTitle>
-          <DrawerDescription className="sr-only">{description ?? title}</DrawerDescription>
-          {children}
-        </DrawerContent>
-      </Drawer>
-    )
-  }
+  const previousFocus = React.useRef<HTMLElement | null>(null)
+  const titleRef = React.useRef<HTMLHeadingElement>(null)
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={nextOpen => { if (!nextOpen) onClose() }}>
       <DialogContent
         raw
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        className={cn(
-          maxWidth,
-          "flex flex-col overflow-hidden p-0 gap-0 [&>button.absolute]:hidden",
-          mobileVariant === 'dialog' &&
-            "!inset-x-4 !bottom-auto !top-1/2 !w-auto !-translate-y-1/2 !rounded-xl !border !max-h-[calc(100dvh-2rem)] sm:!left-1/2 sm:!right-auto sm:!w-full sm:!-translate-x-1/2"
-        )}
+        onOpenAutoFocus={event => {
+          previousFocus.current = document.activeElement as HTMLElement | null
+          event.preventDefault()
+          titleRef.current?.focus()
+        }}
+        onCloseAutoFocus={event => {
+          event.preventDefault()
+          previousFocus.current?.focus()
+        }}
+        className={cn(maxWidth, "p-0 gap-0", contentClassName)}
       >
-        <DialogHeader className="sr-only">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description ?? title}</DialogDescription>
-        </DialogHeader>
+        <DialogTitle ref={titleRef} tabIndex={-1} className="sr-only">{title}</DialogTitle>
+        <DialogDescription className="sr-only">{description ?? title}</DialogDescription>
         {children}
       </DialogContent>
     </Dialog>

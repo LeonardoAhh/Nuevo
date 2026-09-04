@@ -720,18 +720,6 @@ input[type="color"]::-webkit-color-swatch {
     }
 }
 
-/* Spinner del botón */
-.login-spinner {
-    display: inline-block;
-    animation: loginSpin 0.7s linear infinite;
-}
-
-@keyframes loginSpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
 /* ─── Fin Login Hero ──────────────────────────────────── */
 
 /* ─── Examen: columnas (pantalla + impresión) ──────────── */
