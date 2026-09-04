@@ -1,110 +1,125 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
-import { useEffect, useState } from "react"
-import { Settings } from "lucide-react"
-import { StatusCaption, StatusShell } from "@/components/ui/status-shell"
+import { useEffect, useId, useState } from "react"
+import { Clock3, Layers3, Radio, RefreshCw } from "lucide-react"
 
-/**
- * Full-screen lock shown in production while maintenance mode is active.
- * Shares the StatusShell surface with the error boundary (same tokens,
- * density, typography and motion behavior).
- */
+const COUNTDOWN_UNITS = [
+  { label: "Días", seconds: 86400, modulo: null },
+  { label: "Horas", seconds: 3600, modulo: 24 },
+  { label: "Minutos", seconds: 60, modulo: 60 },
+  { label: "Segundos", seconds: 1, modulo: 60 },
+] as const
 
-/* Indeterminate progress — not expressible in pure Tailwind.
-   Honors both the OS setting and the app's .reduce-motion toggle
-   (globals.css already neutralizes CSS animations for it). */
-const PROGRESS_STYLES = `
-  .status-progress-track {
-    height: 4px;
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: hsl(var(--border));
-  }
-  .status-progress-bar {
-    height: 100%;
-    width: 40%;
-    border-radius: 6px;
-    background-color: hsl(var(--primary));
-    animation: statusIndeterminate 2s ease-in-out infinite;
-  }
-  @keyframes statusIndeterminate {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(350%); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .status-progress-bar { animation: none; transform: translateX(125%); }
-  }
-`
-
+/** Uses the shared theme, typography and density tokens of the status surfaces. */
 export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null }) {
-  const reduced = useReducedMotion()
+  const id = useId()
   const [now, setNow] = useState<number | null>(null)
   const deadline = endsAt ? Date.parse(endsAt) : NaN
   const hasDeadline = Number.isFinite(deadline)
-  const remaining = hasDeadline && now !== null ? Math.max(0, Math.ceil((deadline - now) / 1000)) : null
-  const finished = remaining === 0
+  const remaining = hasDeadline && now !== null
+    ? Math.max(0, Math.ceil((deadline - now) / 1000))
+    : null
+  const estimateElapsed = remaining === 0
+
   useEffect(() => {
     if (!hasDeadline) return
     const tick = () => setNow(Date.now())
     const initial = window.setTimeout(tick, 0)
     const timer = window.setInterval(tick, 1000)
-    return () => { window.clearTimeout(initial); window.clearInterval(timer) }
+    // Recalculate from the deadline after a suspended/background tab resumes.
+    window.addEventListener("focus", tick)
+    return () => {
+      window.clearTimeout(initial)
+      window.clearInterval(timer)
+      window.removeEventListener("focus", tick)
+    }
   }, [hasDeadline])
-  const units = remaining === null ? [] : [
-    { label: "Días", value: Math.floor(remaining / 86400) },
-    { label: "Horas", value: Math.floor(remaining / 3600) % 24 },
-    { label: "Minutos", value: Math.floor(remaining / 60) % 60 },
-    { label: "Segundos", value: remaining % 60 },
-  ]
 
   return (
-    <>
-      <style>{PROGRESS_STYLES}</style>
-
-      <StatusShell
-        icon={Settings}
-        tone="primary"
-        eyebrow="Sistema en mantenimiento"
-        title="Estamos aplicando una actualización"
-        description="Estamos trabajando para mejorar el sistema. No necesitas hacer nada; la página volverá por sí sola cuando termine el mantenimiento."
-        labelledBy="maintenance-heading"
-      >
-        {hasDeadline && (
-          <div className="mt-7">
-            <p className="mb-3 text-sm text-muted-foreground" role="status">
-              {finished ? "Estamos finalizando la actualización. Gracias por tu paciencia." : "Tiempo estimado restante"}
-            </p>
-            <div role="timer" aria-label="Tiempo estimado restante" aria-live="off" className="grid grid-cols-4 gap-2">
-              {(units.length ? units : ["Días", "Horas", "Minutos", "Segundos"].map(label => ({ label, value: null }))).map(({ label, value }) => (
-                <div key={label} className="min-w-0 rounded-xl border border-border bg-muted/30 px-1 py-3 text-center">
-                  <span className="block font-mono text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">{value === null ? "--" : String(value).padStart(2, "0")}</span>
-                  <span className="text-[10px] text-muted-foreground sm:text-xs">{label}</span>
-                </div>
-              ))}
+    <main
+      aria-labelledby={`${id}-heading`}
+      aria-describedby={`${id}-description`}
+      className="relative isolate flex min-h-dvh items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 sm:py-12"
+    >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-primary/5 to-transparent" />
+      </div>
+      <div className="w-full max-w-4xl space-y-5">
+        <header className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Estado del sistema</p>
+          <span className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
+            <Radio className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+            Mantenimiento activo
+          </span>
+        </header>
+        <article aria-labelledby={`${id}-heading`} className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
+          <div className="grid md:grid-cols-2">
+            <div className="flex flex-col items-start p-6 sm:p-8 lg:p-10">
+              <div aria-hidden="true" className="mb-6 grid size-14 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                <Layers3 className="size-7" strokeWidth={1.5} />
+              </div>
+              <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Sistema en mantenimiento</p>
+              <h1 id={`${id}-heading`} className="text-balance font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+                Estamos aplicando una actualización
+              </h1>
+              <p id={`${id}-description`} className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Estamos actualizando el sistema para mejorar tu experiencia. El acceso está pausado temporalmente.
+              </p>
             </div>
+            <section aria-labelledby={`${id}-countdown`} className="flex min-w-0 flex-col justify-center gap-5 border-t border-border bg-muted/30 p-6 sm:p-8 md:border-l md:border-t-0 lg:p-10">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock3 className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                <h2 id={`${id}-countdown`} className="text-sm font-medium text-foreground">
+                  {hasDeadline ? "Tiempo estimado restante" : "Actualización en curso"}
+                </h2>
+              </div>
+              {hasDeadline ? (
+                <div role="timer" aria-labelledby={`${id}-countdown`} aria-live="off">
+                  <dl className="grid grid-cols-2 gap-3 xs:grid-cols-4 md:grid-cols-2 lg:grid-cols-4">
+                    {COUNTDOWN_UNITS.map(({ label, seconds, modulo }) => {
+                      const total = remaining === null ? null : Math.floor(remaining / seconds)
+                      const value = total === null ? null : modulo === null ? total : total % modulo
+                      return (
+                        <div key={label} className="flex min-w-0 flex-col items-center gap-2 rounded-lg border border-border bg-card px-2 py-4 shadow-sm">
+                          <dt className="order-2 text-xs text-muted-foreground">{label}</dt>
+                          <dd className="font-mono text-3xl font-medium leading-none tracking-tight tabular-nums text-foreground">
+                            {value === null ? "—" : String(value).padStart(2, "0")}
+                          </dd>
+                        </div>
+                      )
+                    })}
+                  </dl>
+                </div>
+              ) : (
+                <p className="font-serif text-2xl font-semibold tracking-tight">Volvemos en cuanto esté listo.</p>
+              )}
+              <div role="status" aria-live="polite" aria-atomic="true" className="text-sm leading-relaxed text-muted-foreground">
+                {estimateElapsed
+                  ? "La actualización necesita un poco más de tiempo. Gracias por tu paciencia."
+                  : hasDeadline
+                    ? "Este tiempo es aproximado y puede ajustarse mientras trabajamos."
+                    : "Todavía no hay una hora estimada de regreso. El acceso volverá aquí cuando el sistema esté disponible."}
+              </div>
+              {hasDeadline && now !== null && (
+                <p className="border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
+                  Fin estimado: <time dateTime={new Date(deadline).toISOString()} className="font-medium text-foreground">
+                    {new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(deadline)}
+                  </time>
+                  <span className="mt-1 block">Hora local de tu dispositivo</span>
+                </p>
+              )}
+            </section>
           </div>
-        )}
-        <motion.div
-          initial={reduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.45 }}
-          className="mt-7"
-        >
-          <div
-            className="status-progress-track"
-            role="progressbar"
-            aria-label="Actualización en progreso"
-            aria-valuetext="Progreso indeterminado"
-          >
-            <div className="status-progress-bar" />
-          </div>
-        </motion.div>
-      </StatusShell>
-
-      <StatusCaption className="fixed inset-x-0 bottom-4 px-4 text-center">
-        Vinoplastic · Planta Querétaro — Mantenimiento programado
-      </StatusCaption>
-    </>
+          <footer className="flex items-start gap-3 border-t border-border px-6 py-5 sm:px-8 lg:px-10">
+            <RefreshCw className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
+            <div className="min-w-0 space-y-1">
+              <p className="text-sm font-medium">Volverás automáticamente</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">Puedes dejar esta página abierta. El acceso se restablecerá cuando termine el mantenimiento.</p>
+            </div>
+          </footer>
+        </article>
+        <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">Gracias por esperar mientras mejoramos el sistema.</p>
+      </div>
+    </main>
   )
 }

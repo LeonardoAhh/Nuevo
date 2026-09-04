@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { describeSupabaseError } from "@/lib/supabase/errors"
 
 export function useMaintenanceMode() {
   const [isMaintenance, setIsMaintenance] = useState(false)
   const [loading, setLoading] = useState(true)
   const [endsAt, setEndsAt] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -69,6 +71,7 @@ export function useMaintenanceMode() {
   }, [])
 
   const toggleMaintenance = async (active: boolean, durationSeconds?: number) => {
+    setSaveError(null)
     if (active && (durationSeconds === undefined || !Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 365 * 86400)) return false
     setSaving(true)
     try {
@@ -87,12 +90,20 @@ export function useMaintenanceMode() {
       setEndsAt(data.maintenance_ends_at ?? null)
       return true
     } catch (err) {
-      console.error("Error updating maintenance mode:", err)
+      const error = err as { code?: string; message?: string }
+      const missingColumn = error?.code === "42703" || error?.code === "PGRST204"
+      const message = missingColumn
+        ? "Falta la columna del contador en Supabase. Ejecuta la migración 20260904_maintenance_countdown.sql en el proyecto conectado a esta aplicación."
+        : error?.code === "PGRST116"
+          ? "No se actualizó el mantenimiento. Verifica que exista el registro maintenance_mode y que tu cuenta tenga permiso para modificarlo."
+          : describeSupabaseError(err, "No se pudo guardar el mantenimiento.")
+      setSaveError(message)
+      console.error(`Error updating maintenance mode: [${error?.code ?? "unknown"}] ${error?.message || message}`)
       return false
     } finally {
       setSaving(false)
     }
   }
 
-  return { isMaintenance, endsAt, loading, saving, toggleMaintenance }
+  return { isMaintenance, endsAt, loading, saving, saveError, toggleMaintenance }
 }

@@ -498,7 +498,7 @@ function AppearanceTab() {
 // ─── NOTIFICATIONS TAB ────────────────────────────────────────────────────────
 // ─── DEVELOPER TAB ────────────────────────────────────────────────────────────
 function DeveloperTab() {
-  const { isMaintenance, endsAt, toggleMaintenance, loading, saving } = useMaintenanceMode()
+  const { isMaintenance, endsAt, toggleMaintenance, loading, saving, saveError } = useMaintenanceMode()
   const [duration, setDuration] = useState("30")
   const [unit, setUnit] = useState("60")
   const [feedback, setFeedback] = useState("")
@@ -509,7 +509,7 @@ function DeveloperTab() {
     const success = await toggleMaintenance(active, seconds)
     setFeedback(success
       ? active ? "Mantenimiento guardado. El contador comienza desde ahora." : "Mantenimiento desactivado."
-      : "No se pudo guardar. Verifica la conexión y que la migración del contador esté aplicada.")
+      : "")
   }
 
   return (
@@ -566,6 +566,7 @@ function DeveloperTab() {
           {isMaintenance && endsAt && Number.isFinite(Date.parse(endsAt)) && (
             <p className="text-xs text-muted-foreground">Fin estimado: {new Date(endsAt).toLocaleString("es-MX")}</p>
           )}
+          {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
           {feedback && <p role="status" className="text-sm">{feedback}</p>}
         </div>
       </SettingGroup>
