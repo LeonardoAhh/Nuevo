@@ -60,10 +60,10 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
               </div>
               <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Sistema en mantenimiento</p>
               <h1 id={`${id}-heading`} className="text-balance font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                Estamos aplicando una actualización
+                Actualización en curso
               </h1>
               <p id={`${id}-description`} className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Estamos actualizando el sistema para mejorar tu experiencia. El acceso está pausado temporalmente.
+                Durante este tiempo, el acceso a la plataforma estará temporalmente deshabilitado.
               </p>
             </div>
             <section aria-labelledby={`${id}-countdown`} className="flex min-w-0 flex-col justify-center gap-5 border-t border-border bg-muted/30 p-6 sm:p-8 md:border-l md:border-t-0 lg:p-10">
@@ -97,7 +97,7 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
                 {estimateElapsed
                   ? "La actualización necesita un poco más de tiempo. Gracias por tu paciencia."
                   : hasDeadline
-                    ? "Este tiempo es aproximado y puede ajustarse mientras trabajamos."
+                    ? "Este tiempo es aproximado."
                     : "Todavía no hay una hora estimada de regreso. El acceso volverá aquí cuando el sistema esté disponible."}
               </div>
               {hasDeadline && now !== null && (
@@ -114,11 +114,11 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
             <RefreshCw className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
             <div className="min-w-0 space-y-1">
               <p className="text-sm font-medium">Volverás automáticamente</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">Puedes dejar esta página abierta. El acceso se restablecerá cuando termine el mantenimiento.</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">El acceso se restablecerá cuando termine el mantenimiento.</p>
             </div>
           </footer>
         </article>
-        <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">Gracias por esperar mientras mejoramos el sistema.</p>
+        <p className="px-2 text-center text-xs leading-relaxed text-muted-foreground">ViñoPlastic Planta Querétaro - Capacitación - Recursos Humanos.</p>
       </div>
     </main>
   )
