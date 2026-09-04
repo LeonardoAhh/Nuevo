@@ -1,6 +1,7 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
+import { useEffect, useState } from "react"
 import { Settings } from "lucide-react"
 import { StatusCaption, StatusShell } from "@/components/ui/status-shell"
 
@@ -36,8 +37,26 @@ const PROGRESS_STYLES = `
   }
 `
 
-export function MaintenanceScreen() {
+export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null }) {
   const reduced = useReducedMotion()
+  const [now, setNow] = useState<number | null>(null)
+  const deadline = endsAt ? Date.parse(endsAt) : NaN
+  const hasDeadline = Number.isFinite(deadline)
+  const remaining = hasDeadline && now !== null ? Math.max(0, Math.ceil((deadline - now) / 1000)) : null
+  const finished = remaining === 0
+  useEffect(() => {
+    if (!hasDeadline) return
+    const tick = () => setNow(Date.now())
+    const initial = window.setTimeout(tick, 0)
+    const timer = window.setInterval(tick, 1000)
+    return () => { window.clearTimeout(initial); window.clearInterval(timer) }
+  }, [hasDeadline])
+  const units = remaining === null ? [] : [
+    { label: "Días", value: Math.floor(remaining / 86400) },
+    { label: "Horas", value: Math.floor(remaining / 3600) % 24 },
+    { label: "Minutos", value: Math.floor(remaining / 60) % 60 },
+    { label: "Segundos", value: remaining % 60 },
+  ]
 
   return (
     <>
@@ -48,9 +67,24 @@ export function MaintenanceScreen() {
         tone="primary"
         eyebrow="Sistema en mantenimiento"
         title="Estamos aplicando una actualización"
-        description="El sistema estará disponible en unos minutos. No necesitas hacer nada; la página volverá por sí sola."
+        description="Estamos trabajando para mejorar el sistema. No necesitas hacer nada; la página volverá por sí sola cuando termine el mantenimiento."
         labelledBy="maintenance-heading"
       >
+        {hasDeadline && (
+          <div className="mt-7">
+            <p className="mb-3 text-sm text-muted-foreground" role="status">
+              {finished ? "Estamos finalizando la actualización. Gracias por tu paciencia." : "Tiempo estimado restante"}
+            </p>
+            <div role="timer" aria-label="Tiempo estimado restante" aria-live="off" className="grid grid-cols-4 gap-2">
+              {(units.length ? units : ["Días", "Horas", "Minutos", "Segundos"].map(label => ({ label, value: null }))).map(({ label, value }) => (
+                <div key={label} className="min-w-0 rounded-xl border border-border bg-muted/30 px-1 py-3 text-center">
+                  <span className="block font-mono text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">{value === null ? "--" : String(value).padStart(2, "0")}</span>
+                  <span className="text-[10px] text-muted-foreground sm:text-xs">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <motion.div
           initial={reduced ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}

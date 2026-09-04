@@ -38,7 +38,7 @@ const noopSubscribe = () => () => {}
 const SERVER_SNAPSHOT = true
 
 export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
-  const { isMaintenance, loading } = useMaintenanceMode()
+  const { isMaintenance, endsAt, loading } = useMaintenanceMode()
   const isLocal = useSyncExternalStore(noopSubscribe, getIsLocal, () => SERVER_SNAPSHOT)
 
   // Mientras carga el estado de mantenimiento, renderiza la app
@@ -48,7 +48,7 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   // ── Modo mantenimiento activo ──────────────────────────────────
   if (isMaintenance) {
     // Producción: bloqueo total
-    if (!isLocal) return <MaintenanceScreen />
+    if (!isLocal) return <MaintenanceScreen endsAt={endsAt} />
 
     // Desarrollo / red local: aviso no bloqueante
     return (

@@ -498,7 +498,19 @@ function AppearanceTab() {
 // ─── NOTIFICATIONS TAB ────────────────────────────────────────────────────────
 // ─── DEVELOPER TAB ────────────────────────────────────────────────────────────
 function DeveloperTab() {
-  const { isMaintenance, toggleMaintenance, loading } = useMaintenanceMode()
+  const { isMaintenance, endsAt, toggleMaintenance, loading, saving } = useMaintenanceMode()
+  const [duration, setDuration] = useState("30")
+  const [unit, setUnit] = useState("60")
+  const [feedback, setFeedback] = useState("")
+  const seconds = Number(duration) * Number(unit)
+  const validDuration = duration.trim() !== "" && Number.isFinite(seconds) && seconds >= 1 && seconds <= 365 * 86400
+  const saveMaintenance = async (active: boolean) => {
+    setFeedback("")
+    const success = await toggleMaintenance(active, seconds)
+    setFeedback(success
+      ? active ? "Mantenimiento guardado. El contador comienza desde ahora." : "Mantenimiento desactivado."
+      : "No se pudo guardar. Verifica la conexión y que la migración del contador esté aplicada.")
+  }
 
   return (
     <div className="space-y-5">
@@ -513,10 +525,49 @@ function DeveloperTab() {
           <Switch
             id="maintenance-sw"
             checked={isMaintenance}
-            onCheckedChange={toggleMaintenance}
-            disabled={loading}
+            onCheckedChange={saveMaintenance}
+            disabled={loading || saving || (!isMaintenance && !validDuration)}
           />
         </SettingRow>
+        <Divider />
+        <div className="space-y-3 py-4">
+          <Label htmlFor="maintenance-duration">Duración estimada</Label>
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              id="maintenance-duration"
+              type="number"
+              min="1"
+              step="1"
+              value={duration}
+              onChange={event => setDuration(event.target.value)}
+              disabled={loading || saving}
+              aria-invalid={!validDuration}
+              aria-describedby="maintenance-duration-help"
+              className="w-28"
+            />
+            <Select value={unit} onValueChange={setUnit} disabled={loading || saving}>
+              <SelectTrigger className="w-36" aria-label="Unidad de duración"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Segundos</SelectItem>
+                <SelectItem value="60">Minutos</SelectItem>
+                <SelectItem value="3600">Horas</SelectItem>
+                <SelectItem value="86400">Días</SelectItem>
+              </SelectContent>
+            </Select>
+            {isMaintenance && (
+              <Button onClick={() => saveMaintenance(true)} disabled={loading || saving || !validDuration}>
+                {saving ? "Guardando…" : "Reiniciar contador"}
+              </Button>
+            )}
+          </div>
+          <p id="maintenance-duration-help" className="text-xs text-muted-foreground">
+            {validDuration ? "El contador comienza al activar o reiniciar. Al llegar a cero, el mantenimiento sigue activo hasta que lo desactives." : "Introduce una duración entre 1 segundo y 365 días."}
+          </p>
+          {isMaintenance && endsAt && Number.isFinite(Date.parse(endsAt)) && (
+            <p className="text-xs text-muted-foreground">Fin estimado: {new Date(endsAt).toLocaleString("es-MX")}</p>
+          )}
+          {feedback && <p role="status" className="text-sm">{feedback}</p>}
+        </div>
       </SettingGroup>
     </div>
   )

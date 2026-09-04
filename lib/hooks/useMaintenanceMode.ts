@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase/client"
 export function useMaintenanceMode() {
   const [isMaintenance, setIsMaintenance] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [endsAt, setEndsAt] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -15,7 +17,7 @@ export function useMaintenanceMode() {
       try {
         const { data, error } = await supabase
           .from("system_settings")
-          .select("value")
+          .select("*")
           .eq("id", "maintenance_mode")
           .maybeSingle()
         
@@ -26,6 +28,7 @@ export function useMaintenanceMode() {
 
         if (mounted && data) {
           setIsMaintenance(data.value === "true" || data.value === true)
+          setEndsAt(data.maintenance_ends_at ?? null)
         }
       } catch (err) {
         console.error("Error fetching maintenance mode:", err)
@@ -47,37 +50,49 @@ export function useMaintenanceMode() {
         (payload) => {
           if (mounted) {
             setIsMaintenance(payload.new.value === "true" || payload.new.value === true)
+            setEndsAt(payload.new.maintenance_ends_at ?? null)
           }
         }
       )
       .subscribe()
 
+    // Reintentar también cuando Realtime no esté disponible.
+    const poll = window.setInterval(fetchState, 30_000)
+    window.addEventListener("focus", fetchState)
+
     return () => {
       mounted = false
+      window.clearInterval(poll)
+      window.removeEventListener("focus", fetchState)
       supabase.removeChannel(channel)
     }
   }, [])
 
-  const toggleMaintenance = async (active: boolean) => {
+  const toggleMaintenance = async (active: boolean, durationSeconds?: number) => {
+    if (active && (durationSeconds === undefined || !Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 365 * 86400)) return false
+    setSaving(true)
     try {
-      // Optimizamos la UI localmente
-      setIsMaintenance(active)
-      const { error } = await supabase
+      const deadline = active ? new Date(Date.now() + durationSeconds! * 1000).toISOString() : null
+      const { data, error } = await supabase
         .from("system_settings")
-        .update({ value: active })
+        .update({ value: active, maintenance_ends_at: deadline })
         .eq("id", "maintenance_mode")
+        .select("*")
+        .single()
       
       if (error) {
-        // Revertir si falla
-        setIsMaintenance(!active)
         throw error
       }
+      setIsMaintenance(data.value === "true" || data.value === true)
+      setEndsAt(data.maintenance_ends_at ?? null)
       return true
     } catch (err) {
       console.error("Error updating maintenance mode:", err)
       return false
+    } finally {
+      setSaving(false)
     }
   }
 
-  return { isMaintenance, loading, toggleMaintenance }
+  return { isMaintenance, endsAt, loading, saving, toggleMaintenance }
 }
