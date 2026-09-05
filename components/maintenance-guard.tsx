@@ -1,6 +1,7 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
+import { Loader2 } from "lucide-react"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 import { MaintenanceScreen } from "./maintenance-screen"
 import { MaintenanceLocalIndicator } from "./maintenance-local-indicator"
@@ -16,9 +17,8 @@ import { MaintenanceLocalIndicator } from "./maintenance-local-indicator"
                    cuyo detalle se consulta bajo demanda
 
    El estado del entorno se lee como un store externo vía
-   useSyncExternalStore: el snapshot de servidor es `true` para
-   evitar un destello donde la app se muestra brevemente antes de
-   hidratar en el cliente.
+   useSyncExternalStore. El servidor no presupone acceso local;
+   la app espera la consulta inicial antes de mostrar sus páginas.
 ──────────────────────────────────────────────────────────────────── */
 
 /* Hosts que se consideran entorno de desarrollo local */
@@ -35,15 +35,21 @@ function getIsLocal(): boolean {
 
 // El entorno de ejecución no cambia durante la sesión del navegador.
 const noopSubscribe = () => () => {}
-const SERVER_SNAPSHOT = true
+const SERVER_SNAPSHOT = false
 
 export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const { isMaintenance, endsAt, loading } = useMaintenanceMode()
   const isLocal = useSyncExternalStore(noopSubscribe, getIsLocal, () => SERVER_SNAPSHOT)
 
-  // Mientras carga el estado de mantenimiento, renderiza la app
-  // normalmente para no penalizar el tiempo de carga inicial
-  if (loading) return <>{children}</>
+  // No montar páginas (incluido /login) antes de conocer el estado inicial.
+  if (loading) return (
+    <main className="flex min-h-dvh items-center justify-center bg-background text-muted-foreground">
+      <div role="status" className="flex items-center gap-2 text-sm">
+        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+        <span>Cargando…</span>
+      </div>
+    </main>
+  )
 
   // ── Modo mantenimiento activo ──────────────────────────────────
   if (isMaintenance) {
