@@ -21,6 +21,35 @@ import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type OrigenEmpleado = "planta" | "nuevo_ingreso"
 
+interface EmpleadoOrigenData {
+  numero: string
+  nombre: string
+  puesto: string | null
+  departamento?: string | null
+  fecha_ingreso?: string | null
+}
+
+interface NuevoIngresoOrigenData extends EmpleadoOrigenData {
+  tipo_contrato: string | null
+}
+
+const CONTRATO_INDETERMINADO = "Indeterminado"
+
+/**
+ * Un contrato de prueba vigente es la fuente autoritativa aunque el número ya
+ * exista en employees. Cuando pasa a indeterminado, employees recupera prioridad.
+ */
+function resolverOrigenEmpleado(
+  empleado: EmpleadoOrigenData | null,
+  nuevoIngreso: NuevoIngresoOrigenData | null,
+): { origen: OrigenEmpleado; registro: EmpleadoOrigenData } | null {
+  const nuevoIngresoActivo = nuevoIngreso && nuevoIngreso.tipo_contrato !== CONTRATO_INDETERMINADO
+  if (nuevoIngresoActivo) return { origen: "nuevo_ingreso", registro: nuevoIngreso }
+  if (empleado) return { origen: "planta", registro: empleado }
+  if (nuevoIngreso) return { origen: "planta", registro: nuevoIngreso }
+  return null
+}
+
 // Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
 const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
 const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
@@ -121,34 +150,36 @@ export function useDesempeno() {
       if (term.length < 2) return []
       const like = `%${term.replace(/[%_]/g, "")}%`
 
-      const { data: emps } = await supabase
-        .from("employees")
-        .select("numero, nombre, puesto")
-        .or(`numero.ilike.${like},nombre.ilike.${like}`)
-        .limit(8)
-
-      const results: Array<{ numero: string; nombre: string; puesto: string }> = []
-      const seen = new Set<string>()
-      for (const e of emps ?? []) {
-        if (!e.numero || seen.has(e.numero)) continue
-        seen.add(e.numero)
-        results.push({ numero: e.numero, nombre: e.nombre ?? "", puesto: e.puesto ?? "" })
-      }
-
-      if (results.length < 8) {
-        const { data: nis } = await supabase
-          .from("nuevo_ingreso")
+      const [{ data: emps }, { data: nuevos }] = await Promise.all([
+        supabase
+          .from("employees")
           .select("numero, nombre, puesto")
           .or(`numero.ilike.${like},nombre.ilike.${like}`)
-          .limit(8 - results.length)
-        for (const n of nis ?? []) {
-          if (!n.numero || seen.has(n.numero)) continue
-          seen.add(n.numero)
-          results.push({ numero: n.numero, nombre: n.nombre ?? "", puesto: n.puesto ?? "" })
-        }
-      }
+          .limit(8),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, tipo_contrato")
+          .or(`numero.ilike.${like},nombre.ilike.${like}`)
+          .limit(8),
+      ])
 
-      return results
+      const empleadosPorNumero = new Map(
+        (emps ?? []).filter(e => e.numero).map(e => [e.numero!, e as EmpleadoOrigenData]),
+      )
+      const nuevosPorNumero = new Map(
+        (nuevos ?? []).filter(e => e.numero).map(e => [e.numero!, e as NuevoIngresoOrigenData]),
+      )
+      const numeros = [...new Set([...nuevosPorNumero.keys(), ...empleadosPorNumero.keys()])]
+
+      return numeros.slice(0, 8).flatMap(numero => {
+        const resolved = resolverOrigenEmpleado(
+          empleadosPorNumero.get(numero) ?? null,
+          nuevosPorNumero.get(numero) ?? null,
+        )
+        return resolved
+          ? [{ numero, nombre: resolved.registro.nombre ?? "", puesto: resolved.registro.puesto ?? "" }]
+          : []
+      })
     },
     [],
   )
@@ -158,40 +189,38 @@ export function useDesempeno() {
     setError(null)
 
     try {
-      // Search in both employees and nuevo_ingreso tables
-      const { data: emp } = await supabase
-        .from("employees")
-        .select("id, numero, nombre, puesto, departamento, fecha_ingreso")
-        .eq("numero", numero)
-        .maybeSingle()
+      // Consulta ambas fuentes: un contrato de prueba activo debe prevalecer
+      // sobre una copia del mismo número que ya exista en employees.
+      const [{ data: emp }, { data: ni }] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso")
+          .eq("numero", numero)
+          .maybeSingle(),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso, tipo_contrato")
+          .eq("numero", numero)
+          .maybeSingle(),
+      ])
 
       let empleadoData: { numero: string; nombre: string; puesto: string; departamento: string | null; fechaIngreso: string | null } | null = null
       let origenEmpleado: OrigenEmpleado | null = null
 
-      if (emp) {
-        origenEmpleado = "planta"
+      const empleadoResuelto = resolverOrigenEmpleado(
+        emp as EmpleadoOrigenData | null,
+        ni as NuevoIngresoOrigenData | null,
+      )
+
+      if (empleadoResuelto) {
+        const registro = empleadoResuelto.registro
+        origenEmpleado = empleadoResuelto.origen
         empleadoData = {
-          numero: emp.numero!,
-          nombre: emp.nombre,
-          puesto: emp.puesto || "",
-          departamento: emp.departamento ?? null,
-          fechaIngreso: emp.fecha_ingreso ?? null,
-        }
-      } else {
-        const { data: ni } = await supabase
-          .from("nuevo_ingreso")
-          .select("numero, nombre, puesto, departamento, fecha_ingreso")
-          .eq("numero", numero)
-          .maybeSingle()
-        if (ni) {
-          origenEmpleado = "nuevo_ingreso"
-          empleadoData = {
-            numero: ni.numero!,
-            nombre: ni.nombre,
-            puesto: ni.puesto || "",
-            departamento: ni.departamento ?? null,
-            fechaIngreso: ni.fecha_ingreso ?? null,
-          }
+          numero: registro.numero,
+          nombre: registro.nombre,
+          puesto: registro.puesto || "",
+          departamento: registro.departamento ?? null,
+          fechaIngreso: registro.fecha_ingreso ?? null,
         }
       }
 
@@ -421,22 +450,34 @@ export function useDesempeno() {
       const empleadoMap: Record<string, { nombre: string; puesto: string; origen: "planta" | "nuevo_ingreso" }> = {}
 
       if (numeros.length > 0) {
-        const { data: emps } = await supabase
-          .from("employees")
-          .select("numero, nombre, puesto")
-          .in("numero", numeros)
-        for (const e of emps ?? []) {
-          if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "", origen: "planta" }
-        }
-
-        const missingNumeros = numeros.filter((n) => !empleadoMap[n])
-        if (missingNumeros.length > 0) {
-          const { data: niEmps } = await supabase
-            .from("nuevo_ingreso")
+        const [{ data: emps }, { data: niEmps }] = await Promise.all([
+          supabase
+            .from("employees")
             .select("numero, nombre, puesto")
-            .in("numero", missingNumeros)
-          for (const e of niEmps ?? []) {
-            if (e.numero) empleadoMap[e.numero] = { nombre: e.nombre, puesto: e.puesto || "", origen: "nuevo_ingreso" }
+            .in("numero", numeros),
+          supabase
+            .from("nuevo_ingreso")
+            .select("numero, nombre, puesto, tipo_contrato")
+            .in("numero", numeros),
+        ])
+        const empleadosPorNumero = new Map(
+          (emps ?? []).filter(e => e.numero).map(e => [e.numero!, e as EmpleadoOrigenData]),
+        )
+        const nuevosPorNumero = new Map(
+          (niEmps ?? []).filter(e => e.numero).map(e => [e.numero!, e as NuevoIngresoOrigenData]),
+        )
+
+        for (const numero of numeros) {
+          const resolved = resolverOrigenEmpleado(
+            empleadosPorNumero.get(numero) ?? null,
+            nuevosPorNumero.get(numero) ?? null,
+          )
+          if (resolved) {
+            empleadoMap[numero] = {
+              nombre: resolved.registro.nombre,
+              puesto: resolved.registro.puesto || "",
+              origen: resolved.origen,
+            }
           }
         }
       }
@@ -482,28 +523,27 @@ export function useDesempeno() {
       let fechaIngresoEmp: string | null = null
       let origenEmpleado: OrigenEmpleado = "planta"
       
-      const { data: emp } = await supabase
-        .from("employees")
-        .select("nombre, puesto, fecha_ingreso")
-        .eq("numero", evalRow.numero_empleado)
-        .maybeSingle()
-      if (emp) {
-        nombre = emp.nombre
-        puesto = emp.puesto || ""
-        fechaIngresoEmp = emp.fecha_ingreso ?? null
-        origenEmpleado = "planta"
-      } else {
-        const { data: ni } = await supabase
-          .from("nuevo_ingreso")
-          .select("nombre, puesto, fecha_ingreso")
+      const [{ data: emp }, { data: ni }] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("numero, nombre, puesto, fecha_ingreso")
           .eq("numero", evalRow.numero_empleado)
-          .maybeSingle()
-        if (ni) {
-          nombre = ni.nombre
-          puesto = ni.puesto || ""
-          fechaIngresoEmp = ni.fecha_ingreso ?? null
-          origenEmpleado = "nuevo_ingreso"
-        }
+          .maybeSingle(),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, fecha_ingreso, tipo_contrato")
+          .eq("numero", evalRow.numero_empleado)
+          .maybeSingle(),
+      ])
+      const empleadoResuelto = resolverOrigenEmpleado(
+        emp as EmpleadoOrigenData | null,
+        ni as NuevoIngresoOrigenData | null,
+      )
+      if (empleadoResuelto) {
+        nombre = empleadoResuelto.registro.nombre
+        puesto = empleadoResuelto.registro.puesto || ""
+        fechaIngresoEmp = empleadoResuelto.registro.fecha_ingreso ?? null
+        origenEmpleado = empleadoResuelto.origen
       }
 
       setFechaIngreso(fechaIngresoEmp)
