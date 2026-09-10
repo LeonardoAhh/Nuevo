@@ -2,17 +2,13 @@
 
 import React, { useState, useMemo, useCallback } from "react"
 import {
-  CheckCircle2,
-  MousePointerClick,
+  ChartNoAxesColumnIncreasing,
   Download,
   FileSpreadsheet,
   FileText,
   FilterX,
-  MoreVertical,
   Search,
-  XCircle,
   X,
-  BarChart3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,7 +29,8 @@ import {
 import { useRole } from "@/lib/hooks"
 import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { PaginationBar } from "@/components/ui/pagination-bar"
-import type { EmpleadoPromocion } from "@/lib/promociones/types"
+import type { ConfirmarPromocionInput, EmpleadoPromocion, ExamenPromocionInput } from "@/lib/promociones/types"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 
 import {
   isHabilitado,
@@ -42,6 +39,7 @@ import {
 import { PromDetalleDialog } from "./prom-detalle-dialog"
 import { PromDesempenoDialog } from "./prom-desempeno-dialog"
 import { PromPromoverDialog } from "./prom-promover-dialog"
+import { PromExamDialog } from "./prom-exam-dialog"
 import { PromReglasPreview, PromDatosPreview } from "./prom-import-tab"
 import { usePromocionesImport } from "@/lib/hooks/usePromocionesImport"
 import { DesktopTable, MobileList } from "./prom-table-rows"
@@ -60,9 +58,9 @@ export default function PromocionesContent({
 }: {
   empleados: EmpleadoPromocion[]
   onDatosActualizados?: () => void
-  guardarDesempeño?: (numero: string, calificacion: number, periodo?: string) => Promise<void>
-  promoverEmpleado?: (empleadoId: string, numero: string | undefined, nuevoPuesto: string, datos: { fechaInicio?: string; fechaExamen?: string; calExamen?: number; intentosPrevios?: number }) => Promise<void>
-  guardarExamen?: (numero: string, datos: { fechaInicio?: string; fechaExamen?: string; calExamen: number | null; intentosPrevios?: number }) => Promise<void>
+  guardarDesempeño: (numero: string, calificacion: number, periodo?: string) => Promise<void>
+  promoverEmpleado: (empleadoId: string, numero: string | undefined, nuevoPuesto: string, datos: ConfirmarPromocionInput) => Promise<void>
+  guardarExamen: (numero: string, datos: ExamenPromocionInput) => Promise<void>
 }) {
   const { isReadOnly } = useRole()
   const [busqueda, setBusqueda] = useState("")
@@ -72,6 +70,7 @@ export default function PromocionesContent({
   const [pagina, setPagina] = useState(1)
   const [empleadoDetalle, setEmpleadoDetalle] = useState<EmpleadoPromocion | null>(null)
   const [empleadoPromover, setEmpleadoPromover] = useState<EmpleadoPromocion | null>(null)
+  const [empleadoExamen, setEmpleadoExamen] = useState<EmpleadoPromocion | null>(null)
   const [empleadoDesempeño, setEmpleadoDesempeño] = useState<EmpleadoPromocion | null>(null)
   const imp = usePromocionesImport(onDatosActualizados)
 
@@ -181,7 +180,7 @@ export default function PromocionesContent({
       {/* Toolbar compacto: search + filtros en 1 línea en desktop */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 min-w-0">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search aria-hidden="true" className={`absolute left-3 top-1/2 -translate-y-1/2 ${PROMOTION_ICON.control} text-muted-foreground`} />
           <Input
             placeholder="Buscar empleado, puesto, número..."
             value={busqueda}
@@ -195,7 +194,7 @@ export default function PromocionesContent({
               onClick={() => setBusqueda("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <X size={15} />
+              <X aria-hidden="true" className={PROMOTION_ICON.control} />
             </button>
           )}
         </div>
@@ -248,7 +247,7 @@ export default function PromocionesContent({
               aria-label="Limpiar filtros"
               title="Limpiar filtros"
             >
-              <FilterX size={14} />
+              <FilterX aria-hidden="true" className={PROMOTION_ICON.control} />
             </Button>
           )}
           <DropdownMenu>
@@ -260,7 +259,7 @@ export default function PromocionesContent({
                 disabled={exporting || todosOrdenados.length === 0}
                 data-testid="promociones-export-trigger"
               >
-                <Download size={14} />
+                <Download aria-hidden="true" className={PROMOTION_ICON.control} />
                 <span className="hidden sm:inline">{exporting ? "Generando…" : "Descargar"}</span>
               </Button>
             </DropdownMenuTrigger>
@@ -271,11 +270,11 @@ export default function PromocionesContent({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleExportPDF} data-testid="promociones-export-pdf" className="gap-2 cursor-pointer">
-                <FileText size={15} className="text-destructive" />
+                <FileText aria-hidden="true" className={`${PROMOTION_ICON.control} text-destructive`} />
                 <span>Reporte PDF</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportExcel} data-testid="promociones-export-excel" className="gap-2 cursor-pointer">
-                <FileSpreadsheet size={15} className="text-success" />
+                <FileSpreadsheet aria-hidden="true" className={`${PROMOTION_ICON.control} text-success`} />
                 <span>Reporte Excel</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -287,7 +286,7 @@ export default function PromocionesContent({
       {empleados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border border-dashed bg-background">
           <div className="bg-primary/10 p-4 rounded-full mb-4">
-            <BarChart3 size={32} className="text-primary" />
+            <ChartNoAxesColumnIncreasing aria-hidden="true" className={`${PROMOTION_ICON.emptyState} text-primary`} />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-1">Sin datos de empleados</h3>
           <p className="text-sm text-muted-foreground max-w-sm">
@@ -303,6 +302,7 @@ export default function PromocionesContent({
             sinCategoria={paginadosSinCategoria}
             onDetalle={setEmpleadoDetalle}
             onPromover={setEmpleadoPromover}
+            onCapturarExamen={setEmpleadoExamen}
             onDesempeño={setEmpleadoDesempeño}
           />
 
@@ -311,6 +311,7 @@ export default function PromocionesContent({
             sinCategoria={paginadosSinCategoria}
             onDetalle={setEmpleadoDetalle}
             onPromover={setEmpleadoPromover}
+            onCapturarExamen={setEmpleadoExamen}
             onDesempeño={setEmpleadoDesempeño}
           />
 
@@ -337,16 +338,25 @@ export default function PromocionesContent({
           onClose={() => setEmpleadoPromover(null)}
           onConfirmarPromocion={async (datos) => {
             if (!empleadoPromover.regla?.promocionA) return
-            await promoverEmpleado?.(
+            await promoverEmpleado(
               empleadoPromover.id,
               empleadoPromover.numero,
               empleadoPromover.regla.promocionA,
               datos,
             )
           }}
-          onSoloGuardarExamen={async (datos) => {
-            if (!empleadoPromover.numero) return
-            await guardarExamen?.(empleadoPromover.numero, datos)
+        />
+      )}
+
+      {empleadoExamen && (
+        <PromExamDialog
+          empleado={empleadoExamen}
+          open={!!empleadoExamen}
+          isReadOnly={isReadOnly}
+          onClose={() => setEmpleadoExamen(null)}
+          onGuardar={async datos => {
+            if (!empleadoExamen.numero) throw new Error("El empleado no tiene N.N asignado")
+            await guardarExamen(empleadoExamen.numero, datos)
           }}
         />
       )}
@@ -359,7 +369,7 @@ export default function PromocionesContent({
           onClose={() => setEmpleadoDesempeño(null)}
           onGuardar={async (cal, periodo) => {
             if (!empleadoDesempeño.numero) throw new Error("El empleado no tiene N.N asignado")
-            await guardarDesempeño?.(empleadoDesempeño.numero, cal, periodo || undefined)
+            await guardarDesempeño(empleadoDesempeño.numero, cal, periodo || undefined)
           }}
         />
       )}

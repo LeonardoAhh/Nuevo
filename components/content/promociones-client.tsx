@@ -1,21 +1,16 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import {
-    CheckCircle2,
     ChevronDown,
-    Clock,
-    Settings2,
-    Users,
-    XCircle,
+    SlidersHorizontal,
 } from "lucide-react"
 import { notify } from "@/lib/notify"
 import { usePromociones } from "@/lib/hooks/usePromociones"
 import PromocionesContent from "@/components/content/promociones"
 import ReglasPromocionContent from "@/components/content/reglas-promocion"
 import { Skeleton } from "@/components/ui/skeleton"
-import { calcularAptitud, isHabilitado } from "@/lib/promociones/utils"
-import { SummaryCard } from "@/components/content/prom-shared"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 
 export default function PromocionesClient() {
     const {
@@ -34,31 +29,12 @@ export default function PromocionesClient() {
         if (error) notify.error(`Error al cargar datos: ${error}`)
     }, [error])
 
-    const kpis = useMemo(() => {
-        const habilitados = empleados.filter((e) => isHabilitado(e.puesto))
-        let aptos = 0
-        let noAptos = 0
-        let pendientes = 0
-        for (const emp of habilitados) {
-            const st = calcularAptitud(emp)
-            if (st === "apto") aptos++
-            else if (st === "no_apto") noAptos++
-            else pendientes++
-        }
-        return { aptos, noAptos, pendientes, total: empleados.length }
-    }, [empleados])
-
     return (
         <div className="w-full space-y-4">
 
             {/* Empleados */}
             {loading && empleados.length === 0 ? (
                 <div className="space-y-2">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <Skeleton key={i} className="h-[72px] rounded-lg" />
-                        ))}
-                    </div>
                     <Skeleton className="h-9 w-full rounded-md" />
                     <div className="hidden md:block rounded-lg border overflow-hidden">
                         {Array.from({ length: 6 }).map((_, i) => (
@@ -67,7 +43,7 @@ export default function PromocionesClient() {
                     </div>
                     <div className="flex flex-col gap-2 md:hidden">
                         {Array.from({ length: 4 }).map((_, i) => (
-                            <Skeleton key={i} className="h-[100px] rounded-xl" />
+                            <Skeleton key={i} className="h-28 rounded-xl" />
                         ))}
                     </div>
                 </div>
@@ -90,19 +66,21 @@ export default function PromocionesClient() {
                 <button
                     type="button"
                     onClick={() => setReglasOpen((v) => !v)}
+                    aria-expanded={reglasOpen}
+                    aria-controls="promotion-rules-panel"
                     className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors rounded-lg"
                 >
                     <span className="flex items-center gap-2">
-                        <Settings2 size={15} className="text-muted-foreground" />
+                        <SlidersHorizontal aria-hidden="true" className={`${PROMOTION_ICON.control} text-muted-foreground`} />
                         Reglas de Promoción
                     </span>
                     <ChevronDown
-                        size={16}
-                        className={`text-muted-foreground transition-transform ${reglasOpen ? "rotate-180" : ""}`}
+                        aria-hidden="true"
+                        className={`${PROMOTION_ICON.control} text-muted-foreground transition-transform ${reglasOpen ? "rotate-180" : ""}`}
                     />
                 </button>
                 {reglasOpen && (
-                    <div className="border-t px-4 py-4">
+                    <div id="promotion-rules-panel" className="border-t px-4 py-4">
                         <ReglasPromocionContent onChange={recargar} />
                     </div>
                 )}

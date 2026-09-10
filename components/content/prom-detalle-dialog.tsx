@@ -2,16 +2,17 @@
 
 import React from "react"
 import {
-  Award,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  Calendar,
+  BadgeCheck,
+  CalendarDays,
+  CircleCheck,
+  CircleX,
+  TriangleAlert,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 import {
   calcularAptitud,
   mesesEnPuesto,
@@ -58,7 +59,7 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
         {/* Header badge */}
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 p-2 rounded-lg shrink-0">
-            <Award size={20} className="text-primary" />
+            <BadgeCheck aria-hidden="true" className={`${PROMOTION_ICON.feature} text-primary`} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">{empleado.nombre}</p>
@@ -97,7 +98,7 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
             </div>
           ) : (
             <div role="status" aria-live="polite" className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
-              <AlertTriangle size={16} aria-hidden="true" className="shrink-0 mt-0.5" />
+              <TriangleAlert aria-hidden="true" className={`mt-0.5 ${PROMOTION_ICON.control} shrink-0`} />
               <span>Sin reglas configuradas.</span>
             </div>
           )}
@@ -122,9 +123,9 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
                     <li key={curso.nombre} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
                       <div className="flex items-center gap-2">
                         {curso.completado ? (
-                          <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+                          <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-success`} />
                         ) : (
-                          <XCircle size={14} className="text-muted-foreground/40 flex-shrink-0" />
+                          <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-muted-foreground/40`} />
                         )}
                         <span className={curso.completado ? "text-foreground" : "text-muted-foreground"}>
                           {curso.nombre}
@@ -160,7 +161,7 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
                     .map((ev, i) => (
                       <li key={`${ev.fecha}-${i}`} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar size={13} />
+                          <CalendarDays aria-hidden="true" className={PROMOTION_ICON.control} />
                           <span>{ev.fecha}</span>
                           {ev.periodo && <Badge variant="secondary" className="text-xs py-0">{ev.periodo}</Badge>}
                         </div>

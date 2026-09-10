@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
-import { Loader2, Pencil, Plus, Search, Settings2, Trash2, X } from "lucide-react"
+import { LoaderCircle, PencilLine, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ import {
   useReglasPromocionCRUD,
   type ReglaPromocionRow,
 } from "@/lib/hooks/useReglasPromocionCRUD"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 import { PromReglaDialog } from "./prom-regla-dialog"
 
 interface Props {
@@ -93,7 +94,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
         <ReadOnlyBanner />
 
         <div className="flex items-start gap-2">
-          <Settings2 size={16} className="text-muted-foreground mt-0.5 shrink-0" />
+          <SlidersHorizontal aria-hidden="true" className={`mt-0.5 ${PROMOTION_ICON.control} shrink-0 text-muted-foreground`} />
           <p className="text-sm text-muted-foreground">
             Define los criterios mínimos (temporalidad, examen, cursos, evaluación)
             para promover de un puesto a otro.
@@ -108,7 +109,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search aria-hidden="true" className={`absolute left-3 top-1/2 -translate-y-1/2 ${PROMOTION_ICON.control} text-muted-foreground`} />
             <Input
               placeholder="Filtrar por puesto..."
               className={`pl-9 ${filter ? "pr-9" : ""}`}
@@ -117,11 +118,12 @@ export default function ReglasPromocionContent({ onChange }: Props) {
             />
             {filter && (
               <button
+                type="button"
                 onClick={() => setFilter("")}
                 aria-label="Limpiar filtro"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <X size={15} />
+                <X aria-hidden="true" className={PROMOTION_ICON.control} />
               </button>
             )}
           </div>
@@ -132,19 +134,19 @@ export default function ReglasPromocionContent({ onChange }: Props) {
             aria-label="Nueva regla"
             title="Nueva regla"
           >
-            <Plus size={14} />
+            <Plus aria-hidden="true" className={PROMOTION_ICON.control} />
           </Button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <Loader2 size={18} className="mr-2 animate-spin" />
+            <LoaderCircle aria-hidden="true" className={`mr-2 ${PROMOTION_ICON.feature} animate-spin`} />
             Cargando reglas...
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 rounded-lg border border-dashed bg-background text-center">
             <div className="bg-primary/10 p-4 rounded-full mb-3">
-              <Settings2 size={28} className="text-primary" />
+              <SlidersHorizontal aria-hidden="true" className={`${PROMOTION_ICON.emptyState} text-primary`} />
             </div>
             <p className="text-base font-semibold text-foreground">
               {reglas.length === 0 ? "Sin reglas" : "Sin coincidencias"}
@@ -213,7 +215,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
                                 disabled={isReadOnly}
                                 aria-label={`Editar regla de ${r.puesto}`}
                               >
-                                <Pencil size={14} />
+                                <PencilLine aria-hidden="true" className={PROMOTION_ICON.control} />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Editar</TooltipContent>
@@ -228,7 +230,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
                                 disabled={isReadOnly}
                                 aria-label={`Eliminar regla de ${r.puesto}`}
                               >
-                                <Trash2 size={14} />
+                                <Trash2 aria-hidden="true" className={PROMOTION_ICON.control} />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Eliminar</TooltipContent>
@@ -284,7 +286,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
                       aria-label="Editar"
                       title="Editar"
                     >
-                      <Pencil size={14} />
+                      <PencilLine aria-hidden="true" className={PROMOTION_ICON.control} />
                     </Button>
                     <Button
                       variant="outline"
@@ -294,7 +296,7 @@ export default function ReglasPromocionContent({ onChange }: Props) {
                       disabled={isReadOnly}
                       aria-label={`Eliminar regla de ${r.puesto}`}
                     >
-                      <Trash2 size={14} />
+                      <Trash2 aria-hidden="true" className={PROMOTION_ICON.control} />
                     </Button>
                   </div>
                 </div>

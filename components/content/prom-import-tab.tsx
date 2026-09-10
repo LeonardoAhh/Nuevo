@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Upload } from "lucide-react"
+import { FileUp } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { ReglaPromocionJSON, DatosPromocionJSON } from "@/lib/promociones/types"
@@ -73,7 +73,7 @@ export function PromReglasPreview({
         onCancel={onClose}
         onConfirm={onConfirmar}
         saving={cargando}
-        confirmIcon={<Upload size={16} />}
+        confirmIcon={<FileUp aria-hidden="true" />}
         confirmDisabled={isReadOnly}
       />
     </ResponsiveShell>
@@ -157,7 +157,7 @@ export function PromDatosPreview({
         onCancel={onClose}
         onConfirm={onConfirmar}
         saving={datosCargando}
-        confirmIcon={<Upload size={16} />}
+        confirmIcon={<FileUp aria-hidden="true" />}
         confirmDisabled={isReadOnly}
       />
     </ResponsiveShell>

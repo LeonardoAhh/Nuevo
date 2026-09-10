@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import type { ReglaPromocionInput, ReglaPromocionRow } from "@/lib/hooks/useReglasPromocionCRUD"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 
 export interface PromReglaDialogProps {
   open: boolean
@@ -220,7 +221,7 @@ export function PromReglaDialog({
         onCancel={onClose}
         onConfirm={handleGuardar}
         saving={guardando}
-        confirmIcon={<Save size={16} />}
+        confirmIcon={<Save aria-hidden="true" className={PROMOTION_ICON.control} />}
         confirmDisabled={isReadOnly}
       />
     </ResponsiveShell>

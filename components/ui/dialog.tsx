@@ -92,19 +92,30 @@ const DialogHeader = ({
 }
 DialogHeader.displayName = "DialogHeader"
 
+interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  detached?: boolean
+}
+
 const DialogFooter = ({
   className,
+  detached = false,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: DialogFooterProps) => (
   <div
     className={cn(
-      // sticky al fondo del área scrollable del dialog
-      "sticky bottom-0 -mx-6 px-6 pt-3 mt-4",
-      "bg-background/95 backdrop-blur-sm",
-      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2",
+      detached
+        ? "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+        : [
+            "sticky bottom-0 -mx-6 mt-4 px-6 pt-3",
+            "bg-background/95 backdrop-blur-sm",
+            "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+          ],
       className,
     )}
-    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+    style={detached ? props.style : {
+      paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+      ...props.style,
+    }}
     {...props}
   />
 )

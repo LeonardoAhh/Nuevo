@@ -4,7 +4,15 @@ import React, { useCallback, useSyncExternalStore } from "react"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // useIsMobile
@@ -37,17 +45,21 @@ export interface ModalHeaderProps {
 
 export function ModalHeader({ title, subtitle, onClose }: ModalHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-4 px-6 py-4 border-b bg-background sticky top-0 z-10 shrink-0">
+    <DialogHeader className="sticky top-0 z-10 mb-0 flex-row items-center justify-between gap-4 border-b bg-background px-4 py-3 pr-4 text-left sm:px-6 sm:py-4 sm:pr-6">
       <div className="flex-1 min-w-0">
-        <h2 className="break-words text-base font-semibold leading-snug text-foreground">{title}</h2>
+        <h2 className="break-words text-lg font-semibold leading-tight tracking-tight text-foreground">{title}</h2>
         {subtitle && (
           <p className="sr-only">{subtitle}</p>
         )}
       </div>
-      {onClose && <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={onClose} aria-label="Cerrar modal">
-        <X aria-hidden="true" />
-      </Button>}
-    </div>
+      {onClose && (
+        <DialogClose asChild>
+          <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label="Cerrar modal">
+            <X aria-hidden="true" />
+          </Button>
+        </DialogClose>
+      )}
+    </DialogHeader>
   )
 }
 
@@ -99,15 +111,15 @@ export function ModalFooter({
     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
 
   return (
-    <div className="flex items-center justify-between gap-3 px-6 py-4 border-t bg-background shrink-0 mt-auto">
-      <div className="flex-1">
+    <DialogFooter detached className="mt-auto shrink-0 items-stretch border-t bg-background px-4 py-3 sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4">
+      <div className="sm:flex-1">
         {secondaryAction && (
           <button
             type="button"
             onClick={secondaryAction.onClick}
             disabled={saving || secondaryAction.disabled}
             className={cn(
-              "inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+              "inline-flex h-9 w-full items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto",
               secondaryClasses
             )}
           >
@@ -116,7 +128,7 @@ export function ModalFooter({
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
         {onCancel && (
           <button
             type="button"
@@ -146,7 +158,7 @@ export function ModalFooter({
           </button>
         )}
       </div>
-    </div>
+    </DialogFooter>
   )
 }
 

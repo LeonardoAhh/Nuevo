@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { Star } from "lucide-react"
+import { ChartNoAxesColumnIncreasing } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -129,7 +129,7 @@ export function PromDesempenoDialog({
         onCancel={onClose}
         onConfirm={handleGuardar}
         saving={guardando}
-        confirmIcon={<Star size={16} />}
+        confirmIcon={<ChartNoAxesColumnIncreasing aria-hidden="true" />}
         confirmDisabled={isReadOnly}
       />
     </ResponsiveShell>

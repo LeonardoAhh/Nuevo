@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
+import type { ConfirmarPromocionInput, ExamenPromocionInput } from "@/lib/promociones/types"
 import type {
   EmpleadoPromocion,
   ReglaPromocion,
@@ -273,12 +274,7 @@ export function usePromociones() {
     empleadoId: string,
     numero: string | undefined,
     nuevoPuesto: string,
-    datos: {
-      fechaInicio?: string
-      fechaExamen?: string
-      calExamen?: number
-      intentosPrevios?: number
-    },
+    datos: ConfirmarPromocionInput,
   ): Promise<void> => {
     const { error: empErr } = await supabase
       .from("employees")
@@ -315,14 +311,9 @@ export function usePromociones() {
 
   const guardarExamen = useCallback(async (
     numero: string,
-    datos: {
-      fechaInicio?: string
-      fechaExamen?: string
-      calExamen: number | null
-      intentosPrevios?: number
-    },
+    datos: ExamenPromocionInput,
   ): Promise<void> => {
-    const isNewAttempt = datos.calExamen != null
+    const isNewAttempt = datos.calExamen != null && datos.nuevoIntento === true
     const baseIntentos = datos.intentosPrevios ?? 0
     const nextIntentos = isNewAttempt ? baseIntentos + 1 : baseIntentos
 
@@ -331,7 +322,6 @@ export function usePromociones() {
       .upsert(
         {
           numero,
-          fecha_inicio_puesto: datos.fechaInicio || null,
           fecha_examen: datos.fechaExamen || null,
           ultima_calificacion_examen: datos.calExamen,
           intentos_examen: nextIntentos,

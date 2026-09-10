@@ -1,28 +1,37 @@
 "use client"
 
 import React from "react"
-import { CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react"
+import {
+  CircleCheck,
+  CircleX,
+  ClipboardPenLine,
+  ScanSearch,
+  ShieldAlert,
+  Timer,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { BadgeProps } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { AptitudStatus } from "@/lib/promociones/types"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 
 // ─── Insignia de aptitud ───────────────────────────────────────────────────
 
 const aptitudCfg: Record<AptitudStatus, { label: string; icon: React.ElementType; variant: NonNullable<BadgeProps['variant']> }> = {
-  apto:        { label: "Apto",        icon: CheckCircle2,  variant: "success" },
-  no_apto:     { label: "No Apto",     icon: XCircle,       variant: "error" },
-  pendiente:   { label: "Espera",      icon: Clock,         variant: "secondary" },
-  pendiente_examen: { label: "Examen", icon: Clock,   variant: "warning" },
-  en_revision: { label: "Revisión", icon: AlertTriangle, variant: "info" },
-  bloqueado_examen: { label: "Penalizado", icon: AlertTriangle, variant: "destructive" }
+  apto: { label: "Apto", icon: CircleCheck, variant: "success" },
+  no_apto: { label: "No Apto", icon: CircleX, variant: "error" },
+  pendiente: { label: "Espera", icon: Timer, variant: "secondary" },
+  pendiente_examen: { label: "Examen", icon: ClipboardPenLine, variant: "warning" },
+  en_revision: { label: "Revisión", icon: ScanSearch, variant: "info" },
+  bloqueado_examen: { label: "Penalizado", icon: ShieldAlert, variant: "destructive" },
 }
 
 export function AptitudBadge({ status }: { status: AptitudStatus }) {
   const cfg = aptitudCfg[status]
   const Icon = cfg.icon
   return (
-    <Badge variant={cfg.variant} className="font-semibold px-2.5 py-0.5 w-[90px] justify-center text-center">
+    <Badge variant={cfg.variant} className="min-w-24 justify-center px-2.5 py-0.5 text-center font-semibold">
+      <Icon aria-hidden="true" className={`${PROMOTION_ICON.badge} shrink-0`} />
       {cfg.label}
     </Badge>
   )
@@ -45,19 +54,19 @@ export function CriterioRow({
 }) {
   return (
     <div className="flex items-center justify-between py-1.5">
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-sm leading-relaxed text-muted-foreground">
         {cumple ? (
-          <CheckCircle2 size={13} className="text-success flex-shrink-0" />
+          <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-success`} />
         ) : (
-          <XCircle size={13} className="text-destructive flex-shrink-0" />
+          <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-destructive`} />
         )}
         <span>{label}</span>
       </div>
-      <div className="text-sm text-right">
+      <div className="text-right text-sm leading-relaxed">
         <span className={`font-semibold ${cumple ? "text-success" : "text-destructive"}`}>
           {valor}{unidad}
         </span>
-        <span className="text-muted-foreground ml-1 text-xs">/ mín {minimo}{unidad}</span>
+        <span className="ml-1 text-sm text-muted-foreground">/ mín {minimo}{unidad}</span>
       </div>
     </div>
   )
@@ -82,7 +91,7 @@ export function SummaryCard({
     <Card className="border">
       <CardContent className="p-4 flex items-center gap-4">
         <div className={`p-3 rounded-xl ${color}`}>
-          <Icon size={22} />
+          <Icon aria-hidden="true" className={PROMOTION_ICON.feature} />
         </div>
         <div>
           <div className="text-2xl font-bold">{value}</div>

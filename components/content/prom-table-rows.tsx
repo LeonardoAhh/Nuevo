@@ -1,18 +1,10 @@
 "use client"
 
-import React from "react"
 import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  Star,
-  TrendingUp,
-  XCircle,
-  MoreVertical,
+  CircleCheck,
+  CircleX,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import {
   Table,
@@ -27,26 +19,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import type { EmpleadoPromocion } from "@/lib/promociones/types"
+import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
 import {
-  calcularAptitud,
-  formatMeses,
-  mesesEnPuesto,
-  porcentajeCursos,
-  ultimaEvaluacion,
-} from "@/lib/promociones/utils"
+  formatShortPromotionDate,
+  getCriterionTone,
+  getUnavailableCategoryLabel,
+  PROMOTION_TABLE_COPY,
+  PROMOTION_TABLE_STYLE,
+} from "@/lib/promociones/table-config"
+import { formatMeses, ultimaEvaluacion } from "@/lib/promociones/utils"
+import { getPromotionRowView } from "@/lib/promociones/table-view"
 import { AptitudBadge } from "./prom-shared"
+import { PromAccionesMenu } from "./prom-acciones-menu"
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const LABEL_CLASS = "text-xs font-medium text-muted-foreground uppercase tracking-wide"
-const MIN_CLASS = "text-xs text-muted-foreground"
+const LABEL_CLASS = PROMOTION_TABLE_STYLE.mobileMetricLabel
+const MIN_CLASS = PROMOTION_TABLE_STYLE.supportingText
 
 // ─── Desktop Table ──────────────────────────────────────────────────────────
 
@@ -55,34 +45,36 @@ export function DesktopTable({
   sinCategoria,
   onDetalle,
   onPromover,
+  onCapturarExamen,
   onDesempeño,
 }: {
   conCategoria: EmpleadoPromocion[]
   sinCategoria: EmpleadoPromocion[]
   onDetalle: (emp: EmpleadoPromocion) => void
   onPromover: (emp: EmpleadoPromocion) => void
+  onCapturarExamen: (emp: EmpleadoPromocion) => void
   onDesempeño: (emp: EmpleadoPromocion) => void
 }) {
   return (
     <div className="hidden md:block rounded-lg border overflow-hidden bg-background">
-      <Table>
+      <Table aria-label={PROMOTION_TABLE_COPY.accessibleName}>
         <TableHeader>
           <TableRow className="bg-muted">
-            <TableHead>Empleado</TableHead>
-            <TableHead>Departamento</TableHead>
+            <TableHead>{PROMOTION_TABLE_COPY.employee}</TableHead>
+            <TableHead>{PROMOTION_TABLE_COPY.department}</TableHead>
             <TableHead className="text-center">
               <Tooltip>
                 <TooltipTrigger className="mx-auto flex items-center gap-1 cursor-default">
-                  Temporalidad
+                  {PROMOTION_TABLE_COPY.tenure}
                 </TooltipTrigger>
-                <TooltipContent>Tiempo en el puesto actual</TooltipContent>
+                <TooltipContent>{PROMOTION_TABLE_COPY.tenureHelp}</TooltipContent>
               </Tooltip>
             </TableHead>
-            <TableHead className="text-center">Cursos</TableHead>
-            <TableHead className="text-center">Desempeño</TableHead>
-            <TableHead className="text-center">Examen</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="w-[88px] text-right">Acciones</TableHead>
+            <TableHead className="text-center">{PROMOTION_TABLE_COPY.courses}</TableHead>
+            <TableHead className="text-center">{PROMOTION_TABLE_COPY.performance}</TableHead>
+            <TableHead className="text-center">{PROMOTION_TABLE_COPY.exam}</TableHead>
+            <TableHead>{PROMOTION_TABLE_COPY.status}</TableHead>
+            <TableHead className="w-16 text-right">{PROMOTION_TABLE_COPY.actions}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -92,14 +84,15 @@ export function DesktopTable({
               emp={emp}
               onDetalle={() => onDetalle(emp)}
               onPromover={() => onPromover(emp)}
+              onCapturarExamen={() => onCapturarExamen(emp)}
               onDesempeño={() => onDesempeño(emp)}
             />
           ))}
           {sinCategoria.length > 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="py-2 bg-muted/50">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                  Categoría A / Sin categoría — inhabilitados
+              <TableCell colSpan={8} className="bg-muted/50 py-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                  {PROMOTION_TABLE_COPY.unavailableGroup}
                 </span>
               </TableCell>
             </TableRow>
@@ -108,6 +101,7 @@ export function DesktopTable({
             <DesktopRowInhabilitado
               key={emp.id}
               emp={emp}
+              onDetalle={() => onDetalle(emp)}
               onDesempeño={() => onDesempeño(emp)}
             />
           ))}
@@ -124,36 +118,46 @@ export function MobileList({
   sinCategoria,
   onDetalle,
   onPromover,
+  onCapturarExamen,
   onDesempeño,
 }: {
   conCategoria: EmpleadoPromocion[]
   sinCategoria: EmpleadoPromocion[]
   onDetalle: (emp: EmpleadoPromocion) => void
   onPromover: (emp: EmpleadoPromocion) => void
+  onCapturarExamen: (emp: EmpleadoPromocion) => void
   onDesempeño: (emp: EmpleadoPromocion) => void
 }) {
   return (
-    <div className="flex flex-col gap-2 md:hidden">
+    <ul className="flex flex-col gap-2 md:hidden" aria-label={PROMOTION_TABLE_COPY.accessibleName}>
       {conCategoria.map((emp) => (
-        <MobileRow key={emp.id} emp={emp} onClick={() => onPromover(emp)} onDesempeño={() => onDesempeño(emp)} />
+        <MobileRow
+          key={emp.id}
+          emp={emp}
+          onDetalle={() => onDetalle(emp)}
+          onPromover={() => onPromover(emp)}
+          onCapturarExamen={() => onCapturarExamen(emp)}
+          onDesempeño={() => onDesempeño(emp)}
+        />
       ))}
       {sinCategoria.length > 0 && (
-        <div className="flex items-center gap-2 py-1 px-1 mt-1">
+        <li className="mt-1 flex items-center gap-2 px-1 py-1">
           <div className="h-px flex-1 bg-muted" />
           <span className="text-xs text-muted-foreground">
-            Categoría A / Sin categoría — inhabilitados
+            {PROMOTION_TABLE_COPY.unavailableGroup}
           </span>
           <div className="h-px flex-1 bg-muted" />
-        </div>
+        </li>
       )}
       {sinCategoria.map((emp) => (
         <MobileCardInhabilitado
           key={emp.id}
           emp={emp}
+          onDetalle={() => onDetalle(emp)}
           onDesempeño={() => onDesempeño(emp)}
         />
       ))}
-    </div>
+    </ul>
   )
 }
 
@@ -163,31 +167,30 @@ function DesktopRow({
   emp,
   onDetalle,
   onPromover,
+  onCapturarExamen,
   onDesempeño,
 }: {
   emp: EmpleadoPromocion
   onDetalle: () => void
   onPromover: () => void
+  onCapturarExamen: () => void
   onDesempeño: () => void
 }) {
-  const aptitud = calcularAptitud(emp)
-  const meses = mesesEnPuesto(emp.fechaIngresoPuesto)
-  const pctCursos = porcentajeCursos(emp.cursosRequeridos)
-  const evalActual = ultimaEvaluacion(emp.evaluaciones)
-  const { regla } = emp
-  const cumpleTemp = regla ? meses >= regla.minTemporalidadMeses : null
-  const cumpleCursos = regla ? pctCursos >= regla.minPorcentajeCursos : null
-  const cumpleEval =
-    regla && evalActual
-      ? evalActual.calificacion >= regla.minCalificacionEvaluacion
-      : null
+  const {
+    aptitud,
+    regla,
+    meses,
+    porcentajeCompletado: pctCursos,
+    cursosCompletados,
+    evaluacion: evalActual,
+    cumpleTemporalidad: cumpleTemp,
+    cumpleCursos,
+    cumpleEvaluacion: cumpleEval,
+    cumpleExamen,
+  } = getPromotionRowView(emp)
 
   return (
-    <React.Fragment>
-      <TableRow
-        className="cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={onPromover}
-      >
+      <TableRow>
         <TableCell>
           <div className="font-medium text-sm text-foreground">
             {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
@@ -206,16 +209,20 @@ function DesktopRow({
         <TableCell className="text-center">
           {cumpleTemp !== null ? (
             <Tooltip>
-              <TooltipTrigger className="cursor-default inline-flex items-center justify-center">
+              <TooltipTrigger
+                className="cursor-default inline-flex items-center justify-center"
+                aria-label={`${cumpleTemp ? PROMOTION_TABLE_COPY.meets : PROMOTION_TABLE_COPY.doesNotMeet} ${PROMOTION_TABLE_COPY.tenure.toLowerCase()}: ${formatMeses(meses)}`}
+              >
                 {cumpleTemp ? (
-                  <CheckCircle2 className="w-5 h-5 text-success" />
+                  <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.control} text-success`} />
                 ) : (
-                  <XCircle className="w-5 h-5 text-destructive" />
+                  <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} text-destructive`} />
                 )}
+                <span className="ml-1 text-sm text-foreground">{formatMeses(meses)}</span>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="font-medium">{formatMeses(meses)}</p>
-                {regla && <p className="text-xs text-muted-foreground mt-0.5">Requerido: {formatMeses(regla.minTemporalidadMeses)}</p>}
+                {regla && <p className="text-xs text-muted-foreground mt-0.5">{PROMOTION_TABLE_COPY.required}: {formatMeses(regla.minTemporalidadMeses)}</p>}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -229,23 +236,23 @@ function DesktopRow({
             <TooltipTrigger className="cursor-default inline-flex items-center justify-center gap-1.5">
               {cumpleCursos !== null &&
                 (cumpleCursos ? (
-                  <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                  <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-success`} />
                 ) : (
-                  <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                  <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-destructive`} />
                 ))}
               <span
-                className={`text-sm font-semibold ${pctCursos >= 80 ? "text-success" : pctCursos >= 50 ? "text-warning" : "text-destructive"}`}
+                className={`text-sm font-semibold ${getCriterionTone(cumpleCursos)}`}
               >
                 {pctCursos}%
               </span>
             </TooltipTrigger>
             <TooltipContent>
               <p className="font-medium">
-                {emp.cursosRequeridos.filter((c) => c.completado).length} de {emp.cursosRequeridos.length} cursos completados
+                {cursosCompletados} de {emp.cursosRequeridos.length} cursos completados
               </p>
               {regla && (
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Requerido: {regla.minPorcentajeCursos}%
+                  {PROMOTION_TABLE_COPY.required}: {regla.minPorcentajeCursos}%
                 </p>
               )}
             </TooltipContent>
@@ -257,12 +264,12 @@ function DesktopRow({
               <TooltipTrigger className="cursor-default inline-flex items-center justify-center gap-1.5">
                 {cumpleEval !== null &&
                   (cumpleEval ? (
-                    <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                    <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-success`} />
                   ) : (
-                    <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-destructive`} />
                   ))}
                 <span
-                  className={`text-sm font-bold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}
+                  className={`text-sm font-semibold ${getCriterionTone(cumpleEval)}`}
                 >
                   {evalActual.calificacion}
                 </span>
@@ -271,14 +278,14 @@ function DesktopRow({
                 {evalActual.periodo && <p className="font-medium uppercase tracking-wide">{evalActual.periodo}</p>}
                 {regla && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Requerido: {regla.minCalificacionEvaluacion}
+                    {PROMOTION_TABLE_COPY.required}: {regla.minCalificacionEvaluacion}
                   </p>
                 )}
               </TooltipContent>
             </Tooltip>
           ) : (
             <span className="text-xs text-muted-foreground italic">
-              Sin evaluar
+              {PROMOTION_TABLE_COPY.noEvaluation}
             </span>
           )}
         </TableCell>
@@ -287,59 +294,36 @@ function DesktopRow({
             <div className="flex flex-col items-center justify-center leading-tight">
               <span
                 className={`text-sm font-semibold ${
-                  !regla || regla.minCalificacionExamen == null || emp.calificacionExamen >= regla.minCalificacionExamen
-                    ? "text-success"
-                    : "text-destructive"
+                  getCriterionTone(cumpleExamen)
                 }`}
               >
                 {emp.calificacionExamen}
               </span>
               {emp.fechaExamenGuardada && (
-                <span className="text-[10px] text-muted-foreground">
-                  {new Date(emp.fechaExamenGuardada + "T12:00:00").toLocaleDateString("es-MX", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
+                <span className={PROMOTION_TABLE_STYLE.supportingText}>
+                  {formatShortPromotionDate(emp.fechaExamenGuardada)}
                 </span>
               )}
             </div>
           ) : (
             <span className="text-xs text-muted-foreground italic">
-              --
+              {PROMOTION_TABLE_COPY.unavailableValue}
             </span>
           )}
         </TableCell>
         <TableCell>
           <AptitudBadge status={aptitud} />
         </TableCell>
-        <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 focus-visible:ring-2 focus-visible:ring-ring">
-                <MoreVertical size={16} />
-                <span className="sr-only">Abrir menú</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onDetalle} className="gap-2 cursor-pointer">
-                <Info size={15} className="text-muted-foreground" />
-                Ver detalle
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onPromover} className="gap-2 cursor-pointer">
-                <TrendingUp size={15} className={aptitud === "apto" ? "text-primary" : "text-muted-foreground"} />
-                {aptitud === "apto" ? "Promover empleado" : "Capturar examen"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDesempeño} className="gap-2 cursor-pointer">
-                <Star size={15} className="text-warning" />
-                Evaluar desempeño
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <TableCell className="text-right">
+          <PromAccionesMenu
+            empleado={emp}
+            onDetalle={onDetalle}
+            onPromover={onPromover}
+            onCapturarExamen={onCapturarExamen}
+            onDesempeño={onDesempeño}
+          />
         </TableCell>
       </TableRow>
-
-    </React.Fragment>
   )
 }
 
@@ -347,14 +331,16 @@ function DesktopRow({
 
 function DesktopRowInhabilitado({
   emp,
+  onDetalle,
   onDesempeño,
 }: {
   emp: EmpleadoPromocion
+  onDetalle: () => void
   onDesempeño: () => void
 }) {
   const evalActual = ultimaEvaluacion(emp.evaluaciones)
   return (
-    <TableRow className="opacity-60">
+    <TableRow className="bg-muted/20">
       <TableCell>
         <div className="font-medium text-sm text-foreground">
           {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
@@ -365,47 +351,38 @@ function DesktopRowInhabilitado({
       <TableCell>
         <span className="text-sm text-muted-foreground">{emp.departamento}</span>
       </TableCell>
-      <TableCell className="text-center" />
-      <TableCell className="text-center" />
-      <TableCell className="text-center" />
+      <UnavailableCell />
+      <UnavailableCell />
       <TableCell className="text-center">
         {evalActual ? (
           <span
-            className={`text-sm font-semibold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}
+            className="text-sm font-semibold text-foreground"
           >
             {evalActual.calificacion}
           </span>
         ) : (
           <span className="text-xs italic text-muted-foreground">
-            Sin evaluar
+            {PROMOTION_TABLE_COPY.noEvaluation}
           </span>
         )}
       </TableCell>
+      <UnavailableCell />
       <TableCell>
         <Badge
           variant="outline"
           className="text-xs text-muted-foreground border-border"
         >
-          {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
+          {getUnavailableCategoryLabel(emp.puesto)}
         </Badge>
       </TableCell>
       <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 focus-visible:ring-2 focus-visible:ring-ring">
-              <MoreVertical size={16} />
-              <span className="sr-only">Abrir menú</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={onDesempeño} className="gap-2 cursor-pointer">
-              <Star size={15} className="text-warning" />
-              Capturar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+          <PromAccionesMenu
+            empleado={emp}
+            onDetalle={onDetalle}
+            onDesempeño={onDesempeño}
+          />
+        </TableCell>
+      </TableRow>
   )
 }
 
@@ -413,152 +390,138 @@ function DesktopRowInhabilitado({
 
 function MobileRow({
   emp,
-  onClick,
+  onDetalle,
+  onPromover,
+  onCapturarExamen,
   onDesempeño,
 }: {
   emp: EmpleadoPromocion
-  onClick: () => void
+  onDetalle: () => void
+  onPromover: () => void
+  onCapturarExamen: () => void
   onDesempeño: () => void
 }) {
-  const aptitud = calcularAptitud(emp)
-  const meses = mesesEnPuesto(emp.fechaIngresoPuesto)
-  const pctCursos = porcentajeCursos(emp.cursosRequeridos)
-  const evalActual = ultimaEvaluacion(emp.evaluaciones)
-  const { regla } = emp
-  const cumpleTemp = regla ? meses >= regla.minTemporalidadMeses : null
-  const cumpleCursos = regla ? pctCursos >= regla.minPorcentajeCursos : null
-  const cumpleEval =
-    regla && evalActual
-      ? evalActual.calificacion >= regla.minCalificacionEvaluacion
-      : null
+  const {
+    aptitud,
+    regla,
+    meses,
+    porcentajeCompletado: pctCursos,
+    cursosCompletados,
+    evaluacion: evalActual,
+    cumpleTemporalidad: cumpleTemp,
+    cumpleCursos,
+    cumpleEvaluacion: cumpleEval,
+    cumpleExamen,
+  } = getPromotionRowView(emp)
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className="bg-background border rounded-xl px-4 py-3 cursor-pointer active:bg-muted/70 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-left w-full"
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          onClick()
-        }
-      }}
-    >
-      <div className="flex items-start justify-between gap-2 mb-1">
+    <li className="w-full rounded-xl border bg-background px-4 py-3 text-left">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-semibold text-sm text-foreground leading-tight">
+          <h3 className="font-semibold text-sm text-foreground leading-tight">
             {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
             {emp.nombre}
-          </div>
+          </h3>
           <div className="text-xs text-muted-foreground leading-tight mt-0.5">
             {emp.puesto}
           </div>
         </div>
+        <PromAccionesMenu
+          empleado={emp}
+          onDetalle={onDetalle}
+          onPromover={onPromover}
+          onCapturarExamen={onCapturarExamen}
+          onDesempeño={onDesempeño}
+        />
+      </div>
+
+      <div className="mb-3 mt-2 flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{emp.departamento}</p>
         <AptitudBadge status={aptitud} />
       </div>
 
-      <div className="flex items-center justify-between gap-2 mb-2.5">
-        <span className="text-xs text-muted-foreground">{emp.departamento}</span>
-        <Button
-          variant="outline"
-          size="icon"
-          className="focus-visible:ring-2 focus-visible:ring-ring h-7 w-7"
-          onClick={(e) => { e.stopPropagation(); onDesempeño(); }}
-          aria-label="Evaluar desempeño"
-          title="Evaluar desempeño"
-        >
-          <Star size={12} className="text-warning" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-4 gap-2 text-xs">
+      <div className={`${PROMOTION_TABLE_STYLE.mobileMetricGrid} text-xs`}>
         <MetricaMobile
-          label="Temporalidad"
+          label={PROMOTION_TABLE_COPY.tenure}
           cumple={cumpleTemp}
           valor={formatMeses(meses)}
-          min={regla ? `mín ${formatMeses(regla.minTemporalidadMeses)}` : undefined}
+          min={regla ? `${PROMOTION_TABLE_COPY.minimum} ${formatMeses(regla.minTemporalidadMeses)}` : undefined}
         />
         <div className="flex flex-col gap-0.5">
-          <span className={LABEL_CLASS}>Cursos</span>
+          <span className={LABEL_CLASS}>{PROMOTION_TABLE_COPY.courses}</span>
           <div className="flex items-center gap-1">
             {cumpleCursos !== null &&
               (cumpleCursos ? (
-                <CheckCircle2 size={12} className="text-success shrink-0" />
+                <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-success`} />
               ) : (
-                <XCircle size={12} className="text-destructive shrink-0" />
+                <CircleX aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-destructive`} />
               ))}
             <span
-              className={`font-semibold ${pctCursos >= 80 ? "text-success" : pctCursos >= 50 ? "text-warning" : "text-destructive"}`}
+              className={`font-semibold ${getCriterionTone(cumpleCursos)}`}
             >
               {pctCursos}%
             </span>
             <span className="text-muted-foreground">
-              ({emp.cursosRequeridos.filter((c) => c.completado).length}/
+              ({cursosCompletados}/
               {emp.cursosRequeridos.length})
             </span>
           </div>
           <Progress value={pctCursos} className="h-1 mt-0.5" />
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className={LABEL_CLASS}>Desempeño</span>
+          <span className={LABEL_CLASS}>{PROMOTION_TABLE_COPY.performance}</span>
           <div className="flex items-center gap-1">
             {evalActual ? (
               <>
                 {cumpleEval !== null &&
                   (cumpleEval ? (
-                    <CheckCircle2 size={12} className="text-success shrink-0" />
+                    <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-success`} />
                   ) : (
-                    <XCircle size={12} className="text-destructive shrink-0" />
+                    <CircleX aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-destructive`} />
                   ))}
                 <span
-                  className={`font-bold ${evalActual.calificacion >= 80 ? "text-success" : evalActual.calificacion >= 60 ? "text-warning" : "text-destructive"}`}
+                  className={`font-semibold ${getCriterionTone(cumpleEval)}`}
                 >
                   {evalActual.calificacion}
                 </span>
               </>
             ) : (
-              <span className="italic text-muted-foreground">Sin evaluar</span>
+              <span className="italic text-muted-foreground">{PROMOTION_TABLE_COPY.noEvaluation}</span>
             )}
           </div>
           {regla && (
-            <span className={MIN_CLASS}>mín {regla.minCalificacionEvaluacion}</span>
+            <span className={MIN_CLASS}>{PROMOTION_TABLE_COPY.minimum} {regla.minCalificacionEvaluacion}</span>
           )}
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className={LABEL_CLASS}>Examen</span>
+          <span className={LABEL_CLASS}>{PROMOTION_TABLE_COPY.exam}</span>
           <div className="flex items-center gap-1">
             {emp.calificacionExamen != null ? (
               <div className="flex flex-col">
                 <span
                   className={`font-semibold ${
-                    !regla || regla.minCalificacionExamen == null || emp.calificacionExamen >= regla.minCalificacionExamen
-                      ? "text-success"
-                      : "text-destructive"
+                    getCriterionTone(cumpleExamen)
                   }`}
                 >
                   {emp.calificacionExamen}
                 </span>
                 {emp.fechaExamenGuardada && (
-                  <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
-                    {new Date(emp.fechaExamenGuardada + "T12:00:00").toLocaleDateString("es-MX", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "2-digit",
-                    })}
+                  <span className={`${PROMOTION_TABLE_STYLE.supportingText} mt-0.5 leading-none`}>
+                    {formatShortPromotionDate(emp.fechaExamenGuardada)}
                   </span>
                 )}
               </div>
             ) : (
-              <span className="italic text-muted-foreground">--</span>
+              <span className="italic text-muted-foreground">{PROMOTION_TABLE_COPY.unavailableValue}</span>
             )}
           </div>
           {regla?.minCalificacionExamen != null && (
-            <span className={MIN_CLASS}>mín {regla.minCalificacionExamen}</span>
+            <span className={MIN_CLASS}>{PROMOTION_TABLE_COPY.minimum} {regla.minCalificacionExamen}</span>
           )}
         </div>
       </div>
-    </div>
+
+    </li>
   )
 }
 
@@ -581,9 +544,9 @@ function MetricaMobile({
       <div className="flex items-center gap-1">
         {cumple !== null &&
           (cumple ? (
-            <CheckCircle2 size={12} className="text-success shrink-0" />
+            <CircleCheck aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-success`} />
           ) : (
-            <XCircle size={12} className="text-destructive shrink-0" />
+            <CircleX aria-hidden="true" className={`${PROMOTION_ICON.metric} shrink-0 text-destructive`} />
           ))}
         <span className="font-medium text-foreground">{valor}</span>
       </div>
@@ -592,50 +555,52 @@ function MetricaMobile({
   )
 }
 
+function UnavailableCell() {
+  return (
+    <TableCell className="text-center text-muted-foreground">
+      <span aria-hidden="true">{PROMOTION_TABLE_COPY.unavailableValue}</span>
+      <span className="sr-only">{PROMOTION_TABLE_COPY.notApplicable}</span>
+    </TableCell>
+  )
+}
+
 // ─── Mobile Card Inhabilitado ───────────────────────────────────────────────
 
 function MobileCardInhabilitado({
   emp,
+  onDetalle,
   onDesempeño,
 }: {
   emp: EmpleadoPromocion
+  onDetalle: () => void
   onDesempeño: () => void
 }) {
   const evalActual = ultimaEvaluacion(emp.evaluaciones)
   return (
-    <div className="bg-background border rounded-xl px-4 py-3 opacity-60 select-none">
-      <div className="flex items-start justify-between gap-2 mb-1">
+    <li className="rounded-xl border bg-muted/30 px-4 py-3">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-semibold text-sm text-foreground leading-tight">
+          <h3 className="font-semibold text-sm text-foreground leading-tight">
             {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
             {emp.nombre}
-          </div>
+          </h3>
           <div className="text-xs text-muted-foreground leading-tight mt-0.5">
             {emp.puesto}
           </div>
         </div>
-        <Badge
-          variant="outline"
-          className="text-xs text-muted-foreground border-border shrink-0"
-        >
-          {/\s[A]$/i.test(emp.puesto.trim()) ? "Cat. A" : "Sin categoría"}
-        </Badge>
+        <PromAccionesMenu empleado={emp} onDetalle={onDetalle} onDesempeño={onDesempeño} />
       </div>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{emp.departamento}</span>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={onDesempeño}
-          aria-label="Capturar evaluación de desempeño"
-          title={evalActual ? `Eval: ${evalActual.calificacion}` : "Eval"}
-        >
-          <Star size={13} />
-        </Button>
+        <Badge variant="outline" className="shrink-0 border-border text-xs text-muted-foreground">
+          {getUnavailableCategoryLabel(emp.puesto)}
+        </Badge>
       </div>
-    </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {PROMOTION_TABLE_COPY.performance}: {evalActual?.calificacion ?? PROMOTION_TABLE_COPY.noEvaluation}
+      </p>
+    </li>
   )
 }

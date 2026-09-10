@@ -42,6 +42,17 @@ export interface EmpleadoPromocion {
   regla?: ReglaPromocion
 }
 
+export interface ExamenPromocionInput {
+  fechaExamen: string
+  calExamen: number | null
+  intentosPrevios?: number
+  nuevoIntento?: boolean
+}
+
+export interface ConfirmarPromocionInput {
+  fechaInicio: string
+}
+
 // ─── Interfaces JSON de importación ────────────────────────────────────────
 
 export interface ReglaPromocionJSON {
