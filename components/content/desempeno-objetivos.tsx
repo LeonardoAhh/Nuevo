@@ -20,6 +20,7 @@ export default function DesempenoObjetivos() {
     showPrintDialog,
     setShowPrintDialog,
     data,
+    loading,
     objetivos,
     hasPuestoObjetivos,
     bloqueado,
@@ -35,7 +36,7 @@ export default function DesempenoObjetivos() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <SectionTitle className="text-base">Evaluación cargada</SectionTitle>
-            <Button variant="outline" size="sm" onClick={() => setShowPrintDialog(true)} disabled={bloqueado}>
+            <Button variant="outline" size="sm" onClick={() => setShowPrintDialog(true)} disabled={bloqueado || loading}>
               <Printer className="h-4 w-4 mr-1.5" />
               {bloqueado ? "Captura compromisos" : "Imprimir"}
           </Button>
@@ -66,11 +67,13 @@ export default function DesempenoObjetivos() {
       {empleadoSel && <SavedDetail context={context} />}
 
       {/* Hidden print area */}
-      {data && <div className="print-area hidden print:block">
+      {data && !loading && <div className="print-area hidden print:block">
         <DesempenoPrint data={data} />
     </div>}
 
-      <PrintInstructionDialog open={showPrintDialog} onOpenChange={setShowPrintDialog} onConfirm={() => window.print()} />
+      <PrintInstructionDialog open={showPrintDialog && !!data && !loading && !bloqueado} onOpenChange={setShowPrintDialog} onConfirm={() => {
+        if (data && !loading && !bloqueado) window.print();
+      }} />
   </EvaluationWorkspace>
 </TooltipProvider>;
 }

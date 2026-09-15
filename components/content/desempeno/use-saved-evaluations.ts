@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { DEFAULT_OBJETIVOS_POR_TIPO, calcularPonderacion, UMBRAL_CALIFICACION_APROBATORIA, type Objetivo } from "@/lib/types/desempeno";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { DEFAULT_OBJETIVOS_POR_TIPO, UMBRAL_CALIFICACION_APROBATORIA, type Objetivo } from "@/lib/types/desempeno";
 import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo";
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR } from "@/lib/catalogo";
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno";
@@ -28,6 +28,7 @@ export function useSavedEvaluations() {
   const [openDeps, setOpenDeps] = useState<string[]>([]);
   const [pendingPrintId, setPendingPrintId] = useState<string | null>(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const printLoadingRef = useRef(false);
   const {
     historial,
     historialLoading,
@@ -35,6 +36,7 @@ export function useSavedEvaluations() {
     cargarEvaluacion,
     eliminarEvaluacion,
     data,
+    setData,
     loading
   } = useDesempeno();
   useEffect(() => {
@@ -43,7 +45,7 @@ export function useSavedEvaluations() {
   const objetivos = puesto ? getObjetivosForPuesto(puesto) : [];
   const hasPuestoObjetivos = puesto ? !!OBJETIVOS_POR_PUESTO[puesto] : false;
   const tipoLabel = puesto ? getTipoDesempenoByPuesto(puesto) : null;
-  const requiereCompromisos = data ? calcularPonderacion(data).calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA : false;
+  const requiereCompromisos = data ? data.calificacion_final < UMBRAL_CALIFICACION_APROBATORIA : false;
   const tieneCompromisos = !!data?.compromisos?.trim();
   const bloqueado = requiereCompromisos && !tieneCompromisos;
 
@@ -91,18 +93,23 @@ export function useSavedEvaluations() {
   }, [empleadosFiltrados]);
   const empleadoSel = useMemo(() => empleadosAgrupados.find(e => e.numero === selectedNumero) ?? null, [empleadosAgrupados, selectedNumero]);
 
-  // Imprimir: carga la evaluación y prepara el modal de impresión.
-  useEffect(() => {
-    if (!pendingPrintId || loading || !data) return;
-    const t = setTimeout(() => {
-      setShowPrintDialog(true);
-      setPendingPrintId(null);
-    }, 150);
-    return () => clearTimeout(t);
-  }, [pendingPrintId, loading, data]);
-  const handlePrint = (evalId: string) => {
+  // Solo ofrece imprimir cuando termina correctamente la carga solicitada.
+  const handlePrint = async (evalId: string) => {
+    if (printLoadingRef.current) return;
+    printLoadingRef.current = true;
+    setShowPrintDialog(false);
+    setData(null);
     setPendingPrintId(evalId);
-    cargarEvaluacion(evalId);
+    try {
+      const result = await cargarEvaluacion(evalId);
+      if (result) {
+        setSelectedNumero(null);
+        setShowPrintDialog(true);
+      }
+    } finally {
+      setPendingPrintId(null);
+      printLoadingRef.current = false;
+    }
   };
   return {
     departamentos,

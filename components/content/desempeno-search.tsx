@@ -73,7 +73,7 @@ function DesempenoSearchContent() {
         periodo: data.periodo || periodoSeleccionado
       })} saving={saving} guardarDisabled={saving || saveSuccess || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} guardarTooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? `Empleado no elegible para este periodo semestral (menos de ${MESES_MIN_ANTIGUEDAD_SEMESTRAL} meses)` : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : saveSuccess ? "La evaluación ya está guardada" : undefined} /> : null}
 
-      {data && <div className="print-area hidden print:block">
+      {data && context.guardado && saveSuccess && !loading && <div className="print-area hidden print:block">
         <DesempenoPrint data={data} />
     </div>}
 

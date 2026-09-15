@@ -2,9 +2,9 @@
 
 import {
   UMBRAL_CALIFICACION_APROBATORIA,
-  calcularPonderacion,
   type DesempenoData,
 } from "@/lib/types/desempeno"
+import { fechaParaImpresion, ponderacionParaImpresion, porcentajeParaImpresion } from "@/lib/desempeno/impresion"
 import styles from "./desempeno-print.module.css"
 
 interface Props {
@@ -24,7 +24,8 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
     })
   }
 
-  const pond = calcularPonderacion(data)
+  const pond = ponderacionParaImpresion(data)
+  const resultado = (valor: number) => blankMode ? "\u00a0" : `${valor}%`
   const tieneCompromisos = !!(data.compromisos || data.fecha_revision || data.observaciones)
 
   const forzarSaltoCompromisos = !blankMode && pond.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA && tieneCompromisos
@@ -99,16 +100,16 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                       <tr key={i}>
                         <td className={styles.tdCenter}>{i + 1}</td>
                         <td>{obj.descripcion || "—"}</td>
-                        <td className={styles.tdCenter}>{obj.resultado || "NA"}</td>
-                        <td className={styles.tdCenter}>{obj.porcentaje || "NA"}</td>
+                        <td className={styles.tdCenter}>{blankMode ? "\u00a0" : obj.resultado || "NA"}</td>
+                        <td className={styles.tdCenter}>{porcentajeParaImpresion(obj, blankMode)}</td>
                         <td>{obj.comentarios || ""}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className={styles.resultRow}>
-                  <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte1}%</strong></span>
-                  <span>RESULTADO PONDERADO: <strong>{pond.ponderadoParte1}%</strong></span>
+                  <span>RESULTADO PROMEDIO: <strong>{resultado(pond.promedioParte1)}</strong></span>
+                  <span>RESULTADO PONDERADO: <strong>{resultado(pond.ponderadoParte1)}</strong></span>
                 </div>
               </div>
 
@@ -129,7 +130,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                     {data.cumplimiento_responsabilidades.map((item, idx) => (
                       <tr key={idx}>
                         <td>{item.descripcion}</td>
-                        <td className={styles.tdCenter}>{item.porcentaje}</td>
+                        <td className={styles.tdCenter}>{porcentajeParaImpresion(item, blankMode)}</td>
                         <td className={styles.tdCenter}>{item.evalua}</td>
                         <td>{item.comentarios || ""}</td>
                       </tr>
@@ -137,8 +138,8 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                   </tbody>
                 </table>
                 <div className={styles.resultRow}>
-                  <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte2}%</strong></span>
-                  <span>RESULTADO PONDERADO: <strong>{pond.ponderadoParte2}%</strong></span>
+                  <span>RESULTADO PROMEDIO: <strong>{resultado(pond.promedioParte2)}</strong></span>
+                  <span>RESULTADO PONDERADO: <strong>{resultado(pond.ponderadoParte2)}</strong></span>
                 </div>
               </div>
 
@@ -160,15 +161,15 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                       <tr key={idx}>
                         <td className={styles.tdNormal}>{comp.nombre}</td>
                         <td className={styles.tdSmall}>{comp.descripcion}</td>
-                        <td className={styles.tdCenter}>{comp.calificacion}</td>
-                        <td className={styles.tdCenter}>{Math.round((comp.calificacion / 4) * 100)}%</td>
+                        <td className={styles.tdCenter}>{blankMode ? "\u00a0" : comp.calificacion}</td>
+                        <td className={styles.tdCenter}>{resultado(Math.round((comp.calificacion / 4) * 100))}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className={styles.resultRow}>
-                  <span>RESULTADO PROMEDIO: <strong>{pond.promedioParte3}%</strong></span>
-                  <span>RESULTADO PONDERADO: <strong>{pond.ponderadoParte3}%</strong></span>
+                  <span>RESULTADO PROMEDIO: <strong>{resultado(pond.promedioParte3)}</strong></span>
+                  <span>RESULTADO PONDERADO: <strong>{resultado(pond.ponderadoParte3)}</strong></span>
                 </div>
               </div>
 
@@ -183,7 +184,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
 
                 <div className={styles.calificacionBox}>
                   <span>CALIFICACIÓN TOTAL DEL PERIODO:</span>
-                  <strong>{pond.calificacionFinal}%</strong>
+                  <strong>{resultado(pond.calificacionFinal)}</strong>
                 </div>
 
                 {(tieneCompromisos || blankMode) && (
@@ -194,7 +195,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
                     </div>
                     <div>
                       <strong>Fecha de revisión:</strong>
-                      <p>{data.fecha_revision || (blankMode ? "\u00A0" : "")}</p>
+                      <p>{fechaParaImpresion(data.fecha_revision) || (blankMode ? "\u00A0" : "")}</p>
                     </div>
                     <div>
                       <strong>Observaciones:</strong>
