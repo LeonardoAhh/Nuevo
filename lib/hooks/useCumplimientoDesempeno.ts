@@ -133,7 +133,7 @@ export function useCumplimientoDesempeno(periodo: string) {
         const evalRow = evalMap.get(emp.numero)
         const entregaRow = entregaMap.get(emp.numero)
 
-        // Antigüedad < 2 meses respecto al cierre del periodo → no aplica
+        // Antigüedad < 3 meses respecto al cierre del periodo → no aplica
         const elegibilidad = esElegibleParaPeriodo(emp.fecha_ingreso, periodo)
 
         let estatus: EstatusEntrega

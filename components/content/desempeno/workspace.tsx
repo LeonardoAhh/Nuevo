@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useRole } from "@/lib/hooks";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
 import { evaluationStyles } from "./presentation";
+import { useRouter } from "next/navigation";
 const navigation = [{
   key: "evaluation",
   href: DESEMPENO.routes.home,
@@ -23,15 +24,18 @@ const navigation = [{
 export function EvaluationWorkspace({
   section,
   actions,
+  confirmNavigation,
   children
 }: {
   section: keyof typeof DESEMPENO.pages;
   actions?: ReactNode;
+  confirmNavigation?: () => Promise<boolean>;
   children: ReactNode;
 }) {
   const {
     isEvaluador
   } = useRole();
+  const router = useRouter();
   return <div className={evaluationStyles.page}>
     <header className="flex items-center justify-between gap-1.5 sm:gap-3 print:hidden">
       <nav aria-label="Evaluación de desempeño" className="grid min-w-0 flex-1 grid-flow-col auto-cols-fr gap-1.5 sm:flex sm:flex-none sm:gap-2">
@@ -40,7 +44,12 @@ export function EvaluationWorkspace({
           href,
           icon: Icon
         }) => <Button key={key} asChild variant={section === key ? "default" : "outline"} className="min-w-0 gap-1 px-2 text-xs sm:gap-2 sm:px-4 sm:text-sm">
-            <Link href={href} aria-current={section === key ? "page" : undefined}>
+            <Link href={href} aria-current={section === key ? "page" : undefined} onNavigate={confirmNavigation ? event => {
+              event.preventDefault();
+              void confirmNavigation().then(confirmed => {
+                if (confirmed) router.push(href);
+              });
+            } : undefined}>
               <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" />
               {DESEMPENO.pages[key].title}
             </Link>

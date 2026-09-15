@@ -4,7 +4,7 @@ import { Pencil, Printer, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PERIODOS_DESEMPENO } from "@/lib/catalogo";
+import { esPeriodoSemestral } from "@/lib/desempeno/elegibilidad";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
 import { ScoreBadge } from "../desempeno-score-badge";
 import type { SavedEvaluationsContext } from "./use-saved-evaluations";
@@ -15,7 +15,7 @@ type Actions = Pick<SavedEvaluationsContext, "loading" | "pendingPrintId" | "han
 
 export function SavedEvaluationCard({ evaluation: ev, actions }: { evaluation: Evaluation; actions: Actions }) {
   const titleId = useId();
-  const isSemestral = ev.periodo && (PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(ev.periodo);
+  const isSemestral = Boolean(ev.periodo && esPeriodoSemestral(ev.periodo));
   const printing = actions.loading && actions.pendingPrintId === ev.id;
   const date = new Date(ev.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
 

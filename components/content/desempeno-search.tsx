@@ -14,6 +14,7 @@ import { DesempenoForm } from "./desempeno-form-operativo";
 import { DesempenoSaveSuccess } from "./desempeno-save-success";
 import { DesempenoGuia } from "./desempeno-guia";
 import { NoticeCard, DesempenoFormSkeleton, GuiaButton } from "./desempeno/search-controls";
+import { MESES_MIN_ANTIGUEDAD_SEMESTRAL } from "@/lib/desempeno/elegibilidad";
 function DesempenoSearchContent() {
   const context = useEvaluationSearch();
   const {
@@ -38,7 +39,7 @@ function DesempenoSearchContent() {
     periodoSemestralObjetivo
   } = context;
   return <TooltipProvider>
-    <EvaluationWorkspace section="evaluation" actions={!data && <GuiaButton onClick={() => setGuiaOpen(true)} />}>
+    <EvaluationWorkspace section="evaluation" confirmNavigation={context.confirmDiscard} actions={!data && <GuiaButton onClick={() => setGuiaOpen(true)} />}>
 
       {/* ── Buscador ── */}
       <SearchPanel context={context} />
@@ -64,16 +65,22 @@ function DesempenoSearchContent() {
           Los nuevos ingresos normalmente se evalúan en modo <strong className="font-semibold text-foreground">Mensual</strong> (onboarding). Verifica el periodo antes de guardar.
     </NoticeCard>}
 
-      {loading ? <DesempenoFormSkeleton /> : data ? <DesempenoForm data={data} onUpdate={setData} onGuardar={() => guardar({
+      {loading ? <DesempenoFormSkeleton /> : data ? <DesempenoForm data={data} onUpdate={next => {
+        resetSaveSuccess();
+        setData(next);
+      }} onGuardar={() => guardar({
         ...data,
         periodo: data.periodo || periodoSeleccionado
-      })} guardarDisabled={saving || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} guardarTooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? "Empleado no elegible para este periodo semestral (< 2 meses)" : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : "Guardar evaluación"} /> : null}
+      })} saving={saving} guardarDisabled={saving || saveSuccess || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} guardarTooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? `Empleado no elegible para este periodo semestral (menos de ${MESES_MIN_ANTIGUEDAD_SEMESTRAL} meses)` : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : saveSuccess ? "La evaluación ya está guardada" : undefined} /> : null}
 
       {data && <div className="print-area hidden print:block">
         <DesempenoPrint data={data} />
     </div>}
 
-      <DesempenoSaveSuccess visible={saveSuccess} nombre={data?.nombre} calificacion={ponderacion?.calificacionFinal} onDone={resetSaveSuccess} />
+      <DesempenoSaveSuccess visible={saveSuccess} nombre={data?.nombre} calificacion={ponderacion?.calificacionFinal} onPrint={() => window.print()} onNew={() => {
+        resetSaveSuccess();
+        context.closeEvaluation();
+      }} />
 
       <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
   </EvaluationWorkspace>

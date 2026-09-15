@@ -76,6 +76,7 @@ export interface ModalSecondaryAction {
 }
 
 export interface ModalFooterProps {
+  className?: string
   onCancel?: () => void
   cancelLabel?: string
   cancelDisabled?: boolean
@@ -83,12 +84,13 @@ export interface ModalFooterProps {
   confirmLabel?: string
   confirmIcon?: React.ReactNode
   confirmDisabled?: boolean
-  confirmVariant?: 'primary' | 'destructive'
+  confirmVariant?: 'primary' | 'destructive' | 'warning'
   saving?: boolean
   secondaryAction?: ModalSecondaryAction
 }
 
 export function ModalFooter({
+  className,
   onCancel,
   cancelLabel = "Cancelar",
   cancelDisabled,
@@ -102,7 +104,9 @@ export function ModalFooter({
 }: ModalFooterProps) {
   const confirmClasses = confirmVariant === 'destructive'
     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md shadow-destructive/30"
-    : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/30"
+    : confirmVariant === 'warning'
+      ? "bg-warning text-warning-foreground hover:bg-warning/90 shadow-md shadow-warning/30"
+      : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/30"
 
   const secondaryClasses = secondaryAction?.variant === 'outline'
     ? "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
@@ -111,7 +115,7 @@ export function ModalFooter({
     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
 
   return (
-    <DialogFooter detached className="mt-auto shrink-0 items-stretch border-t bg-background px-4 py-3 sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4">
+    <DialogFooter detached className={cn("mt-auto shrink-0 items-stretch border-t bg-background px-4 py-3 sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4", className)}>
       <div className="sm:flex-1">
         {secondaryAction && (
           <button

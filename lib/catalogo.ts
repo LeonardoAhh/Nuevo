@@ -438,25 +438,35 @@ export function getDepartamentoByPuesto(puesto: string | null | undefined): stri
   return PUESTO_A_DEPARTAMENTO[normalizePuestoKey(puesto)] ?? DEPARTAMENTO_SIN_ASIGNAR
 }
 
-export const PERIODOS_DESEMPENO = {
-  semestrales: ["DIC - MAY 2026", "JUN-NOV 2026"] as const,
-  mensuales: [
-    "DIC-ENE 2027",
-    "ENE-FEB 2027",
-    "FEB-MAR 2027",
-    "MAR-ABR 2027",
-    "ABR-MAY 2027",
-    "MAY-JUN 2027",
-    "JUN-JUL 2027",
-    "JUL-AGO 2026",
-    "AGO-SEP 2026",
-    "SEP-OCT 2026",
-    "OCT-NOV 2026",
-    "NOV-DIC 2026",
-  ] as const,
-} as const
+const MESES_DESEMPENO = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"] as const
 
-export type DesempenoPeriodo = (typeof PERIODOS_DESEMPENO)[keyof typeof PERIODOS_DESEMPENO][number]
+export type DesempenoPeriodo = string
+export type PeriodoModo = "semestrales" | "mensuales"
+
+/** Devuelve periodos cuyo año corresponde al mes final del rango. */
+export function getPeriodosDesempeno(year: number): Record<PeriodoModo, string[]> {
+  return {
+    semestrales: [`DIC-MAY ${year}`, `JUN-NOV ${year}`],
+    mensuales: MESES_DESEMPENO.map((mesFinal, index) => {
+      const mesInicial = MESES_DESEMPENO[(index + 11) % 12]
+      return `${mesInicial}-${mesFinal} ${year}`
+    }),
+  }
+}
+
+export function normalizarPeriodoDesempeno(periodo: string): string {
+  return periodo.trim().replace(/\s*-\s*/g, "-").replace(/\s+/g, " ").toUpperCase()
+}
+
+export function getPeriodoActual(modo: PeriodoModo, fecha = new Date()): string {
+  if (modo === "mensuales") return getPeriodosDesempeno(fecha.getFullYear()).mensuales[fecha.getMonth()]
+  if (fecha.getMonth() === 11) return getPeriodosDesempeno(fecha.getFullYear() + 1).semestrales[0]
+  const periodos = getPeriodosDesempeno(fecha.getFullYear()).semestrales
+  return fecha.getMonth() <= 4 ? periodos[0] : periodos[1]
+}
+
+const CURRENT_DESEMPENO_YEAR = new Date().getFullYear()
+export const PERIODOS_DESEMPENO = getPeriodosDesempeno(CURRENT_DESEMPENO_YEAR)
 
 // Mapa abreviatura de mes (ES) → número 1-12.
 const MES_ABREV_A_NUM: Record<string, number> = {
@@ -479,7 +489,7 @@ const MES_ABREV_A_NUM: Record<string, number> = {
  */
 export function mesesDePeriodo(periodo: string | null | undefined): string[] {
   if (!periodo) return []
-  const m = periodo.trim().match(/^([A-ZÁÉÍÓÚ]{3})-([A-ZÁÉÍÓÚ]{3})\s+(\d{4})$/i)
+  const m = normalizarPeriodoDesempeno(periodo).match(/^([A-ZÁÉÍÓÚ]{3})-([A-ZÁÉÍÓÚ]{3})\s+(\d{4})$/i)
   if (!m) return []
 
   const startNum = MES_ABREV_A_NUM[m[1].toUpperCase()]

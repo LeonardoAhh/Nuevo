@@ -10,12 +10,13 @@ import {
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS_POR_TIPO,
   calcularPonderacion,
+  validarEvaluacion,
   type DesempenoData,
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
 import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
-import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, PERIODOS_DESEMPENO } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, getPeriodosDesempeno, normalizarPeriodoDesempeno } from "@/lib/catalogo"
 import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
@@ -135,6 +136,9 @@ export function useDesempeno() {
   const [historial, setHistorial] = useState<EvaluacionHistorial[]>([])
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
+  const lastEvalKey = useRef<string | null>(null)
+  const searchRequest = useRef(0)
+  const savingRef = useRef(false)
   const dataRef = useRef<DesempenoData | null>(null)
 
   // Mantén dataRef sincronizado con data
@@ -184,7 +188,8 @@ export function useDesempeno() {
     [],
   )
 
-  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null) => {
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null, forzarPeriodo = false) => {
+    const requestId = ++searchRequest.current
     setLoading(true)
     setError(null)
 
@@ -251,9 +256,12 @@ export function useDesempeno() {
 
       // Semestre activo = primer semestral SIN evaluación guardada (auto-avance:
       // si ya hizo DIC-MAY, pasa a JUN-NOV). Si todos están hechos, usa el último.
+      const selectedYear = Number(periodoSeleccionado?.match(/(\d{4})$/)?.[1]) || new Date().getFullYear()
+      const periodosContexto = getPeriodosDesempeno(selectedYear)
+      const periodosNormalizados = new Set([...periodosConEval].map(normalizarPeriodoDesempeno))
       const semestreActivo =
-        PERIODOS_DESEMPENO.semestrales.find((p) => !periodosConEval.has(p)) ??
-        PERIODOS_DESEMPENO.semestrales[PERIODOS_DESEMPENO.semestrales.length - 1]
+        periodosContexto.semestrales.find((p) => !periodosNormalizados.has(normalizarPeriodoDesempeno(p))) ??
+        periodosContexto.semestrales[periodosContexto.semestrales.length - 1]
 
       // Un empleado de planta solo se evalúa SEMESTRAL si ya cumple la antigüedad
       // mínima para el semestre activo. Si es planta pero recién ingresado (aún
@@ -264,20 +272,26 @@ export function useDesempeno() {
         esElegibleParaPeriodo(empleadoData.fechaIngreso, semestreActivo).elegible
       const requiereSemestralEmp = origenEmpleado === "planta" && elegibleSemestreActivo
 
-      const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[]
+      const mensuales = periodosContexto.mensuales as readonly string[]
       const mensualResuelto =
         periodoSeleccionado && mensuales.includes(periodoSeleccionado)
           ? periodoSeleccionado
-          : PERIODOS_DESEMPENO.mensuales[0]
+          : periodosContexto.mensuales[0]
 
-      const modo: PeriodoModo = requiereSemestralEmp ? "semestrales" : "mensuales"
-      const periodoResuelto: string = requiereSemestralEmp ? semestreActivo : mensualResuelto
+      const semestralSeleccionado = periodoSeleccionado && periodosContexto.semestrales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
+      const mensualSeleccionado = periodoSeleccionado && periodosContexto.mensuales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
+      const periodoForzado = forzarPeriodo && periodoSeleccionado && (semestralSeleccionado || mensualSeleccionado)
+      const modo: PeriodoModo = periodoForzado
+        ? (semestralSeleccionado ? "semestrales" : "mensuales")
+        : (requiereSemestralEmp ? "semestrales" : "mensuales")
+      const periodoResuelto: string = periodoForzado
+        ? periodoSeleccionado
+        : requiereSemestralEmp ? semestreActivo : mensualResuelto
 
       // Carga la evaluación que corresponde al periodo resuelto (no la última
       // sin más): así guardar un periodo nuevo NO sobrescribe al anterior.
-      const evalData = evals.find((e) => e.periodo === periodoResuelto) ?? null
-
-      lastEvalId.current = evalData?.id ?? null
+      const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
+      const evalData = evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null
 
       const { data: incidenciaData, error: incidenciaError } = await supabase
         .from("incidencias")
@@ -317,7 +331,7 @@ export function useDesempeno() {
 
       // Map competencias from saved data or use defaults
       const competencias: Competencia[] = evalData?.competencias?.length
-        ? (evalData.competencias as Competencia[])
+        ? (evalData.competencias as Competencia[]).map(item => ({ ...item, evaluada: item.evaluada ?? item.calificacion > 0 }))
         : (DEFAULT_COMPETENCIAS_POR_TIPO[tipoPuesto] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c }))
 
       const result: DesempenoData = {
@@ -345,6 +359,9 @@ export function useDesempeno() {
         })),
       }
 
+      if (requestId !== searchRequest.current) return null
+      lastEvalId.current = evalData?.id ?? null
+      lastEvalKey.current = evalData ? `${numero}:${periodoNormalizado}` : null
       setData(result)
       setOrigen(origenEmpleado)
       setRequiereSemestral(requiereSemestralEmp)
@@ -357,17 +374,25 @@ export function useDesempeno() {
         semestreObjetivo: semestreActivo,
       } satisfies BusquedaResultado
     } catch (e) {
+      if (requestId !== searchRequest.current) return null
       setError(e instanceof Error ? e.message : "Error")
       notify.error("Empleado no encontrado")
       return null
     } finally {
-      setLoading(false)
+      if (requestId === searchRequest.current) setLoading(false)
     }
   }, [])
 
   const resetSaveSuccess = useCallback(() => setSaveSuccess(false), [])
 
   const guardar = useCallback(async (evalData: DesempenoData) => {
+    if (savingRef.current) return false
+    const validacion = validarEvaluacion(evalData)
+    if (!validacion.valida) {
+      notify.error(validacion.errores[0] ?? "Completa la evaluación antes de guardar")
+      return false
+    }
+    savingRef.current = true
     setSaving(true)
     setSaveSuccess(false)
     try {
@@ -387,7 +412,8 @@ export function useDesempeno() {
         calificacion_final: ponderacion.calificacionFinal,
       }
 
-      if (lastEvalId.current) {
+      const evalKey = `${evalData.numero_empleado}:${normalizarPeriodoDesempeno(evalData.periodo)}`
+      if (lastEvalId.current && lastEvalKey.current === evalKey) {
         const { error: err } = await supabase
           .from("evaluaciones_desempeno")
           .update(row)
@@ -401,10 +427,12 @@ export function useDesempeno() {
           .single()
         if (err) throw err
         lastEvalId.current = inserted.id
+        lastEvalKey.current = evalKey
       }
 
       setData({ ...evalData, calificacion_final: ponderacion.calificacionFinal })
       setSaveSuccess(true)
+      return true
       // notify.success ya no es necesario — el modal DesempenoSaveSuccess lo muestra
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message
@@ -412,7 +440,9 @@ export function useDesempeno() {
         : "Error al guardar"
       console.error("[guardar]", e)
       notify.error(msg)
+      return false
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }, [])
@@ -516,6 +546,7 @@ export function useDesempeno() {
       if (err || !evalRow) throw err ?? new Error("Evaluación no encontrada")
 
       lastEvalId.current = evalRow.id
+      lastEvalKey.current = `${evalRow.numero_empleado}:${normalizarPeriodoDesempeno(evalRow.periodo || "")}`
 
       // Find employee info
       let nombre = ""
@@ -569,7 +600,7 @@ export function useDesempeno() {
           ? (evalRow.cumplimiento_responsabilidades as CumplimientoItem[])
           : (DEFAULT_CUMPLIMIENTO_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
         competencias: evalRow.competencias?.length
-          ? (evalRow.competencias as Competencia[])
+          ? (evalRow.competencias as Competencia[]).map(item => ({ ...item, evaluada: item.evaluada ?? item.calificacion > 0 }))
           : (DEFAULT_COMPETENCIAS_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c })),
         compromisos: evalRow.compromisos || "",
         fecha_revision: evalRow.fecha_revision || "",
@@ -614,6 +645,7 @@ export function useDesempeno() {
 
       if (lastEvalId.current === evalId) {
         lastEvalId.current = null
+        lastEvalKey.current = null
         setData(null)
         setOrigen(null)
         setRequiereSemestral(false)

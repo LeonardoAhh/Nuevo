@@ -5,12 +5,16 @@ export interface Objetivo {
     descripcion: string;
     resultado: string;
     porcentaje: string;
+    /** Distingue una selección consciente de "No aplica" de un valor heredado. */
+    no_aplica?: boolean;
     comentarios: string;
 }
 
 export interface CumplimientoItem {
     descripcion: string;
     porcentaje: string;
+    /** Distingue una selección consciente de "No aplica" de un valor heredado. */
+    no_aplica?: boolean;
     evalua: string;
     comentarios: string;
 }
@@ -19,6 +23,8 @@ export interface Competencia {
     nombre: string;
     descripcion: string;
     calificacion: number; // 0-4
+    /** Un cero puede ser una respuesta válida; este campo lo separa de "pendiente". */
+    evaluada?: boolean;
     comentarios: string;
 }
 
@@ -36,6 +42,46 @@ export type DesempenoTipo = "operativo" | "administrativo" | "jefe";
 // ═══════════════════════════════════════════════════════════════
 
 export const UMBRAL_CALIFICACION_APROBATORIA = 80;
+
+export const ESCALA_COMPETENCIAS = [
+    { valor: 0, etiqueta: "No demostrada" },
+    { valor: 1, etiqueta: "Aplicación ocasional" },
+    { valor: 2, etiqueta: "Aplicación intermitente" },
+    { valor: 3, etiqueta: "Aplicación frecuente" },
+    { valor: 4, etiqueta: "Totalmente integrada" },
+] as const;
+
+export function esPorcentajeValido(valor: string): boolean {
+    if (!/^\d{1,3}$/.test(valor.trim())) return false;
+    const numero = Number(valor);
+    return Number.isInteger(numero) && numero >= 0 && numero <= 100;
+}
+
+export function tieneRespuestaPorcentaje(item: { porcentaje: string; no_aplica?: boolean }): boolean {
+    return item.no_aplica === true || esPorcentajeValido(item.porcentaje);
+}
+
+export interface ValidacionDesempeno {
+    valida: boolean;
+    pasos: readonly boolean[];
+    errores: readonly string[];
+}
+
+/** Fuente única para habilitar pasos y validar antes de persistir. */
+export function validarEvaluacion(data: DesempenoData): ValidacionDesempeno {
+    const datos = Boolean(data.evaluador_nombre.trim() && data.periodo.trim());
+    const objetivos = data.objetivos.length > 0 && data.objetivos.every(tieneRespuestaPorcentaje);
+    const responsabilidades = data.cumplimiento_responsabilidades.length > 0
+        && data.cumplimiento_responsabilidades.every(tieneRespuestaPorcentaje);
+    const competencias = data.competencias.length > 0
+        && data.competencias.every((item) => item.evaluada === true);
+    const ponderacion = calcularPonderacion(data);
+    const compromisos = ponderacion.calificacionFinal >= UMBRAL_CALIFICACION_APROBATORIA
+        || Boolean(data.compromisos.trim());
+    const pasos = [datos, objetivos, responsabilidades, competencias, compromisos] as const;
+    const etiquetas = ["Selecciona al evaluador.", "Responde todos los objetivos.", "Responde todas las responsabilidades.", "Califica todas las competencias.", `Captura compromisos para una calificación menor a ${UMBRAL_CALIFICACION_APROBATORIA}%.`];
+    return { valida: pasos.every(Boolean), pasos, errores: etiquetas.filter((_, index) => !pasos[index]) };
+}
 
 export const DEFAULT_OBJETIVOS_POR_TIPO: Record<DesempenoTipo, Objetivo[]> = {
     operativo: [
@@ -67,13 +113,13 @@ export const DEFAULT_OBJETIVOS_POR_TIPO: Record<DesempenoTipo, Objetivo[]> = {
     ],
 };
 
-export enum CumplimientoOperativoIndex {
-    Compromisos = 0,
-    Reglamento = 1,
-    Asistencia = 2,
-    Puntualidad = 3,
-    Permisos = 4,
-}
+export const CumplimientoOperativoIndex = {
+    Compromisos: 0,
+    Reglamento: 1,
+    Asistencia: 2,
+    Puntualidad: 3,
+    Permisos: 4,
+} as const;
 
 export const DEFAULT_CUMPLIMIENTO: CumplimientoItem[] = [
     {
@@ -288,6 +334,7 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
     // 1. Extraemos los porcentajes de la lista de objetivos.
     // Convertimos el texto a numeros con parseFloat y filtramos cualquier valor que no sea un numero valido.
     const objVals = data.objetivos
+        .filter((o) => !o.no_aplica)
         .map((o) => parseFloat(o.porcentaje))
         .filter((v) => !isNaN(v));
 
@@ -322,6 +369,7 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
     // 2. Aplicamos la funcion traductora a todas las responsabilidades.
     // Luego, filtramos (eliminamos) todos los resultados nulos o "NA" para que no afecten el calculo.
     const cumpVals = data.cumplimiento_responsabilidades
+        .filter((c) => !c.no_aplica)
         .map((c) => parseCumplimiento(c.porcentaje))
         .filter((v): v is number => v !== null);
 
@@ -338,11 +386,10 @@ export function calcularPonderacion(data: DesempenoData): ResultadoPonderacion {
     // --- Parte 3: Competencias (30% de la nota final) ---
 
     // 1. Extraemos las competencias y las convertimos a porcentaje base 100.
-    // Primero descartamos las que tienen calificacion 0 (probablemente aun no evaluadas).
-    // Se asume que las competencias se califican del 1 al 4. Al dividir entre 4 y multiplicar por 100,
-    // una nota de 4 se convierte en 100%, una de 2 en 50%, etc.
+    // Solo incluye respuestas marcadas explícitamente como evaluadas.
+    // La escala válida es 0-4: cero aporta 0% y cuatro aporta 100%.
     const compVals = data.competencias
-        .filter((c) => c.calificacion > 0)
+        .filter((c) => c.evaluada === true)
         .map((c) => (c.calificacion / 4) * 100);
 
     // 2. Calculamos el promedio de las competencias.

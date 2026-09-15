@@ -1,21 +1,24 @@
 "use client";
 
 import { SEARCH_OPTIONS } from "@/lib/desempeno/presentation";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDesempeno } from "@/lib/hooks/useDesempeno";
-import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo";
+import { getPeriodoActual, getPeriodosDesempeno, normalizarPeriodoDesempeno, type DesempenoPeriodo } from "@/lib/catalogo";
 import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad";
 import { UMBRAL_CALIFICACION_APROBATORIA, calcularPonderacion } from "@/lib/types/desempeno";
 import { guiaYaVista } from "../desempeno-guia";
 import { useRole } from "@/lib/hooks";
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals";
+import { confirm } from "@/components/ui/confirm-dialog";
 export function useEvaluationSearch() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [numeroBuscado, setNumeroBuscado] = useState("");
   const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales");
-  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(PERIODOS_DESEMPENO.semestrales[0]);
+  const [periodoYear, setPeriodoYear] = useState(() => Number(getPeriodoActual("semestrales").match(/(\d{4})$/)?.[1]) || new Date().getFullYear());
+  const periodosDisponibles = useMemo(() => getPeriodosDesempeno(periodoYear), [periodoYear]);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(() => getPeriodoActual("semestrales"));
   const {
     data,
     setData,
@@ -63,6 +66,8 @@ export function useEvaluationSearch() {
   }>>([]);
   // Gate de impresión: solo se puede imprimir una evaluación ya guardada y sin ediciones posteriores.
   const savedSnapshotRef = useRef<string | null>(null);
+  const baselineSnapshotRef = useRef<string | null>(null);
+  const baselineKeyRef = useRef<string | null>(null);
   const [guardado, setGuardado] = useState(false);
 
   // Cargar evaluación desde URL si existe evalId
@@ -76,14 +81,13 @@ export function useEvaluationSearch() {
       setModoEdicion(true);
       cargarEvaluacion(evalId).then(result => {
         if (result?.periodo) {
-          // Determinar si es mensual o semestral según el periodo cargado
-          const mensuales = PERIODOS_DESEMPENO.mensuales as readonly string[];
-          const semestrales = PERIODOS_DESEMPENO.semestrales as readonly string[];
-          if (mensuales.includes(result.periodo)) {
-            setPeriodoModo("mensuales");
-            setPeriodoSeleccionado(result.periodo as DesempenoPeriodo);
-          } else if (semestrales.includes(result.periodo)) {
-            setPeriodoModo("semestrales");
+          const year = Number(result.periodo.match(/(\d{4})$/)?.[1]);
+          if (year) {
+            const delYear = getPeriodosDesempeno(year);
+            const normalizado = normalizarPeriodoDesempeno(result.periodo);
+            const modo = delYear.semestrales.some(p => normalizarPeriodoDesempeno(p) === normalizado) ? "semestrales" : "mensuales";
+            setPeriodoYear(year);
+            setPeriodoModo(modo);
             setPeriodoSeleccionado(result.periodo as DesempenoPeriodo);
           }
         }
@@ -103,8 +107,12 @@ export function useEvaluationSearch() {
   // modo; si no (p.ej. venías de semestral), cae al primero del modo nuevo.
   // No clobberea el periodo auto-seleccionado al cargar un empleado.
   useEffect(() => {
-    setPeriodoSeleccionado(prev => (PERIODOS_DESEMPENO[periodoModo] as readonly string[]).includes(prev) ? prev : PERIODOS_DESEMPENO[periodoModo][0]);
-  }, [periodoModo]);
+    const currentMonth = new Date().getMonth();
+    const fallback = periodoModo === "mensuales"
+      ? periodosDisponibles.mensuales[currentMonth]
+      : periodosDisponibles.semestrales[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
+    setPeriodoSeleccionado(prev => periodosDisponibles[periodoModo].some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(prev)) ? prev : fallback);
+  }, [periodoModo, periodoYear, periodosDisponibles]);
 
   // Carga búsquedas recientes desde localStorage.
   useEffect(() => {
@@ -190,6 +198,99 @@ export function useEvaluationSearch() {
     });
   }, [buscarEmpleado, departamentosScope, periodoSeleccionado, addReciente]);
 
+  const identityKey = data ? `${data.numero_empleado}:${normalizarPeriodoDesempeno(data.periodo)}` : null;
+  useEffect(() => {
+    if (!data || !identityKey) {
+      baselineKeyRef.current = null;
+      baselineSnapshotRef.current = null;
+      return;
+    }
+    if (loading) return;
+    if (baselineKeyRef.current !== identityKey) {
+      baselineKeyRef.current = identityKey;
+      baselineSnapshotRef.current = JSON.stringify(data);
+    }
+  }, [data, identityKey, loading]);
+  const hasUnsavedChanges = Boolean(!loading && data && baselineSnapshotRef.current && JSON.stringify(data) !== baselineSnapshotRef.current && !guardado);
+
+  const confirmDiscard = useCallback(async () => {
+    if (!hasUnsavedChanges) return true;
+    return confirm({
+      title: "Cambios sin guardar",
+      description: "Si continúas, se perderá la captura que todavía no has guardado.",
+      confirmLabel: "Descartar cambios",
+      cancelLabel: "Seguir capturando",
+      tone: "warning",
+    });
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    const onDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element | null)?.closest("a[href]") as HTMLAnchorElement | null;
+      if (!anchor || anchor.target === "_blank" || anchor.origin !== window.location.origin || anchor.href === window.location.href) return;
+      event.preventDefault();
+      void confirmDiscard().then(confirmed => {
+        if (confirmed) router.push(`${anchor.pathname}${anchor.search}${anchor.hash}`);
+      });
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onDocumentClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onDocumentClick, true);
+    };
+  }, [confirmDiscard, hasUnsavedChanges, router]);
+
+  const closeEvaluation = useCallback(async () => {
+    if (!(await confirmDiscard())) return;
+    setData(null);
+    setNumeroBuscado("");
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.delete("q");
+    router.replace(newParams.size ? `/desempeno?${newParams.toString()}` : "/desempeno", { scroll: false });
+  }, [confirmDiscard, router, searchParams, setData]);
+
+  const changePeriodo = useCallback(async (periodo: string) => {
+    if (periodo === periodoSeleccionado) return;
+    if (!(await confirmDiscard())) return;
+    if (data && !(await buscarEmpleado(data.numero_empleado, departamentosScope, periodo, true))) return;
+    setPeriodoSeleccionado(periodo);
+  }, [buscarEmpleado, confirmDiscard, data, departamentosScope, periodoSeleccionado]);
+
+  const changePeriodoYear = useCallback(async (year: number) => {
+    if (!(await confirmDiscard())) return;
+    const next = getPeriodosDesempeno(year)[periodoModo];
+    const currentMonth = new Date().getMonth();
+    const periodo = periodoModo === "mensuales" ? next[currentMonth] : next[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
+    if (data && !(await buscarEmpleado(data.numero_empleado, departamentosScope, periodo, true))) return;
+    setPeriodoYear(year);
+    setPeriodoSeleccionado(periodo);
+  }, [buscarEmpleado, confirmDiscard, data, departamentosScope, periodoModo]);
+
+  const guardedSearch = useCallback(async (valor: string, nombre?: string) => {
+    if (!(await confirmDiscard())) return;
+    await doBuscar(valor, nombre);
+  }, [confirmDiscard, doBuscar]);
+
+  const changePeriodoModo = useCallback(async (modo: "semestrales" | "mensuales") => {
+    if (modo === periodoModo || !(await confirmDiscard())) return;
+    const currentPeriod = getPeriodoActual(periodoModo);
+    const followsCurrentPeriod = normalizarPeriodoDesempeno(periodoSeleccionado) === normalizarPeriodoDesempeno(currentPeriod);
+    const currentMonth = new Date().getMonth();
+    const options = getPeriodosDesempeno(periodoYear)[modo];
+    const periodo = followsCurrentPeriod
+      ? getPeriodoActual(modo)
+      : modo === "mensuales" ? options[currentMonth] : options[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
+    if (data && !(await buscarEmpleado(data.numero_empleado, departamentosScope, periodo, true))) return;
+    const nextYear = Number(periodo.match(/(\d{4})$/)?.[1]);
+    if (nextYear) setPeriodoYear(nextYear);
+    setPeriodoModo(modo);
+    setPeriodoSeleccionado(periodo);
+  }, [buscarEmpleado, confirmDiscard, data, departamentosScope, periodoModo, periodoYear]);
+
   // Realizar búsqueda inicial si existe el parámetro 'q'
   useEffect(() => {
     const q = searchParams.get('q');
@@ -203,7 +304,6 @@ export function useEvaluationSearch() {
       });
     }
   }, [searchParams, router, doBuscar]);
-  const handleSearch = () => doBuscar(numeroBuscado);
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -217,9 +317,9 @@ export function useEvaluationSearch() {
       const s = showSugg && !suggLoading && activeIdx >= 0 ? suggestions[activeIdx] : undefined;
       if (s) {
         setNumeroBuscado(s.numero);
-        doBuscar(s.numero, s.nombre);
+        guardedSearch(s.numero, s.nombre);
       } else {
-        doBuscar(numeroBuscado);
+        guardedSearch(numeroBuscado);
       }
     } else if (e.key === "Escape") {
       setShowSugg(false);
@@ -241,6 +341,7 @@ export function useEvaluationSearch() {
   useEffect(() => {
     if (saveSuccess && data) {
       savedSnapshotRef.current = JSON.stringify(data);
+      baselineSnapshotRef.current = JSON.stringify(data);
       setGuardado(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,7 +353,7 @@ export function useEvaluationSearch() {
   const faltaEvaluador = data ? !data.evaluador_nombre : false;
 
   // Elegibilidad por antigüedad para evaluaciones semestrales.
-  // Empleados con < 2 meses respecto al fin del periodo no son evaluables.
+  // Empleados con menos de 3 meses respecto al fin del periodo no son evaluables.
   const periodoEvaluacion = data?.periodo || periodoSeleccionado;
   const elegibilidad = data ? esElegibleParaPeriodo(fechaIngreso, periodoEvaluacion) : {
     elegible: true,
@@ -269,16 +370,20 @@ export function useEvaluationSearch() {
   //  - nuevo ingreso en modo Semestral → aviso suave (no bloquea).
   const mismatchBloqueo = requiereSemestral && periodoModo === "mensuales";
   const mismatchSuave = origen === "nuevo_ingreso" && periodoModo === "semestrales";
-  const periodoSemestralObjetivo = semestreObjetivo ?? PERIODOS_DESEMPENO.semestrales[0];
+  const periodoSemestralObjetivo = semestreObjetivo ?? periodosDisponibles.semestrales[0];
   return {
     searchParams,
     router,
     numeroBuscado,
     setNumeroBuscado,
     periodoModo,
-    setPeriodoModo,
+    setPeriodoModo: changePeriodoModo,
     periodoSeleccionado,
     setPeriodoSeleccionado,
+    periodoYear,
+    periodosDisponibles,
+    changePeriodo,
+    changePeriodoYear,
     data,
     setData,
     origen,
@@ -319,9 +424,12 @@ export function useEvaluationSearch() {
     savedSnapshotRef,
     guardado,
     setGuardado,
+    hasUnsavedChanges,
+    confirmDiscard,
+    closeEvaluation,
     addReciente,
-    doBuscar,
-    handleSearch,
+    doBuscar: guardedSearch,
+    handleSearch: () => guardedSearch(numeroBuscado),
     onInputKeyDown,
     ponderacion,
     requiereCompromisos,

@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno";
-import { PERIODOS_DESEMPENO } from "@/lib/catalogo";
+import { esPeriodoSemestral } from "@/lib/desempeno/elegibilidad";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import type { SavedEvaluationsContext } from "./use-saved-evaluations";
 export function SavedHistory({
@@ -88,7 +88,7 @@ export function SavedHistory({
                       </TableCell>
                     </TableRow> : empleados.map(e => {
                     const lastEval = e.evals[0];
-                    const isSemestral = lastEval?.periodo && (PERIODOS_DESEMPENO.semestrales as readonly string[]).includes(lastEval.periodo);
+                    const isSemestral = Boolean(lastEval?.periodo && esPeriodoSemestral(lastEval.periodo));
                     return <TableRow key={e.numero} className="hover:bg-muted/50">
                         <TableCell className="py-2 font-mono text-xs">{e.numero}</TableCell>
                         <TableCell className="py-2 font-medium break-words">

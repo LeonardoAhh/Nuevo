@@ -3,15 +3,14 @@
 import { useId } from "react";
 import { DESEMPENO, SEARCH_OPTIONS } from "@/lib/desempeno/presentation";
 import { SectionTitle } from "./presentation";
-import { Search, Printer, Save, Loader2, X, Clock } from "lucide-react";
+import { Search, Loader2, X, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PERIODOS_DESEMPENO, type DesempenoPeriodo } from "@/lib/catalogo";
-import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno";
+import type { DesempenoPeriodo } from "@/lib/catalogo";
 import type { EvaluationSearchContext } from "./use-evaluation-search";
 import { ActionButton } from "./search-controls";
 export function SearchPanel({
@@ -24,18 +23,16 @@ export function SearchPanel({
   const expanded = context.showSugg && context.numeroBuscado.trim().length >= SEARCH_OPTIONS.minLength;
   const {
     loading,
-    searchParams,
-    router,
     numeroBuscado,
     setNumeroBuscado,
     periodoModo,
     setPeriodoModo,
     periodoSeleccionado,
-    setPeriodoSeleccionado,
+    periodoYear,
+    periodosDisponibles,
+    changePeriodo,
+    changePeriodoYear,
     data,
-    setData,
-    saving,
-    guardar,
     modoEdicion,
     inputRef,
     suggestions,
@@ -45,14 +42,10 @@ export function SearchPanel({
     activeIdx,
     setActiveIdx,
     recientes,
-    guardado,
+    closeEvaluation,
     doBuscar,
     handleSearch,
     onInputKeyDown,
-    bloqueado,
-    faltaEvaluador,
-    noElegible,
-    mismatchBloqueo
   } = context;
   return <Card>
     <CardHeader className="pb-2">
@@ -66,22 +59,7 @@ export function SearchPanel({
 
         {/* ── Barra de acciones ────────────────────────────────────── */}
         {data && <div className="flex flex-wrap items-center gap-2">
-            <ActionButton icon={<X className="h-3.5 w-3.5" />} label="Cerrar" tooltip="Descartar y volver al buscador" onClick={() => {
-              setData(null);
-              setNumeroBuscado("");
-              const newParams = new URLSearchParams(searchParams.toString());
-              newParams.delete('q');
-              router.replace(`/desempeno?${newParams.toString()}`, {
-                scroll: false
-              });
-            }} variant="outline" className="text-foreground" />
-
-            <ActionButton icon={saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} label="Guardar" tooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? "Empleado no elegible para este periodo semestral (< 2 meses)" : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : "Guardar evaluación"} onClick={() => guardar({
-              ...data,
-              periodo: data.periodo || periodoSeleccionado
-            })} disabled={loading || saving || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} variant="outline" />
-
-            <ActionButton icon={<Printer className="h-3.5 w-3.5" />} label="Imprimir" tooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? "Empleado no elegible para este periodo semestral (< 2 meses)" : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : !guardado ? "Guarda la evaluación primero para poder imprimir" : "Imprimir evaluación"} onClick={() => window.print()} disabled={loading || !guardado || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} variant="default" />
+            <ActionButton icon={<X className="h-3.5 w-3.5" />} label="Cerrar" tooltip="Cerrar evaluación" onClick={closeEvaluation} variant="outline" className="text-foreground" />
         </div>}
       </div>
     </CardHeader>
@@ -95,12 +73,12 @@ export function SearchPanel({
             <Input ref={inputRef} value={numeroBuscado} onChange={e => {
               setNumeroBuscado(e.target.value);
               setShowSugg(true);
-            }} onFocus={() => setShowSugg(true)} onBlur={() => setShowSugg(false)} onKeyDown={onInputKeyDown} disabled={loading} placeholder={DESEMPENO.search.placeholder} aria-label={DESEMPENO.search.label} aria-describedby={`${searchId}-help`} aria-controls={expanded ? listId : undefined} aria-activedescendant={expanded && !suggLoading && suggestions[activeIdx] ? `${listId}-${activeIdx}` : undefined} className="pl-9 pr-9" autoComplete="off" role="combobox" aria-expanded={expanded} aria-autocomplete="list" />
+            }} onFocus={() => setShowSugg(true)} onBlur={() => setShowSugg(false)} onKeyDown={onInputKeyDown} disabled={loading} placeholder={DESEMPENO.search.placeholder} aria-label={DESEMPENO.search.label} aria-describedby={`${searchId}-help`} aria-controls={expanded ? listId : undefined} aria-activedescendant={expanded && !suggLoading && suggestions[activeIdx] ? `${listId}-${activeIdx}` : undefined} className="min-h-11 pl-9 pr-11" autoComplete="off" role="combobox" aria-expanded={expanded} aria-autocomplete="list" />
             {numeroBuscado && <button type="button" onClick={() => {
               setNumeroBuscado("");
               setSuggestions([]);
               inputRef.current?.focus();
-            }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Limpiar búsqueda">
+            }} className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Limpiar búsqueda">
               <X className="h-4 w-4" />
             </button>}
 
@@ -120,7 +98,7 @@ export function SearchPanel({
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={handleSearch} aria-label="Buscar empleado" disabled={loading || !numeroBuscado.trim()} className="shrink-0 px-4">
+              <Button onClick={handleSearch} aria-label="Buscar empleado" disabled={loading || !numeroBuscado.trim()} className="min-h-11 shrink-0 px-4">
                 <Search className="h-4 w-4" />
                 <span className="sr-only">Buscar</span>
               </Button>
@@ -131,19 +109,24 @@ export function SearchPanel({
 
         {/* Controles de Periodo y Buscar */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full xl:w-auto shrink-0">
-          <div className="flex bg-muted/60 p-1 rounded-lg shrink-0 w-full sm:w-auto">
-            {(["semestrales", "mensuales"] as const).map(modo => <button key={modo} type="button" onClick={() => setPeriodoModo(modo)} aria-pressed={periodoModo === modo} className={`flex-1 sm:flex-none h-8 px-4 flex items-center justify-center text-sm font-medium rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${periodoModo === modo ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20" : "text-muted-foreground hover:bg-background/50 hover:text-foreground"}`}>
+          <div className="flex bg-muted/60 p-1 rounded-lg shrink-0 w-full sm:w-auto" role="group" aria-label="Frecuencia de evaluación">
+            {(["semestrales", "mensuales"] as const).map(modo => <button key={modo} type="button" onClick={() => setPeriodoModo(modo)} aria-pressed={periodoModo === modo} className={`flex min-h-11 flex-1 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none ${periodoModo === modo ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20" : "text-muted-foreground hover:bg-background/50 hover:text-foreground"}`}>
                 {DESEMPENO.modes[modo]}
               </button>)}
           </div>
 
+          <div className="flex w-full items-center justify-between gap-1 sm:w-auto" aria-label="Año de evaluación">
+            <Button type="button" variant="outline" size="icon" className="min-h-11 min-w-11" onClick={() => changePeriodoYear(periodoYear - 1)} aria-label="Año anterior"><ChevronLeft className="size-4" /></Button>
+            <span className="min-w-14 text-center text-sm font-semibold tabular-nums">{periodoYear}</span>
+            <Button type="button" variant="outline" size="icon" className="min-h-11 min-w-11" onClick={() => changePeriodoYear(periodoYear + 1)} aria-label="Año siguiente"><ChevronRight className="size-4" /></Button>
+          </div>
           <div className="w-full sm:w-44 shrink-0">
-            <Select value={periodoSeleccionado} onValueChange={value => setPeriodoSeleccionado(value as DesempenoPeriodo)}>
+            <Select value={periodoSeleccionado} onValueChange={value => changePeriodo(value as DesempenoPeriodo)}>
               <SelectTrigger aria-label={DESEMPENO.search.period}>
                 <SelectValue placeholder="Periodo" />
               </SelectTrigger>
               <SelectContent>
-                {PERIODOS_DESEMPENO[periodoModo].map(periodo => <SelectItem key={periodo} value={periodo}>
+                {periodosDisponibles[periodoModo].map(periodo => <SelectItem key={periodo} value={periodo}>
                     {periodo}
                   </SelectItem>)}
               </SelectContent>

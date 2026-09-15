@@ -1,3 +1,5 @@
+import { mesesDePeriodo, normalizarPeriodoDesempeno } from "@/lib/catalogo"
+
 /**
  * Elegibilidad para evaluaciones de desempeño semestrales.
  *
@@ -15,29 +17,15 @@
  * ⚠ AJUSTES FUTUROS — TODOS LOS PARÁMETROS VIVEN AQUÍ.
  *
  * - Cambiar N meses → editar `MESES_MIN_ANTIGUEDAD_SEMESTRAL`.
- * - Agregar nuevo periodo semestral → agregar entrada en `PERIODO_FIN`.
- * - Cambiar fecha fin de un periodo → editar su valor en `PERIODO_FIN`.
- *
- * IMPORTANTE: la migration `20260526_eval_desempeno_elegibilidad.sql`
- * tiene los MISMOS valores hardcodeados en la fn
- * `desempeno_es_elegible_periodo()`. Si cambias algo aquí, actualizar
- * también la migration (o crear una nueva) para mantener UI y DB en sync.
+ * Los cierres se derivan del propio periodo para evitar catálogos por año.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 export const MESES_MIN_ANTIGUEDAD_SEMESTRAL = 3
 
-/**
- * Mapa periodo → fecha fin (inclusive). Solo periodos semestrales.
- * Formato YYYY-MM-DD.
- */
-export const PERIODO_FIN: Record<string, string> = {
-  "DIC-MAY 2026": "2026-05-31",
-  "JUN-NOV 2026": "2026-11-30",
-}
-
 export function esPeriodoSemestral(periodo: string): boolean {
-  return periodo in PERIODO_FIN
+  const normalizado = normalizarPeriodoDesempeno(periodo)
+  return /^(DIC-MAY|JUN-NOV) \d{4}$/.test(normalizado) && mesesDePeriodo(normalizado).length === 6
 }
 
 /**
@@ -49,9 +37,12 @@ export function esPeriodoSemestral(periodo: string): boolean {
  * NO debe rodar a 03-mar, sino al último día válido = 28-feb).
  */
 export function getCutoffParaPeriodo(periodo: string): string | null {
-  const fin = PERIODO_FIN[periodo]
-  if (!fin) return null
-  const [y, m, d] = fin.split("-").map(Number)
+  if (!esPeriodoSemestral(periodo)) return null
+  const meses = mesesDePeriodo(periodo)
+  const ultimoMes = meses.at(-1)
+  if (!ultimoMes) return null
+  const [y, m] = ultimoMes.split("-").map(Number)
+  const d = new Date(y, m, 0).getDate()
   let targetMonth = m - MESES_MIN_ANTIGUEDAD_SEMESTRAL // 1-indexed
   let targetYear = y
   while (targetMonth <= 0) {

@@ -5,7 +5,7 @@ import { DESEMPENO } from "@/lib/desempeno/presentation";
 
 import type { EvaluationFormContext } from "./use-evaluation-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { EditButton, InfoField } from "./form-controls";
+import { InfoField } from "./form-controls";
 export function CommitmentsCard({
   context
 }: {
@@ -13,15 +13,11 @@ export function CommitmentsCard({
 }) {
   const {
     data,
-    canEdit,
-    faltaEvaluador,
-    openModal
   } = context;
   return <Card>
     <CardHeader className="pb-3">
       <div className={evaluationStyles.sectionHeader}>
         <SectionTitle>{DESEMPENO.sections.compromisos}</SectionTitle>
-        <EditButton section="compromisos" canEdit={canEdit} isDisabled={faltaEvaluador} openModal={openModal} />
     </div>
       <p className={evaluationStyles.description}>{DESEMPENO.descriptions.compromisos}</p>
   </CardHeader>

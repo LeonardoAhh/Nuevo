@@ -6,7 +6,6 @@ import { EVALUATION_WEIGHTS, DESEMPENO } from "@/lib/desempeno/presentation";
 import type { EvaluationFormContext } from "./use-evaluation-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EditButton } from "./form-controls";
 export function CompetenciesCard({
   context
 }: {
@@ -15,15 +14,11 @@ export function CompetenciesCard({
   const {
     data,
     ponderacion,
-    canEdit,
-    faltaEvaluador,
-    openModal
   } = context;
   return <Card>
     <CardHeader className="pb-3">
       <div className={evaluationStyles.sectionHeader}>
         <SectionTitle>{`${DESEMPENO.sections.competencias} (${EVALUATION_WEIGHTS.competencias * 100}%)`}</SectionTitle>
-        <EditButton section="competencias" canEdit={canEdit} isDisabled={faltaEvaluador} openModal={openModal} />
     </div>
       <p className={evaluationStyles.description}>{DESEMPENO.descriptions.competencias}</p>
   </CardHeader>
