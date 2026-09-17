@@ -1,4 +1,4 @@
-// TIMESTAMP: 2026-09-17T20:03:22.196Z
+// TIMESTAMP: 2026-09-17T20:59:20.212Z
 const CACHE_NAME = "vinoplastic-v5"
 const STATIC_CACHE = "vinoplastic-static-v5"
 const API_CACHE = "vinoplastic-api-v5"
