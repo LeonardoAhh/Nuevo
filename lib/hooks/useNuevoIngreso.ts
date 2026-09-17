@@ -32,6 +32,10 @@ export interface NuevoIngreso {
   tipo_contrato: TipoContrato
   rg_rec_048: EstadoRG
   fecha_vencimiento_rg: string | null
+  // Datos personales adicionales
+  fecha_nacimiento: string | null      // YYYY-MM-DD
+  email: string | null                 // correo personal del colaborador
+  cumple_enviado_year: number | null   // año del último envío de felicitación
   created_at: string
   updated_at: string
 }

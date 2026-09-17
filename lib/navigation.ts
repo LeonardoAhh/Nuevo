@@ -33,6 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Nuevos Empleados", href: "/ingresos" },
       { label: "Recontratación", href: "/recontratacion" },
+      { label: "Cumpleaños", href: "/cumpleanos" },
     ],
   },
   {

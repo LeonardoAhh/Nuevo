@@ -52,3 +52,6 @@ export type {
   ReglaPromocionJSON,
   DatosPromocionJSON,
 } from '@/lib/promociones/types'
+
+export { useCumpleanos } from './useCumpleanos'
+export type { CumpleanosEntry, CumpleanosData } from './useCumpleanos'

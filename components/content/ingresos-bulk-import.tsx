@@ -195,6 +195,9 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
       eval_3_fecha: "",
       eval_3_calificacion: null,
       termino_contrato: "",
+      fecha_nacimiento: null,
+      email: null,
+      cumple_enviado_year: null,
     })
 
     return { invalid: false, record: validRecord }

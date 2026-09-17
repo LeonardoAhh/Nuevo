@@ -73,24 +73,18 @@ export default function Header({
     <>
       <SignOutOverlay show={signingOut} />
 
-      {/* Floating card — mirrors the sidebar panel (rounded, bordered, soft
-          shadow) so both landmarks read as surfaces of the same system. */}
       <header
         role="banner"
-        className={cn(
-          "sticky top-0 z-20 rounded-2xl border border-border/60 bg-card/95",
-          "supports-[backdrop-filter]:bg-card/80 backdrop-blur shadow-sm",
-          "mx-2 mt-2 sm:mx-3 sm:mt-3",
-        )}
+        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-card"
       >
-        <div className="flex h-[56px] items-center gap-2 pl-2 pr-2 sm:pl-3">
+        <div className="flex h-full items-center gap-2 px-3 sm:px-5">
           {/* Hamburger — mobile only, when sidebar is closed */}
           {isMobileView && !showMobileSidebar && (
             <button
               type="button"
               onClick={onOpenSidebar}
               aria-label="Abrir menú de navegación"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
             >
               <Menu size={19} />
             </button>
@@ -113,13 +107,13 @@ export default function Header({
                   type="button"
                   aria-label={`Cuenta de ${displayName}`}
                   className={cn(
-                    "flex h-10 items-center gap-2 rounded-xl pr-2 pl-1 transition-colors",
+                    "flex h-10 items-center gap-2 rounded-md py-1 pl-1 pr-2 transition-colors",
                     "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   )}
                 >
-                  <Avatar className="size-8 shrink-0 rounded-lg ring-2 ring-primary/15">
+                  <Avatar className="size-8 shrink-0 rounded-md border border-border">
                     <AvatarImage src={profile?.avatar || undefined} alt="" />
-                    <AvatarFallback className="rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground">
+                    <AvatarFallback className="rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
                       {initials}
                     </AvatarFallback>
                   </Avatar>

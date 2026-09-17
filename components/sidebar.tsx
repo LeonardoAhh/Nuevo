@@ -29,14 +29,14 @@ const SIDEBAR_STORAGE_KEYS = {
 const EXPANDED_CHANGE_EVENT = "vtx:sidebar-expanded-change"
 
 const WIDTH = {
-  rail: "w-[76px]",
-  full: "w-[264px]",
+  rail: "w-16",
+  full: "w-60",
 } as const
 
-// Visual language: solid primary pill for the active item, soft accent tiles
-// for hover states, uppercase section headings for grouping.
+// Traditional navigation language: restrained backgrounds, compact radii and
+// clear hierarchy without floating surfaces or shadows.
 const rowIdle = "text-muted-foreground hover:bg-accent hover:text-foreground"
-const rowActiveSolid = "bg-primary text-primary-foreground font-medium shadow-sm"
+const rowActiveSolid = "bg-accent text-foreground font-medium"
 
 // ─── Hook (public API consumed by Dashboard) ──────────────────────────────────
 
@@ -109,14 +109,13 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
     <Link
       href="/"
       aria-label="Inicio — VIÑOPLASTIC"
-      className="group flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring transition-opacity hover:opacity-80"
+      className="group flex items-center rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-card text-foreground shadow-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-          <path d="M12 1.5V6.5M12 17.5V22.5M4.5 12H9.5M14.5 12H19.5M5.25 5.25L8.5 8.5M15.5 15.5L18.75 18.75M5.25 18.75L8.5 15.5M15.5 8.5L18.75 5.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </span>
-      {!compact && (
+      {compact ? (
+        <span className="select-none text-sm font-semibold tracking-tight text-foreground">
+          VP
+        </span>
+      ) : (
         <span className="select-none overflow-hidden whitespace-nowrap text-[17px] font-medium tracking-tight">
           <span className="text-foreground">VIÑO</span>
           <span className="text-muted-foreground ml-0.5">PLASTIC</span>
@@ -155,14 +154,14 @@ function NavTree({
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-10 w-full items-center gap-3 rounded-xl px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active ? rowActiveSolid : rowIdle,
                   )}
                 >
                   <span
                     className={cn(
                       "grid size-6 shrink-0 place-items-center rounded-md",
-                      active ? "bg-primary-foreground/20" : "bg-accent",
+                      active ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     <section.icon size={16} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
@@ -190,7 +189,7 @@ function NavTree({
                         onClick={onNavigate}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex w-full items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          "flex w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           "h-9",
                           active ? rowActiveSolid : rowIdle,
                         )}
@@ -199,7 +198,7 @@ function NavTree({
                           aria-hidden="true"
                           className={cn(
                             "size-1.5 shrink-0 rounded-[2px]",
-                            active ? "bg-primary-foreground/80" : "bg-border",
+                            active ? "bg-primary" : "bg-border",
                           )}
                         />
                         <span className="truncate">{leaf.label}</span>
@@ -237,7 +236,7 @@ function RailSection({
               aria-current={active ? "page" : undefined}
               aria-label={section.label}
               className={cn(
-                "grid size-11 place-items-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "grid size-11 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active ? rowActiveSolid : rowIdle,
               )}
             >
@@ -267,7 +266,7 @@ function RailSection({
                 aria-label={`${section.label} — abrir submenú`}
                 aria-haspopup="menu"
                 className={cn(
-                  "relative grid size-11 place-items-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "relative grid size-11 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
                     ? "bg-primary/10 text-primary font-medium"
                     : rowIdle,
@@ -276,7 +275,7 @@ function RailSection({
                 {active && (
                   <span
                     aria-hidden="true"
-                    className="absolute -left-[9px] size-1.5 rounded-[2px] bg-primary"
+                    className="absolute -left-2 h-6 w-0.5 bg-primary"
                   />
                 )}
                 <section.icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
@@ -342,7 +341,7 @@ export default function Sidebar({
             raw
             showHandle={false}
             // Anchor BOTH top and bottom so the panel always spans the viewport.
-            className="inset-y-0 left-0 right-auto mt-0 w-[286px] max-w-[86vw] rounded-none rounded-r-2xl border-y-0 border-l-0"
+            className="inset-y-0 left-0 right-auto mt-0 w-[286px] max-w-[86vw] rounded-none border-y-0 border-l-0"
           >
             <div
               className="flex h-full flex-col bg-card"
@@ -360,7 +359,7 @@ export default function Sidebar({
                   type="button"
                   onClick={closeMobile}
                   aria-label="Cerrar menú"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X size={18} aria-hidden="true" />
                 </button>
@@ -378,19 +377,19 @@ export default function Sidebar({
         </Drawer>
       )}
 
-      {/* ── Desktop floating panel ── */}
+      {/* ── Desktop sidebar ── */}
       {isDesktop && (
         <TooltipProvider delayDuration={0}>
           <aside
             aria-label="Menú principal"
             className={cn(
-              "my-3 ml-3 flex shrink-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm",
+              "flex shrink-0 flex-col overflow-hidden bg-card",
               "transition-[width] duration-300 ease-in-out",
               isExpanded ? WIDTH.full : WIDTH.rail,
             )}
           >
             {/* Brand */}
-            <div className={cn("flex h-[60px] shrink-0 items-center px-3", !isExpanded && "justify-center px-0")}>
+            <div className={cn("flex h-[60px] shrink-0 items-center border-b border-border px-3", !isExpanded && "justify-center px-0")}>
               <BrandMark compact={!isExpanded} />
             </div>
 
@@ -423,7 +422,7 @@ export default function Sidebar({
                     aria-label={isExpanded ? "Colapsar menú lateral" : "Expandir menú lateral"}
                     className={cn(
                       rowIdle,
-                      "flex h-10 w-full items-center rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+                      "flex h-10 w-full cursor-pointer items-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       isExpanded ? "gap-3 px-3" : "justify-center",
                     )}
                   >

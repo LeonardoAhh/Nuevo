@@ -1,5 +1,11 @@
 {
   "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cumpleanos/automatico",
+      "schedule": "0 14 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",
