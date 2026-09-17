@@ -33,7 +33,7 @@ function HoursTooltip({
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
   return (
-    <div data-testid="hours-kpi-tooltip" className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[200px]">
+    <div data-testid="hours-kpi-tooltip" className="min-w-[200px] rounded-md border bg-popover p-3 text-sm shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
       <p className="font-semibold text-foreground mb-1.5">Año {label}</p>
       <div className="space-y-1 text-muted-foreground">
         <div className="flex justify-between gap-4">

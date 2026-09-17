@@ -56,7 +56,7 @@ export function ErrorState({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 22 }}
-        className={`grid size-16 place-items-center rounded-2xl ${iconBg}`}
+        className={`grid size-16 place-items-center rounded-md ${iconBg}`}
         aria-hidden
       >
         <Icon className="size-7" strokeWidth={1.75} />
@@ -64,7 +64,7 @@ export function ErrorState({
 
       <div className="space-y-2">
         {code ? (
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{code}</p>
+          <p className="font-mono text-xs font-medium uppercase text-muted-foreground">{code}</p>
         ) : null}
         <h1 className="text-xl font-semibold text-foreground sm:text-2xl">{title}</h1>
         {description ? (

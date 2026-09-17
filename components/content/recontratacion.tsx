@@ -155,7 +155,7 @@ const URGENCY_PILL_BG: Record<"critical" | "warning", string> = {
 function Dato({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5 min-w-0">
-      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+      <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
         {label}
       </dt>
       <dd className="text-sm text-foreground font-medium truncate">{value}</dd>
@@ -165,10 +165,8 @@ function Dato({ label, value }: { label: string; value: string }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-      <span className="h-px flex-1 bg-border" aria-hidden="true" />
+    <h3 className="border-b border-border pb-2 font-mono text-xs font-medium uppercase text-foreground">
       {children}
-      <span className="h-px flex-1 bg-border" aria-hidden="true" />
     </h3>
   )
 }
@@ -239,7 +237,7 @@ function StatCard({
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{label}</p>
+        <p className="truncate font-mono text-[11px] uppercase text-muted-foreground">{label}</p>
         <p className={cn("text-lg font-semibold leading-tight tabular-nums", valueClass)}>
           {value}
         </p>
@@ -550,14 +548,14 @@ function DetalleDialog({
                   <table className="w-full text-xs min-w-[480px]">
                     <thead>
                       <tr className="bg-muted/50 border-b">
-                        <th scope="col" className="px-3 py-2.5 text-left font-medium text-muted-foreground w-24">
+                        <th scope="col" className="w-24 px-3 py-2.5 text-left font-mono text-[11px] font-medium uppercase text-muted-foreground">
                           Mes
                         </th>
                         {INCIDENCIA_COLUMNS.map(c => (
                           <th
                             key={c.header}
                             scope="col"
-                            className="px-2 py-2.5 text-center font-medium text-muted-foreground text-[11px] leading-tight"
+                            className="px-2 py-2.5 text-center font-mono text-[11px] font-medium uppercase leading-tight text-muted-foreground"
                           >
                             {c.header}
                           </th>
@@ -615,10 +613,10 @@ function DetalleDialog({
                   <table className="w-full text-xs min-w-[360px]">
                     <thead>
                       <tr className="bg-muted/50 border-b">
-                        <th scope="col" className="px-3 py-2.5 text-left font-medium text-muted-foreground w-8">#</th>
-                        <th scope="col" className="px-3 py-2.5 text-left font-medium text-muted-foreground">Periodo</th>
-                        <th scope="col" className="px-3 py-2.5 text-center font-medium text-muted-foreground">Calificación</th>
-                        <th scope="col" className="px-3 py-2.5 text-left font-medium text-muted-foreground">Plan de seguimiento</th>
+                        <th scope="col" className="w-8 px-3 py-2.5 text-left font-mono text-[11px] font-medium uppercase text-muted-foreground">#</th>
+                        <th scope="col" className="px-3 py-2.5 text-left font-mono text-[11px] font-medium uppercase text-muted-foreground">Periodo</th>
+                        <th scope="col" className="px-3 py-2.5 text-center font-mono text-[11px] font-medium uppercase text-muted-foreground">Calificación</th>
+                        <th scope="col" className="px-3 py-2.5 text-left font-mono text-[11px] font-medium uppercase text-muted-foreground">Plan de seguimiento</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -834,7 +832,7 @@ export default function RecontratacionContent() {
                 placeholder="Nombre, número, puesto…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className={cn("pl-9 h-9 bg-muted/50 text-sm", search && "pr-9")}
+                className={cn("h-9 bg-card pl-9 text-sm", search && "pr-9")}
               />
               {search && (
                 <button
@@ -851,7 +849,7 @@ export default function RecontratacionContent() {
             {/* Filtro departamento */}
             <Select value={filterDept} onValueChange={setFilterDept}>
               <SelectTrigger
-                className="h-9 min-w-[150px] w-auto bg-muted/50 text-sm gap-1.5"
+                className="h-9 min-w-[150px] w-auto bg-card text-sm gap-1.5"
                 aria-label="Filtrar por departamento"
               >
                 <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />

@@ -75,7 +75,7 @@ export default function Header({
 
       <header
         role="banner"
-        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-card"
+        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-background"
       >
         <div className="flex h-full items-center gap-2 px-3 sm:px-5">
           {/* Hamburger — mobile only, when sidebar is closed */}

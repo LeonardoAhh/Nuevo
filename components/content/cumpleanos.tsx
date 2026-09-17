@@ -79,7 +79,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
   return (
     <li
       className={cn(
-        "min-w-0 rounded-xl border border-border/70 bg-card p-4 transition-colors",
+        "min-w-0 rounded-xl border border-border bg-card p-4 transition-colors",
         selected && "border-primary/40 bg-primary/[0.03]",
       )}
     >
@@ -140,9 +140,9 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-border/60 pt-3 sm:grid-cols-[1fr_1.35fr]">
+      <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-border pt-3 sm:grid-cols-[1fr_1.35fr]">
         <div className="min-w-0">
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
             Cumpleaños
           </dt>
           <dd className="mt-0.5 text-sm text-foreground">
@@ -150,7 +150,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
             Correo
           </dt>
           <dd className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-foreground">
@@ -181,7 +181,6 @@ interface BirthdaySectionProps {
   sendingId: string | null
   onToggle: (key: string) => void
   onSend: (entry: CumpleanosEntry) => Promise<void>
-  prominent?: boolean
 }
 
 function BirthdaySection({
@@ -193,15 +192,14 @@ function BirthdaySection({
   sendingId,
   onToggle,
   onSend,
-  prominent = false,
 }: BirthdaySectionProps) {
   return (
     <section
       aria-labelledby={`section-${title.replaceAll(" ", "-").toLowerCase()}`}
-      className={cn("space-y-3", prominent && "rounded-xl bg-primary/[0.025] p-3")}
+      className="space-y-3"
     >
       <div className="flex items-center gap-3 px-1">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary" aria-hidden="true">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary" aria-hidden="true">
           {icon}
         </span>
         <h2
@@ -515,7 +513,7 @@ export default function CumpleanosContent() {
       {upcomingEntries.length === 0 && !searchQuery.trim() ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <span className="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+            <span className="grid size-12 place-items-center rounded-md bg-muted text-muted-foreground">
               <Cake className="size-5" aria-hidden="true" />
             </span>
             <div>
@@ -534,7 +532,7 @@ export default function CumpleanosContent() {
       ) : filteredEntries.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <span className="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+            <span className="grid size-12 place-items-center rounded-md bg-muted text-muted-foreground">
               <Search className="size-5" aria-hidden="true" />
             </span>
             <div>
@@ -550,13 +548,12 @@ export default function CumpleanosContent() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {periods.filter((period) => period.entries.length > 0).map((period, index) => (
+          {periods.filter((period) => period.entries.length > 0).map((period) => (
             <BirthdaySection
               key={period.key}
               title={period.label}
               entries={period.entries}
               icon={period.icon}
-              prominent={index === 0 && period.entries.length > 0}
               canEdit={canEdit}
               selectedIds={selectedIds}
               sendingId={sendingId}

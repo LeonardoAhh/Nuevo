@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils"
  * Shared surface for full-screen status pages (error boundary, maintenance).
  *
  * Design system contract:
- * - Floating card (`rounded-2xl`, soft border/shadow) matching sidebar/header.
- * - Icon inside a `rounded-xl` tile tinted by semantic tone.
- * - Mono uppercase eyebrow + serif heading (scales with --font-base-size).
+ * - Flat hairline card on the neutral canvas.
+ * - Compact icon tile tinted only by semantic tone.
+ * - Mono uppercase eyebrow + Geist Sans heading.
  * - Tokens only: accent color, density spacing and reduced-motion settings
  *   apply automatically. No pill/full-rounded shapes.
  */
@@ -19,14 +19,12 @@ const EASE = [0.16, 1, 0.3, 1] as const
 
 export type StatusTone = "primary" | "destructive"
 
-const TONE: Record<StatusTone, { tile: string; glow: string }> = {
+const TONE: Record<StatusTone, { tile: string }> = {
   primary: {
     tile: "border-primary/25 bg-primary/10 text-primary",
-    glow: "bg-primary/8",
   },
   destructive: {
     tile: "border-destructive/25 bg-destructive/10 text-destructive",
-    glow: "bg-destructive/8",
   },
 }
 
@@ -43,25 +41,6 @@ interface StatusShellProps {
   children?: React.ReactNode
   /** Optional strip pinned to the bottom of the card. */
   footer?: React.ReactNode
-}
-
-function Backdrop({ glow }: { glow: string }) {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      <div className={cn("absolute -left-24 -top-24 size-72 rounded-full blur-[100px]", glow)} />
-      <div className="absolute -bottom-24 -right-16 size-64 rounded-full bg-primary/5 blur-[90px]" />
-      {/* Dot grid masked towards the center */}
-      <div
-        className="absolute inset-0 opacity-[0.12]"
-        style={{
-          backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-          maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 75%)",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 75%)",
-        }}
-      />
-    </div>
-  )
 }
 
 export function StatusShell({
@@ -89,17 +68,15 @@ export function StatusShell({
       className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10 sm:px-6 sm:py-16"
       aria-labelledby={labelledBy}
     >
-      <Backdrop glow={TONE[tone].glow} />
-
       <motion.section {...fade(0)} className="relative z-10 w-full max-w-lg">
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="p-7 sm:p-10">
             {/* Header · icon tile + status eyebrow */}
             <motion.div {...fade(0.08)} className="mb-7 flex items-center gap-4">
-              <span className={cn("grid size-12 shrink-0 place-items-center rounded-xl border", TONE[tone].tile)}>
+              <span className={cn("grid size-12 shrink-0 place-items-center rounded-md border", TONE[tone].tile)}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-muted-foreground">
+              <p className="font-mono text-xs font-medium uppercase text-muted-foreground">
                 {eyebrow}
               </p>
             </motion.div>
@@ -108,7 +85,7 @@ export function StatusShell({
             <motion.h1
               id={labelledBy}
               {...fade(0.14)}
-              className="font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+              className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
             >
               {title}
             </motion.h1>
@@ -139,7 +116,7 @@ export function StatusShell({
 /** Small mono caption used under the card / in footer strips. */
 export function StatusCaption({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className={cn("font-mono text-[0.6rem] uppercase tracking-[0.22em] text-muted-foreground", className)}>
+    <p className={cn("font-mono text-xs font-medium uppercase text-muted-foreground", className)}>
       {children}
     </p>
   )

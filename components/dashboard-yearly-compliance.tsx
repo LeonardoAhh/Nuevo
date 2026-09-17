@@ -21,7 +21,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   if (!active || !payload?.length) return null
   const row = (payload[0] as unknown as { payload: YearStats }).payload
   return (
-    <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
+    <div className="min-w-[180px] rounded-md border bg-popover p-3 text-sm shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
       <p className="font-semibold text-foreground mb-2">{label}</p>
       <div className="space-y-1 text-muted-foreground">
         {[

@@ -28,7 +28,9 @@ const config: Config = {
         xs: "480px",
       },
       fontFamily: {
-        serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "Arial", "sans-serif"],
+        // Temporary compatibility alias for existing editorial screens.
+        serif: ["var(--font-sans)", "Arial", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       colors: {

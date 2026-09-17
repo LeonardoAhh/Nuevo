@@ -90,7 +90,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
   };
 
   return <form className="space-y-5 print:hidden" onSubmit={submit} noValidate>
-    <div className="sticky top-0 z-10 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
+    <div className="sticky top-0 z-10 rounded-md border bg-background p-3">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="min-w-0 truncate font-semibold">{data.nombre}</span>
         <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">{data.periodo}</span>
@@ -164,7 +164,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
       {(guardarTooltip || !validation.valida) && <p role="status" className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">{!validation.valida ? validation.errores[0] : guardarTooltip}</p>}
     </div>}
 
-    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm">
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3">
       <Button type="button" variant="outline" size="lg" onClick={goPrevView} disabled={activeView === 1 || saving} className="min-h-11 min-w-0 flex-1 sm:flex-none"><ChevronLeft className="mr-2 size-4" />Atrás</Button>
       {activeView < STEPS.length ? <Button type="submit" size="lg" className="min-h-11 min-w-0 flex-1 sm:flex-none">Siguiente<ChevronRight className="ml-2 size-4" /></Button>
         : <Button type="submit" size="lg" className="min-h-11 min-w-0 flex-1 sm:flex-none" disabled={!validation.valida || guardarDisabled || saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}{saving ? "Guardando…" : "Guardar evaluación"}</Button>}

@@ -58,11 +58,11 @@ function CursoCover({ curso }: { curso: CursoPublico }) {
 
       <div className="relative flex h-40 flex-col justify-between p-4 sm:h-44 sm:p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/25 shadow-sm ring-1 ring-white/30 backdrop-blur-sm sm:h-11 sm:w-11">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/25 ring-1 ring-white/30 sm:h-11 sm:w-11">
             <CategoryIcon size={20} className="text-white sm:hidden" strokeWidth={2.25} />
             <CategoryIcon size={22} className="hidden text-white sm:block" strokeWidth={2.25} />
           </div>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm">
+          <span className="rounded-full bg-white px-2.5 py-1 font-mono text-[10px] font-medium uppercase text-black">
             {category.label}
           </span>
         </div>
@@ -88,7 +88,7 @@ function CursoCardList({
   onShowQr: () => void
 }) {
   return (
-    <Card className="group flex h-full flex-col overflow-hidden border border-border bg-background shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <Card className="group flex h-full flex-col overflow-hidden bg-card">
       <CursoCover curso={curso} />
 
       <div className="flex flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5">
@@ -118,8 +118,8 @@ function CursoCardList({
 
 function EmptyState({ hasQuery }: { hasQuery: boolean }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border/60 bg-background p-8 text-center sm:rounded-3xl sm:p-10">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-16 sm:w-16">
+    <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center sm:p-10">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-primary/10 text-primary sm:h-16 sm:w-16">
         <Info size={22} />
       </div>
       <p className="text-sm font-semibold text-foreground">No se encontraron cursos</p>
@@ -177,7 +177,7 @@ function QrDialog({
           <img
             src={getQrUrl(curso.url, 280)}
             alt={`QR de ${curso.nombre}`}
-            className="mx-auto rounded-3xl border border-border bg-white p-3"
+            className="mx-auto rounded-xl border border-border bg-white p-3"
           />
           <p className="break-all text-sm text-muted-foreground">{curso.url}</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
@@ -239,7 +239,7 @@ export default function RecursosHome() {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       {/* ─── Header ─── */}
-      <header className="sticky top-0 z-30 border-b bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-4 sm:h-14 sm:gap-3 sm:px-6">
           <span className="text-base font-bold tracking-tight sm:text-xl">
             <span className="text-primary">VIÑO</span>
@@ -270,7 +270,7 @@ export default function RecursosHome() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <div className="inline-flex items-center gap-2 text-[11px] font-medium text-muted-foreground sm:text-xs">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="uppercase tracking-[0.18em]">Capacitación</span>
+                  <span className="font-mono uppercase">Capacitación</span>
                 </div>
                 {!loading && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground sm:hidden">
@@ -281,7 +281,7 @@ export default function RecursosHome() {
                 )}
               </div>
 
-              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
                 Planta Querétaro
               </h1>
               <p className="hidden max-w-xl text-sm text-muted-foreground sm:block">
@@ -292,7 +292,7 @@ export default function RecursosHome() {
 
             {/* Pill de contador solo en desktop */}
             {!loading && (
-              <div className="hidden items-center gap-2 self-start rounded-full border border-border bg-card px-3.5 py-1.5 text-xs shadow-sm sm:inline-flex sm:self-end">
+              <div className="hidden items-center gap-2 self-start rounded-full border border-border bg-card px-3.5 py-1.5 text-xs sm:inline-flex sm:self-end">
                 <GraduationCap size={14} className="text-primary" />
                 <span className="font-semibold text-foreground">{cursos.length}</span>
                 <span className="text-muted-foreground">
@@ -305,9 +305,9 @@ export default function RecursosHome() {
       </section>
 
       {/* ─── Search sticky ─── */}
-      <div className="sticky top-12 z-20 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:top-14">
+      <div className="sticky top-12 z-20 border-b bg-background sm:top-14">
         <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6 sm:py-4">
-          <div className="group flex h-12 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-2 shadow-sm transition focus-within:border-primary/60 focus-within:shadow-md focus-within:ring-2 focus-within:ring-primary/20 sm:h-11">
+          <div className="group flex h-12 items-center gap-2 rounded-md border border-border bg-card pl-3 pr-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 sm:h-11">
             <Search
               size={18}
               className="shrink-0 text-muted-foreground transition group-focus-within:text-primary sm:hidden"
@@ -368,13 +368,13 @@ export default function RecursosHome() {
         <div
           role="note"
           aria-label="Nota importante"
-          className="mb-5 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-50/80 px-3 py-2.5 shadow-sm dark:bg-amber-500/10 sm:mb-6 sm:gap-3 sm:px-4 sm:py-3"
+          className="mb-5 flex items-start gap-2.5 rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 sm:mb-6 sm:gap-3 sm:px-4 sm:py-3"
         >
-          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-warning/15 text-warning">
             <Info size={14} />
           </div>
           <div className="flex-1 space-y-0.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 sm:text-xs">
+            <p className="font-mono text-[11px] font-medium uppercase text-warning sm:text-xs">
               Nota importante
             </p>
             <p className="text-xs leading-relaxed text-foreground/85 sm:text-sm">

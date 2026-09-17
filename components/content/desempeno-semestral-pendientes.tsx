@@ -29,20 +29,20 @@ const itemV = {
 function EstadoBadge({ item }: { item: SemestralEmployee }) {
   if (item.estado === "completado") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-success px-2 py-1 text-xs font-bold text-success-foreground shadow-sm">
+      <span className="inline-flex items-center gap-1.5 rounded-md border border-success/20 bg-success/10 px-2 py-1 text-xs font-semibold text-success">
         <CheckCircle2 className="size-3.5" aria-hidden="true" /> Completado · {item.calificacion}%
       </span>
     )
   }
   if (item.estado === "no_elegible") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+      <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
         <Ban className="size-3.5" aria-hidden="true" /> No aplica (&lt; 3 meses)
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-warning px-2 py-1 text-xs font-bold text-warning-foreground shadow-sm">
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1 text-xs font-semibold text-warning">
       <Clock3 className="size-3.5" aria-hidden="true" /> Pendiente
     </span>
   )
@@ -83,7 +83,7 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
       </Alert>
 
       {!loading && deptGroups.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-muted/30 py-8 text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-8 text-muted-foreground">
           <Users className="size-6 opacity-60" aria-hidden="true" />
           <p className="text-sm font-medium">Sin personal de planta en tu área.</p>
         </div>

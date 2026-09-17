@@ -215,7 +215,7 @@ function AttachmentPreviewDialog({
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
         >
-          <Button size="icon" variant="secondary" className="size-9 rounded-full shadow-lg">
+          <Button size="icon" variant="secondary" className="size-9 rounded-full shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
             <Download className="size-4" />
             <span className="sr-only">Descargar</span>
           </Button>
@@ -223,7 +223,7 @@ function AttachmentPreviewDialog({
         <Button
           size="icon"
           variant="secondary"
-          className="size-9 rounded-full shadow-lg"
+          className="size-9 rounded-full shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]"
           onClick={e => { e.stopPropagation(); onClose() }}
         >
           <X className="size-4" />
@@ -241,7 +241,7 @@ function AttachmentPreviewDialog({
           <img
             src={target.url}
             alt={label}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="max-h-full max-w-full rounded-xl object-contain shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)]"
           />
         )}
 
@@ -710,7 +710,7 @@ export default function NotesWidget() {
 
   return (
     <>
-      <Card className="w-full shadow-sm">
+      <Card className="w-full">
         <CardHeader className="pb-3">
           {/* Title + Add button */}
           <div className="flex items-center justify-between gap-3 flex-wrap">

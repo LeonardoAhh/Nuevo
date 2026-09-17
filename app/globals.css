@@ -7,39 +7,38 @@
         --font-base-size: 16px;
         --density-scale: 1;
 
-        /* System fonts fallback */
-        --font-sans: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-serif: "Georgia", "Times New Roman", serif;
-        --font-mono: "JetBrains Mono", "Fira Code", monospace;
+        /* Geist-aligned neutral system with local fallbacks. */
+        --font-sans: "Geist", Arial, sans-serif;
+        --font-serif: "Geist", Arial, sans-serif;
+        --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
 
-        /* Premium warm-neutral palette — softer light theme to reduce eye strain */
-        --background: 220 14% 94%;
-        --foreground: 222 14% 16%;
+        --background: 0 0% 98%;
+        --foreground: 0 0% 9%;
 
-        --card: 220 14% 98%;
-        --card-foreground: 222 14% 16%;
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 9%;
 
-        --popover: 220 14% 98%;
-        --popover-foreground: 222 14% 16%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 9%;
 
-        --primary: 221 62% 55%;
+        --primary: 212 100% 48%;
         --primary-foreground: 0 0% 98%;
 
-        --secondary: 220 12% 93%;
-        --secondary-foreground: 222 14% 16%;
+        --secondary: 0 0% 95%;
+        --secondary-foreground: 0 0% 9%;
 
-        --muted: 220 12% 93%;
-        --muted-foreground: 220 8% 46%;
+        --muted: 0 0% 95%;
+        --muted-foreground: 0 0% 40%;
 
-        --accent: 220 12% 93%;
-        --accent-foreground: 222 14% 16%;
+        --accent: 0 0% 95%;
+        --accent-foreground: 0 0% 9%;
 
         --destructive: 0 65% 48%;
         --destructive-foreground: 0 0% 98%;
 
-        --border: 220 10% 89%;
-        --input: 220 10% 89%;
-        --ring: 221 62% 55%;
+        --border: 0 0% 92%;
+        --input: 0 0% 92%;
+        --ring: 212 100% 48%;
 
         --chart-1: 221 55% 55%;
         --chart-2: 152 45% 40%;
@@ -49,8 +48,8 @@
 
         --success: 152 48% 38%;
         --success-foreground: 0 0% 98%;
-        --warning: 24 94% 65%;
-        --warning-foreground: 24 94% 15%;
+        --warning: 32 85% 40%;
+        --warning-foreground: 0 0% 100%;
         --info: 200 60% 46%;
         --info-foreground: 0 0% 98%;
 
@@ -78,34 +77,34 @@
 }
 
 .dark {
-    /* Premium dark — warm near-black, elevated cards, subtle borders */
-    --background: 225 12% 7%;
-    --foreground: 220 10% 94%;
+    /* Dark counterpart: neutral ink surfaces and crisp hairlines. */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
 
-    --card: 225 10% 12%;
-    --card-foreground: 220 10% 94%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 225 10% 12%;
-    --popover-foreground: 220 10% 94%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 221 65% 60%;
+    --primary: 212 100% 48%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 225 8% 17%;
-    --secondary-foreground: 220 10% 94%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 93%;
 
-    --muted: 225 8% 17%;
-    --muted-foreground: 220 6% 64%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 225 8% 17%;
-    --accent-foreground: 220 10% 94%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 93%;
 
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 225 7% 20%;
-    --input: 225 7% 20%;
-    --ring: 221 65% 60%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 212 100% 48%;
 
     --chart-1: 221 58% 60%;
     --chart-2: 160 45% 46%;
@@ -115,8 +114,8 @@
 
     --success: 160 48% 44%;
     --success-foreground: 0 0% 98%;
-    --warning: 38 65% 48%;
-    --warning-foreground: 40 80% 10%;
+    --warning: 38 80% 60%;
+    --warning-foreground: 0 0% 10%;
     --info: 200 55% 50%;
     --info-foreground: 0 0% 98%;
 

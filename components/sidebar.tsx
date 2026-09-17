@@ -36,7 +36,7 @@ const WIDTH = {
 // Traditional navigation language: restrained backgrounds, compact radii and
 // clear hierarchy without floating surfaces or shadows.
 const rowIdle = "text-muted-foreground hover:bg-accent hover:text-foreground"
-const rowActiveSolid = "bg-accent text-foreground font-medium"
+const rowActiveSolid = "bg-primary/10 text-primary font-medium"
 
 // ─── Hook (public API consumed by Dashboard) ──────────────────────────────────
 
@@ -175,7 +175,7 @@ function NavTree({
           // Grouped section → heading + always-visible links.
           return (
             <li key={section.label}>
-              <p className="flex items-center gap-2 px-1 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="flex items-center gap-2 px-1 pb-1 pt-2 font-mono text-[11px] font-medium uppercase text-muted-foreground">
                 <section.icon size={14} aria-hidden="true" />
                 {section.label}
               </p>
@@ -344,7 +344,7 @@ export default function Sidebar({
             className="inset-y-0 left-0 right-auto mt-0 w-[286px] max-w-[86vw] rounded-none border-y-0 border-l-0"
           >
             <div
-              className="flex h-full flex-col bg-card"
+              className="flex h-full flex-col bg-background"
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
             >
               {/* Accessible drawer title (visually replaced by the brand mark) */}
@@ -383,7 +383,7 @@ export default function Sidebar({
           <aside
             aria-label="Menú principal"
             className={cn(
-              "flex shrink-0 flex-col overflow-hidden bg-card",
+              "flex shrink-0 flex-col overflow-hidden bg-background",
               "transition-[width] duration-300 ease-in-out",
               isExpanded ? WIDTH.full : WIDTH.rail,
             )}

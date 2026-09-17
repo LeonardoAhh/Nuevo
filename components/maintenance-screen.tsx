@@ -46,19 +46,19 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
       </div>
       <div className="w-full max-w-4xl space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3 px-1">
-          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Estado del sistema</p>
-          <span className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
+          <p className="font-mono text-xs font-medium uppercase text-muted-foreground">Estado del sistema</p>
+          <span className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
             <Radio className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
             Mantenimiento activo
           </span>
         </header>
-        <article aria-labelledby={`${id}-heading`} className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
+        <article aria-labelledby={`${id}-heading`} className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
           <div className="grid md:grid-cols-2">
             <div className="flex flex-col items-start p-6 sm:p-8 lg:p-10">
-              <div aria-hidden="true" className="mb-6 grid size-14 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <div aria-hidden="true" className="mb-6 grid size-14 place-items-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                 <Layers3 className="size-7" strokeWidth={1.5} />
               </div>
-              <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Sistema en mantenimiento</p>
+              <p className="mb-3 font-mono text-xs font-medium uppercase text-muted-foreground">Sistema en mantenimiento</p>
               <h1 id={`${id}-heading`} className="text-balance font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
                 Actualización en curso
               </h1>
@@ -80,7 +80,7 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
                       const total = remaining === null ? null : Math.floor(remaining / seconds)
                       const value = total === null ? null : modulo === null ? total : total % modulo
                       return (
-                        <div key={label} className="flex min-w-0 flex-col items-center gap-2 rounded-lg border border-border bg-card px-2 py-4 shadow-sm">
+                        <div key={label} className="flex min-w-0 flex-col items-center gap-2 rounded-md border border-border bg-card px-2 py-4">
                           <dt className="order-2 text-xs text-muted-foreground">{label}</dt>
                           <dd className="font-mono text-3xl font-medium leading-none tracking-tight tabular-nums text-foreground">
                             {value === null ? "—" : String(value).padStart(2, "0")}

@@ -74,10 +74,10 @@ function CategoriaCover({
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
       <div className="relative flex flex-col items-center justify-center text-white">
-        <div className="rounded-full bg-white/15 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+        <div className="rounded-md bg-white/15 p-3 ring-1 ring-white/10">
           <Icon className="text-white" size={iconSize} strokeWidth={1.5} />
         </div>
-        <span className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/80">
+        <span className="mt-2 font-mono text-[10px] font-medium uppercase text-white/80">
           {cat.label}
         </span>
       </div>
@@ -314,7 +314,7 @@ function CursoDialog({ open, saving, inicial, onClose, onSave }: CursoDialogProp
           {qrPreview && (
             <div className="space-y-1.5">
               <Label>Vista previa del QR</Label>
-              <div className="border rounded-lg p-3 bg-white inline-block">
+              <div className="inline-block rounded-md border border-border bg-white p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrPreview} alt="Preview QR" width={120} height={120} loading="lazy" />
               </div>
@@ -672,7 +672,7 @@ function PublicQrDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
         <div className="flex flex-col items-center gap-4 pt-2">
           {/* QR frame: fondo blanco fijo (legibilidad), borde con tokens */}
-          <div className="rounded-2xl bg-white p-4 sm:p-6 border border-border shadow-sm">
+          <div className="rounded-xl border border-border bg-white p-4 sm:p-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={qrLarge}

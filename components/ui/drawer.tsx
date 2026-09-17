@@ -31,7 +31,7 @@ const DrawerOverlay = React.forwardRef<
   <DrawerPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
+      "fixed inset-0 z-50 bg-black/50",
       className
     )}
     {...props}
@@ -95,7 +95,7 @@ const DrawerContent = React.forwardRef<
           // Altura máxima: nunca sube más allá del safe-area-top
           // Cuando el teclado está visible, usa visualViewport height
           "flex flex-col",
-          "rounded-t-2xl border bg-background",
+          "rounded-t-xl border bg-card",
           // mt-24 original mantenido para el snap inicial
           "mt-24",
           className

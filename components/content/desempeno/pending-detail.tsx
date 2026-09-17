@@ -74,8 +74,8 @@ export function DetailModal({
           icon,
           label,
           value
-        }) => <div key={label} className="flex flex-col gap-1 rounded-xl border bg-muted/30 p-3 shadow-sm">
-            <dt className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        }) => <div key={label} className="flex flex-col gap-1 rounded-xl border bg-muted/30 p-3">
+            <dt className="flex items-center gap-1.5 font-mono text-xs font-medium uppercase text-muted-foreground">
               {icon} {label}
             </dt>
             <dd className="break-words text-sm font-medium text-foreground">{value}</dd>
@@ -87,7 +87,7 @@ export function DetailModal({
 
       {/* Evaluaciones pendientes */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="font-mono text-xs font-medium uppercase text-muted-foreground">
             Evaluaciones pendientes
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -98,7 +98,7 @@ export function DetailModal({
               bg,
               text
             } = PERIODO_BADGE[p];
-            return <div key={p} className="flex flex-col items-center gap-3 rounded-xl border bg-card p-4 text-center shadow-sm">
+            return <div key={p} className="flex flex-col items-center gap-3 rounded-xl border bg-card p-4 text-center">
               <span className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold uppercase ${bg} ${text}`}>
                 <GraduationCap className="size-3.5" aria-hidden="true" /> {p}
               </span>

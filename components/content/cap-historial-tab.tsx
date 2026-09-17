@@ -72,22 +72,22 @@ export function CapHistorialTab({
         </Alert>
       )}
 
-      <div className="bg-card border border-border/60 shadow-none rounded-xl overflow-hidden">
-        <div className="pb-6 pt-6 px-6 border-b border-border/60">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-6 pb-6 pt-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Empleados</h2>
+              <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">Empleados</h2>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <Button className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
+              <Button variant="outline" className="h-10 px-4" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
                 <span className="hidden sm:inline">Cargar cursos</span>
                 <Layers className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
+              <Button variant="outline" className="h-10 px-4" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
                 <span className="hidden sm:inline">Cargar empleados</span>
                 <Users className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button className="h-10 px-4 rounded-md shadow-none font-medium transition-colors" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
+              <Button className="h-10 px-4" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
                 <span className="hidden sm:inline">Nuevo empleado</span>
                 <UserPlus className="h-4 w-4 sm:hidden" />
               </Button>
@@ -104,7 +104,7 @@ export function CapHistorialTab({
                 value={empSearch}
                 onChange={e => setEmpSearch(e.target.value)}
                 placeholder="Buscar empleado..."
-                className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${empSearch ? "pr-11" : ""}`}
+                className={`h-11 pl-11 text-base ${empSearch ? "pr-11" : ""}`}
               />
               {empSearch && (
                 <button
@@ -120,10 +120,10 @@ export function CapHistorialTab({
             {/* Filters row */}
             <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
               <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
-                <SelectTrigger className="h-11 flex-1 sm:w-48 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
+                <SelectTrigger className="h-11 flex-1 text-base sm:w-48 sm:flex-none">
                   <SelectValue placeholder="Departamento" />
                 </SelectTrigger>
-                <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
+                <SelectContent>
                   <SelectItem value="all">Departamentos</SelectItem>
                   {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => (
                     <SelectItem key={d} value={d}>{d}</SelectItem>
@@ -131,10 +131,10 @@ export function CapHistorialTab({
                 </SelectContent>
               </Select>
               <Select value={empFilterTurno} onValueChange={setEmpFilterTurno}>
-                <SelectTrigger className="h-11 flex-1 sm:w-40 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
+                <SelectTrigger className="h-11 flex-1 text-base sm:w-40 sm:flex-none">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
-                <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
+                <SelectContent>
                   <SelectItem value="all">Turnos</SelectItem>
                   {TURNOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
@@ -143,7 +143,7 @@ export function CapHistorialTab({
           </div>
 
           {loadingEmployees ? (
-            <div className="rounded-md border border-border/60 shadow-none overflow-hidden bg-transparent">
+            <div className="overflow-hidden rounded-md border border-border bg-card">
               <div className="divide-y divide-border/60">
                 {Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-4 py-3">
@@ -164,7 +164,7 @@ export function CapHistorialTab({
             </div>
           ) : (
             <>
-              <div className="rounded-md border border-border/60 shadow-none overflow-hidden bg-transparent">
+              <div className="overflow-hidden rounded-md border border-border bg-card">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-transparent hover:bg-transparent border-border/60">

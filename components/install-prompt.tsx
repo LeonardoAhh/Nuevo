@@ -131,8 +131,8 @@ export function InstallPrompt() {
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="pointer-events-none fixed inset-x-0 bottom-[max(env(safe-area-inset-bottom),1rem)] z-[55] flex justify-center px-4"
           >
-            <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-border/60 bg-card/95 p-3 pl-4 shadow-xl backdrop-blur">
-              <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary" aria-hidden>
+            <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl border border-border bg-card p-3 pl-4 shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)]">
+              <div className="grid size-10 place-items-center rounded-md bg-primary/10 text-primary" aria-hidden>
                 <Smartphone className="size-5" strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
@@ -169,7 +169,7 @@ export function InstallPrompt() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[60] flex items-end justify-center bg-background/60 backdrop-blur-sm sm:items-center"
+                className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 sm:items-center"
                 onClick={() => setIosSheetOpen(false)}
               >
                 <motion.div
@@ -177,7 +177,7 @@ export function InstallPrompt() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 40, opacity: 0 }}
                   transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-full max-w-md rounded-t-2xl border border-border/60 bg-card p-6 shadow-2xl sm:rounded-2xl"
+                  className="w-full max-w-md rounded-t-xl border border-border bg-card p-6 shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)] sm:rounded-xl"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-start justify-between gap-3">

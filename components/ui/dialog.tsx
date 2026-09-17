@@ -18,7 +18,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
+      "fixed inset-0 z-50 bg-black/50",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:animate-none",
       className,
@@ -37,7 +37,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-xl",
+        "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)]",
         "max-h-[80dvh]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -61,7 +61,7 @@ const DialogContent = React.forwardRef<
 
           {/* Botón cerrar */}
           {!hideClose && (
-            <DialogPrimitive.Close className="absolute right-3 top-3 z-50 flex size-10 items-center justify-center rounded-md bg-card p-2 text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-muted hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+            <DialogPrimitive.Close className="absolute right-3 top-3 z-50 flex size-10 items-center justify-center rounded-md bg-card p-2 text-muted-foreground ring-offset-background transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
               <X className="h-4 w-4" />
               <span className="sr-only">Cerrar</span>
             </DialogPrimitive.Close>
@@ -107,7 +107,7 @@ const DialogFooter = ({
         ? "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
         : [
             "sticky bottom-0 -mx-6 mt-4 px-6 pt-3",
-            "bg-background/95 backdrop-blur-sm",
+            "border-t bg-card",
             "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
           ],
       className,

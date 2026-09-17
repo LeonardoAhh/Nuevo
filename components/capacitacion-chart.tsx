@@ -32,7 +32,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   if (!active || !payload?.length) return null
   const dataPoints = payload.filter((p) => !p.dataKey.includes("_trend"))
   return (
-    <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[150px]">
+    <div className="min-w-[150px] rounded-md border bg-popover p-3 text-sm shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
       <p className="font-semibold text-foreground mb-2">{label}</p>
       {dataPoints.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4">

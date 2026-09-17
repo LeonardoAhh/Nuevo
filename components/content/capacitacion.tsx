@@ -357,14 +357,14 @@ export default function CapacitacionContent() {
     <>
       <ReadOnlyBanner />
       <Tabs defaultValue="historial" onValueChange={handleTabChange}>
-        <TabsList className="flex w-full mb-6 bg-muted rounded-md p-1 border-0 shadow-none">
-          <TabsTrigger value="historial" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+        <TabsList className="mb-6 flex w-full rounded-md bg-muted p-1">
+          <TabsTrigger value="historial" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
             <ClipboardList className="mr-2 h-[18px] w-[18px]" /><span>Empleados</span>
           </TabsTrigger>
-          <TabsTrigger value="cursos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+          <TabsTrigger value="cursos" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
             <BookOpen className="mr-2 h-[18px] w-[18px]" /><span>Cursos</span>
           </TabsTrigger>
-          <TabsTrigger value="puestos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+          <TabsTrigger value="puestos" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
             <Briefcase className="mr-2 h-[18px] w-[18px]" /><span>Puestos</span>
           </TabsTrigger>
         </TabsList>

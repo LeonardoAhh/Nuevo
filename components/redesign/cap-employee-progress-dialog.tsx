@@ -79,15 +79,15 @@ export function CapEmployeeProgressDialog({
 
               {/* Tabs */}
               <Tabs value={tab} onValueChange={v => onTabChange(v as 'requeridos' | 'historial')}>
-                <TabsList className="flex w-full mb-2 bg-muted rounded-md p-1 border-0 shadow-none">
-                  <TabsTrigger value="requeridos" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+                <TabsList className="mb-2 flex w-full rounded-md bg-muted p-1">
+                  <TabsTrigger value="requeridos" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
                     <Briefcase className="mr-2 h-[16px] w-[16px]" />
                     Requeridos
                     {progress?.totalRequired ? (
                       <Badge variant="secondary" className="ml-2 text-xs px-1.5 bg-transparent border-border/60 shadow-none font-normal">{progress.totalRequired}</Badge>
                     ) : null}
                   </TabsTrigger>
-                  <TabsTrigger value="historial" className="flex-1 text-sm font-medium rounded-[6px] py-2 data-[state=active]:bg-card data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all text-muted-foreground">
+                  <TabsTrigger value="historial" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
                     <ClipboardList className="mr-2 h-[16px] w-[16px]" />
                     Historial completo
                     {courses.length > 0 && (

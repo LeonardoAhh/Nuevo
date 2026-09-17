@@ -213,12 +213,12 @@ function DeadlineHero({
         <div
           className={`flex flex-col items-center justify-center shrink-0 border-b sm:border-b-0 sm:border-r pb-4 sm:pb-0 sm:pr-5 ${c.dividerBorder} min-w-[80px]`}
         >
-          <span className={`text-7xl font-black tabular-nums leading-none ${c.accentText}`}>
+          <span className={`text-7xl font-semibold tabular-nums leading-none ${c.accentText}`}>
             {diasNum}
           </span>
           <div className="flex items-center gap-1.5 mt-1.5">
             <Icon className={`h-4 w-4 ${c.accentText} opacity-70`} />
-            <span className={`text-xs font-semibold uppercase tracking-widest ${c.accentText} opacity-80`}>
+            <span className={`font-mono text-xs font-medium uppercase ${c.accentText} opacity-80`}>
               {info.status === "vencido" ? "cerrado" : "días"}
             </span>
           </div>
@@ -257,26 +257,26 @@ function DeadlineHero({
           className={`flex sm:flex-col gap-5 sm:gap-3 border-t sm:border-t-0 sm:border-l pt-4 sm:pt-0 sm:pl-5 ${c.dividerBorder} shrink-0`}
         >
           <div className="flex flex-col items-center sm:items-end gap-0.5">
-            <span className="text-4xl font-black tabular-nums text-destructive leading-none">
+            <span className="text-4xl font-semibold tabular-nums text-destructive leading-none">
               {totalPendientes}
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <span className="font-mono text-[10px] font-medium uppercase text-muted-foreground">
               Pendientes
             </span>
           </div>
           <div className="flex flex-col items-center sm:items-end gap-0.5">
-            <span className="text-4xl font-black tabular-nums text-[hsl(var(--success))] leading-none">
+            <span className="text-4xl font-semibold tabular-nums text-[hsl(var(--success))] leading-none">
               {totalFisicos}
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <span className="font-mono text-[10px] font-medium uppercase text-muted-foreground">
                 Físicos
             </span>
           </div>
           <div className="flex flex-col items-center sm:items-end gap-0.5 mt-2 sm:mt-0">
-            <span className="text-4xl font-black tabular-nums text-[hsl(var(--info))] leading-none">
+            <span className="text-4xl font-semibold tabular-nums text-[hsl(var(--info))] leading-none">
               {totalEntregadas}
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <span className="font-mono text-[10px] font-medium uppercase text-muted-foreground">
                 Evaluados
             </span>
           </div>

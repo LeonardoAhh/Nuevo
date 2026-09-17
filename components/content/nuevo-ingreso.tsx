@@ -321,7 +321,7 @@ export default function NuevoIngresoContent() {
                           <p className="text-xs text-muted-foreground mt-0.5 truncate">{r.puesto}</p>
                           <p className="text-xs text-muted-foreground">{r.departamento}</p>
                         </div>
-                          <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md shadow-sm ${r.rg_rec_048 === 'Entregado'
+                          <div className={`shrink-0 inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md ${r.rg_rec_048 === 'Entregado'
                             ? 'bg-success text-success-foreground'
                             : rgUrgente
                               ? 'bg-destructive text-destructive-foreground'
@@ -422,7 +422,7 @@ export default function NuevoIngresoContent() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md shadow-sm ${r.rg_rec_048 === 'Entregado'
+                            <div className={`inline-flex flex-col items-center gap-0.5 text-xs font-medium px-2 py-1 rounded-md ${r.rg_rec_048 === 'Entregado'
                               ? 'bg-success text-success-foreground'
                               : rgUrgente
                                 ? 'bg-destructive text-destructive-foreground'

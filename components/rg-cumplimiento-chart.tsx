@@ -25,7 +25,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   const d = payload[0]?.payload
   const cumple = d.pct >= META
   return (
-    <div className="bg-card border rounded-lg shadow-lg p-3 text-sm min-w-[180px]">
+    <div className="min-w-[180px] rounded-md border bg-popover p-3 text-sm shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
       <p className="font-semibold text-foreground mb-1 truncate">{label}</p>
       <div className="flex items-center justify-between gap-4 text-muted-foreground">
         <span>Entregados</span><span className="font-bold text-success">{d.entregados}</span>

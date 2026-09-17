@@ -25,9 +25,7 @@ import { AuthForm } from "@/components/auth-form"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
-  "blue", "indigo", "purple", "violet",
-  "rose", "pink", "orange", "amber",
-  "green", "teal", "cyan", "slate", "monochrome"
+  "monochrome", "blue", "violet", "pink", "magenta", "cyan",
 ]
 
 type Tab = "profile" | "appearance" | "developer"
@@ -110,7 +108,7 @@ function SettingGroup({
             background: "hsl(var(--muted) / 0.5)",
           }}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest"
+          <p className="font-mono text-xs font-medium uppercase tracking-normal"
             style={{ color: "hsl(var(--muted-foreground))" }}>
             {title}
           </p>
@@ -367,14 +365,14 @@ function AppearanceTab() {
                   aria-pressed={selected}
                   onClick={() => setTheme(value)}
                   className={cn(
-                    "flex flex-col items-center gap-2 py-3 px-2 rounded-lg border transition-all text-center",
+                    "flex flex-col items-center gap-2 rounded-md border px-2 py-3 text-center transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selected
                       ? "border-primary bg-primary/10"
                       : "border-border hover:bg-accent/40"
                   )}
                 >
-                  <div className={cn("p-2 rounded-full shadow-sm", iconBg)}>
+                  <div className={cn("rounded-md p-2", iconBg)}>
                     <Icon className={cn("h-5 w-5", iconFg)} />
                   </div>
                   <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground))" }}>{label}</span>
@@ -391,10 +389,13 @@ function AppearanceTab() {
       {/* Accent */}
       <SettingGroup title="Color de acento">
         <div className="py-3 space-y-3">
-          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {ALL_ACCENTS.map((name) => {
-              const { primaryLight, primaryDark, label } = ACCENT_COLOR_MAP[name]
+              const { primaryLight, primaryDark, primaryForeground, primaryForegroundDark, label } = ACCENT_COLOR_MAP[name]
               const swatchColor = resolvedTheme === "dark" ? primaryDark : primaryLight
+              const checkColor = resolvedTheme === "dark" && primaryForegroundDark
+                ? primaryForegroundDark
+                : primaryForeground
               return (
                 <TooltipProvider key={name}>
                   <Tooltip>
@@ -404,16 +405,18 @@ function AppearanceTab() {
                         aria-pressed={accentColor === name}
                         aria-label={`Acento ${label}`}
                         className={cn(
-                          "h-8 w-full rounded-lg border-2 flex items-center justify-center transition-all",
+                          "flex h-8 w-full items-center justify-center rounded-md border-2 transition-colors",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           accentColor === name
-                            ? "border-foreground scale-110 shadow-md"
-                            : "border-transparent hover:scale-105 hover:shadow-sm",
+                            ? "border-foreground"
+                            : "border-transparent hover:border-border",
                         )}
                         style={{ backgroundColor: `hsl(${swatchColor})` }}
                         onClick={() => setAccentColor(name)}
                       >
-                        {accentColor === name && <Check className={name === "monochrome" && resolvedTheme === "dark" ? "h-3.5 w-3.5 text-black" : "h-3.5 w-3.5 text-white drop-shadow"} />}
+                        {accentColor === name && (
+                          <Check className="h-3.5 w-3.5" style={{ color: `hsl(${checkColor})` }} />
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent><p>{label}</p></TooltipContent>
@@ -423,7 +426,7 @@ function AppearanceTab() {
             })}
           </div>
           <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Afecta botones, enlaces y elementos interactivos.
+            Paleta de acentos del sistema. Afecta botones, enlaces, foco y elementos interactivos.
           </p>
         </div>
       </SettingGroup>

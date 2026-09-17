@@ -284,18 +284,18 @@ function SummaryCards({ rows }: { rows: EvalRow[] }) {
   const sinFecha   = rows.filter(r => !r.fecha_revision).length
 
   const items = [
-    { label: "Total",         value: rows.length, color: "text-primary-foreground",     labelColor: "text-primary-foreground/90",       bg: "bg-primary shadow-sm" },
-    { label: "Reprobados",    value: reprobados,  color: "text-destructive-foreground", labelColor: "text-destructive-foreground/90",   bg: "bg-destructive shadow-sm" },
-    { label: "Vencidos",      value: vencidos,    color: "text-destructive-foreground", labelColor: "text-destructive-foreground/90",   bg: "bg-destructive shadow-sm" },
-    { label: "Próximos 14 d", value: proximos,    color: "text-warning-foreground",     labelColor: "text-warning-foreground/90",       bg: "bg-warning shadow-sm" },
-    { label: "Sin fecha",     value: sinFecha,    color: "text-secondary-foreground",   labelColor: "text-secondary-foreground/90",     bg: "bg-secondary shadow-sm" },
+    { label: "Total",         value: rows.length, color: "text-primary" },
+    { label: "Reprobados",    value: reprobados,  color: "text-destructive" },
+    { label: "Vencidos",      value: vencidos,    color: "text-destructive" },
+    { label: "Próximos 14 d", value: proximos,    color: "text-warning" },
+    { label: "Sin fecha",     value: sinFecha,    color: "text-muted-foreground" },
   ]
 
   return (
     <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {items.map(({ label, value, color, labelColor, bg }) => (
-        <div key={label} className={`rounded-md p-3 ${bg} flex flex-col gap-1`}>
-          <dt className={`text-xs ${labelColor}`}>{label}</dt>
+      {items.map(({ label, value, color }) => (
+        <div key={label} className="flex flex-col gap-1 rounded-md border border-border bg-card p-3">
+          <dt className="text-xs text-muted-foreground">{label}</dt>
           <dd className={`text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
         </div>
       ))}
@@ -440,10 +440,10 @@ export default function DesempenoSeguimiento() {
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Header */}
-      <Card className="bg-gradient-to-br from-destructive/5 to-warning/5 border-destructive/20">
+      <Card className="border-destructive/20">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-destructive text-destructive-foreground shadow-sm">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-destructive/20 bg-destructive/10 text-destructive">
               <TrendingDown size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">

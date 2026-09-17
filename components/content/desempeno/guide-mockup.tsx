@@ -99,7 +99,7 @@ function PrintPreview() {
       <div className="flex justify-end">
         <span className={cn(mockupStyles.action, mockupStyles.primary)}><Printer className="size-3.5" />{GUIDE_COPY.print}</span>
       </div>
-      <div className="mx-auto w-full max-w-64 space-y-3 rounded-md border bg-card p-4 shadow-sm">
+      <div className="mx-auto w-full max-w-64 space-y-3 rounded-md border bg-card p-4">
         <div className="flex items-center gap-2 border-b pb-2 text-primary">
           <FileCheck2 className="size-5 shrink-0" />
           <p className="text-xs font-semibold">{DESEMPENO.title}</p>

@@ -34,8 +34,9 @@ export function SonnerProvider() {
           toast: [
             "group flex w-full items-start gap-3.5",
             "rounded-md border border-border",
-            "bg-card text-card-foreground shadow-lg",
-            "px-4 py-3.5 transition-all",
+            "bg-card text-card-foreground",
+            "shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]",
+            "px-4 py-3.5 transition-colors",
           ].join(" "),
           title: "text-sm font-semibold tracking-tight text-foreground",
           description: "text-xs text-muted-foreground leading-relaxed mt-0.5",
@@ -56,18 +57,16 @@ export function SonnerProvider() {
             "bg-card text-muted-foreground",
             "transition-colors hover:bg-muted hover:text-foreground",
           ].join(" "),
-          // Variantes semánticas: fondo sólido del token + foreground del token.
-          // El prefijo ! sobrescribe los estilos inline de Sonner (requisito de
-          // su API, no un hack). La descripción hereda el foreground del token
-          // vía [data-description] para mantener contraste AA.
+          // Semantic color stays on the hairline and icon; the notification
+          // surface remains neutral to avoid large saturated blocks.
           success:
-            "!bg-success !text-success-foreground !border-success/60 [&>[data-icon]]:text-success-foreground [&_[data-description]]:!text-success-foreground/80",
+            "!bg-card !text-card-foreground !border-success/40 [&>[data-icon]]:text-success [&_[data-description]]:!text-muted-foreground",
           error:
-            "!bg-destructive !text-destructive-foreground !border-destructive/60 [&>[data-icon]]:text-destructive-foreground [&_[data-description]]:!text-destructive-foreground/80",
+            "!bg-card !text-card-foreground !border-destructive/40 [&>[data-icon]]:text-destructive [&_[data-description]]:!text-muted-foreground",
           warning:
-            "!bg-warning !text-warning-foreground !border-warning/60 [&>[data-icon]]:text-warning-foreground [&_[data-description]]:!text-warning-foreground/80",
+            "!bg-card !text-card-foreground !border-warning/50 [&>[data-icon]]:text-warning [&_[data-description]]:!text-muted-foreground",
           info:
-            "!bg-info !text-info-foreground !border-info/60 [&>[data-icon]]:text-info-foreground [&_[data-description]]:!text-info-foreground/80",
+            "!bg-card !text-card-foreground !border-info/40 [&>[data-icon]]:text-info [&_[data-description]]:!text-muted-foreground",
         },
       }}
     />

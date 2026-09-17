@@ -36,7 +36,7 @@ export function UpdateBanner() {
           transition={{ duration: 0.2 }}
           className="fixed inset-x-4 bottom-4 z-50 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm"
         >
-          <div className="rounded-md border border-border/60 bg-card p-4 shadow-lg">
+          <div className="rounded-md border border-border bg-card p-4 shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
             <div className="flex items-start gap-3">
               {/* Icon tile */}
               <span className="grid size-10 shrink-0 place-items-center rounded-md border border-primary/25 bg-primary/10 text-primary">

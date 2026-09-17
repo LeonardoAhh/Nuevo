@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Fraunces, JetBrains_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from "next/font/google"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
@@ -17,23 +17,18 @@ import {
   OS_THEME_COLOR_FALLBACK as THEME_FALLBACK,
 } from "@/lib/theme/constants"
 
-// Editorial serif + technical mono shared by the login hero and
-// the post-login transition. Exposed as CSS variables so any
-// consumer can use `font-serif` / `font-mono` Tailwind classes
-// instead of hard-coding font-family strings.
-const fontSerif = Fraunces({
+// Geist is the single app type system. Existing `font-serif` consumers are
+// intentionally mapped to Geist Sans in Tailwind while they are migrated.
+const fontSans = Geist({
   subsets: ["latin"],
-  variable: "--font-serif",
+  variable: "--font-sans",
   display: "swap",
-  weight: ["300", "600", "800"],
-  style: ["normal", "italic"],
 })
 
-const fontMono = JetBrains_Mono({
+const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
-  weight: ["400", "500"],
 })
 
 export const viewport: Viewport = {
@@ -91,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body
         suppressHydrationWarning
-        className={`${fontSerif.variable} ${fontMono.variable}`}
+        className={`${fontSans.variable} ${fontMono.variable} font-sans`}
       >
         {/* Client-side viewport metrics (--initial/visual-viewport-height) */}
         <ViewportFix />

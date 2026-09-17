@@ -59,7 +59,7 @@ function StatCard({
         <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{label}</p>
+        <p className="truncate font-mono text-[11px] uppercase text-muted-foreground">{label}</p>
         <p className={cn("text-lg font-semibold leading-tight tabular-nums", toneClasses[tone].value)}>
           {value}
         </p>
@@ -355,7 +355,7 @@ export default function RecontratacionLft() {
                 placeholder="Nombre, número, puesto…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={cn("pl-9 h-9 bg-muted/50 text-sm", search && "pr-9")}
+                className={cn("h-9 bg-card pl-9 text-sm", search && "pr-9")}
                 data-testid="lft-search-input"
               />
               {search && (
@@ -375,7 +375,7 @@ export default function RecontratacionLft() {
               onValueChange={(v) => setFilterOrigen(v as "all" | LftOrigen)}
             >
               <SelectTrigger
-                className="h-9 min-w-[140px] w-auto bg-muted/50 text-sm gap-1.5"
+                className="h-9 min-w-[140px] w-auto bg-card text-sm gap-1.5"
                 aria-label="Filtrar por origen"
                 data-testid="lft-filter-origen"
               >
@@ -391,7 +391,7 @@ export default function RecontratacionLft() {
 
             <Select value={filterDept} onValueChange={setFilterDept}>
               <SelectTrigger
-                className="h-9 min-w-[150px] w-auto bg-muted/50 text-sm gap-1.5"
+                className="h-9 min-w-[150px] w-auto bg-card text-sm gap-1.5"
                 aria-label="Filtrar por departamento"
                 data-testid="lft-filter-depto"
               >

@@ -27,7 +27,7 @@ export function MaintenanceLocalIndicator() {
             type="button"
             variant="outline"
             size="icon"
-            className="size-11 rounded-full bg-card text-muted-foreground shadow-sm hover:text-foreground"
+            className="size-11 rounded-full bg-card text-muted-foreground hover:text-foreground"
             aria-label={COPY.label}
             title={COPY.title}
           >

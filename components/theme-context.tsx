@@ -134,6 +134,7 @@ function isColorLight(hex?: string): boolean {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [initialized, setInitialized] = useState(false)
   const [theme, setTheme] = useState<Theme>("light")
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
   const [accentColor, setAccentColorRaw] = useState<AccentColor>("blue")
@@ -161,11 +162,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const storedReducedMotion = localStorage.getItem(THEME_STORAGE_KEYS.reducedMotion)
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-    if (storedTheme && (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system")) {
-      setTheme(storedTheme)
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark")
-    }
+    const nextTheme: Theme = storedTheme && (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system")
+      ? storedTheme
+      : window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+    setTheme(nextTheme)
+    setResolvedTheme(resolveTheme(nextTheme))
 
     if (storedAccentColor && storedAccentColor in ACCENT_COLOR_MAP) setAccentColor(storedAccentColor)
     if (storedFontSize && storedFontSize in FONT_SIZE_MAP) setFontSize(storedFontSize)
@@ -173,10 +176,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const rm = storedReducedMotion !== null ? storedReducedMotion === "true" : prefersReducedMotion
     setReducedMotion(rm)
-  }, [])
+    setInitialized(true)
+  }, [resolveTheme, setAccentColor])
 
   // Apply dark/light class + subscribe to system changes when theme="system"
   useEffect(() => {
+    if (!initialized) return
+
     const apply = (resolved: "light" | "dark") => {
       setResolvedTheme(resolved)
       if (resolved === "dark") {
@@ -196,16 +202,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mq.addEventListener("change", handler)
       return () => mq.removeEventListener("change", handler)
     }
-  }, [theme, resolveTheme])
+  }, [initialized, theme, resolveTheme])
 
   // Apply font size via CSS variable
   useEffect(() => {
+    if (!initialized) return
     document.documentElement.style.setProperty("--font-base-size", FONT_SIZE_MAP[fontSize])
     localStorage.setItem(THEME_STORAGE_KEYS.fontSize, fontSize)
-  }, [fontSize])
+  }, [fontSize, initialized])
 
   // Apply density via CSS variable + class
   useEffect(() => {
+    if (!initialized) return
     document.documentElement.style.setProperty("--density-scale", DENSITY_SCALE_MAP[density])
     if (density === "compact") {
       document.documentElement.classList.add("density-compact")
@@ -213,27 +221,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove("density-compact")
     }
     localStorage.setItem(THEME_STORAGE_KEYS.density, density)
-  }, [density])
+  }, [density, initialized])
 
   // Apply reduced motion
   useEffect(() => {
+    if (!initialized) return
     if (reducedMotion) {
       document.documentElement.classList.add("reduce-motion")
     } else {
       document.documentElement.classList.remove("reduce-motion")
     }
     localStorage.setItem(THEME_STORAGE_KEYS.reducedMotion, String(reducedMotion))
-  }, [reducedMotion])
+  }, [reducedMotion, initialized])
 
   // Update CSS variables when accent color changes
   useEffect(() => {
+    if (!initialized) return
     const colors = ACCENT_COLOR_MAP[accentColor] ?? ACCENT_COLOR_MAP.blue
     const primaryColor = resolvedTheme === "dark" ? colors.primaryDark : colors.primaryLight
     const primaryFgColor = (resolvedTheme === "dark" && colors.primaryForegroundDark) ? colors.primaryForegroundDark : colors.primaryForeground
     document.documentElement.style.setProperty("--primary", primaryColor)
     document.documentElement.style.setProperty("--primary-foreground", primaryFgColor)
+    document.documentElement.style.setProperty("--ring", primaryColor)
     localStorage.setItem(THEME_STORAGE_KEYS.accentColor, accentColor)
-  }, [accentColor, resolvedTheme])
+  }, [accentColor, initialized, resolvedTheme])
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light")

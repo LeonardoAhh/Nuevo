@@ -49,9 +49,9 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
     const isVencida = label.toLowerCase().includes('vencida')
     const isProxima = label.toLowerCase().includes('próxima') || label.toLowerCase().includes('proxima')
     
-    const solidBg = isVencida ? 'bg-destructive text-destructive-foreground' :
-                    isProxima ? 'bg-warning text-warning-foreground' :
-                    'bg-primary text-primary-foreground'
+    const solidBg = isVencida ? 'border border-destructive/20 bg-destructive/10 text-destructive' :
+                    isProxima ? 'border border-warning/30 bg-warning/10 text-warning' :
+                    'border border-primary/20 bg-primary/10 text-primary'
 
     return (
         <button
@@ -62,7 +62,7 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
             disabled={loading || valor === 0}
             aria-label={`${label}: ${valor}`}
             className={`
-        group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-md shadow-sm transition-all text-left
+        group flex items-center gap-2.5 rounded-md p-2.5 text-left transition-colors sm:p-3
         ${valor > 0 && !loading
                     ? `cursor-pointer hover:opacity-90 ${solidBg}`
                     : "cursor-default bg-muted text-muted-foreground opacity-75"
@@ -88,8 +88,8 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
 
 function SeccionHeader({ label }: { label: string }) {
     return (
-        <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+        <div className="mb-2 flex items-center gap-1.5">
+            <span className="font-mono text-xs font-medium uppercase text-primary">
                 {label}
             </span>
         </div>
@@ -115,7 +115,7 @@ export function Seccion({
     umbrales, onVencidas, onPorVencer, loading,
 }: SeccionProps) {
     return (
-        <div className="rounded-md border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-md border border-border bg-card p-4">
             <SeccionHeader label={label} />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                 <Metrica
@@ -235,12 +235,12 @@ export function CalificacionModal({
             className="flex items-center justify-center p-4 calificacion-captura-modal-portal"
         >
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
+                className="absolute inset-0 bg-black/50 animate-in fade-in-0"
                 onClick={deferredClose}
                 aria-hidden
             />
             <div
-                className="relative z-10 w-full max-w-sm sm:max-w-md rounded-xl border bg-card shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+                className="relative z-10 w-full max-w-sm overflow-hidden rounded-xl border bg-card shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)] animate-in fade-in-0 zoom-in-95 sm:max-w-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 {item && (
@@ -339,7 +339,7 @@ export function FilaEval({ item, evalNum, colorDias, colorBadge, colorBorde, bad
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-md border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+        <div className={`flex flex-col gap-2 rounded-md border border-border border-l-4 bg-card p-3.5 transition-colors ${colorBorde}`}>
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
@@ -395,7 +395,7 @@ export function FilaFecha({ item, colorBadge, colorDias, colorBorde, onEntregado
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-md border border-border/60 border-l-4 bg-card p-3.5 shadow-sm transition-colors ${colorBorde}`}>
+        <div className={`flex flex-col gap-2 rounded-md border border-border border-l-4 bg-card p-3.5 transition-colors ${colorBorde}`}>
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>

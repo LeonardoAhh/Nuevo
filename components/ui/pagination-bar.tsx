@@ -21,7 +21,7 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
           size="sm"
           disabled={safePage <= 1}
           onClick={() => onPageChange(safePage - 1)}
-          className="h-10 w-10 p-0 sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
+          className="h-10 w-10 rounded-md border-border p-0 shadow-none sm:h-8 sm:w-8"
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -42,7 +42,7 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
                   variant={item === safePage ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onPageChange(item)}
-                  className="h-10 w-10 p-0 text-xs sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
+                  className="h-10 w-10 rounded-md border-border p-0 text-xs shadow-none sm:h-8 sm:w-8"
                   aria-label={`Ir a la página ${item}`}
                   aria-current={item === safePage ? 'page' : undefined}
                 >
@@ -55,7 +55,7 @@ export function PaginationBar({ currentPage, totalPages, onPageChange }: Paginat
           size="sm"
           disabled={safePage >= totalPages}
           onClick={() => onPageChange(safePage + 1)}
-          className="h-10 w-10 p-0 sm:h-8 sm:w-8 rounded-md border-border/60 shadow-none"
+          className="h-10 w-10 rounded-md border-border p-0 shadow-none sm:h-8 sm:w-8"
           aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />

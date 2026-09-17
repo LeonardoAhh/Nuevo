@@ -58,7 +58,7 @@ export function CapBulkImportDialog({
 
       <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-6 bg-surface-card">
           {success !== null && (
-            <Alert className="border-success/30 bg-success/10 mb-6 shadow-sm">
+            <Alert className="mb-6 border-success/30 bg-success/10">
               <CheckCircle2 className="h-5 w-5 text-success" />
               <AlertDescription className="text-success font-medium text-base ml-2">
                 ¡{success} registros importados correctamente!
@@ -67,7 +67,7 @@ export function CapBulkImportDialog({
           )}
 
           {error && (
-            <Alert variant="destructive" className="mb-6 shadow-sm">
+            <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-5 w-5" />
               <AlertDescription className="text-sm font-medium ml-2">{error}</AlertDescription>
             </Alert>
