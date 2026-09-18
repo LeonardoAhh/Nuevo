@@ -21,14 +21,14 @@ export type Density = "comfortable" | "compact"
 
 export const ACCENT_COLOR_MAP: Record<
   AccentColor,
-  { primaryLight: string; primaryDark: string; primaryForeground: string; primaryForegroundDark?: string; label: string }
+  { accentLight: string; accentDark: string; accentTextLight: string; accentTextDark: string; accentForeground: string; accentForegroundDark?: string; label: string }
 > = {
-  blue: { primaryLight: "212 100% 48%", primaryDark: "212 100% 48%", primaryForeground: "0 0% 100%", label: "Azul" },
-  violet: { primaryLight: "270 67% 47%", primaryDark: "270 67% 47%", primaryForeground: "0 0% 100%", label: "Violeta" },
-  pink: { primaryLight: "330 100% 50%", primaryDark: "330 100% 50%", primaryForeground: "0 0% 9%", label: "Rosa" },
-  magenta: { primaryLight: "336 82% 57%", primaryDark: "336 82% 57%", primaryForeground: "0 0% 9%", label: "Magenta" },
-  cyan: { primaryLight: "167 72% 60%", primaryDark: "167 72% 60%", primaryForeground: "0 0% 9%", label: "Cian" },
-  monochrome: { primaryLight: "0 0% 9%", primaryDark: "0 0% 100%", primaryForeground: "0 0% 100%", primaryForegroundDark: "0 0% 9%", label: "Tinta" },
+  blue: { accentLight: "212.35 100% 47.65%", accentDark: "212.35 100% 47.65%", accentTextLight: "212.02 100% 43.73%", accentTextDark: "212.2 100% 59.8%", accentForeground: "0 0% 100%", label: "Azul" },
+  violet: { accentLight: "270 66.94% 47.45%", accentDark: "270 66.94% 47.45%", accentTextLight: "270 66.94% 47.45%", accentTextDark: "262.39 89.33% 70.59%", accentForeground: "0 0% 100%", label: "Violeta" },
+  pink: { accentLight: "329.88 100% 50%", accentDark: "329.88 100% 50%", accentTextLight: "330 100% 38.82%", accentTextDark: "330 100% 65.1%", accentForeground: "0 0% 9%", label: "Rosa" },
+  magenta: { accentLight: "335.8 81.9% 56.67%", accentDark: "335.8 81.9% 56.67%", accentTextLight: "336.44 70.56% 45.29%", accentTextDark: "336.27 81.71% 67.84%", accentForeground: "0 0% 9%", label: "Magenta" },
+  cyan: { accentLight: "166.53 72.41% 60.2%", accentDark: "166.53 72.41% 60.2%", accentTextLight: "169.92 88.15% 26.47%", accentTextDark: "166.53 72.41% 60.2%", accentForeground: "0 0% 9%", label: "Cian" },
+  monochrome: { accentLight: "0 0% 9.02%", accentDark: "0 0% 100%", accentTextLight: "0 0% 9.02%", accentTextDark: "0 0% 100%", accentForeground: "0 0% 100%", accentForegroundDark: "0 0% 9%", label: "Tinta" },
 }
 
 export const FONT_SIZE_MAP: Record<FontSize, string> = {
@@ -103,9 +103,10 @@ export function buildThemeBootstrapScript(): string {
   if(dn==="compact"){d.classList.add("density-compact");d.style.setProperty("--density-scale","${compactScale}");}
   var a=localStorage.getItem(k.accentColor);
   if(a&&c[a]){
-    d.style.setProperty("--primary", isDark ? c[a].primaryDark : c[a].primaryLight);
-    d.style.setProperty("--primary-foreground", (isDark && c[a].primaryForegroundDark) ? c[a].primaryForegroundDark : c[a].primaryForeground);
-    d.style.setProperty("--ring", isDark ? c[a].primaryDark : c[a].primaryLight);
+    d.style.setProperty("--brand-accent", isDark ? c[a].accentDark : c[a].accentLight);
+    d.style.setProperty("--brand-accent-text", isDark ? c[a].accentTextDark : c[a].accentTextLight);
+    d.style.setProperty("--brand-accent-foreground", (isDark && c[a].accentForegroundDark) ? c[a].accentForegroundDark : c[a].accentForeground);
+    d.style.setProperty("--ring", isDark ? c[a].accentDark : c[a].accentLight);
   }
   if(localStorage.getItem(k.reducedMotion)==="true")d.classList.add("reduce-motion");
 }catch(e){}})();`

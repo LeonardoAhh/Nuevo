@@ -1,15 +1,10 @@
 "use client"
 
-import { useCallback, useMemo, useState, useSyncExternalStore } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsLeft, ChevronsRight, X } from "lucide-react"
+import { X } from "lucide-react"
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { NAV_SECTIONS, findActiveLeaf, isActiveRoute, type NavSection } from "@/lib/navigation"
 import { useRole } from "@/lib/hooks"
@@ -21,22 +16,10 @@ import { useIsMobile } from "@/components/ui/responsive-shell"
 /** Matches the `md:` breakpoint used by Dashboard's flex layout. */
 const MOBILE_BREAKPOINT = 768
 
-const SIDEBAR_STORAGE_KEYS = {
-  expanded: "sidebar_expanded",
-} as const
-
-/** Custom event fired after toggling the persisted collapse preference. */
-const EXPANDED_CHANGE_EVENT = "vtx:sidebar-expanded-change"
-
-const WIDTH = {
-  rail: "w-16",
-  full: "w-60",
-} as const
-
 // Traditional navigation language: restrained backgrounds, compact radii and
 // clear hierarchy without floating surfaces or shadows.
 const rowIdle = "text-muted-foreground hover:bg-accent hover:text-foreground"
-const rowActiveSolid = "bg-primary/10 text-primary font-medium"
+const rowActiveSolid = "bg-brand/10 text-brand-text font-medium"
 
 // ─── Hook (public API consumed by Dashboard) ──────────────────────────────────
 
@@ -74,53 +57,19 @@ function useVisibleSections(isEvaluador: boolean): NavSection[] {
   }, [isEvaluador])
 }
 
-/**
- * Collapse preference persisted in localStorage, exposed as an external
- * store so the first client render already reflects the saved value.
- * Collapsed is stored as "false"; absence means expanded (default).
- */
-function useExpandedPreference(): [boolean, () => void] {
-  const key = SIDEBAR_STORAGE_KEYS.expanded
-
-  const subscribe = useCallback((onStoreChange: () => void) => {
-    window.addEventListener(EXPANDED_CHANGE_EVENT, onStoreChange)
-    return () => window.removeEventListener(EXPANDED_CHANGE_EVENT, onStoreChange)
-  }, [])
-
-  const isExpanded = useSyncExternalStore(
-    subscribe,
-    () => window.localStorage.getItem(key) !== "false",
-    () => true,
-  )
-
-  const toggle = useCallback(() => {
-    const next = window.localStorage.getItem(key) === "false"
-    window.localStorage.setItem(key, String(next))
-    window.dispatchEvent(new Event(EXPANDED_CHANGE_EVENT))
-  }, [key])
-
-  return [isExpanded, toggle]
-}
-
 // ─── Shared pieces ────────────────────────────────────────────────────────────
 
-function BrandMark({ compact = false }: { compact?: boolean }) {
+function BrandMark() {
   return (
     <Link
       href="/"
       aria-label="Inicio — VIÑOPLASTIC"
       className="group flex items-center rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
     >
-      {compact ? (
-        <span className="select-none text-sm font-semibold tracking-tight text-foreground">
-          VP
-        </span>
-      ) : (
-        <span className="select-none overflow-hidden whitespace-nowrap text-[17px] font-medium tracking-tight">
-          <span className="text-foreground">VIÑO</span>
-          <span className="text-muted-foreground ml-0.5">PLASTIC</span>
-        </span>
-      )}
+      <span className="select-none overflow-hidden whitespace-nowrap text-[17px] font-medium tracking-tight">
+        <span className="text-foreground">VIÑO</span>
+        <span className="ml-0.5 text-muted-foreground">PLASTIC</span>
+      </span>
     </Link>
   )
 }
@@ -161,7 +110,7 @@ function NavTree({
                   <span
                     className={cn(
                       "grid size-6 shrink-0 place-items-center rounded-md",
-                      active ? "text-primary" : "text-muted-foreground",
+                      active ? "text-brand-text" : "text-muted-foreground",
                     )}
                   >
                     <section.icon size={16} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
@@ -198,7 +147,7 @@ function NavTree({
                           aria-hidden="true"
                           className={cn(
                             "size-1.5 shrink-0 rounded-[2px]",
-                            active ? "bg-primary" : "bg-border",
+                            active ? "bg-brand" : "bg-border",
                           )}
                         />
                         <span className="truncate">{leaf.label}</span>
@@ -212,101 +161,6 @@ function NavTree({
         })}
       </ul>
     </nav>
-  )
-}
-
-// ─── Desktop · collapsed rail ─────────────────────────────────────────────────
-
-function RailSection({
-  section,
-  pathname,
-}: {
-  section: NavSection
-  pathname: string
-}) {
-  // Direct link → icon tile with tooltip.
-  if (!section.items?.length && section.href) {
-    const active = isActiveRoute(pathname, section.href)
-    return (
-      <li className="flex justify-center">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              href={section.href}
-              aria-current={active ? "page" : undefined}
-              aria-label={section.label}
-              className={cn(
-                "grid size-11 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? rowActiveSolid : rowIdle,
-              )}
-            >
-              <section.icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="font-medium">
-            {section.label}
-          </TooltipContent>
-        </Tooltip>
-      </li>
-    )
-  }
-
-  // Grouped section → icon tile with flyout menu.
-  const activeLeaf = findActiveLeaf(section.items, pathname)
-  const active = Boolean(activeLeaf)
-
-  return (
-    <li className="flex justify-center">
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={`${section.label} — abrir submenú`}
-                aria-haspopup="menu"
-                className={cn(
-                  "relative grid size-11 place-items-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  active
-                    ? "bg-primary/10 text-primary font-medium"
-                    : rowIdle,
-                )}
-              >
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -left-2 h-6 w-0.5 bg-primary"
-                  />
-                )}
-                <section.icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
-              </button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          {!active && (
-            <TooltipContent side="right" className="font-medium">
-              {section.label}
-            </TooltipContent>
-          )}
-        </Tooltip>
-
-        <DropdownMenuContent side="right" align="start" sideOffset={12} className="w-56 p-1.5">
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {section.label}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator className="mx-1" />
-          {section.items?.map((leaf) => {
-            const leafActive = leaf.href === activeLeaf?.href
-            return (
-              <DropdownMenuItem key={leaf.href} asChild className="cursor-pointer rounded-lg">
-                <Link href={leaf.href} aria-current={leafActive ? "page" : undefined}>
-                  {leaf.label}
-                </Link>
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </li>
   )
 }
 
@@ -328,7 +182,6 @@ export default function Sidebar({
   const pathname = usePathname()
   const sections = useVisibleSections(isEvaluador)
   const closeMobile = useCallback(() => setShowMobileSidebar(false), [setShowMobileSidebar])
-  const [isExpanded, toggleExpanded] = useExpandedPreference()
 
   const isDesktop = !isMobileView
 
@@ -353,7 +206,7 @@ export default function Sidebar({
                 Navegación entre las secciones de la aplicación
               </DrawerDescription>
 
-              <div className="flex h-[56px] shrink-0 items-center justify-between border-b border-border/60 pl-4 pr-2">
+              <div className="flex h-[56px] shrink-0 items-center justify-between pl-4 pr-2">
                 <BrandMark />
                 <button
                   type="button"
@@ -379,70 +232,15 @@ export default function Sidebar({
 
       {/* ── Desktop sidebar ── */}
       {isDesktop && (
-        <TooltipProvider delayDuration={0}>
-          <aside
-            aria-label="Menú principal"
-            className={cn(
-              "flex shrink-0 flex-col overflow-hidden bg-background",
-              "transition-[width] duration-300 ease-in-out",
-              isExpanded ? WIDTH.full : WIDTH.rail,
-            )}
-          >
-            {/* Brand */}
-            <div className={cn("flex h-[60px] shrink-0 items-center border-b border-border px-3", !isExpanded && "justify-center px-0")}>
-              <BrandMark compact={!isExpanded} />
-            </div>
-
-            {/* Nav tree */}
-            {isExpanded ? (
-              <NavTree sections={sections} pathname={pathname} />
-            ) : (
-              <nav aria-label="Secciones" className="flex-1 space-y-2 overflow-x-hidden overflow-y-auto px-2 pb-4 pt-1 scrollbar-thin">
-                <ul className="space-y-1.5">
-                  {sections.map((section) => (
-                    <RailSection key={section.label} section={section} pathname={pathname} />
-                  ))}
-                </ul>
-              </nav>
-            )}
-
-            {/* Footer · collapse toggle (text + icon) */}
-            <div
-              className={cn(
-                "shrink-0 border-t border-border/60",
-                isExpanded ? "p-3" : "px-2 py-3",
-              )}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={toggleExpanded}
-                    aria-expanded={isExpanded}
-                    aria-label={isExpanded ? "Colapsar menú lateral" : "Expandir menú lateral"}
-                    className={cn(
-                      rowIdle,
-                      "flex h-10 w-full cursor-pointer items-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      isExpanded ? "gap-3 px-3" : "justify-center",
-                    )}
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronsLeft size={18} aria-hidden="true" />
-                        Colapsar
-                      </>
-                    ) : (
-                      <ChevronsRight size={18} aria-hidden="true" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                {!isExpanded && (
-                  <TooltipContent side="right">Expandir</TooltipContent>
-                )}
-              </Tooltip>
-            </div>
-          </aside>
-        </TooltipProvider>
+        <aside
+          aria-label="Menú principal"
+          className="my-2 flex w-60 shrink-0 flex-col overflow-hidden bg-background"
+        >
+          <div className="flex h-[60px] shrink-0 items-center px-3">
+            <BrandMark />
+          </div>
+          <NavTree sections={sections} pathname={pathname} />
+        </aside>
       )}
     </>
   )

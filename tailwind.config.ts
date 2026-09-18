@@ -48,6 +48,11 @@ const config: Config = {
           DEFAULT:    "hsl(var(--primary) / <alpha-value>)",
           foreground: "hsl(var(--primary-foreground))",
         },
+        brand: {
+          DEFAULT:    "hsl(var(--brand-accent) / <alpha-value>)",
+          text:       "hsl(var(--brand-accent-text) / <alpha-value>)",
+          foreground: "hsl(var(--brand-accent-foreground))",
+        },
         secondary: {
           DEFAULT:    "hsl(var(--secondary) / <alpha-value>)",
           foreground: "hsl(var(--secondary-foreground))",

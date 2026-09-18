@@ -238,11 +238,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initialized) return
     const colors = ACCENT_COLOR_MAP[accentColor] ?? ACCENT_COLOR_MAP.blue
-    const primaryColor = resolvedTheme === "dark" ? colors.primaryDark : colors.primaryLight
-    const primaryFgColor = (resolvedTheme === "dark" && colors.primaryForegroundDark) ? colors.primaryForegroundDark : colors.primaryForeground
-    document.documentElement.style.setProperty("--primary", primaryColor)
-    document.documentElement.style.setProperty("--primary-foreground", primaryFgColor)
-    document.documentElement.style.setProperty("--ring", primaryColor)
+    const accent = resolvedTheme === "dark" ? colors.accentDark : colors.accentLight
+    const accentText = resolvedTheme === "dark" ? colors.accentTextDark : colors.accentTextLight
+    const accentForeground = (resolvedTheme === "dark" && colors.accentForegroundDark) ? colors.accentForegroundDark : colors.accentForeground
+    // Clear legacy inline overrides from the previous implementation, where
+    // choosing an accent replaced the semantic primary button color.
+    document.documentElement.style.removeProperty("--primary")
+    document.documentElement.style.removeProperty("--primary-foreground")
+    document.documentElement.style.setProperty("--brand-accent", accent)
+    document.documentElement.style.setProperty("--brand-accent-text", accentText)
+    document.documentElement.style.setProperty("--brand-accent-foreground", accentForeground)
+    document.documentElement.style.setProperty("--ring", accent)
     localStorage.setItem(THEME_STORAGE_KEYS.accentColor, accentColor)
   }, [accentColor, initialized, resolvedTheme])
 

@@ -21,6 +21,7 @@ import { useUser, useProfile } from "@/lib/hooks"
 import { getRouteLabel } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import SignOutOverlay from "@/components/signout-overlay"
+import { WorkspaceContainer } from "@/components/ui/workspace-container"
 
 // ─── Theme options (single source for label + icon) ──────────────────────────
 
@@ -75,9 +76,9 @@ export default function Header({
 
       <header
         role="banner"
-        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-background"
+        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-card"
       >
-        <div className="flex h-full items-center gap-2 px-3 sm:px-5">
+        <WorkspaceContainer className="flex h-full items-center gap-2">
           {/* Hamburger — mobile only, when sidebar is closed */}
           {isMobileView && !showMobileSidebar && (
             <button
@@ -204,7 +205,7 @@ export default function Header({
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
-        </div>
+        </WorkspaceContainer>
       </header>
     </>
   )

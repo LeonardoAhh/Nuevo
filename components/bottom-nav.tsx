@@ -151,14 +151,14 @@ export default function BottomNav() {
               className={cn(
                 "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
                 moreActive
-                  ? "text-primary"
+                  ? "text-brand-text"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               {moreActive ? (
                 <motion.span
                   layoutId="bottom-nav-active"
-                  className="absolute inset-x-6 top-1 h-0.5 rounded-full bg-primary"
+                  className="absolute inset-x-6 top-1 h-0.5 rounded-full bg-brand"
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 />
               ) : null}
@@ -192,14 +192,14 @@ export default function BottomNav() {
                           className={cn(
                             "flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-colors",
                             active
-                              ? "border-primary/40 bg-primary/10 text-primary"
-                              : "border-border/60 bg-card text-foreground hover:border-primary/30 hover:bg-muted/40",
+                              ? "border-brand/40 bg-brand/10 text-brand-text"
+                              : "border-border/60 bg-card text-foreground hover:border-brand/30 hover:bg-muted/40",
                           )}
                         >
                           <span
                             className={cn(
                               "grid size-9 shrink-0 place-items-center rounded-lg",
-                              active ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground",
+                              active ? "bg-brand/15 text-brand-text" : "bg-muted/60 text-muted-foreground",
                             )}
                           >
                             <item.icon size={18} aria-hidden />
@@ -227,13 +227,13 @@ function TabLink({ item, active }: { item: NavItem; active: boolean }) {
         aria-current={active ? "page" : undefined}
         className={cn(
           "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
-          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          active ? "text-brand-text" : "text-muted-foreground hover:text-foreground",
         )}
       >
         {active ? (
           <motion.span
             layoutId="bottom-nav-active"
-            className="absolute inset-x-6 top-1 h-0.5 rounded-full bg-primary"
+            className="absolute inset-x-6 top-1 h-0.5 rounded-full bg-brand"
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
         ) : null}

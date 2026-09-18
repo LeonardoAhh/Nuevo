@@ -368,7 +368,7 @@ function AppearanceTab() {
                     "flex flex-col items-center gap-2 rounded-md border px-2 py-3 text-center transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selected
-                      ? "border-primary bg-primary/10"
+                      ? "border-brand bg-brand/10"
                       : "border-border hover:bg-accent/40"
                   )}
                 >
@@ -391,11 +391,11 @@ function AppearanceTab() {
         <div className="py-3 space-y-3">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {ALL_ACCENTS.map((name) => {
-              const { primaryLight, primaryDark, primaryForeground, primaryForegroundDark, label } = ACCENT_COLOR_MAP[name]
-              const swatchColor = resolvedTheme === "dark" ? primaryDark : primaryLight
-              const checkColor = resolvedTheme === "dark" && primaryForegroundDark
-                ? primaryForegroundDark
-                : primaryForeground
+              const { accentLight, accentDark, accentForeground, accentForegroundDark, label } = ACCENT_COLOR_MAP[name]
+              const swatchColor = resolvedTheme === "dark" ? accentDark : accentLight
+              const checkColor = resolvedTheme === "dark" && accentForegroundDark
+                ? accentForegroundDark
+                : accentForeground
               return (
                 <TooltipProvider key={name}>
                   <Tooltip>
@@ -426,7 +426,7 @@ function AppearanceTab() {
             })}
           </div>
           <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Paleta de acentos del sistema. Afecta botones, enlaces, foco y elementos interactivos.
+            Afecta la navegación activa, indicadores y foco. Los botones primarios conservan la tinta del sistema.
           </p>
         </div>
       </SettingGroup>
@@ -473,10 +473,13 @@ function AppearanceTab() {
             <Button size="sm" variant="outline" className="text-xs h-8">Secundario</Button>
             <Button size="sm" variant="ghost" className="text-xs h-8">Fantasma</Button>
           </div>
-          <div className="flex items-center gap-3">
-            <Switch id="preview-sw" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Switch id="preview-sw" defaultChecked />
             <Label htmlFor="preview-sw" className="text-xs">Interruptor</Label>
-            <Badge className="text-xs">Etiqueta</Badge>
+            <Badge className="text-xs">Tinta</Badge>
+            <span className="inline-flex items-center rounded-md border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand-text">
+              Acento
+            </span>
             <Badge variant="outline" className="text-xs">Contorno</Badge>
           </div>
         </div>
@@ -617,11 +620,11 @@ export default function SettingsContent() {
           background: hsl(var(--accent) / 0.6);
         }
         .settings-nav-item.active {
-          background: hsl(var(--primary) / 0.1);
-          color: hsl(var(--primary));
+          background: hsl(var(--brand-accent) / 0.1);
+          color: hsl(var(--brand-accent-text));
         }
         .settings-nav-item.active .nav-icon {
-          color: hsl(var(--primary));
+          color: hsl(var(--brand-accent-text));
         }
         .settings-nav-item:not(.active) .nav-icon {
           color: hsl(var(--muted-foreground));
@@ -662,7 +665,7 @@ export default function SettingsContent() {
                 </span>
                 {/* Chevron solo en desktop */}
                 {active && (
-                  <ChevronRight className="ml-auto h-3.5 w-3.5 hidden md:block shrink-0 opacity-60" style={{ color: "hsl(var(--primary))" }} />
+                  <ChevronRight className="ml-auto h-3.5 w-3.5 hidden md:block shrink-0 opacity-60" style={{ color: "hsl(var(--brand-accent-text))" }} />
                 )}
               </button>
             )

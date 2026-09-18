@@ -89,6 +89,9 @@ Geist Sans and Geist Mono are freely available (open-source, via Vercel / Google
 
 ### Grid & Container
 - Centered max-width container (~1200px) with comfortable gutters; the hero and CTA bands center their content.
+- **Authenticated workspace** (`{layout.workspace-max}` — 1440px): shared maximum width for the application header and main content. It gives data grids and three-column layouts more room without returning to a full-bleed canvas.
+- **Workspace gutters** (`{layout.workspace-gutter}`): 16px on mobile, 24px from tablet, and 32px from laptop upward. Header and main content must use the same gutter values and centered grid.
+- **Workspace frame** (`{components.workspace-frame}`): on desktop, the authenticated header and main content share one elevated-canvas panel (`{colors.canvas-elevated}`) with a 1px hairline, 12px radius, and an 8px outer inset on the top, right, and bottom. It has no shadow. The fixed-width sidebar remains on the base canvas and uses the same 8px vertical inset; it has no collapsible rail and no divider beneath the wordmark. On mobile, the frame becomes full-bleed with no outer border or radius.
 - Feature sections use 2-up, 3-up, and 4-up hairline-card grids that collapse toward 1-up on narrow widths.
 - The pricing page uses a multi-column tier grid; the customers page a logo / case-study grid.
 
