@@ -1,6 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, BookOpen, ChevronRight, Pencil, Trash2, UserPlus, Layers, Users, CheckCircle2, X, CalendarDays, FileWarning, MoreVertical, GraduationCap } from "lucide-react"
+import Link from "next/link"
+import {
+  BadgeCheck, BookPlus, CalendarClock, EllipsisVertical, FilePenLine,
+  LayoutGrid, Layers, Search, Trash2, UserPlus, UserRoundPen, Users, X,
+} from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,16 +32,13 @@ interface CapHistorialTabProps {
   onEditEmployee: (emp: Employee) => void
   onAddCourses: (emp: Employee) => void
   onDeleteEmployee: (emp: Employee) => void
-  onIncidencias: (emp: Employee) => void
-  onActasSeguimiento: (emp: Employee) => void
 }
 
 export function CapHistorialTab({
   employees, loadingEmployees, isReadOnly,
   newEmpSuccess, addCoursesSuccess,
   onNewEmployee, onBulkImport, onBulkCreateEmployees,
-  onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee, onIncidencias,
-  onActasSeguimiento,
+  onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee,
 }: CapHistorialTabProps) {
   const [empSearch, setEmpSearch]         = useState("")
   const [empFilterDept, setEmpFilterDept] = useState("all")
@@ -65,7 +66,7 @@ export function CapHistorialTab({
     <div className="space-y-4">
       {(newEmpSuccess || addCoursesSuccess) && (
         <Alert className="border-success/30 bg-success/10">
-          <CheckCircle2 className="h-4 w-4 text-success" />
+          <BadgeCheck className="h-4 w-4 text-success" />
           <AlertDescription className="text-success">
             {newEmpSuccess ? 'Empleado registrado correctamente.' : 'Cursos guardados correctamente.'}
           </AlertDescription>
@@ -172,7 +173,6 @@ export function CapHistorialTab({
                       <TableHead>Nombre</TableHead>
                       <TableHead className="hidden sm:table-cell">Puesto</TableHead>
                       <TableHead className="hidden md:table-cell">Departamento</TableHead>
-                      <TableHead className="text-center w-28">Matriz</TableHead>
                       <TableHead className="text-right w-16">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -198,48 +198,46 @@ export function CapHistorialTab({
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-center p-2">
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-8 w-8 mx-auto text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                            onClick={() => onViewEmployee(emp)}
-                            title="Ver matriz de capacitación"
-                          >
-                            <GraduationCap className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
                         <TableCell className="text-right p-2">
                           <div className="flex items-center justify-end gap-1">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" title="Más opciones">
-                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                <Button variant="ghost" size="icon" className="h-11 w-11" aria-label={`Más opciones para ${emp.nombre}`}>
+                                  <EllipsisVertical className="text-muted-foreground" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => onAddCourses(emp)} className="cursor-pointer">
-                                  <BookOpen className="mr-2 h-4 w-4" />
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onViewEmployee(emp)}>
+                                  <LayoutGrid />
+                                  <span>Matriz de capacitación</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onAddCourses(emp)}>
+                                  <BookPlus />
                                   <span>Agregar cursos</span>
                                 </DropdownMenuItem>
                                 {emp.numero && (
                                   <>
-                                    <DropdownMenuItem onClick={() => onIncidencias(emp)} className="cursor-pointer">
-                                      <CalendarDays className="mr-2 h-4 w-4 text-info" />
-                                      <span>Incidencias</span>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/capacitacion/incidencias/${encodeURIComponent(emp.numero)}`}>
+                                        <CalendarClock />
+                                        <span>Incidencias</span>
+                                      </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onActasSeguimiento(emp)} className="cursor-pointer">
-                                      <FileWarning className="mr-2 h-4 w-4 text-destructive/70" />
-                                      <span>Actas y Seguimiento</span>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/capacitacion/actas/${encodeURIComponent(emp.numero)}`}>
+                                        <FilePenLine />
+                                        <span>Actas y seguimiento</span>
+                                      </Link>
                                     </DropdownMenuItem>
                                   </>
                                 )}
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => onEditEmployee(emp)} className="cursor-pointer">
-                                  <Pencil className="mr-2 h-4 w-4" />
+                                <DropdownMenuItem onClick={() => onEditEmployee(emp)}>
+                                  <UserRoundPen />
                                   <span>Editar empleado</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onDeleteEmployee(emp)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
+                                <DropdownMenuItem onClick={() => onDeleteEmployee(emp)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                  <Trash2 />
                                   <span>Eliminar</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>

@@ -1,17 +1,26 @@
 "use client"
 import React from "react"
-import { Upload, FileJson, Search, CheckCircle2, AlertCircle, AlertTriangle, ArrowLeft } from "lucide-react"
+import { Upload, Search, CheckCircle2, AlertCircle, AlertTriangle, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { ResponsiveShell } from "@/components/ui/responsive-shell"
-import { RedesignModalHeader } from "./modal-header"
-import { RedesignModalFooter } from "./modal-footer"
+import { ModalFooter, ModalHeader, ResponsiveShell } from "@/components/ui/responsive-shell"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Course } from "@/lib/hooks"
 import type { BulkCourseRow } from "@/lib/capacitacion/types"
+
+const COURSE_JSON_EXAMPLE = JSON.stringify([
+  {
+    numero: "1234",
+    curso: "NOMBRE EXACTO DEL CATÁLOGO",
+    fecha: "2026-09-21",
+    calificacion: 10,
+  },
+], null, 2)
 
 interface CapBulkImportDialogProps {
   open: boolean
@@ -47,16 +56,16 @@ export function CapBulkImportDialog({
       open={open}
       onClose={() => onOpenChange(false)}
       title="Cargar cursos"
-      maxWidth={rows.length > 0 ? "sm:max-w-5xl" : "sm:max-w-2xl"}
-      mobileVariant="dialog"
+      description="Importa registros desde JSON"
+      size={rows.length > 0 ? "xl" : "md"}
     >
-      <RedesignModalHeader
-        title="Carga masiva de cursos"
-        icon={<FileJson className="h-5 w-5" />}
+      <ModalHeader
+        title="Cargar cursos"
+        subtitle="Importa registros desde JSON"
         onClose={() => onOpenChange(false)}
       />
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-6 bg-surface-card">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-card p-5 sm:p-6">
           {success !== null && (
             <Alert className="mb-6 border-success/30 bg-success/10">
               <CheckCircle2 className="h-5 w-5 text-success" />
@@ -75,19 +84,7 @@ export function CapBulkImportDialog({
 
           {/* FASE 1: Entrada JSON (Carga) */}
           {rows.length === 0 && success === null && (
-            <div className="space-y-5">
-              <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-background">
-                  <FileJson className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-ink">Importar historial de cursos</p>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Pega el contenido o selecciona un archivo JSON. Podrás revisar y corregir los registros antes de guardarlos.
-                  </p>
-                </div>
-              </div>
-
+            <div>
               <div className="space-y-2">
                 {parseError && (
                   <Alert variant="destructive" className="py-2.5">
@@ -97,25 +94,22 @@ export function CapBulkImportDialog({
                 )}
 
                 <div className="flex items-center justify-between gap-3">
-                  <label htmlFor="json-input" className="text-sm font-medium text-ink">Datos de cursos</label>
+                  <Label htmlFor="json-input">Datos de cursos</Label>
                   <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
+                    <Upload aria-hidden="true" />
                     Seleccionar JSON
                   </Button>
                   <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" onChange={onFile} />
                 </div>
-                <textarea
+                <Textarea
                   id="json-input"
                   value={text}
                   onChange={e => onTextChange(e.target.value)}
-                  placeholder={'Formato esperado:\n[\n  { "numero": "1234", "curso": "Seguridad Industrial", "fecha": "2025-03-15", "calificacion": 85 }\n]'}
-                  rows={7}
-                  className="w-full min-h-44 rounded-md border border-border/60 bg-transparent text-foreground p-4 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-primary shadow-none placeholder:text-muted-foreground/60 transition-shadow"
+                  placeholder={`Ejemplo:\n${COURSE_JSON_EXAMPLE}`}
+                  rows={5}
+                  className="min-h-32 resize-y font-mono"
                   aria-label="Contenido JSON"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Campos: numero, curso, fecha (YYYY-MM-DD) y calificacion.
-                </p>
               </div>
             </div>
           )}
@@ -123,7 +117,7 @@ export function CapBulkImportDialog({
           {/* FASE 2: Preview Editable */}
           {rows.length > 0 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-3">
                   <Badge variant="outline" className="text-sm font-medium px-3 py-1 bg-background">
                     {rows.length} registros totales
@@ -137,14 +131,6 @@ export function CapBulkImportDialog({
                     </Badge>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground text-sm font-medium h-9 px-4 rounded-full"
-                  onClick={onBack}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver al editor
-                </Button>
               </div>
 
               <div className="rounded-md border border-border/60 shadow-none bg-surface-card overflow-hidden">
@@ -231,7 +217,7 @@ export function CapBulkImportDialog({
           )}
         </div>
 
-      <RedesignModalFooter
+      <ModalFooter
         onCancel={() => onOpenChange(false)}
         cancelLabel={success !== null ? 'Cerrar' : 'Cancelar'}
         cancelDisabled={saving}

@@ -170,10 +170,21 @@ export function ModalFooter({
 // ResponsiveShell — shared centered Dialog on every screen
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type ModalSize = "xs" | "sm" | "md" | "lg" | "xl"
+
+const MODAL_WIDTHS: Record<ModalSize, string> = {
+  xs: "sm:max-w-md",
+  sm: "sm:max-w-lg",
+  md: "sm:max-w-2xl",
+  lg: "sm:max-w-4xl",
+  xl: "sm:max-w-5xl",
+}
+
 export interface ResponsiveShellProps {
   open: boolean
   onClose: () => void
   children: React.ReactNode
+  size?: ModalSize
   maxWidth?: string
   contentClassName?: string
   /** @deprecated Modals now use the same centered Dialog on every screen. */
@@ -183,10 +194,11 @@ export interface ResponsiveShellProps {
 }
 
 export function ResponsiveShell({
-  open, onClose, children, maxWidth = "sm:max-w-lg", contentClassName, title, description,
+  open, onClose, children, size, maxWidth, contentClassName, title, description,
 }: ResponsiveShellProps) {
   const previousFocus = React.useRef<HTMLElement | null>(null)
   const titleRef = React.useRef<HTMLHeadingElement>(null)
+  const widthClassName = size ? MODAL_WIDTHS[size] : maxWidth ?? MODAL_WIDTHS.sm
 
   return (
     <Dialog open={open} onOpenChange={nextOpen => { if (!nextOpen) onClose() }}>
@@ -201,7 +213,7 @@ export function ResponsiveShell({
           event.preventDefault()
           previousFocus.current?.focus()
         }}
-        className={cn(maxWidth, "p-0 gap-0", contentClassName)}
+        className={cn(widthClassName, "p-0 gap-0", contentClassName)}
       >
         <DialogTitle ref={titleRef} tabIndex={-1} className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">{description ?? title}</DialogDescription>

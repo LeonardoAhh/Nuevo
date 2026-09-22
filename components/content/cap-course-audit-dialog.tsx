@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { Check, ChevronsUpDown, Download, FileSpreadsheet, Search, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ResponsiveShell } from "@/components/ui/responsive-shell"
 import { RedesignModalHeader } from "@/components/redesign/modal-header"
 import { RedesignModalFooter } from "@/components/redesign/modal-footer"
@@ -160,39 +161,35 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
       />
 
       <div className="overflow-y-auto p-5 sm:p-6 space-y-6 bg-card">
-        <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-background border border-border/60">
-            <Download className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-ink">Descarga por curso</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              El archivo incluirá una fila por empleado y conservará únicamente su intento más reciente.
-            </p>
-          </div>
-        </div>
-
         <div className="space-y-2">
           <label className="text-sm font-medium text-ink">Curso</label>
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            aria-expanded={coursePickerOpen}
-            onClick={() => {
-              setCoursePickerOpen(current => !current)
-              if (coursePickerOpen) setCourseSearch("")
+          <Popover
+            open={coursePickerOpen}
+            onOpenChange={nextOpen => {
+              setCoursePickerOpen(nextOpen)
+              if (!nextOpen) setCourseSearch("")
             }}
-            className="h-11 w-full min-w-0 justify-between bg-transparent px-3 text-base font-normal shadow-none"
           >
-            <span className="min-w-0 truncate text-left">
-              {selectedCourseName || "Selecciona un curso..."}
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-
-          {coursePickerOpen && (
-            <div className="w-full overflow-hidden rounded-md border border-border/60 bg-card shadow-sm">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={coursePickerOpen}
+                className="h-11 w-full min-w-0 justify-between bg-transparent px-3 text-base font-normal shadow-none"
+              >
+                <span className="min-w-0 truncate text-left">
+                  {selectedCourseName || "Selecciona un curso..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              side="bottom"
+              sideOffset={4}
+              className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] overflow-hidden p-0"
+            >
               <div className="relative border-b border-border/60 p-2">
                 <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -200,7 +197,6 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
                   onChange={event => setCourseSearch(event.target.value)}
                   placeholder="Buscar curso..."
                   className="h-9 pl-9 shadow-none"
-                  autoFocus
                 />
               </div>
               <div className="max-h-60 overflow-y-auto p-1">
@@ -230,8 +226,8 @@ export function CapCourseAuditDialog({ open, onOpenChange, courses, employees, e
                   </p>
                 )}
               </div>
-            </div>
-          )}
+            </PopoverContent>
+          </Popover>
         </div>
 
         {selectedCourseId !== "all" && (

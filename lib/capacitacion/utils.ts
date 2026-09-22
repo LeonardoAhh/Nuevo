@@ -15,3 +15,7 @@ export function normalizeDateToISO(raw: string): string {
   if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
   return raw
 }
+
+export function isPassingCourseGrade(grade: number): boolean {
+  return grade >= 7
+}

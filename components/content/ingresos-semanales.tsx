@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
+import Link from "next/link"
 import {
   Search,
   CalendarDays,
@@ -25,7 +26,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNuevoIngreso } from "@/lib/hooks"
 import type { NuevoIngreso } from "@/lib/hooks"
-import { IncidenciasModal } from "@/components/content/incidencias-modal"
 
 // ─── Helpers de semana ────────────────────────────────────────────────────────
 
@@ -133,30 +133,12 @@ function groupByWeek(records: NuevoIngreso[]): WeekGroup[] {
   )
 }
 
-// ─── Estado del modal de incidencias ─────────────────────────────────────────
-
-interface IncidenciasState {
-  open: boolean
-  numero: string
-  nombre: string
-}
-
-const INCIDENCIAS_INITIAL: IncidenciasState = {
-  open: false,
-  numero: "",
-  nombre: "",
-}
-
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function IngresosSemanalesContent() {
   const { loading, fetchAll } = useNuevoIngreso()
   const [records, setRecords] = useState<NuevoIngreso[]>([])
   const [search, setSearch] = useState("")
-
-  // Modal de incidencias — siempre montado para conservar animaciones de salida
-  const [incidencias, setIncidencias] =
-    useState<IncidenciasState>(INCIDENCIAS_INITIAL)
 
   // ─── Carga inicial ──────────────────────────────────────────────────────
 
@@ -211,17 +193,6 @@ export default function IngresosSemanalesContent() {
 
   const goToPrev = () => { if (canPrev) setActiveTab(weeks[activeIdx - 1].key) }
   const goToNext = () => { if (canNext) setActiveTab(weeks[activeIdx + 1].key) }
-
-  // ─── Acciones del modal ─────────────────────────────────────────────────
-
-  const handleOpenIncidencias = (r: NuevoIngreso) => {
-    if (!r.numero) return
-    setIncidencias({ open: true, numero: r.numero, nombre: r.nombre })
-  }
-
-  const handleCloseIncidencias = () => {
-    setIncidencias((prev) => ({ ...prev, open: false }))
-  }
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -438,14 +409,15 @@ export default function IngresosSemanalesContent() {
 
                             {r.numero && (
                               <Button
-                                type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground"
+                                asChild
+                                className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground"
                                 aria-label={`Ver incidencias de ${r.nombre}`}
-                                onClick={() => handleOpenIncidencias(r)}
                               >
-                                <CalendarDays className="h-4 w-4" />
+                                <Link href={`/capacitacion/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
+                                  <CalendarDays className="h-4 w-4" />
+                                </Link>
                               </Button>
                             )}
                           </div>
@@ -531,15 +503,16 @@ export default function IngresosSemanalesContent() {
                               <TableCell className="text-right">
                                 {r.numero && (
                                   <Button
-                                    type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                    asChild
+                                    className="h-11 w-11 text-muted-foreground hover:text-foreground"
                                     aria-label={`Ver incidencias de ${r.nombre}`}
                                     title="Ver incidencias"
-                                    onClick={() => handleOpenIncidencias(r)}
                                   >
-                                    <CalendarDays className="h-4 w-4" />
+                                    <Link href={`/capacitacion/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
+                                      <CalendarDays className="h-4 w-4" />
+                                    </Link>
                                   </Button>
                                 )}
                               </TableCell>
@@ -569,18 +542,6 @@ export default function IngresosSemanalesContent() {
           {formatShort(activeWeek.sunday)} {activeWeek.monday.getFullYear()}
         </p>
       )}
-
-      {/* ── Modal de incidencias ─────────────────────────────────────────── */}
-      {/*
-        Siempre montado para preservar estado interno y animaciones de salida.
-        Cuando open=false el modal se oculta sin destruirse.
-      */}
-      <IncidenciasModal
-        open={incidencias.open}
-        onClose={handleCloseIncidencias}
-        numeroEmpleado={incidencias.numero}
-        nombreEmpleado={incidencias.nombre}
-      />
     </>
   )
 }

@@ -172,7 +172,7 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
               const { notify } = await import("@/lib/notify")
               const ok = await notify.confirm({
                 title: "Eliminar empleado",
-                description: `Se eliminará a ${record.nombre} y todos sus datos. No se puede deshacer.`,
+                description: `${record.nombre}. Esta acción no se puede deshacer.`,
                 confirmLabel: "Eliminar",
                 tone: "destructive",
                 requireInputText: "ELIMINAR"

@@ -2,19 +2,17 @@
 
 import React, { useCallback, useRef, useState } from "react"
 import {
-  Users,
   Upload,
-  FileJson,
   AlertCircle,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   ArrowLeft,
 } from "lucide-react"
-import { ResponsiveShell } from "@/components/ui/responsive-shell"
-import { RedesignModalHeader } from "./modal-header"
-import { RedesignModalFooter } from "./modal-footer"
+import { ModalFooter, ModalHeader, ResponsiveShell } from "@/components/ui/responsive-shell"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -67,6 +65,20 @@ interface DuplicateEntry {
   numero: string
   nombre: string
 }
+
+const EMPLOYEE_JSON_EXAMPLE = JSON.stringify([
+  {
+    numero: "1234",
+    nombre: "JUAN PEREZ",
+    puesto: null,
+    departamento: null,
+    area: null,
+    turno: null,
+    fecha_ingreso: null,
+    jefe_directo: null,
+    evaluacion_desempeno: null,
+  },
+] satisfies JsonEntry[], null, 2)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation helpers
@@ -298,16 +310,16 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
     <ResponsiveShell
       open={open}
       onClose={handleClose}
-      title="Carga empleados"
-      maxWidth={step === "preview" ? "sm:max-w-4xl" : "sm:max-w-2xl"}
-      mobileVariant="dialog"
+      title="Cargar empleados"
+      description="Importa empleados desde JSON"
+      size={step === "preview" ? "lg" : "md"}
     >
-      <RedesignModalHeader
-        title="Carga masiva de empleados"
-        icon={<Users className="h-5 w-5" />}
+      <ModalHeader
+        title="Cargar empleados"
+        subtitle="Importa empleados desde JSON"
         onClose={handleClose}
       />
-      <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 bg-surface-card">
+      <div className="flex-1 space-y-5 overflow-y-auto bg-card p-5 sm:p-6">
 
         {error && (
           <Alert variant="destructive">
@@ -317,56 +329,23 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
         )}
 
         {step === "upload" && (
-          <div className="space-y-5">
-            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-background">
-                <FileJson className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-ink">Importar empleados desde JSON</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Pega el contenido o selecciona un archivo. Antes de crear empleados podrás revisar válidos, duplicados y errores.
-                </p>
-              </div>
-            </div>
-
-            <details className="group overflow-hidden rounded-md border border-border/60">
-              <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-ink hover:bg-muted/30">
-                Ver estructura esperada
-              </summary>
-              <pre className="max-h-64 overflow-auto border-t border-border/60 bg-muted/20 p-4 text-xs text-muted-foreground">
-{`[
-  {
-    "numero": "1234",
-    "nombre": "JUAN PEREZ GARCIA",
-    "puesto": "OPERADOR DE MÁQUINA A",
-    "departamento": "PRODUCCIÓN",
-    "area": "PRODUCCIÓN 1ER TURNO",
-    "turno": "1",
-    "fecha_ingreso": "2026-01-15",
-    "jefe_directo": "MARIA LOPEZ",
-    "evaluacion_desempeno": "operativo"
-  }
-]`}
-              </pre>
-            </details>
-
+          <div>
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <label htmlFor="employees-json-input" className="text-sm font-medium text-ink">Datos de empleados</label>
+                <Label htmlFor="employees-json-input">Datos de empleados</Label>
                 <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                  <Upload className="mr-2 h-4 w-4" />
+                  <Upload aria-hidden="true" />
                   Seleccionar JSON
                 </Button>
                 <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFile} />
               </div>
-              <textarea
+              <Textarea
                 id="employees-json-input"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Pega tu JSON aquí..."
-                rows={8}
-                className="w-full min-h-48 rounded-md border border-border/60 bg-transparent text-foreground p-4 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-primary shadow-none placeholder:text-muted-foreground/60 transition-shadow"
+                placeholder={`Ejemplo:\n${EMPLOYEE_JSON_EXAMPLE}`}
+                rows={5}
+                className="min-h-32 resize-y font-mono"
                 aria-label="Contenido JSON"
               />
             </div>
@@ -501,7 +480,7 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
         )}
       </div>
 
-      <RedesignModalFooter
+      <ModalFooter
         onCancel={handleClose}
         cancelLabel={step === "done" ? "Cerrar" : "Cancelar"}
         onConfirm={

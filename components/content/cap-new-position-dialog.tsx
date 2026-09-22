@@ -1,13 +1,12 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Check, AlertCircle } from "lucide-react"
+import React, { useId, useState, useEffect } from "react"
+import { AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ResponsiveShell } from "@/components/ui/responsive-shell"
-import { RedesignModalHeader } from "@/components/redesign/modal-header"
-import { RedesignModalFooter } from "@/components/redesign/modal-footer"
+import { ModalFooter, ModalHeader, ResponsiveShell } from "@/components/ui/responsive-shell"
 import type { Department } from "@/lib/hooks"
 
 export interface CapNewPositionDialogProps {
@@ -19,6 +18,9 @@ export interface CapNewPositionDialogProps {
 }
 
 export function CapNewPositionDialog({ open, saving, departments, onClose, onSave }: CapNewPositionDialogProps) {
+  const nameId = useId()
+  const departmentId = useId()
+  const errorId = useId()
   const [name, setName] = useState('')
   const [deptId, setDeptId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -35,45 +37,58 @@ export function CapNewPositionDialog({ open, saving, departments, onClose, onSav
   }
 
   return (
-    <ResponsiveShell open={open} onClose={onClose} maxWidth="sm:max-w-md" title="Nuevo puesto">
-      <RedesignModalHeader
+    <ResponsiveShell
+      open={open}
+      onClose={onClose}
+      size="xs"
+      title="Nuevo puesto"
+      description="Agrega un puesto al catálogo"
+    >
+      <ModalHeader
         title="Nuevo puesto"
         subtitle="Agrega un puesto al catálogo"
         onClose={onClose}
       />
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="space-y-5 px-6 py-6">
+        <div className="space-y-4 px-4 py-5 sm:px-6 sm:py-6">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-ink">Nombre del puesto</label>
+            <Label htmlFor={nameId}>Nombre del puesto</Label>
             <Input
+              id={nameId}
               placeholder="Ej. Operador de producción"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm() }}
-              className="h-11 rounded-md border-border/60 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-primary text-base"
-              autoFocus
+              aria-invalid={error?.startsWith("El nombre") || undefined}
+              aria-describedby={error ? errorId : undefined}
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-ink">Departamento</label>
+            <Label id={departmentId}>Departamento</Label>
             <Select value={deptId} onValueChange={setDeptId}>
-              <SelectTrigger className="h-11 rounded-md border-border/60 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-primary text-base"><SelectValue placeholder="Selecciona departamento" /></SelectTrigger>
-              <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
+              <SelectTrigger
+                aria-labelledby={departmentId}
+                aria-invalid={error?.startsWith("Selecciona") || undefined}
+                aria-describedby={error ? errorId : undefined}
+              >
+                <SelectValue placeholder="Selecciona departamento" />
+              </SelectTrigger>
+              <SelectContent matchTriggerWidth>
                 {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           {error && (
-            <Alert variant="destructive" className="py-2 border-destructive/30 bg-destructive/10 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+            <Alert id={errorId} variant="destructive">
+              <AlertCircle aria-hidden="true" />
+              <AlertDescription role="alert">{error}</AlertDescription>
             </Alert>
           )}
         </div>
       </div>
       
-      <RedesignModalFooter
+      <ModalFooter
         onCancel={onClose}
         onConfirm={handleConfirm}
         saving={saving}

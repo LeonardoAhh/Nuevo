@@ -11,7 +11,7 @@ import { ReadOnlyBanner } from "@/components/read-only-banner"
 import { notify } from "@/lib/notify"
 
 // Existing dialogs
-import { CapEditEmployeeDialog } from "@/components/content/cap-edit-employee-dialog"
+import { CapEditEmployeeDialog, type EditEmployeeForm } from "@/components/content/cap-edit-employee-dialog"
 import { CapNewEmployeeDialog } from "@/components/redesign/cap-new-employee-dialog"
 import { CapAddCoursesDialog } from "@/components/content/cap-add-courses-dialog"
 import { CapPositionCoursesDialog } from "@/components/content/cap-position-courses-dialog"
@@ -26,8 +26,6 @@ import { CapCoursesTab } from "@/components/content/cap-courses-tab"
 import { CapHistorialTab } from "@/components/content/cap-historial-tab"
 import { CapBulkImportDialog } from "@/components/redesign/cap-bulk-import-dialog"
 import { CapBulkCreateEmployees } from "@/components/redesign/cap-bulk-create-employees"
-import { IncidenciasModal } from "@/components/content/incidencias-modal"
-import { ActasSeguimientoModal } from "@/components/content/actas-seguimiento-modal"
 
 // Hooks
 import { useBulkImport } from "@/lib/hooks/useBulkImport"
@@ -247,14 +245,11 @@ export default function CapacitacionContent() {
     finally { setLoadingEmpDlg(false) }
   }, [fetchEmployeeCourses, fetchEmployeeProgress])
 
-  const handleSaveEditEmp = useCallback(async (form: {
-    numero: string; nombre: string; departamento: string; area: string;
-    puesto: string; turno: string; fecha_ingreso: string; jefe_directo: string; evaluacion_desempeno: string
-  }) => {
+  const handleSaveEditEmp = useCallback(async (form: EditEmployeeForm) => {
     if (!editEmpTarget) return
     setEditEmpSaving(true)
     const result = await updateEmployee(editEmpTarget.id, {
-      numero: form.numero.trim() || null, nombre: form.nombre.trim(),
+      nombre: form.nombre.trim(),
       puesto: form.puesto || null, departamento: form.departamento || null,
       area: form.area || null, turno: form.turno || null,
       fecha_ingreso: form.fecha_ingreso || null, jefe_directo: form.jefe_directo || null,
@@ -271,7 +266,6 @@ export default function CapacitacionContent() {
 
   const handleSaveNewEmp = useCallback(async (
     emp: { numero: string; nombre: string; puesto: string; departamento: string; area: string; turno: string; fecha_ingreso: string; jefe_directo: string; evaluacion_desempeno: string },
-    courseRows: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]
   ) => {
     setNewEmpSaving(true)
     const result = await createEmployeeManual(
@@ -282,7 +276,7 @@ export default function CapacitacionContent() {
         fecha_ingreso: emp.fecha_ingreso || null, jefe_directo: emp.jefe_directo || null,
         evaluacion_desempeno: emp.evaluacion_desempeno.trim() || null,
       },
-      courseRows.map(r => ({ course_id: r.course_id, course_name: r.course_name, fecha_aplicacion: r.fecha_aplicacion, calificacion: r.calificacion }))
+      []
     )
     setNewEmpSaving(false)
     if (result.success) { setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(); notify.success('Empleado creado') }
@@ -314,30 +308,10 @@ export default function CapacitacionContent() {
     else notify.error(result.error ?? 'Error al eliminar historial')
   }, [clearHistorial, employees.length])
 
-  // ── Incidencias modal state ─────────────────────────────────────────────
-  const [incidenciasOpen, setIncidenciasOpen] = useState(false)
-  const [incidenciasEmpleado, setIncidenciasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
-
-  const handleOpenIncidencias = useCallback((emp: Employee) => {
-    if (!emp.numero) return
-    setIncidenciasEmpleado({ numero: emp.numero, nombre: emp.nombre })
-    setIncidenciasOpen(true)
-  }, [])
-
-  // ── Actas / Seguimiento modal state ────────────────────────────────────────
-  const [actasOpen, setActasOpen] = useState(false)
-  const [actasEmpleado, setActasEmpleado] = useState<{ numero: string; nombre: string } | null>(null)
-
-  const handleOpenActas = useCallback((emp: Employee) => {
-    if (!emp.numero) return
-    setActasEmpleado({ numero: emp.numero, nombre: emp.nombre })
-    setActasOpen(true)
-  }, [])
-
   const handleDeleteEmployee = useCallback(async (emp: Employee) => {
     const ok = await notify.confirm({
       title: "Eliminar empleado",
-      description: `Se eliminará a ${emp.nombre} y todos sus datos. No se puede deshacer.`,
+      description: "Esta acción no se puede deshacer.",
       confirmLabel: "Eliminar",
       tone: "destructive",
       requireInputText: "ELIMINAR",
@@ -413,8 +387,6 @@ export default function CapacitacionContent() {
               onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
               onAddCourses={(emp) => { setAddCoursesDlgEmp(emp); setAddCoursesDlgOpen(true); if (courses.length === 0) loadCoursesData() }}
               onDeleteEmployee={handleDeleteEmployee}
-              onIncidencias={handleOpenIncidencias}
-              onActasSeguimiento={handleOpenActas}
             />
           </motion.div>
         </TabsContent>
@@ -464,10 +436,7 @@ export default function CapacitacionContent() {
         open={newEmpOpen}
         saving={newEmpSaving}
         isReadOnly={isReadOnly}
-        courses={courses}
-        loadingCourses={loadingCourses}
         onClose={() => setNewEmpOpen(false)}
-        onLoadCourses={loadCoursesData}
         onSave={handleSaveNewEmp}
       />
 
@@ -530,23 +499,6 @@ export default function CapacitacionContent() {
         onSave={handleSaveEditCourse}
       />
 
-      {incidenciasEmpleado && (
-        <IncidenciasModal
-          open={incidenciasOpen}
-          onClose={() => setIncidenciasOpen(false)}
-          numeroEmpleado={incidenciasEmpleado.numero}
-          nombreEmpleado={incidenciasEmpleado.nombre}
-        />
-      )}
-
-      {actasEmpleado && (
-        <ActasSeguimientoModal
-          open={actasOpen}
-          onClose={() => setActasOpen(false)}
-          numeroEmpleado={actasEmpleado.numero}
-          nombreEmpleado={actasEmpleado.nombre}
-        />
-      )}
     </>
   )
 }

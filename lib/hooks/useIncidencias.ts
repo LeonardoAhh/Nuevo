@@ -265,11 +265,12 @@ export function useIncidencias() {
     setError(null)
     try {
       // Delete existing month data
-      await supabase
+      const { error: deleteError } = await supabase
         .from('incidencias')
         .delete()
         .eq('numero_empleado', numero)
         .eq('mes', mes)
+      if (deleteError) throw deleteError
 
       // Build inserts for non-zero values
       const inserts: IncidenciaInsert[] = INCIDENCIA_CATEGORIES

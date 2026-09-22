@@ -83,7 +83,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
         selected && "border-primary/40 bg-primary/[0.03]",
       )}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-start gap-3 lg:items-center">
         {canEdit && (
           <label
             htmlFor={selectionId}
@@ -99,15 +99,37 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
           </label>
         )}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="min-w-0 break-words text-sm font-semibold leading-5 text-foreground">
-              {entry.nombre}
-            </h3>
-            {entry.numero && (
-              <span className="font-mono text-xs text-muted-foreground">#{entry.numero}</span>
-            )}
+        <div className="grid min-w-0 flex-1 gap-4 lg:grid-cols-2 lg:items-center">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="min-w-0 break-words text-sm font-semibold leading-5 text-foreground">
+                {entry.nombre}
+              </h3>
+              {entry.numero && (
+                <span className="font-mono text-xs text-muted-foreground">#{entry.numero}</span>
+              )}
+            </div>
           </div>
+
+          <dl className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-3 border-t border-border pt-3 sm:grid-cols-2 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+            <div className="min-w-0">
+              <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
+                Cumpleaños
+              </dt>
+              <dd className="mt-0.5 text-sm text-foreground sm:whitespace-nowrap">
+                {formatBirthday(entry.fechaCumpleanios)} · {entry.edad} años
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
+                Correo
+              </dt>
+              <dd className="mt-0.5 flex min-w-0 items-start gap-1.5 text-sm text-foreground">
+                <Mail className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="min-w-0 break-all">{entry.email || "Sin correo registrado"}</span>
+              </dd>
+            </div>
+          </dl>
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -129,9 +151,9 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
                   ? `Enviar felicitación atrasada a ${entry.nombre}`
                   : entry.yaEnviado
                     ? `Reenviar felicitación a ${entry.nombre}`
-                  : !entry.email
-                    ? `${entry.nombre} no tiene correo registrado`
-                    : `Enviar felicitación a ${entry.nombre}`
+                    : !entry.email
+                      ? `${entry.nombre} no tiene correo registrado`
+                      : `Enviar felicitación a ${entry.nombre}`
               }
             >
               {sending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Send aria-hidden="true" />}
@@ -139,26 +161,6 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
           )}
         </div>
       </div>
-
-      <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-border pt-3 sm:grid-cols-[1fr_1.35fr]">
-        <div className="min-w-0">
-          <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
-            Cumpleaños
-          </dt>
-          <dd className="mt-0.5 text-sm text-foreground">
-            {formatBirthday(entry.fechaCumpleanios)} · {entry.edad} años
-          </dd>
-        </div>
-        <div className="min-w-0">
-          <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
-            Correo
-          </dt>
-          <dd className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-foreground">
-            <Mail className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="min-w-0 truncate">{entry.email || "Sin correo registrado"}</span>
-          </dd>
-        </div>
-      </dl>
 
       {entry.yaEnviado && (
         <div className="mt-3 sm:hidden">
@@ -213,7 +215,7 @@ function BirthdaySection({
         </Badge>
       </div>
 
-      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid gap-3">
         {entries.map((entry) => {
           const key = birthdayEntryKey(entry)
           return (

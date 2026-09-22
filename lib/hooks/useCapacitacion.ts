@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { isPassingCourseGrade } from '@/lib/capacitacion/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaces – catálogo
@@ -663,7 +664,7 @@ export function useCapacitacion() {
       const cal = taken?.calificacion ?? null
       let status: CourseProgress['status']
       if (taken == null) status = 'pendiente'
-      else if (cal != null && cal >= 7) status = 'aprobado'
+      else if (cal != null && isPassingCourseGrade(cal)) status = 'aprobado'
       else status = 'reprobado'
 
       return {
@@ -893,7 +894,6 @@ export function useCapacitacion() {
   const updateEmployee = async (
     employeeId: string,
     data: {
-      numero: string | null
       nombre: string
       puesto: string | null
       departamento: string | null
