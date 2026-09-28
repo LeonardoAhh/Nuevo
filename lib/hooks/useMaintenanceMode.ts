@@ -1,0 +1,139 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase/client"
+import { describeSupabaseError } from "@/lib/supabase/errors"
+import {
+  isExpiredJwtError,
+  prepareBrowserSession,
+  refreshOrClearBrowserSession,
+} from "@/lib/supabase/browser-session"
+
+async function readMaintenanceMode() {
+  let result = await supabase
+    .from("system_settings")
+    .select("*")
+    .eq("id", "maintenance_mode")
+    .maybeSingle()
+
+  if (isExpiredJwtError(result.error)) {
+    await refreshOrClearBrowserSession()
+    result = await supabase
+      .from("system_settings")
+      .select("*")
+      .eq("id", "maintenance_mode")
+      .maybeSingle()
+  }
+
+  return result
+}
+
+export function useMaintenanceMode() {
+  const [isMaintenance, setIsMaintenance] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [endsAt, setEndsAt] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    // Obtener estado inicial
+    const fetchState = async () => {
+      try {
+        await prepareBrowserSession()
+        const { data, error } = await readMaintenanceMode()
+        
+        if (error) {
+          console.error("Supabase error [maintenance_mode]:", error.message || error.toString(), error)
+          return
+        }
+
+        if (mounted && data) {
+          setIsMaintenance(data.value === "true" || data.value === true)
+          setEndsAt(data.maintenance_ends_at ?? null)
+        }
+      } catch (err) {
+        console.error("Error fetching maintenance mode:", err)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let poll: number | null = null
+
+    const initialize = async () => {
+      await fetchState()
+      if (!mounted) return
+
+      // Crear Realtime después de renovar la sesión evita suscribirlo con un JWT vencido.
+      const channelName = `maintenance_mode_${Math.random().toString(36).substring(2)}`
+      channel = supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "system_settings", filter: "id=eq.maintenance_mode" },
+          (payload) => {
+            if (mounted) {
+              setIsMaintenance(payload.new.value === "true" || payload.new.value === true)
+              setEndsAt(payload.new.maintenance_ends_at ?? null)
+            }
+          }
+        )
+        .subscribe()
+
+      poll = window.setInterval(fetchState, 30_000)
+    }
+
+    void initialize()
+
+    // Reintentar también cuando Realtime no esté disponible.
+    window.addEventListener("focus", fetchState)
+
+    return () => {
+      mounted = false
+      if (poll !== null) window.clearInterval(poll)
+      window.removeEventListener("focus", fetchState)
+      if (channel) void supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const toggleMaintenance = async (active: boolean, durationSeconds?: number) => {
+    setSaveError(null)
+    if (active && (durationSeconds === undefined || !Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 365 * 86400)) return false
+    setSaving(true)
+    try {
+      await prepareBrowserSession()
+      const deadline = active ? new Date(Date.now() + durationSeconds! * 1000).toISOString() : null
+      const { data, error } = await supabase
+        .from("system_settings")
+        .update({ value: active, maintenance_ends_at: deadline })
+        .eq("id", "maintenance_mode")
+        .select("*")
+        .single()
+      
+      if (error) {
+        throw error
+      }
+      setIsMaintenance(data.value === "true" || data.value === true)
+      setEndsAt(data.maintenance_ends_at ?? null)
+      return true
+    } catch (err) {
+      const error = err as { code?: string; message?: string }
+      const missingColumn = error?.code === "42703" || error?.code === "PGRST204"
+      const message = missingColumn
+        ? "Falta la columna del contador en Supabase. Ejecuta la migración 20260904_maintenance_countdown.sql en el proyecto conectado a esta aplicación."
+        : error?.code === "PGRST116"
+          ? "No se actualizó el mantenimiento. Verifica que exista el registro maintenance_mode y que tu cuenta tenga permiso para modificarlo."
+          : describeSupabaseError(err, "No se pudo guardar el mantenimiento.")
+      setSaveError(message)
+      console.error(`Error updating maintenance mode: [${error?.code ?? "unknown"}] ${error?.message || message}`)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return { isMaintenance, endsAt, loading, saving, saveError, toggleMaintenance }
+}

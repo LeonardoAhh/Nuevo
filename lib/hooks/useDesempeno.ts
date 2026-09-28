@@ -1,0 +1,717 @@
+"use client"
+
+import { useState, useCallback, useRef, useEffect } from "react"
+import { supabase } from "@/lib/supabase/client"
+import { notify } from "@/lib/notify"
+import {
+
+  DEFAULT_OBJETIVOS_POR_TIPO,
+  DEFAULT_CUMPLIMIENTO,
+  DEFAULT_CUMPLIMIENTO_POR_TIPO,
+  DEFAULT_COMPETENCIAS_POR_TIPO,
+  calcularPonderacion,
+  validarEvaluacion,
+  type DesempenoData,
+  type CumplimientoItem,
+  type Competencia,
+} from "@/lib/types/desempeno"
+import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
+import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, getPeriodosDesempeno, normalizarPeriodoDesempeno } from "@/lib/catalogo"
+import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
+
+/** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
+export type OrigenEmpleado = "planta" | "nuevo_ingreso"
+
+interface EmpleadoOrigenData {
+  numero: string
+  nombre: string
+  puesto: string | null
+  departamento?: string | null
+  fecha_ingreso?: string | null
+}
+
+interface NuevoIngresoOrigenData extends EmpleadoOrigenData {
+  tipo_contrato: string | null
+}
+
+const CONTRATO_INDETERMINADO = "Indeterminado"
+
+/**
+ * Un contrato de prueba vigente es la fuente autoritativa aunque el número ya
+ * exista en employees. Cuando pasa a indeterminado, employees recupera prioridad.
+ */
+function resolverOrigenEmpleado(
+  empleado: EmpleadoOrigenData | null,
+  nuevoIngreso: NuevoIngresoOrigenData | null,
+): { origen: OrigenEmpleado; registro: EmpleadoOrigenData } | null {
+  const nuevoIngresoActivo = nuevoIngreso && nuevoIngreso.tipo_contrato !== CONTRATO_INDETERMINADO
+  if (nuevoIngresoActivo) return { origen: "nuevo_ingreso", registro: nuevoIngreso }
+  if (empleado) return { origen: "planta", registro: empleado }
+  if (nuevoIngreso) return { origen: "planta", registro: nuevoIngreso }
+  return null
+}
+
+// Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
+const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
+const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
+
+function calcularAsistenciaPorcentaje(incidencias: Record<string, unknown>[], targetPeriodo: string): number {
+  const mesesPeriodo = mesesDePeriodo(targetPeriodo)
+  const faltasDeMes = (mes: string): number =>
+    incidencias
+      .filter((i) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
+      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
+
+  if (mesesPeriodo.length > 0) {
+    const mesesConDatos = mesesPeriodo.filter((mes) =>
+      incidencias.some((i) => i.mes === mes),
+    )
+    if (mesesConDatos.length > 0) {
+      const promedio =
+        mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
+        mesesConDatos.length
+      return Math.round(promedio)
+    } else {
+      return 100
+    }
+  } else {
+    const totalFaltas = incidencias
+      .filter((i) => i.categoria === 'FALTA INJUSTIFICADA')
+      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
+    return aplicarEscala(totalFaltas)
+  }
+}
+export type PeriodoModo = "semestrales" | "mensuales"
+
+/** Resultado de `buscarEmpleado`: origen + modo/periodo recomendado para el selector. */
+export interface BusquedaResultado {
+  origen: OrigenEmpleado
+  modo: PeriodoModo
+  periodo: string
+  /** true si es planta Y elegible para el semestre activo → debe evaluarse semestral. */
+  requiereSemestral: boolean
+  /** Semestre activo (primer semestral sin evaluación) usado para el guardrail. */
+  semestreObjetivo: string
+}
+
+/** Fila de `evaluaciones_desempeno` (campos usados al cargar una evaluación). */
+interface EvalRowFull {
+  id: string
+  periodo: string | null
+  evaluador_nombre: string | null
+  evaluador_puesto: string | null
+  tipo: string | null
+  objetivos: DesempenoData["objetivos"] | null
+  cumplimiento_responsabilidades: CumplimientoItem[] | null
+  competencias: Competencia[] | null
+  compromisos: string | null
+  fecha_revision: string | null
+  observaciones: string | null
+  calificacion_final: number | null
+}
+
+export interface EvaluacionHistorial {
+  id: string
+  numero_empleado: string
+  nombre?: string
+  puesto?: string
+  evaluador_nombre: string | null
+  tipo: string
+  periodo: string | null
+  calificacion_final: number
+  created_at: string
+  origen?: "planta" | "nuevo_ingreso"
+}
+
+export function useDesempeno() {
+  const [data, setData] = useState<DesempenoData | null>(null)
+  const [existingEvaluation, setExistingEvaluation] = useState<{ id: string; periodo: string; numero: string } | null>(null)
+  const [origen, setOrigen] = useState<OrigenEmpleado | null>(null)
+  const [requiereSemestral, setRequiereSemestral] = useState(false)
+  const [semestreObjetivo, setSemestreObjetivo] = useState<string | null>(null)
+  const [fechaIngreso, setFechaIngreso] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [historial, setHistorial] = useState<EvaluacionHistorial[]>([])
+  const [historialLoading, setHistorialLoading] = useState(false)
+  const lastEvalId = useRef<string | null>(null)
+  const lastEvalKey = useRef<string | null>(null)
+  const searchRequest = useRef(0)
+  const savingRef = useRef(false)
+  const dataRef = useRef<DesempenoData | null>(null)
+
+  // Mantén dataRef sincronizado con data
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
+
+  // Sugerencias para typeahead: busca por número o nombre (ILIKE) en
+  // employees y nuevo_ingreso. Devuelve hasta 8 resultados, sin duplicar números.
+  const buscarSugerencias = useCallback(
+    async (q: string): Promise<Array<{ numero: string; nombre: string; puesto: string }>> => {
+      const term = q.trim()
+      if (term.length < 2) return []
+      const like = `%${term.replace(/[%_]/g, "")}%`
+
+      const [{ data: emps }, { data: nuevos }] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("numero, nombre, puesto")
+          .or(`numero.ilike.${like},nombre.ilike.${like}`)
+          .limit(8),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, tipo_contrato")
+          .or(`numero.ilike.${like},nombre.ilike.${like}`)
+          .limit(8),
+      ])
+
+      const empleadosPorNumero = new Map(
+        (emps ?? []).filter(e => e.numero).map(e => [e.numero!, e as EmpleadoOrigenData]),
+      )
+      const nuevosPorNumero = new Map(
+        (nuevos ?? []).filter(e => e.numero).map(e => [e.numero!, e as NuevoIngresoOrigenData]),
+      )
+      const numeros = [...new Set([...nuevosPorNumero.keys(), ...empleadosPorNumero.keys()])]
+
+      return numeros.slice(0, 8).flatMap(numero => {
+        const resolved = resolverOrigenEmpleado(
+          empleadosPorNumero.get(numero) ?? null,
+          nuevosPorNumero.get(numero) ?? null,
+        )
+        return resolved
+          ? [{ numero, nombre: resolved.registro.nombre ?? "", puesto: resolved.registro.puesto ?? "" }]
+          : []
+      })
+    },
+    [],
+  )
+
+  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null, forzarPeriodo = false) => {
+    const requestId = ++searchRequest.current
+    setLoading(true)
+    setError(null)
+    setData(null)
+    setExistingEvaluation(null)
+    setSaveSuccess(false)
+
+    try {
+      // Consulta ambas fuentes: un contrato de prueba activo debe prevalecer
+      // sobre una copia del mismo número que ya exista en employees.
+      const [{ data: emp }, { data: ni }] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso")
+          .eq("numero", numero)
+          .maybeSingle(),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso, tipo_contrato")
+          .eq("numero", numero)
+          .maybeSingle(),
+      ])
+
+      let empleadoData: { numero: string; nombre: string; puesto: string; departamento: string | null; fechaIngreso: string | null } | null = null
+      let origenEmpleado: OrigenEmpleado | null = null
+
+      const empleadoResuelto = resolverOrigenEmpleado(
+        emp as EmpleadoOrigenData | null,
+        ni as NuevoIngresoOrigenData | null,
+      )
+
+      if (empleadoResuelto) {
+        const registro = empleadoResuelto.registro
+        origenEmpleado = empleadoResuelto.origen
+        empleadoData = {
+          numero: registro.numero,
+          nombre: registro.nombre,
+          puesto: registro.puesto || "",
+          departamento: registro.departamento ?? null,
+          fechaIngreso: registro.fecha_ingreso ?? null,
+        }
+      }
+
+      if (!empleadoData || !origenEmpleado) throw new Error("Empleado no encontrado")
+
+      // Scope por departamento: el evaluador solo puede abrir empleados de las áreas asignadas
+      if (restrictDepartamentos && restrictDepartamentos.length > 0) {
+        const permitidos = restrictDepartamentos.map(normalizeDepartamento)
+        if (!permitidos.includes(normalizeDepartamento(empleadoData.departamento))) {
+          throw new Error(
+            `Este empleado pertenece a otro departamento. Solo puedes evaluar a tu área (${restrictDepartamentos.join(", ")}).`,
+          )
+        }
+      }
+
+      // Trae TODAS las evaluaciones del empleado (más reciente primero) para
+      // poder resolver el periodo correcto y cargar la fila de ESE periodo.
+      const { data: evalsRaw, error: evalsError } = await supabase
+        .from("evaluaciones_desempeno")
+        .select("*")
+        .eq("numero_empleado", numero)
+        .order("created_at", { ascending: false })
+
+      if (evalsError) throw evalsError
+      const evals = (evalsRaw ?? []) as EvalRowFull[]
+      const periodosConEval = new Set(evals.map((e) => e.periodo).filter(Boolean) as string[])
+
+      // Semestre activo = primer semestral SIN evaluación guardada (auto-avance:
+      // si ya hizo DIC-MAY, pasa a JUN-NOV). Si todos están hechos, usa el último.
+      const selectedYear = Number(periodoSeleccionado?.match(/(\d{4})$/)?.[1]) || new Date().getFullYear()
+      const periodosContexto = getPeriodosDesempeno(selectedYear)
+      const periodosNormalizados = new Set([...periodosConEval].map(normalizarPeriodoDesempeno))
+      const semestreActivo =
+        periodosContexto.semestrales.find((p) => !periodosNormalizados.has(normalizarPeriodoDesempeno(p))) ??
+        periodosContexto.semestrales[periodosContexto.semestrales.length - 1]
+
+      // Un empleado de planta solo se evalúa SEMESTRAL si ya cumple la antigüedad
+      // mínima para el semestre activo. Si es planta pero recién ingresado (aún
+      // no elegible), se evalúa MENSUAL (onboarding) hasta que califique; en ese
+      // caso NO se bloquea el modo mensual.
+      const elegibleSemestreActivo =
+        origenEmpleado === "planta" &&
+        esElegibleParaPeriodo(empleadoData.fechaIngreso, semestreActivo).elegible
+      const requiereSemestralEmp = origenEmpleado === "planta" && elegibleSemestreActivo
+
+      const mensuales = periodosContexto.mensuales as readonly string[]
+      const mensualResuelto =
+        periodoSeleccionado && mensuales.includes(periodoSeleccionado)
+          ? periodoSeleccionado
+          : periodosContexto.mensuales[0]
+
+      const semestralSeleccionado = periodoSeleccionado && periodosContexto.semestrales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
+      const mensualSeleccionado = periodoSeleccionado && periodosContexto.mensuales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
+      const periodoForzado = forzarPeriodo && periodoSeleccionado && (semestralSeleccionado || mensualSeleccionado)
+      const modo: PeriodoModo = periodoForzado
+        ? (semestralSeleccionado ? "semestrales" : "mensuales")
+        : (requiereSemestralEmp ? "semestrales" : "mensuales")
+      const periodoResuelto: string = periodoForzado
+        ? periodoSeleccionado
+        : requiereSemestralEmp ? semestreActivo : mensualResuelto
+
+      // Buscar solo detecta las evaluaciones guardadas; abrirlas requiere una accion explicita.
+      const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
+      const evalData = evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null
+      if (evalData) {
+        if (requestId !== searchRequest.current) return null
+        lastEvalId.current = null
+        lastEvalKey.current = null
+        setExistingEvaluation({ id: evalData.id, periodo: periodoResuelto, numero })
+        setFechaIngreso(empleadoData.fechaIngreso)
+        setOrigen(origenEmpleado)
+        setRequiereSemestral(requiereSemestralEmp)
+        setSemestreObjetivo(semestreActivo)
+        return { origen: origenEmpleado, modo, periodo: periodoResuelto, requiereSemestral: requiereSemestralEmp, semestreObjetivo: semestreActivo }
+      }
+
+      const { data: incidenciaData, error: incidenciaError } = await supabase
+        .from("incidencias")
+        .select("categoria, valor, notas, mes")
+        .eq("numero_empleado", numero)
+        .order("mes", { ascending: false })
+
+      if (incidenciaError) throw incidenciaError
+
+      const puesto = empleadoData.puesto
+      const tipoPuesto = getTipoDesempenoByPuesto(puesto)
+      const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
+        ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
+
+      // Auto-calculate cumplimiento from incidencias using graduated scale
+      const incidencias = incidenciaData ?? []
+
+      // "Cumplir con asistencia": se evalúa por mes del periodo y se promedian
+      // los % de los meses CON datos (≥1 incidencia registrada).
+      //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
+      //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
+      // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
+      const targetPeriodo = periodoResuelto
+      const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as Record<string, unknown>[], targetPeriodo)
+
+
+      const cumplimiento: CumplimientoItem[] = (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipoPuesto] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c }))
+
+      // Override auto-calculated fields with graduated scale values
+      // index 2 = "Cumplir con asistencia" → based on faltas (only for operativo/administrativo)
+      if (tipoPuesto !== "jefe" && cumplimiento[2]) {
+        cumplimiento[2].porcentaje = String(asistenciaPorcentaje)
+      }
+
+      const competencias: Competencia[] = (DEFAULT_COMPETENCIAS_POR_TIPO[tipoPuesto] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c }))
+
+      const result: DesempenoData = {
+        numero_empleado: empleadoData.numero,
+        nombre: empleadoData.nombre,
+        puesto,
+        evaluador_nombre: "",
+        evaluador_puesto: "",
+        tipo: tipoPuesto,
+        periodo: periodoResuelto,
+        objetivos: objetivosFallback.map((obj) => ({ ...obj })),
+        cumplimiento_responsabilidades: cumplimiento,
+        competencias,
+        compromisos: "",
+        fecha_revision: "",
+        observaciones: "",
+        calificacion_final: 0,
+        incidencias: (incidenciaData ?? []).map((item: Record<string, unknown>) => ({
+          categoria: (item.categoria as string) ?? "",
+          valor: (item.valor as number) ?? null,
+          notas: (item.notas as string) ?? null,
+          mes: (item.mes as string) ?? null,
+        })),
+      }
+
+      if (requestId !== searchRequest.current) return null
+      lastEvalId.current = null
+      lastEvalKey.current = null
+      setFechaIngreso(empleadoData.fechaIngreso)
+      setData(result)
+      setOrigen(origenEmpleado)
+      setRequiereSemestral(requiereSemestralEmp)
+      setSemestreObjetivo(semestreActivo)
+      return {
+        origen: origenEmpleado,
+        modo,
+        periodo: periodoResuelto,
+        requiereSemestral: requiereSemestralEmp,
+        semestreObjetivo: semestreActivo,
+      } satisfies BusquedaResultado
+    } catch (e) {
+      if (requestId !== searchRequest.current) return null
+      setError(e instanceof Error ? e.message : "Error")
+      notify.error("Empleado no encontrado")
+      return null
+    } finally {
+      if (requestId === searchRequest.current) setLoading(false)
+    }
+  }, [])
+
+  const clearEvaluation = useCallback(() => {
+    ++searchRequest.current
+    lastEvalId.current = null
+    lastEvalKey.current = null
+    setData(null)
+    setExistingEvaluation(null)
+    setSaveSuccess(false)
+    setError(null)
+    setLoading(false)
+  }, [])
+
+  const resetSaveSuccess = useCallback(() => setSaveSuccess(false), [])
+
+  const guardar = useCallback(async (evalData: DesempenoData) => {
+    if (savingRef.current) return false
+    const validacion = validarEvaluacion(evalData)
+    if (!validacion.valida) {
+      notify.error(validacion.errores[0] ?? "Completa la evaluación antes de guardar")
+      return false
+    }
+    savingRef.current = true
+    setSaving(true)
+    setSaveSuccess(false)
+    try {
+      const ponderacion = calcularPonderacion(evalData)
+      const row = {
+        numero_empleado: evalData.numero_empleado,
+        evaluador_nombre: evalData.evaluador_nombre || null,
+        evaluador_puesto: evalData.evaluador_puesto || null,
+        tipo: evalData.tipo,
+        periodo: evalData.periodo || null,
+        objetivos: evalData.objetivos,
+        cumplimiento_responsabilidades: evalData.cumplimiento_responsabilidades,
+        competencias: evalData.competencias,
+        compromisos: evalData.compromisos || null,
+        fecha_revision: evalData.fecha_revision || null,
+        observaciones: evalData.observaciones || null,
+        calificacion_final: ponderacion.calificacionFinal,
+      }
+
+      const evalKey = `${evalData.numero_empleado}:${normalizarPeriodoDesempeno(evalData.periodo)}`
+      if (lastEvalId.current && lastEvalKey.current === evalKey) {
+        const { error: err } = await supabase
+          .from("evaluaciones_desempeno")
+          .update(row)
+          .eq("id", lastEvalId.current)
+        if (err) throw err
+      } else {
+        const { data: existingRows, error: existingError } = await supabase
+          .from("evaluaciones_desempeno")
+          .select("periodo")
+          .eq("numero_empleado", evalData.numero_empleado)
+        if (existingError) throw existingError
+        if (existingRows?.some((row) => row.periodo && normalizarPeriodoDesempeno(row.periodo) === normalizarPeriodoDesempeno(evalData.periodo))) {
+          throw new Error("Ya existe una evaluación para este periodo. Ábrela desde Historial.")
+        }
+        const { data: inserted, error: err } = await supabase
+          .from("evaluaciones_desempeno")
+          .insert(row)
+          .select("id")
+          .single()
+        if (err) throw err
+        lastEvalId.current = inserted.id
+        lastEvalKey.current = evalKey
+      }
+
+      setData({ ...evalData, calificacion_final: ponderacion.calificacionFinal })
+      setSaveSuccess(true)
+      return true
+      // notify.success ya no es necesario — el modal DesempenoSaveSuccess lo muestra
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message
+        : typeof e === "object" && e !== null && "message" in e ? String((e as Record<string, unknown>).message)
+        : "Error al guardar"
+      console.error("[guardar]", e)
+      notify.error(msg)
+      return false
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
+  }, [])
+
+  const fetchHistorial = useCallback(async () => {
+    setHistorialLoading(true)
+    try {
+      // Pagina el query hasta traer TODAS las evaluaciones (sin cap fijo).
+      interface EvalRow {
+        id: string
+        numero_empleado: string
+        evaluador_nombre: string | null
+        tipo: string
+        periodo: string | null
+        calificacion_final: number
+        created_at: string
+      }
+      const PAGE = 1000
+      const evals: EvalRow[] = []
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: err } = await supabase
+          .from("evaluaciones_desempeno")
+          .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1)
+
+        if (err) throw err
+        if (!page || page.length === 0) break
+        evals.push(...(page as EvalRow[]))
+        if (page.length < PAGE) break
+      }
+
+      // Fetch employee names for each unique numero_empleado
+      const numeros = [...new Set((evals ?? []).map((e) => e.numero_empleado))]
+      const empleadoMap: Record<string, { nombre: string; puesto: string; origen: "planta" | "nuevo_ingreso" }> = {}
+
+      if (numeros.length > 0) {
+        const [{ data: emps }, { data: niEmps }] = await Promise.all([
+          supabase
+            .from("employees")
+            .select("numero, nombre, puesto")
+            .in("numero", numeros),
+          supabase
+            .from("nuevo_ingreso")
+            .select("numero, nombre, puesto, tipo_contrato")
+            .in("numero", numeros),
+        ])
+        const empleadosPorNumero = new Map(
+          (emps ?? []).filter(e => e.numero).map(e => [e.numero!, e as EmpleadoOrigenData]),
+        )
+        const nuevosPorNumero = new Map(
+          (niEmps ?? []).filter(e => e.numero).map(e => [e.numero!, e as NuevoIngresoOrigenData]),
+        )
+
+        for (const numero of numeros) {
+          const resolved = resolverOrigenEmpleado(
+            empleadosPorNumero.get(numero) ?? null,
+            nuevosPorNumero.get(numero) ?? null,
+          )
+          if (resolved) {
+            empleadoMap[numero] = {
+              nombre: resolved.registro.nombre,
+              puesto: resolved.registro.puesto || "",
+              origen: resolved.origen,
+            }
+          }
+        }
+      }
+
+      setHistorial(
+        (evals ?? []).map((e) => ({
+          id: e.id,
+          numero_empleado: e.numero_empleado,
+          nombre: empleadoMap[e.numero_empleado]?.nombre,
+          puesto: empleadoMap[e.numero_empleado]?.puesto,
+          evaluador_nombre: e.evaluador_nombre,
+          tipo: e.tipo,
+          periodo: e.periodo,
+          calificacion_final: e.calificacion_final,
+          created_at: e.created_at,
+          origen: empleadoMap[e.numero_empleado]?.origen,
+        }))
+      )
+    } catch (e) {
+      notify.error(e instanceof Error ? e.message : "Error al cargar historial")
+    } finally {
+      setHistorialLoading(false)
+    }
+  }, [])
+
+  const cargarEvaluacion = useCallback(async (evalId: string) => {
+    const requestId = ++searchRequest.current
+    setLoading(true)
+    setError(null)
+    setData(null)
+    setExistingEvaluation(null)
+    setSaveSuccess(false)
+    try {
+      const { data: evalRow, error: err } = await supabase
+        .from("evaluaciones_desempeno")
+        .select("*")
+        .eq("id", evalId)
+        .single()
+
+      if (err || !evalRow) throw err ?? new Error("Evaluación no encontrada")
+
+      // Find employee info
+      let nombre = ""
+      let puesto = ""
+      let fechaIngresoEmp: string | null = null
+      let origenEmpleado: OrigenEmpleado = "planta"
+      
+      const [{ data: emp }, { data: ni }] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("numero, nombre, puesto, fecha_ingreso")
+          .eq("numero", evalRow.numero_empleado)
+          .maybeSingle(),
+        supabase
+          .from("nuevo_ingreso")
+          .select("numero, nombre, puesto, fecha_ingreso, tipo_contrato")
+          .eq("numero", evalRow.numero_empleado)
+          .maybeSingle(),
+      ])
+      const empleadoResuelto = resolverOrigenEmpleado(
+        emp as EmpleadoOrigenData | null,
+        ni as NuevoIngresoOrigenData | null,
+      )
+      if (empleadoResuelto) {
+        nombre = empleadoResuelto.registro.nombre
+        puesto = empleadoResuelto.registro.puesto || ""
+        fechaIngresoEmp = empleadoResuelto.registro.fecha_ingreso ?? null
+        origenEmpleado = empleadoResuelto.origen
+      }
+
+      // Fetch incidencias para recalcular asistencia si es necesario
+      const { data: incidenciaData } = await supabase
+        .from("incidencias")
+        .select("categoria, valor, notas, mes")
+        .eq("numero_empleado", evalRow.numero_empleado)
+        .order("mes", { ascending: false })
+
+      const result: DesempenoData = {
+        numero_empleado: evalRow.numero_empleado,
+        nombre,
+        puesto,
+        evaluador_nombre: evalRow.evaluador_nombre || "",
+        evaluador_puesto: evalRow.evaluador_puesto || "",
+        tipo: (evalRow.tipo as DesempenoData["tipo"]) || "operativo",
+        periodo: evalRow.periodo || "",
+        objetivos: evalRow.objetivos?.length ? evalRow.objetivos : [],
+        cumplimiento_responsabilidades: evalRow.cumplimiento_responsabilidades?.length
+          ? (evalRow.cumplimiento_responsabilidades as CumplimientoItem[])
+          : (DEFAULT_CUMPLIMIENTO_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c })),
+        competencias: evalRow.competencias?.length
+          ? (evalRow.competencias as Competencia[]).map(item => ({ ...item, evaluada: item.evaluada ?? item.calificacion > 0 }))
+          : (DEFAULT_COMPETENCIAS_POR_TIPO[(evalRow.tipo as DesempenoData["tipo"]) || "operativo"] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c })),
+        compromisos: evalRow.compromisos || "",
+        fecha_revision: evalRow.fecha_revision || "",
+        observaciones: evalRow.observaciones || "",
+        calificacion_final: evalRow.calificacion_final || 0,
+        incidencias: (incidenciaData ?? []).map((item: Record<string, unknown>) => ({
+          categoria: (item.categoria as string) ?? "",
+          valor: (item.valor as number) ?? null,
+          notas: (item.notas as string) ?? null,
+          mes: (item.mes as string) ?? null,
+        })),
+      }
+
+      if (requestId !== searchRequest.current) return null
+      lastEvalId.current = evalRow.id
+      lastEvalKey.current = evalRow.numero_empleado + ":" + normalizarPeriodoDesempeno(evalRow.periodo || "")
+      setFechaIngreso(fechaIngresoEmp)
+      setOrigen(origenEmpleado)
+      setData(result)
+      
+      // Retornar información del periodo para que el componente pueda actualizar el selector
+      const periodoStr = evalRow.periodo || ""
+      return { periodo: periodoStr, origen: origenEmpleado }
+    } catch (e) {
+      if (requestId !== searchRequest.current) return null
+      setError(e instanceof Error ? e.message : "Error")
+      notify.error("Evaluación no encontrada")
+      return null
+    } finally {
+      if (requestId === searchRequest.current) setLoading(false)
+    }
+  }, [])
+
+  const eliminarEvaluacion = useCallback(async (evalId: string) => {
+    const confirmed = await notify.confirm({
+      title: "¿Eliminar esta evaluación?",
+      description: "Esta acción no se puede deshacer.",
+      tone: "destructive",
+    })
+    if (!confirmed) return false
+
+    try {
+      const { error: err } = await supabase
+        .from("evaluaciones_desempeno")
+        .delete()
+        .eq("id", evalId)
+      if (err) throw err
+
+      if (lastEvalId.current === evalId) {
+        lastEvalId.current = null
+        lastEvalKey.current = null
+        setData(null)
+        setOrigen(null)
+        setRequiereSemestral(false)
+        setSemestreObjetivo(null)
+      }
+      setHistorial((prev) => prev.filter((e) => e.id !== evalId))
+      notify.success("Evaluación eliminada")
+      return true
+    } catch (e) {
+      notify.error(e instanceof Error ? e.message : "Error al eliminar")
+      return false
+    }
+  }, [])
+
+  const recalcularAsistencia = useCallback((nuevoPeriodo: string) => {
+    const currentData = dataRef.current
+    if (!currentData) return
+
+    const mesesPeriodo = mesesDePeriodo(nuevoPeriodo)
+    const incidencias = currentData.incidencias ?? []
+    const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as unknown as Record<string, unknown>[], nuevoPeriodo)
+
+    const tipoPuesto = getTipoDesempenoByPuesto(currentData.puesto)
+    const cumplimiento = [...(currentData.cumplimiento_responsabilidades ?? [])]
+
+    // Actualiza el porcentaje de asistencia (índice 2) solo para operativo/administrativo
+    if (tipoPuesto !== "jefe" && cumplimiento[2]) {
+      cumplimiento[2] = { ...cumplimiento[2], porcentaje: String(asistenciaPorcentaje) }
+    }
+
+    setData({ ...currentData, periodo: nuevoPeriodo, cumplimiento_responsabilidades: cumplimiento })
+  }, [])
+
+  return {
+    data, setData, existingEvaluation, clearEvaluation, origen, requiereSemestral, semestreObjetivo, fechaIngreso, loading, saving, saveSuccess, resetSaveSuccess, error,
+    buscarEmpleado, buscarSugerencias, guardar, recalcularAsistencia,
+    historial, historialLoading, fetchHistorial,
+    cargarEvaluacion, eliminarEvaluacion,
+  }
+}

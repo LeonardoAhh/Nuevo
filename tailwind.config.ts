@@ -1,0 +1,134 @@
+import type { Config } from "tailwindcss"
+import plugin from "tailwindcss/plugin"
+import defaultTheme from "tailwindcss/defaultTheme"
+
+// Automágicamente multiplicamos todos los espaciados en 'rem' por la variable --density-scale
+const dynamicSpacing = Object.fromEntries(
+  Object.entries(defaultTheme.spacing).map(([key, value]) => {
+    if (typeof value === "string" && value.endsWith("rem")) {
+      return [key, `calc(${value} * var(--density-scale, 1))`]
+    }
+    return [key, value]
+  })
+)
+
+const config: Config = {
+  darkMode: "class",
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./*.{js,ts,jsx,tsx,mdx}",
+    "*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      spacing: dynamicSpacing,
+      screens: {
+        xs: "480px",
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "Arial", "sans-serif"],
+        // Temporary compatibility alias for existing editorial screens.
+        serif: ["var(--font-sans)", "Arial", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      colors: {
+        // ── Tokens base — sin <alpha-value> porque se usan como valores
+        //    sólidos en border, outline, ring, etc. y rara vez con opacidad.
+        border:     "hsl(var(--border))",
+        input:      "hsl(var(--input))",
+        ring:       "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+
+        // ── Tokens semánticos — con <alpha-value> para habilitar
+        //    slash-notation: bg-primary/10, text-primary/80, etc.
+        primary: {
+          DEFAULT:    "hsl(var(--primary) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        brand: {
+          DEFAULT:    "hsl(var(--brand-accent) / <alpha-value>)",
+          text:       "hsl(var(--brand-accent-text) / <alpha-value>)",
+          foreground: "hsl(var(--brand-accent-foreground))",
+        },
+        secondary: {
+          DEFAULT:    "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT:    "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT:    "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
+        },
+        accent: {
+          DEFAULT:    "hsl(var(--accent) / <alpha-value>)",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT:    "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT:    "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground))",
+        },
+
+        // ── Tokens de estado — necesitan opacidad para badges y fondos sutiles
+        //    bg-success/10, text-success, border-success/20, etc.
+        success: {
+          DEFAULT:    "hsl(var(--success) / <alpha-value>)",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT:    "hsl(var(--warning) / <alpha-value>)",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT:    "hsl(var(--info) / <alpha-value>)",
+          foreground: "hsl(var(--info-foreground))",
+        },
+
+        // ── Tokens de chart — con opacidad para áreas, barras semitransparentes
+        chart: {
+          "1": "hsl(var(--chart-1) / <alpha-value>)",
+          "2": "hsl(var(--chart-2) / <alpha-value>)",
+          "3": "hsl(var(--chart-3) / <alpha-value>)",
+          "4": "hsl(var(--chart-4) / <alpha-value>)",
+          "5": "hsl(var(--chart-5) / <alpha-value>)",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to:   { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to:   { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up":   "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [
+    plugin(function({ addVariant }) {
+      // Agrega la variante 'compact:' para usar en las clases de Tailwind
+      addVariant('compact', '.density-compact &')
+    })
+  ],
+}
+
+export default config

@@ -1,0 +1,45 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/NODE JS
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# PWA — generados por next-pwa en build (sw.js is hand-written, keep tracked)
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+/public/fallback-*.js
+/public/fallback-*.js.map
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Firebase service account credentials (never commit)
+public/*firebase-adminsdk*.json
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials

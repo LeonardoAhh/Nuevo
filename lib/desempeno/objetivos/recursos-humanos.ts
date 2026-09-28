@@ -1,0 +1,473 @@
+import type { Objetivo } from "@/lib/types/desempeno"
+
+export const _OBJETIVOS_AUXILIAR_LIMPIEZA: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Lograr un 90% en el puntaje de inspecciones de calidad",
+        resultado: "90%",
+        porcentaje: "NA",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Mantener en 0 el número de quejas o incidencias",
+        resultado: "0",
+        porcentaje: "NA",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Mantener en 0 la tasa de no conformidades",
+        resultado: "0",
+        porcentaje: "NA",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Cumplir al 100% con el plan de trabajo",
+        resultado: "100%",
+        porcentaje: "NA",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Hacer uso correcto de equipos y productos químicos",
+        resultado: "100%",
+        porcentaje: "NA",
+        comentarios: "",
+    },
+];
+
+export const _OBJETIVOS_COORDINADOR_RECLUTAMIENTO: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cubrir las vacantes en un máximo de 15 días promedio por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Cumplir  mínimo el 70% del perfil requerido por el puesto de las personas contratadas por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Integrar el 100% de expedientes completos y con la información correcta en los documentos de contratación y registros internos.",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Cumplimiento de 13 ingresos por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Realizar la medición de indicadores mensuales máximo el día 9 de cada mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Definir acciones correctivas en caso de incumplimiento a los objetivos mensuales de reclutamiento y completarlas conforme las fechas definidas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Medir costos de reclutamiento de fuentes de reclutamiento",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+];
+
+export const _OBJETIVOS_JEFE_RECURSOS_HUMANOS: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cubrir las vacantes en un máximo de 15 días promedio por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Cumplir el 90% del plan de capacitación mensual definido",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Cumplir al menos el 90% promedio en las calificaciones de los cursos impartidos durante el mes.",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Mantener una rotación máxima de 11% mensual",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Mantener un % de asistencia del 96% mínimo mensual",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Tener máximo 2 accidentes por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Tener 0 errores en el proceso de prenómina",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Cumplir el 100% de actividades del check list de cumplimiento legal programadas por mes.",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Cumplir el 100% de los planes de formación del área de Recursos Humanos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "Seguimiento al envío de requerimientos REPSE por parte de los proveedores de servicio de RRHH",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
+export const _OBJETIVOS_ANALISTA_CAPACITACION: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cumplimiento de la matriz de habilidades de todos los ocupantes de los puestos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Cumplir el 90% del plan de capacitación mensual definido",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Cumplir al menos el 90% en la eficiencia de capacitación por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Aplicar las evaluaciones de categorías a las personas correspondientes, según la frecuencia definida para cada categoría, de manera mensual",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Mantener los registros de capacitación actualizados al 100% de manera semanal, conforme el avance del programa mensual de capacitación",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Cumplir con el 100% de documentos legales requeridos por la autoridad laboral conforme al programa mensual",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Realizar la medición de indicadores mensuales máximo el día 9 de cada mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Cumplir el 100% del programa de comunicación interna definido por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Definir acciones correctivas en caso de incumplimiento a los objetivos mensuales de capacitación y completarlas conforme las fechas definidas.",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "Entregar las evaluaciones mensuales del personal de nuevo ingreso máximo 1 día después del cumplimiento de los meses 1 y 2 y 1 semana antes para el mes 3",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+];
+
+export const _OBJETIVOS_ANALISTA_RECLUTAMIENTO: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cubrir las vacantes en un máximo de 15 días promedio por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Cumplir  mínimo el 70% del perfil requerido por el puesto de las personas contratadas por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Integrar el 100% de expedientes completos y con la información correcta en los documentos de contratación y registros internos.",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Cumplimiento de 13 ingresos por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+];
+
+export const _OBJETIVOS_ANALISTA_RECURSOS_HUMANOS: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Tasa de Rotación 3er turno",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Tiempo de resolución de solicitudes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Índice de Satisfacción del Colaborador",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Tasa de ausentismo del 3er turno ",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Objetivo menor a 3 incidentes por mes- Número Incidentes de incumplimiento de RIT o de seguridad y calidad",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "100% de cumplimiento en entrega de RG-REC-048",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "100% de cumplimiento en entrega de evaluaciones de desempeño de nuevos ingreso y semestrales",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Cumplir el 90% del plan de capacitación mensual definido",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
+export const _OBJETIVOS_ANALISTA_SEGURIDAD_HIGIENE: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Tasa de Cumplimiento Normativo -Cumplir el 100% del programa de seguridad definido por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Emitir un informe semanal de los hallazgos de seguridad, salud y medio ambiente y dar seguimiento para el cierre de hallazgos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Emitir un informe semanal del cumplimiento al uso de EPP por áreas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Emitir un informe mensual de la auditoría de 5´s y difundir resultados a todo el personal",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Emitir un informe mensual del cumplimiento de objetivos de medio ambiente y comunicarlo a todos los trabajadores",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Elaborar y completar un plan de acciones correctivas por cada accidente ocurrido durante cada mes  y dar seguimiento para el cierre de acciones",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Realizar la medición de indicadores mensuales máximo el día 9 de cada mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Definir acciones correctivas en caso de incumplimiento a los objetivos mensuales de seguridad e higiene y completarlas conforme las fechas definidas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Porcentaje de Cumplimiento del Plan de Capacitación en los cursos de seguridad e higiene",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "Cumplir el 100% del programa de comunicación interna definido por mes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
+
+export const _OBJETIVOS_ASISTENTE_RECURSOS_HUMANOS: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "100% de cumplimiento en captura de Incidencias",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "Número de Ajustes en Nómina",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "100% de cumplimiento de entrega en tiempo y forma ",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Tiempo de resolución de solicitudes",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Seguimiento al cumplimiento de la aplicación de sanciones y retardos en base a la política de asistencia",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Índice de Satisfacción del Colaborador",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "100% de recibos firmados de prestaciones (prima vacacional, aguinaldo y PTU) máximo una semana después del cierre de cada nómina",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "100% de finiquitos escaneados máximo una semana después del cierre de cada nómina y el regreso de cheques no entregados (15 dias)",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "100% de entrega de tarjetas de vales de despensa antes del depósito de cada mes y regresar las tarjetas no entregadas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "No contar con incidencias en falta de suministros",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];

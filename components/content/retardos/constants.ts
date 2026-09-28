@@ -1,0 +1,16 @@
+export const INCIDENCIA_LABELS: Record<string, string> = {
+    "-": "No contratado",
+    A: "Asistencia",
+    F: "Falta injustificada",
+    DF: "Día festivo",
+    FJ: "Faltas just.",
+    S: "Sanción",
+    P: "Permiso",
+    CT: "Cambio turno",
+    I: "Incapacidad",
+    V: "Vacación",
+    TXT: "T. por tiempo",
+    D: "Descanso",
+    PH: "Permiso horas",
+    X: "Sin incidencia",
+}

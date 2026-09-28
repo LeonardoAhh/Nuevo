@@ -1,0 +1,147 @@
+import type { Objetivo } from "@/lib/types/desempeno"
+
+export const _OBJETIVOS_METROLOGO: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cumplimiento 100% con sus auditorías  LPA",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "No presentar hallazgos en auditorías de clientes o sistema de gestión",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Realizar y mantener 5´S al 100% en su área de trabajo",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Portar el 100% de su equipo de EPP y uniformidad diariamente",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Cumplir con el 100% del programa de calibración",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Cubrir con el 95 % del Time en las fechas establecidas",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Cobertura del 100% de uso de equipos crÍticos",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Elaboración del 100% de métodos de medición",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Cumplimiento del 100% de R&R de equipos de medición",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "Cobertura de plantilla al 100% en equipos críticos    ",
+        resultado: "100%",
+        porcentaje: "N/A",
+        comentarios: "",
+    },
+];
+
+export const _OBJETIVOS_AUXILIAR_METROLOGIA: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "Cumplimiento 100% con sus auditorías  LPA",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 2,
+        descripcion: "No presentar hallazgos en auditorías de clientes o sistema de gestión",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 3,
+        descripcion: "Realizar y mantener 5´S al 100% en su área de trabajo",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 4,
+        descripcion: "Portar el 100% de su equipo de EPP y uniformidad diariamente",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 5,
+        descripcion: "Cumplir con el 100% del programa de calibración",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 6,
+        descripcion: "Cubrir con el 95 % del Time en las fechas establecidas",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 7,
+        descripcion: "Cobertura del 100% de uso de equipos crÍticos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 8,
+        descripcion: "Elaboración del 100% de métodos de medición",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 9,
+        descripcion: "Cumplimiento del 100% de R&R de equipos de medición",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    },
+    {
+        numero: 10,
+        descripcion: "Cobertura de plantilla al 100% en equipos críticos",
+        resultado: "100%",
+        porcentaje: "",
+        comentarios: "",
+    }
+];

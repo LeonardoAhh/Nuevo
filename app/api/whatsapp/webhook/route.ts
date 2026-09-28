@@ -1,0 +1,163 @@
+/**
+ * Twilio WhatsApp Webhook
+ *
+ * POST — mensajes entrantes (Twilio envía application/x-www-form-urlencoded)
+ *
+ * Setup en Twilio Console:
+ *   Sandbox:    Messaging > Try it out > Send a WhatsApp message
+ *               Sandbox Configuration > When a message comes in:
+ *               URL: https://tu-dominio.com/api/whatsapp/webhook  Method: HTTP POST
+ *   Producción: Phone Numbers > Manage > Active Numbers > tu número
+ *               Messaging > A message comes in > Webhook POST
+ *
+ * No requiere GET de verificación (a diferencia de Meta API).
+ * Twilio valida con firma HMAC-SHA1 en header X-Twilio-Signature.
+ */
+
+import { NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
+import { sendWhatsAppMessage } from "@/lib/whatsapp/client"
+import { getComplianceByNumero, formatComplianceMessage, hasAlreadyQueried, markAsQueried, checkRateLimit } from "@/lib/whatsapp/compliance"
+import { MSG } from "@/lib/whatsapp/messages"
+
+/**
+ * Redact a phone number for logging. Keeps the first 4 and last 2 digits so
+ * ops can still correlate repeat offenders without storing full PII in logs.
+ * Example: whatsapp:+5214424112233 → whatsapp:+5214****33
+ */
+function redactPhone(raw: string): string {
+  return raw.replace(/(\+?\d{4})(\d+)(\d{2})/, (_, head, mid, tail) => `${head}${"*".repeat(Math.max(mid.length, 0))}${tail}`)
+}
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+// ─── POST — Mensajes entrantes ────────────────────────────────
+export async function POST(req: NextRequest) {
+  // Leer body como form-encoded (formato Twilio)
+  let formBody: URLSearchParams
+  try {
+    const text = await req.text()
+    formBody = new URLSearchParams(text)
+  } catch {
+    return new NextResponse("Bad Request", { status: 400 })
+  }
+
+  // Validar firma Twilio (seguridad — evita requests falsos)
+  const isValid = validateTwilioSignature(req, formBody)
+  if (!isValid) {
+    console.warn("[WhatsApp webhook] Firma Twilio inválida — request rechazado")
+    return new NextResponse("Forbidden", { status: 403 })
+  }
+
+  const from = formBody.get("From") ?? "" // e.g. "whatsapp:+521234567890"
+  const body = formBody.get("Body")?.trim() ?? ""
+
+  if (!from) {
+    return new NextResponse("OK", { status: 200 })
+  }
+
+  // Procesar de forma síncrona — Vercel mata la función al retornar, el fire-and-forget no funciona
+  try {
+    await handleMessage(from, body)
+  } catch (err) {
+    console.error("[WhatsApp webhook] Error al procesar mensaje:", err)
+  }
+
+  // Twilio espera respuesta vacía o TwiML — 200 vacío es suficiente
+  return new NextResponse("", {
+    status: 200,
+    headers: { "Content-Type": "text/xml" },
+  })
+}
+
+// ─── Lógica de respuesta ──────────────────────────────────────
+async function handleMessage(from: string, text: string): Promise<void> {
+  const normalized = text.replace(/\s+/g, "").toLowerCase()
+
+  // Rate-limit por teléfono (anti-enumeración)
+  if (!checkRateLimit(from)) {
+    console.warn(`[WhatsApp webhook] Rate limit excedido para '${redactPhone(from)}'`)
+    await sendWhatsAppMessage(from, MSG.rateLimitExcedido)
+    return
+  }
+
+  // Comandos de bienvenida — no hacemos lookup de consulta previa porque el saludo
+  // llega antes de que el usuario envíe su número, así que el estado "ya consultó" no aplica.
+  if (["hola", "hi", "hello", "ayuda", "help", "inicio", "start", ""].includes(normalized)) {
+    await sendWhatsAppMessage(from, MSG.bienvenida(false))
+    return
+  }
+
+  // Validar que sea número de empleado (solo dígitos, 1–10 chars)
+  if (!/^\d{1,10}$/.test(normalized)) {
+    console.warn(`[WhatsApp webhook] Formato inválido de '${redactPhone(from)}' (len=${text.length})`)
+    await sendWhatsAppMessage(from, MSG.formatoInvalido)
+    return
+  }
+
+  // Verificar límite de 1 consulta por empleado
+  try {
+    const already = await hasAlreadyQueried(normalized)
+    if (already) {
+      await sendWhatsAppMessage(from, MSG.yaConsulto)
+      return
+    }
+  } catch (err) {
+    console.error("[WhatsApp webhook] Error verificando consulta previa:", err)
+  }
+
+  // Consultar cumplimiento en Supabase
+  try {
+    const result = await getComplianceByNumero(normalized)
+    const message = formatComplianceMessage(result)
+    // Enviar primero — si falla, NO registrar (evita bloquear empleado sin haber recibido resultado)
+    await sendWhatsAppMessage(from, message + "\n\n" + MSG.consultaUnica)
+    await markAsQueried(normalized, from)
+  } catch (err) {
+    console.error("[WhatsApp webhook] Error Supabase:", err)
+    await sendWhatsAppMessage(from, MSG.errorServidor)
+  }
+}
+
+// ─── Validación de firma Twilio ───────────────────────────────
+/**
+ * Verifica que el request venga de Twilio.
+ * Algoritmo: HMAC-SHA1(authToken, url + params ordenados) → base64
+ * Docs: https://www.twilio.com/docs/usage/webhooks/webhooks-security
+ */
+function validateTwilioSignature(
+  req: NextRequest,
+  body: URLSearchParams
+): boolean {
+  const signature = req.headers.get("x-twilio-signature")
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+
+  // En desarrollo sin firma (Twilio Sandbox local con ngrok no siempre la envía)
+  if (process.env.NODE_ENV === "development") return true
+  if (!signature || !authToken) return false
+
+  // Reconstruir URL completa (debe coincidir exactamente con la configurada en Twilio)
+  const proto = req.headers.get("x-forwarded-proto") ?? "https"
+  const host = req.headers.get("host") ?? req.nextUrl.host
+  const url = `${proto}://${host}${req.nextUrl.pathname}`
+
+  // Concatenar parámetros ordenados alfabéticamente
+  const sortedParams = [...body.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}${v}`)
+    .join("")
+
+  const hmac = crypto.createHmac("sha1", authToken)
+  hmac.update(url + sortedParams)
+  const expected = hmac.digest("base64")
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, "utf8"),
+      Buffer.from(expected, "utf8")
+    )
+  } catch {
+    return false
+  }
+}
