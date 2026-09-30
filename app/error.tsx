@@ -54,7 +54,7 @@ export default function RouteError({
             Reintentar
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/">
+            <Link href="/inicio">
               <ArrowLeft aria-hidden="true" />
               Ir al inicio
             </Link>

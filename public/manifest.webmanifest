@@ -2,7 +2,7 @@
   "name": "Capacitacion",
   "short_name": "Capacitacion",
   "description": "Sistema de gestion de capacitacion.",
-  "start_url": "/",
+  "start_url": "/inicio",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fafafa",

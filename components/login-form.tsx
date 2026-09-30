@@ -41,7 +41,10 @@ export default function LoginForm() {
       })
       if (authError) throw authError
 
-      const rawRedirect = searchParams.get("redirectTo") || "/"
+      const requestedPath = searchParams.get("redirectTo")
+      const rawRedirect = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") && requestedPath !== "/" && !requestedPath.startsWith("/auth/redirect")
+        ? requestedPath
+        : "/inicio"
       setSubmitStatus("success")
 
       await new Promise(resolve => setTimeout(resolve, 1500))

@@ -11,8 +11,8 @@ import {
   FileWarning,
   ImageIcon,
   GraduationCap,
-  Clock,
   LayoutGrid,
+  LayoutDashboard,
   MoreHorizontal,
   TrendingUp,
   UserPlus,
@@ -62,7 +62,7 @@ const EVALUADOR_PRIMARY_HREFS = new Set(EVALUADOR_PRIMARY.map((i) => i.href))
 // Everything else lives in the bottom sheet, grouped by category to keep the
 // list readable.
 const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "Personal", items: [{ label: "Retardos y Marcajes", href: "/retardos", icon: Clock }] },
+  { label: "Inicio", items: [{ label: "Inicio", href: "/inicio", icon: LayoutDashboard }] },
   {
     label: "Capacitación",
     items: [
@@ -101,7 +101,7 @@ const ALL_MORE_HREFS = new Set(
  * lights up when the user is on any route that lives inside the sheet.
  */
 export default function BottomNav() {
-  const pathname = usePathname() ?? "/"
+  const pathname = usePathname() ?? "/inicio"
   const [open, setOpen] = useState(false)
   const { isEvaluador } = useRole()
 
@@ -246,7 +246,6 @@ function TabLink({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/"
   return pathname === href || pathname.startsWith(href + "/")
 }
 
@@ -256,7 +255,6 @@ function isPublicPath(pathname: string) {
     pathname === "/login" ||
     pathname === "/offline" ||
     pathname.startsWith("/eventos") ||
-    pathname.startsWith("/recursos") ||
     pathname.startsWith("/cursos") ||
     pathname.startsWith("/preview")
   )

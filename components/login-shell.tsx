@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { GraduationCap, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import LoginForm from "@/components/login-form"
 import { LOGIN, loginStyles } from "@/lib/login/presentation"
 
@@ -9,7 +9,7 @@ export default function LoginShell() {
       <div className={loginStyles.container}>
         <header className={loginStyles.brand}>
           <span className={loginStyles.brandIcon} aria-hidden="true">
-            <GraduationCap className="size-5" />
+            <img src="/icons/icon.svg" alt="" className="size-5" />
           </span>
           <span>{LOGIN.brand}</span>
         </header>

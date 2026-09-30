@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function HomePage() {
-  redirect("/capacitacion")
+export default function RootPage() {
+  redirect("/inicio")
 }

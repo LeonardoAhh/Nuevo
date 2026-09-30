@@ -21,6 +21,7 @@ import { useUser, useProfile } from "@/lib/hooks"
 import { getRouteLabel } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import SignOutOverlay from "@/components/signout-overlay"
+import { useAppReducedMotion } from "@/components/app-transition"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
 
 // ─── Theme options (single source for label + icon) ──────────────────────────
@@ -52,6 +53,7 @@ export default function Header({
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
   const [signingOut, setSigningOut] = useState(false)
+  const reducedMotion = useAppReducedMotion()
   const { status: updateStatus, checkForUpdate, applyUpdate, getLatestStatus } = useAppUpdate()
 
   const initials = profile
@@ -67,7 +69,7 @@ export default function Header({
       const { supabase } = await import("@/lib/supabase/client")
       await supabase.auth.signOut()
     } catch { /* redirect anyway */ }
-    setTimeout(() => { router.replace("/login") }, 1200)
+    setTimeout(() => { router.replace("/login") }, reducedMotion ? 0 : 1600)
   }
 
   return (

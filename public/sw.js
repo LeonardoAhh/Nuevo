@@ -1,11 +1,11 @@
-// TIMESTAMP: 2026-09-28T22:03:02.254Z
+// TIMESTAMP: 2026-09-29T00:03:38.836Z
 const CACHE_NAME = "vinoplastic-v5"
 const STATIC_CACHE = "vinoplastic-static-v5"
 const API_CACHE = "vinoplastic-api-v5"
 
 // Recursos a pre-cachear en la instalación. `/offline` es la ruta de
 // fallback cuando una navegación falla y no hay copia en caché.
-const PRECACHE_URLS = ["/", "/login", "/offline", "/capacitacion", "/nuevo-ingreso"]
+const PRECACHE_URLS = ["/inicio", "/login", "/offline", "/capacitacion"]
 const OFFLINE_URL = "/offline"
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -75,10 +75,10 @@ async function networkFirst(request, cacheName, maxAgeSeconds = 3600) {
     if (cached) return cached
     if (request.destination === "document") {
       // Prefer the dedicated /offline route; fall back to the last-cached
-      // root if the offline page isn't in the cache yet (first visit).
+      // home if the offline page isn't in the cache yet (first visit).
       const offlinePage = await caches.match(OFFLINE_URL)
       if (offlinePage) return offlinePage
-      const rootCached = await caches.match("/")
+      const rootCached = await caches.match("/inicio")
       if (rootCached) return rootCached
     }
     return new Response("Sin conexión", {

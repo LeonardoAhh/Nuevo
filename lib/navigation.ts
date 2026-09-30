@@ -5,7 +5,7 @@
  * (page titles). Add new routes here once — every consumer updates itself.
  */
 import type { LucideIcon } from "lucide-react"
-import { Award, GraduationCap, UserPlus } from "lucide-react"
+import { Award, CalendarDays, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
 
 export interface NavLeaf {
   label: string
@@ -22,6 +22,8 @@ export interface NavSection {
 }
 
 export const NAV_SECTIONS: NavSection[] = [
+  { label: "Inicio", icon: LayoutDashboard, href: "/inicio" },
+  { label: "Eventos", icon: CalendarDays, href: "/eventos" },
   {
     label: "Personal",
     icon: UserPlus,
@@ -29,7 +31,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Nuevos Empleados", href: "/ingresos" },
       { label: "Recontratación", href: "/recontratacion" },
       { label: "Cumpleaños", href: "/cumpleanos" },
-      { label: "Retardos y Marcajes", href: "/retardos" },
     ],
   },
   {
@@ -62,13 +63,11 @@ const EXTRA_ROUTE_LABELS: Record<string, string> = {
   "/settings": "Configuración",
   "/ingresos-semanales": "Ingresos Semanales",
   "/whatsapp": "WhatsApp Bot",
-  "/bot": "Bot WhatsApp",
   "/desempeno/pendientes": "Evaluaciones Pendientes",
 }
 
 /** True when `pathname` is `href` itself or anywhere below it. */
 export function isActiveRoute(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/"
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 

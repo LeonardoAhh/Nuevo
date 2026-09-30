@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calendar, MessageSquare, Sparkles, Star } from "lucide-react"
 import { useRole } from "@/lib/hooks"
@@ -163,18 +162,8 @@ export function EventosLanding() {
       )}
 
       {/* Footer */}
-      <footer className="mx-auto w-full max-w-6xl px-5 sm:px-8 py-10 border-t border-border/60">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Capacitación Planta Qro.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/recursos" className="hover:text-foreground transition">
-              Cursos
-            </Link>
-            <Link href="/bot" className="hover:text-foreground transition">
-              Bot WhatsApp
-            </Link>
-          </div>
-        </div>
+      <footer className="mx-auto w-full max-w-6xl border-t border-border/60 px-5 py-10 text-sm text-muted-foreground sm:px-8">
+        <p>© {new Date().getFullYear()} Capacitación Planta Qro.</p>
       </footer>
 
       <EventoDetalle

@@ -11,7 +11,7 @@ import { WorkspaceContainer } from "@/components/ui/workspace-container"
 import { cn } from "@/lib/utils"
 
 
-import { Loader2 } from "lucide-react"
+import { AppTransition } from "@/components/app-transition"
 
 interface DashboardProps {
   content?: ReactNode
@@ -37,13 +37,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
     }
   }, [pathname, isEvaluador, roleLoading, router])
 
-  if (roleLoading) {
-    return (
-      <div className="flex h-[100dvh] items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (roleLoading) return <AppTransition message="Preparando tu espacio…" />
 
   return (
     <div 

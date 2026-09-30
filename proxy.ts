@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_ROUTES = ['/login', '/recursos', '/bot', '/eventos', '/guia-evaluador', '/manifest.webmanifest', '/sw.js', '/api/whatsapp/webhook']
+const PUBLIC_ROUTES = ['/login', '/eventos', '/guia-evaluador', '/manifest.webmanifest', '/sw.js', '/api/whatsapp/webhook']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
   // Sin sesión → redirigir a login
   if (!user) {
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirectTo', pathname)
+    loginUrl.searchParams.set('redirectTo', pathname === '/' || pathname.startsWith('/auth/redirect') ? '/inicio' : pathname)
     return NextResponse.redirect(loginUrl)
   }
 

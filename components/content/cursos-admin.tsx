@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState } from "react"
 import {
   Plus,
   Pencil,
@@ -12,8 +12,6 @@ import {
   QrCode,
   AlertCircle,
   Check,
-  Copy,
-  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,20 +23,13 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
 import { useCursosPublicos, type CursoPublico, type CursoPublicoInput } from "@/lib/hooks"
 import { useRole } from "@/lib/hooks"
 import { RoleGate } from "@/components/role-gate"
 import { notify } from "@/lib/notify"
 import { detectarCategoria, getToneClasses } from "@/lib/constants/cursos-categorias"
 
-// ─── Cover semántico (mismo patrón que /recursos) ────────────────────────────
+// ─── Cover semántico ────────────────────────────
 
 function CategoriaCover({
   nombre,
@@ -428,7 +419,6 @@ export default function CursosAdminContent() {
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<CursoPublico | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [qrPublicOpen, setQrPublicOpen] = useState(false)
 
   const openCreate = () => {
     setEditTarget(null)
@@ -484,31 +474,9 @@ export default function CursosAdminContent() {
   return (
     <div className="space-y-5">
         {/* Header bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-semibold">Cursos</h2>
-            <p className="text-sm text-muted-foreground">
-              Cursos visibles en{" "}
-              <a
-                href="/recursos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-1"
-              >
-                /recursos <ExternalLink size={11} />
-              </a>
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Cursos</h2>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setQrPublicOpen(true)}
-              title="Mostrar QR público"
-              aria-label="Mostrar QR público"
-            >
-              <QrCode size={16} />
-            </Button>
             {canEdit && (
               <Button size="icon" onClick={openCreate} aria-label="Nuevo curso" title="Nuevo curso">
                 <Plus size={16} />
@@ -609,115 +577,6 @@ export default function CursosAdminContent() {
         />
       </ResponsiveShell>
 
-      {/* Public QR dialog */}
-      <PublicQrDialog open={qrPublicOpen} onClose={() => setQrPublicOpen(false)} />
     </div>
-  )
-}
-
-// ─── Public QR dialog ────────────────────────────────────────────────────────
-
-function PublicQrDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [origin, setOrigin] = useState("")
-
-  useEffect(() => {
-    if (typeof window !== "undefined") setOrigin(window.location.origin)
-  }, [])
-
-  const publicUrl = useMemo(() => (origin ? `${origin}/recursos` : "/recursos"), [origin])
-
-  const qrLarge = useMemo(
-    () =>
-      `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=12&data=${encodeURIComponent(publicUrl)}`,
-    [publicUrl]
-  )
-
-  const qrDownload = useMemo(
-    () =>
-      `https://api.qrserver.com/v1/create-qr-code/?size=1200x1200&margin=20&data=${encodeURIComponent(publicUrl)}`,
-    [publicUrl]
-  )
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(publicUrl)
-      notify.success("Enlace copiado")
-    } catch {
-      notify.error("No se pudo copiar")
-    }
-  }
-
-  const handleDownload = () => {
-    const link = document.createElement("a")
-    link.href = qrDownload
-    link.download = "qr-cursos-publicos.png"
-    link.target = "_blank"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <QrCode size={18} className="text-primary" />
-            QR de cursos públicos
-          </DialogTitle>
-          <DialogDescription>
-            Escanea para abrir la página pública de cursos.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col items-center gap-4 pt-2">
-          {/* QR frame: fondo blanco fijo (legibilidad), borde con tokens */}
-          <div className="rounded-xl border border-border bg-white p-4 sm:p-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrLarge}
-              alt={`Código QR para ${publicUrl}`}
-              width={300}
-              height={300}
-              className="block w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]"
-            />
-          </div>
-
-          {/* URL visible (tokens light/dark) */}
-          <div className="w-full">
-            <Label className="text-xs text-muted-foreground">URL pública</Label>
-            <div className="mt-1 flex items-stretch gap-2">
-              <Input
-                readOnly
-                value={publicUrl}
-                className="bg-muted font-mono text-xs sm:text-sm"
-                onFocus={(e) => e.currentTarget.select()}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopy}
-                aria-label="Copiar enlace"
-                title="Copiar enlace"
-              >
-                <Copy size={15} />
-              </Button>
-            </div>
-          </div>
-
-          {/* Acciones */}
-          <div className="w-full flex gap-2 pt-1">
-            <Button variant="outline" size="icon" onClick={handleDownload} aria-label="Descargar PNG" title="Descargar PNG">
-              <Download size={14} />
-            </Button>
-            <Button size="icon" asChild aria-label="Abrir enlace" title="Abrir">
-              <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink size={14} />
-              </a>
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }

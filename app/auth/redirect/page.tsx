@@ -6,7 +6,7 @@ import { PostLoginLoading } from "@/components/post-login-loading"
  * Muestra la pantalla de carga animada, resuelve el rol del usuario
  * y redirige a la ruta correcta:
  *   - evaluador  → /desempeno
- *   - admin/dev  → ?to param (ruta original) o /
+ *   - admin/dev  → ?to param (ruta original) o /inicio
  */
 export default function AuthRedirectPage() {
   return (

@@ -24,7 +24,7 @@ export const loginStyles = {
   page: "flex min-h-dvh flex-col items-center justify-center bg-muted/30 px-4 py-8 text-foreground sm:px-6 safe-bottom-content",
   container: "my-auto w-full max-w-md space-y-6",
   brand: "flex items-center justify-center gap-2 text-sm font-semibold tracking-tight",
-  brandIcon: "flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground",
+  brandIcon: "flex size-9 items-center justify-center rounded-lg border border-border bg-white",
   formRegion: "min-w-0 rounded-xl border bg-card p-6 text-card-foreground shadow-sm sm:p-8",
   form: "w-full space-y-6",
   heading: "text-2xl font-semibold leading-tight tracking-tight text-foreground",

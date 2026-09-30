@@ -62,7 +62,7 @@ function useVisibleSections(isEvaluador: boolean): NavSection[] {
 function BrandMark() {
   return (
     <Link
-      href="/"
+      href="/inicio"
       aria-label="Inicio — VIÑOPLASTIC"
       className="group flex items-center rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
     >
@@ -89,7 +89,7 @@ function NavTree({
 }) {
   return (
     <nav aria-label="Secciones" className="flex-1 overflow-x-hidden overflow-y-auto px-3 pb-4 scrollbar-thin">
-      <ul className="space-y-3 pt-1">
+      <ul className="space-y-1 pt-1">
         {sections.map((section) => {
           const activeLeaf = findActiveLeaf(section.items, pathname)
 
@@ -123,8 +123,8 @@ function NavTree({
 
           // Grouped section → heading + always-visible links.
           return (
-            <li key={section.label}>
-              <p className="flex items-center gap-2 px-1 pb-1 pt-2 font-mono text-[11px] font-medium uppercase text-muted-foreground">
+            <li key={section.label} className="pt-3">
+              <p className="flex items-center gap-2 px-1 pb-1 font-mono text-[11px] font-medium uppercase text-muted-foreground">
                 <section.icon size={14} aria-hidden="true" />
                 {section.label}
               </p>

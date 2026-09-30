@@ -1,7 +1,7 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
-import { Loader2 } from "lucide-react"
+import { useEffect, useState, useSyncExternalStore } from "react"
+import { AppTransition, APP_TRANSITION_MIN_MS, useAppReducedMotion } from "@/components/app-transition"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 import { MaintenanceScreen } from "./maintenance-screen"
 import { MaintenanceLocalIndicator } from "./maintenance-local-indicator"
@@ -40,16 +40,16 @@ const SERVER_SNAPSHOT = false
 export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const { isMaintenance, endsAt, loading } = useMaintenanceMode()
   const isLocal = useSyncExternalStore(noopSubscribe, getIsLocal, () => SERVER_SNAPSHOT)
+  const reducedMotion = useAppReducedMotion()
+  const [transitionReady, setTransitionReady] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTransitionReady(true), reducedMotion ? 0 : APP_TRANSITION_MIN_MS)
+    return () => window.clearTimeout(timer)
+  }, [reducedMotion])
 
   // No montar páginas (incluido /login) antes de conocer el estado inicial.
-  if (loading) return (
-    <main className="flex min-h-dvh items-center justify-center bg-background text-muted-foreground">
-      <div role="status" className="flex items-center gap-2 text-sm">
-        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-        <span>Cargando…</span>
-      </div>
-    </main>
-  )
+  if (loading || !transitionReady) return <AppTransition message="Preparando tu espacio…" />
 
   // ── Modo mantenimiento activo ──────────────────────────────────
   if (isMaintenance) {
