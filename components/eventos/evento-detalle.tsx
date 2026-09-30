@@ -1,12 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useState, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronLeft, ChevronRight, MessageCircle, Star, Trash2, X } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { ChevronLeft, ChevronRight, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { confirm } from "@/components/ui/confirm-dialog"
 import { useRole } from "@/lib/hooks"
+import { useIsMobile } from "@/components/ui/responsive-shell"
 import { StarRating } from "./star-rating"
 import { ResenaForm } from "./resena-form"
 import {
@@ -25,51 +25,58 @@ interface Props {
 }
 
 export function EventoDetalle({ evento, onClose, onChange }: Props) {
-  const open = !!evento
   const { canEdit } = useRole()
+  const isMobile = useIsMobile(1023)
   const { resenas, loading: loadingResenas, publicar } = useEventoResenas(evento?.id ?? null)
   const { eliminarFoto, saving } = useEventosAdmin(onChange)
-
   const [index, setIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<"fotos" | "videos">("fotos")
+  const [mobilePanel, setMobilePanel] = useState<"media" | "reviews">("media")
+  const [reviewView, setReviewView] = useState<"list" | "form">("list")
+  const [reviewPage, setReviewPage] = useState(0)
 
   const { fotosList, videosList } = useMemo(() => {
-    const f: EventoFoto[] = []
-    const v: EventoFoto[] = []
+    const fotos: EventoFoto[] = []
+    const videos: EventoFoto[] = []
     for (const item of evento?.fotos ?? []) {
-      if (isVideoPath(item.storage_path)) v.push(item)
-      else f.push(item)
+      if (isVideoPath(item.storage_path)) videos.push(item)
+      else fotos.push(item)
     }
-    return { fotosList: f, videosList: v }
+    return { fotosList: fotos, videosList: videos }
   }, [evento?.fotos])
 
   useEffect(() => {
     if (!evento) return
-    const hasFotos = evento.fotos.some(f => !isVideoPath(f.storage_path))
+    const hasFotos = evento.fotos.some((item) => !isVideoPath(item.storage_path))
     setActiveTab(hasFotos || evento.fotos.length === 0 ? "fotos" : "videos")
     setIndex(0)
+    setMobilePanel("media")
+    setReviewPage(0)
   }, [evento?.id])
 
   const currentList = activeTab === "fotos" ? fotosList : videosList
   const total = currentList.length
+  const safeIndex = total === 0 ? 0 : Math.min(Math.max(index, 0), total - 1)
+  const archivo = currentList[safeIndex] ?? null
+  const archivoUrl = archivo ? eventoPublicUrl(archivo.storage_path) : null
 
   const next = useCallback(() => {
-    if (total > 0) setIndex((i) => (i + 1) % total)
+    if (total > 0) setIndex((current) => (current + 1) % total)
   }, [total])
-
   const prev = useCallback(() => {
-    if (total > 0) setIndex((i) => (i - 1 + total) % total)
+    if (total > 0) setIndex((current) => (current - 1 + total) % total)
   }, [total])
 
   useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") next()
-      else if (e.key === "ArrowLeft") prev()
+    if (!evento || (isMobile && mobilePanel !== "media")) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest("input, textarea, [role=radio]")) return
+      if (event.key === "ArrowRight") next()
+      if (event.key === "ArrowLeft") prev()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, next, prev])
+  }, [evento, isMobile, mobilePanel, next, prev])
 
   if (!evento) return null
 
@@ -81,79 +88,110 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
       })
     : null
 
-  // Clamp to the currently-known fotos array so we never index past the end
-  // if the parent re-renders with stale data between deletion and refetch.
-  const safeIndex = total === 0 ? 0 : Math.min(Math.max(index, 0), total - 1)
-  const foto = currentList[safeIndex] ?? null
-  const fotoUrl = foto ? eventoPublicUrl(foto.storage_path) : null
-
-  async function handleEliminarFoto() {
-    if (!foto) return
+  const reviewPageCount = Math.max(1, Math.ceil(resenas.length / 2))
+  const visibleResenas = isMobile
+    ? resenas.slice(reviewPage * 2, reviewPage * 2 + 2)
+    : resenas
+  async function handleEliminarArchivo() {
+    if (!archivo) return
     const ok = await confirm({
-      title: "Eliminar foto",
+      title: "Eliminar archivo",
       description: "Esta acción no se puede deshacer.",
       tone: "destructive",
       confirmLabel: "Eliminar",
     })
     if (!ok) return
     try {
-      await eliminarFoto(foto.id, foto.storage_path)
-      // Step back one position; the render-time clamp keeps us in bounds
-      // even if parent refetch hasn't resolved yet.
-      setIndex((i) => Math.max(0, i - 1))
+      await eliminarFoto(archivo.id, archivo.storage_path)
+      setIndex((current) => Math.max(0, current - 1))
     } catch {
-      /* toast emitido en el hook */
+      // El hook muestra el error.
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent
-        raw
-        className="sm:max-w-4xl w-full p-0 overflow-hidden bg-card [&>button.absolute]:hidden"
-      >
-        <DialogHeader className="sr-only">
-          <DialogTitle>{evento.titulo}</DialogTitle>
-          <DialogDescription>{evento.descripcion ?? evento.titulo}</DialogDescription>
-        </DialogHeader>
+  const handleClose = () => {
+    setMobilePanel("media")
+    onClose()
+  }
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] max-h-[88vh] overflow-y-auto lg:overflow-hidden">
-          {/* Visor */}
-          <div className="relative flex flex-col bg-background min-w-0">
-            <div className="relative flex-1 min-h-[200px] max-h-[45vh] lg:max-h-none lg:min-h-[420px] bg-muted/40 flex items-center justify-center">
-              {fotoUrl ? (
-                <AnimatePresence mode="wait" initial={false}>
-                  {isVideoPath(fotoUrl) ? (
-                    <motion.video
-                      key={foto!.id}
-                      src={fotoUrl}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="max-h-[40vh] lg:max-h-[60vh] w-full object-contain"
-                      controls
-                      playsInline
-                      autoPlay
-                    />
-                  ) : (
-                    <motion.img
-                      key={foto!.id}
-                      src={fotoUrl}
-                      alt={foto?.caption ?? evento.titulo}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="max-h-[40vh] lg:max-h-[60vh] w-full object-contain"
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                    />
-                  )}
-                </AnimatePresence>
+  const detailContent = (
+    <>
+        <div className="flex items-start justify-between gap-4 border-b border-border p-4 sm:px-6">
+          <div className="min-w-0 flex-1 space-y-1">
+            <DialogTitle className="text-lg">{evento.titulo}</DialogTitle>
+            <DialogDescription className="line-clamp-1 lg:line-clamp-2">
+              {evento.descripcion || "Fotos, videos y reseñas del evento."}
+            </DialogDescription>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
+              {fecha && <time dateTime={evento.fecha ?? undefined}>{fecha}</time>}
+              <span className="inline-flex items-center gap-1.5">
+                <StarRating value={evento.rating_avg ?? 0} size={14} readOnly />
+                {evento.rating_count > 0
+                  ? `${(evento.rating_avg ?? 0).toFixed(1)} · ${evento.rating_count} reseña${evento.rating_count === 1 ? "" : "s"}`
+                  : "Sin reseñas"}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Cerrar evento"
+            className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="grid min-h-0 lg:max-h-[calc(100dvh-9rem)] lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,1fr)]">
+          {(!isMobile || mobilePanel === "media") && (
+          <section aria-label="Galería del evento" className="min-w-0 space-y-3 p-4 sm:p-6">
+            {fotosList.length > 0 && videosList.length > 0 && (
+              <div className="flex gap-2" aria-label="Tipo de archivo">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeTab === "fotos" ? "default" : "outline"}
+                  aria-pressed={activeTab === "fotos"}
+                  onClick={() => { setActiveTab("fotos"); setIndex(0) }}
+                  className="min-h-10"
+                >
+                  Fotos ({fotosList.length})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeTab === "videos" ? "default" : "outline"}
+                  aria-pressed={activeTab === "videos"}
+                  onClick={() => { setActiveTab("videos"); setIndex(0) }}
+                  className="min-h-10"
+                >
+                  Videos ({videosList.length})
+                </Button>
+              </div>
+            )}
+
+            <div className="relative flex h-[32dvh] min-h-[160px] max-h-[280px] items-center justify-center overflow-hidden rounded-md border border-border bg-muted/30 lg:aspect-[4/3] lg:h-auto lg:max-h-[54dvh]">
+              {archivoUrl ? (
+                isVideoPath(archivo!.storage_path) ? (
+                  <video
+                    key={archivo!.id}
+                    src={archivoUrl}
+                    className="h-full w-full object-contain"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={archivo!.id}
+                    src={archivoUrl}
+                    alt={archivo?.caption || `${evento.titulo}, imagen ${safeIndex + 1}`}
+                    className="h-full w-full object-contain"
+                    loading="eager"
+                    decoding="async"
+                  />
+                )
               ) : (
-                <p className="text-sm text-muted-foreground">Este evento aún no tiene fotos.</p>
+                <p className="px-4 text-center text-sm text-muted-foreground">Este evento aún no tiene archivos.</p>
               )}
 
               {total > 1 && (
@@ -161,172 +199,202 @@ export function EventoDetalle({ evento, onClose, onChange }: Props) {
                   <button
                     type="button"
                     onClick={prev}
-                    aria-label="Foto anterior"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+                    aria-label="Archivo anterior"
+                    className="absolute left-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-card/95 text-foreground hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={18} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={next}
-                    aria-label="Foto siguiente"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
+                    aria-label="Archivo siguiente"
+                    className="absolute right-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md border border-border bg-card/95 text-foreground hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={18} aria-hidden="true" />
                   </button>
                 </>
               )}
-
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar"
-                className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur border border-border/60 flex items-center justify-center hover:bg-background transition"
-              >
-                <X size={16} />
-              </button>
-
-              {total > 0 && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/80 backdrop-blur border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                  {safeIndex + 1} / {total}
-                </div>
-              )}
             </div>
 
-            <div className="border-t border-border/60 p-3 flex flex-col gap-2 bg-muted/10">
-              {fotosList.length > 0 && videosList.length > 0 && (
-                <div className="flex items-center gap-2 px-1">
+            {total > 0 && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs tabular-nums text-muted-foreground">{safeIndex + 1} de {total}</p>
+                {canEdit && archivo && (
                   <Button
-                    variant={activeTab === "fotos" ? "default" : "outline"}
+                    type="button"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => { setActiveTab("fotos"); setIndex(0) }}
-                    className="h-7 text-[11px] rounded-full px-3"
+                    onClick={handleEliminarArchivo}
+                    disabled={saving}
+                    className="min-h-10 gap-2 text-destructive hover:text-destructive"
                   >
-                    Fotos ({fotosList.length})
+                    <Trash2 size={16} aria-hidden="true" />
+                    Eliminar archivo
                   </Button>
-                  <Button
-                    variant={activeTab === "videos" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => { setActiveTab("videos"); setIndex(0) }}
-                    className="h-7 text-[11px] rounded-full px-3"
-                  >
-                    Videos ({videosList.length})
-                  </Button>
-                </div>
-              )}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 px-1">
-                {currentList.map((f, i) => {
-                  const url = eventoPublicUrl(f.storage_path)
+                )}
+              </div>
+            )}
+
+            {total > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Seleccionar archivo">
+                {currentList.map((item, itemIndex) => {
+                  const url = eventoPublicUrl(item.storage_path)
                   if (!url) return null
-                  const isVideo = isVideoPath(url)
                   return (
                     <button
-                      key={f.id}
+                      key={item.id}
                       type="button"
-                      onClick={() => setIndex(i)}
-                      className={`relative shrink-0 h-14 w-14 rounded-md overflow-hidden border transition ${
-                        i === safeIndex ? "border-primary ring-2 ring-primary/30" : "border-border/60 opacity-70 hover:opacity-100"
-                      }`}
-                      aria-label={`Foto ${i + 1}`}
+                      onClick={() => setIndex(itemIndex)}
+                      aria-label={`${activeTab === "fotos" ? "Foto" : "Video"} ${itemIndex + 1} de ${total}`}
+                      aria-current={itemIndex === safeIndex ? "true" : undefined}
+                      className={`size-12 shrink-0 overflow-hidden sm:size-14 rounded-md border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${itemIndex === safeIndex ? "border-foreground" : "border-border opacity-70 hover:opacity-100"}`}
                     >
-                      {isVideo ? (
-                        <video src={url} className="h-full w-full object-cover pointer-events-none" muted playsInline />
+                      {isVideoPath(item.storage_path) ? (
+                        <video src={url} className="h-full w-full object-cover" muted playsInline />
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" width={56} height={56} />
+                        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
                       )}
                     </button>
                   )
                 })}
-                {canEdit && foto && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleEliminarFoto}
-                    disabled={saving}
-                    className="ml-auto shrink-0 text-destructive hover:text-destructive h-14 w-14"
-                    aria-label="Quitar archivo"
-                    title="Quitar archivo"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                )}
               </div>
-            </div>
-          </div>
+            )}
+          </section>
+          )}
 
-          {/* Reseñas */}
-          <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-border/60 min-h-0 lg:overflow-y-auto">
-            <div className="p-4 border-b border-border/60">
-              <p className="text-lg font-semibold truncate">{evento.titulo}</p>
-              {fecha && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Calendar size={12} /> {fecha}
-                </p>
-              )}
-              {evento.descripcion && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{evento.descripcion}</p>
-              )}
-              <div className="flex items-center gap-2 mt-3">
-                <StarRating value={evento.rating_avg ?? 0} size={16} readOnly />
-                <span className="text-xs text-muted-foreground">
-                  {evento.rating_avg != null
-                    ? `${evento.rating_avg.toFixed(1)} · ${evento.rating_count} reseña${evento.rating_count !== 1 ? "s" : ""}`
-                    : "Sin reseñas aún"}
-                </span>
+          {(!isMobile || mobilePanel === "reviews") && (
+          <section aria-labelledby="resenas-heading" className="min-h-0 space-y-4 border-t border-border p-4 sm:p-6 lg:overflow-y-auto lg:border-l lg:border-t-0">
+            {isMobile && (
+              <div role="group" aria-label="Vista de reseñas" className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={reviewView === "list" ? "default" : "outline"}
+                  aria-pressed={reviewView === "list"}
+                  onClick={() => setReviewView("list")}
+                  className="min-h-10"
+                >
+                  Reseñas ({resenas.length})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={reviewView === "form" ? "default" : "outline"}
+                  aria-pressed={reviewView === "form"}
+                  onClick={() => setReviewView("form")}
+                  className="min-h-10"
+                >
+                  Escribir reseña
+                </Button>
               </div>
+            )}
+            <div className={isMobile && reviewView !== "form" ? "hidden" : undefined}>
+              <ResenaForm
+                onSubmit={async (input) => {
+                  await publicar(input)
+                  setReviewPage(0)
+                  setReviewView("list")
+                }}
+              />
             </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <ResenaForm onSubmit={publicar} />
-
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <MessageCircle size={12} /> Reseñas
-                </p>
-                {loadingResenas ? (
-                  <div className="space-y-2">
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="rounded-md border border-border/60 bg-muted/40 p-3 animate-pulse">
-                        <div className="h-3 w-24 bg-muted rounded" />
-                        <div className="h-3 w-full bg-muted rounded mt-2" />
-                      </div>
-                    ))}
-                  </div>
-                ) : resenas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aún no hay reseñas. ¡Sé el primero!</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {resenas.map((r) => (
-                      <li
-                        key={r.id}
-                        className="rounded-md border border-border/60 bg-background p-3 space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium truncate">{r.nombre}</p>
-                          <StarRating value={r.rating} size={12} readOnly />
+            <div className={isMobile && reviewView !== "list" ? "hidden" : "space-y-3"}>
+              <h3 id="resenas-heading" className={isMobile ? "sr-only" : "text-sm font-semibold text-foreground"}>
+                Reseñas ({resenas.length})
+              </h3>
+              {loadingResenas ? (
+                <p role="status" className="text-sm text-muted-foreground">Cargando reseñas…</p>
+              ) : resenas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aún no hay reseñas.</p>
+              ) : (
+                <>
+                  <ul className="divide-y divide-border border-t border-border">
+                    {visibleResenas.map((resena) => (
+                      <li key={resena.id} className="space-y-1 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">{resena.nombre}</p>
+                          <StarRating value={resena.rating} size={13} readOnly />
                         </div>
-                        {r.comentario && (
-                          <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                            {r.comentario}
+                        {resena.comentario && (
+                          <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                            {resena.comentario}
                           </p>
                         )}
-                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <Star size={10} />
-                          {new Date(r.created_at).toLocaleDateString("es-MX", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
+                        <time dateTime={resena.created_at} className="block text-xs text-muted-foreground">
+                          {new Date(resena.created_at).toLocaleDateString("es-MX", {
+                            year: "numeric", month: "short", day: "numeric",
                           })}
-                        </p>
+                        </time>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                  {isMobile && reviewPageCount > 1 && (
+                    <div className="flex items-center justify-between gap-2 pt-2">
+                      <Button type="button" variant="outline" size="sm" disabled={reviewPage === 0} onClick={() => setReviewPage((page) => page - 1)}>
+                        Anterior
+                      </Button>
+                      <span className="text-xs tabular-nums text-muted-foreground">
+                        {reviewPage + 1} de {reviewPageCount}
+                      </span>
+                      <Button type="button" variant="outline" size="sm" disabled={reviewPage + 1 >= reviewPageCount} onClick={() => setReviewPage((page) => page + 1)}>
+                        Siguiente
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
+          </section>
+          )}
         </div>
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <>
+        <Dialog open={mobilePanel === "media"} onOpenChange={(open) => !open && handleClose()}>
+          <DialogContent raw className="overflow-y-auto p-0">
+            {detailContent}
+            <div className="border-t border-border p-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-10 w-full"
+                onClick={() => {
+                  setReviewView(resenas.length > 0 ? "list" : "form")
+                  setMobilePanel("reviews")
+                }}
+              >
+                Ver reseñas ({evento.rating_count})
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={mobilePanel === "reviews"} onOpenChange={(open) => !open && handleClose()}>
+          <DialogContent raw className="overflow-y-auto p-0">
+            {detailContent}
+            <div className="border-t border-border p-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-10 w-full"
+                onClick={() => setMobilePanel("media")}
+              >
+                Ver fotos y videos
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    )
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent raw className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-5xl lg:overflow-hidden">
+        {detailContent}
       </DialogContent>
     </Dialog>
   )

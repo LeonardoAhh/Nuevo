@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
-import { useRole } from "@/lib/hooks"
+import { useRole, useUser } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
 import { cn } from "@/lib/utils"
@@ -16,9 +16,10 @@ import { AppTransition } from "@/components/app-transition"
 interface DashboardProps {
   content?: ReactNode
   pageTitle?: string
+  publicPage?: boolean
 }
 
-export default function Dashboard({ content, pageTitle }: DashboardProps) {
+export default function Dashboard({ content, pageTitle, publicPage = false }: DashboardProps) {
   const {
     isMobileView,
     showMobileSidebar,
@@ -29,6 +30,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { isEvaluador, loading: roleLoading } = useRole()
+  const { user, loading: userLoading } = useUser()
 
   useEffect(() => {
     if (roleLoading || !isEvaluador) return
@@ -37,7 +39,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
     }
   }, [pathname, isEvaluador, roleLoading, router])
 
-  if (roleLoading) return <AppTransition message="Preparando tu espacio…" />
+  if (roleLoading || (publicPage && userLoading)) return <AppTransition message="Preparando tu espacio…" />
 
   return (
     <div 
@@ -59,6 +61,7 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
         showMobileSidebar={showMobileSidebar}
         setShowMobileSidebar={setShowMobileSidebar}
         isEvaluador={isEvaluador}
+        isGuest={publicPage && !user}
       />
 
       {/* Área principal con scroll controlado */}

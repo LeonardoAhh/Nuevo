@@ -274,43 +274,31 @@ function SegmentControl<T extends string>({
   ariaLabel,
 }: SegmentControlProps<T>) {
   return (
-    <div
-      role="tablist"
-      aria-label={ariaLabel}
-      className="
-        inline-flex w-full items-center
-        rounded-lg border border-border/60
-        bg-muted/40 p-0.5 gap-0.5
-      "
-    >
-      {options.map((opt) => {
-        const active = opt.value === value
-        return (
-          <button
-            key={opt.value}
-            role="tab"
-            aria-selected={active}
-            type="button"
-            onClick={() => onValueChange(opt.value)}
-            className={cn(
-              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              active
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-            )}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
+    <div className="min-w-0 space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground">{ariaLabel}</p>
+      <div role="group" aria-label={ariaLabel} className="grid grid-cols-2 gap-1 rounded-md border border-border bg-muted/30 p-1">
+        {options.map((opt) => {
+          const active = opt.value === value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onValueChange(opt.value)}
+              className={cn(
+                "min-h-10 min-w-0 rounded-md px-2 text-sm font-medium whitespace-nowrap transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-background hover:text-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
-
-// ─── FilterBar ─────────────────────────────────────────────────────────────────
-// En móvil: colapsable. En desktop: siempre visible como fila.
-
 interface FilterBarProps {
   filterDept: string
   setFilterDept: (v: string) => void
@@ -329,6 +317,8 @@ const FilterBar = memo(function FilterBar({
   departments, turnos,
 }: FilterBarProps) {
   const [open, setOpen] = useState(false)
+  const deptSelectId = useId()
+  const turnoSelectId = useId()
 
   const activeFilters = [
     filterDept !== "all",
@@ -337,7 +327,7 @@ const FilterBar = memo(function FilterBar({
   ].filter(Boolean).length
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 overflow-hidden">
+    <div className="rounded-lg border border-border/50 bg-muted/20">
       {/* Header del panel – siempre visible */}
       <button
         type="button"
@@ -370,21 +360,21 @@ const FilterBar = memo(function FilterBar({
       <div
         id="filter-panel"
         className={cn(
-          "px-3 pb-3 pt-1 grid gap-2",
-          "sm:grid sm:grid-cols-3 sm:items-end sm:pt-2.5",
+          "grid grid-cols-1 gap-3 px-3 pb-3 pt-3",
+          "sm:grid-cols-3 sm:items-end",
           // Móvil: oculto por defecto, visible cuando open
-          "max-sm:transition-all max-sm:duration-200",
-          open ? "max-sm:block" : "max-sm:hidden sm:block"
+          
+          open ? "grid" : "hidden sm:grid"
         )}
       >
         {/* Departamento */}
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Departamento</Label>
+          <Label htmlFor={deptSelectId} className="text-xs text-muted-foreground">Departamento</Label>
           <Select value={filterDept} onValueChange={setFilterDept}>
-            <SelectTrigger className="h-8 w-full bg-muted/50 border-border/50 text-sm">
+            <SelectTrigger id={deptSelectId} className="h-10 w-full bg-background text-sm">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
-            <SelectContent className="bg-card">
+            <SelectContent className="z-[60] bg-card">
               <SelectItem value="all">Todos</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
@@ -395,12 +385,12 @@ const FilterBar = memo(function FilterBar({
 
         {/* Turno */}
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Turno</Label>
+          <Label htmlFor={turnoSelectId} className="text-xs text-muted-foreground">Turno</Label>
           <Select value={filterTurno} onValueChange={setFilterTurno}>
-            <SelectTrigger className="h-8 w-full bg-muted/50 border-border/50 text-sm">
+            <SelectTrigger id={turnoSelectId} className="h-10 w-full bg-background text-sm">
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
-            <SelectContent className="bg-card">
+            <SelectContent className="z-[60] bg-card">
               <SelectItem value="all">Todos</SelectItem>
               {turnos.map((t) => (
                 <SelectItem key={t} value={t}>Turno {t}</SelectItem>
@@ -510,7 +500,7 @@ const EmployeePanel = memo(function EmployeePanel({
   const someSelected = employees.some((e) => selectedIds.has(e.dbId))
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 overflow-hidden">
+    <div className="rounded-lg border border-border/50 bg-muted/20">
       {/* Búsqueda + toggle all */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40">
         <div className="relative flex-1">
@@ -850,10 +840,10 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         onClose={onClose}
       />
 
-      <div className="flex flex-col gap-4 p-4 sm:p-5 min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
 
         {/* ── Fila 1: Tipo de documento + Formato en una sola línea ─────── */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <SegmentControl
             value={topic}
             onValueChange={handleTopicChange}
@@ -870,20 +860,20 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
               { value: "whatsapp", label: "WhatsApp" },
               { value: "email", label: "Correo" },
             ]}
-            ariaLabel="Formato de salida"
+            ariaLabel="Canal"
           />
         </div>
 
         {/* ── Fila 2: Plantilla ─────────────────────────────────────────── */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
           <Label htmlFor={templateSelectId} className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
             Plantilla
           </Label>
           <Select value={template} onValueChange={(v) => setTemplate(v as TemplateType)}>
-            <SelectTrigger id={templateSelectId} className="h-8 flex-1 bg-muted/50 border-border/50 text-sm">
+            <SelectTrigger id={templateSelectId} className="h-10 w-full min-w-0 bg-background text-sm sm:flex-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-card">
+            <SelectContent className="z-[60] bg-card">
               <SelectItem value="formal">Formal</SelectItem>
               <SelectItem value="informal">Informal</SelectItem>
               <SelectItem value="urgent">Urgente</SelectItem>
@@ -963,6 +953,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
         )}
 
         {/* ── Fila 5: Vista previa ─────────────────────────────────────── */}
+        <div className="hidden sm:flex sm:min-h-0 sm:flex-1">
         <MessagePreview
           loading={loading}
           text={summaryText}
@@ -971,6 +962,7 @@ export function IngresosWhatsappModal({ open, onClose }: IngresosWhatsappModalPr
           employeeCount={activeEmployees.length}
           vencidasCount={vencidasCount}
         />
+        </div>
 
         {/* ── Fila 6: Acción secundaria ─────────────────────────────────── */}
         <div className="flex justify-end">

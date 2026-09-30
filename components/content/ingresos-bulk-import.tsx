@@ -1,9 +1,8 @@
 "use client"
 
 import React, { useCallback, useRef, useState } from "react"
-import { AlertCircle, CheckCircle2, FileUp, Loader2, Upload, ArrowLeft } from "lucide-react"
+import { AlertCircle, CheckCircle2, Upload } from "lucide-react"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
-import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -69,7 +68,10 @@ const normalizeUpper = (value: unknown): string | null => {
   return normalized ? normalized.toUpperCase() : null
 }
 
-const todayIso = (): string => new Date().toISOString().split("T")[0]
+const todayIso = (): string => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+}
 
 const buildIngresoRecord = (entry: ValidIngreso): ValidIngreso => {
   const fechaIngreso = entry.fecha_ingreso ?? todayIso()
@@ -96,7 +98,7 @@ const buildIngresoRecord = (entry: ValidIngreso): ValidIngreso => {
 
 export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkImportProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const { saving, importRecords, error: importError } = useNuevoIngreso()
+  const { saving, importRecords } = useNuevoIngreso()
   const [step, setStep] = useState<"upload" | "preview" | "done">("upload")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -318,11 +320,23 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
   const validCount = validRecords.length
   const invalidCount = invalidEntries.length
   const duplicateCount = duplicateEntries.length
+  const exampleDepartment = Object.keys(CATALOGO_ORGANIZACIONAL)[0]
+  const exampleConfig = CATALOGO_ORGANIZACIONAL[exampleDepartment]
+  const exampleJson = JSON.stringify([{
+    numero: "1001",
+    nombre: "JUAN PÉREZ",
+    puesto: exampleConfig.puestos[0],
+    departamento: exampleDepartment,
+    area: exampleConfig.areas[0],
+    turno: TURNOS[0],
+    fecha_ingreso: todayIso(),
+    tipo_contrato: Array.from(VALID_CONTRACTS)[0],
+  }], null, 2)
 
   return (
     <ResponsiveShell
       open={open}
-      onClose={() => { if (!open) closeDialog() }}
+      onClose={closeDialog}
       title="Importar empleados desde JSON"
       description="Selecciona un archivo JSON para crear nuevos registros de ingresos."
       maxWidth="sm:max-w-4xl"
@@ -334,41 +348,18 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
       />
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-        {(error || importError) && (
+        {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error ?? importError}</AlertDescription>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         {step === "upload" && (
-          <div className="space-y-5">
-            <Alert>
-              <AlertDescription className="space-y-2">
-                <p className="font-semibold">Estructura esperada</p>
-                <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-{`[
-  {
-    "numero": "1001",
-    "nombre": "JUAN PÉREZ",
-    "puesto": "OPERADOR",
-    "departamento": "PRODUCCIÓN",
-    "area": "LÍNEA 1",
-    "turno": "1",
-    "fecha_ingreso": "2026-07-01",
-    "curp": "PERE800101HDFRZN09",
-    "escolaridad": "BACHILLERATO",
-    "jefe_area": "MARÍA LÓPEZ",
-    "tipo_contrato": "A prueba"
-  }
-]`}
-                </pre>
-                <p className="text-sm text-muted-foreground">
-                  <strong>Todos los datos son obligatorios.</strong>
-                </p>
-              </AlertDescription>
-            </Alert>
-
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecciona un archivo .json con los empleados que deseas importar.
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -377,28 +368,19 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
               onChange={handleFileUpload}
               aria-hidden="true"
             />
-
-            <Button
-              variant="outline"
-              className="w-full border-dashed border-border py-8"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading || saving}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Procesando archivo...
-                </span>
-              ) : (
-                <span className="flex flex-col items-center gap-2 text-sm">
-                  <Upload className="h-5 w-5" />
-                  Seleccionar archivo JSON
-                </span>
-              )}
-            </Button>
+            <details className="rounded-md border border-border bg-card">
+              <summary className="cursor-pointer px-3 py-3 text-sm font-medium">
+                Ver formato del JSON
+              </summary>
+              <div className="space-y-2 border-t border-border p-3">
+                <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{exampleJson}</pre>
+                <p className="text-xs text-muted-foreground">
+                  El nombre es obligatorio. Departamento, área y puesto deben existir en el catálogo.
+                </p>
+              </div>
+            </details>
           </div>
         )}
-
         {step === "preview" && (
           <section aria-labelledby="preview-title" className="space-y-5">
             <div className="flex flex-wrap gap-2">
@@ -417,7 +399,7 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
               {validCount > 0 && (
                 <article>
                   <h2 id="preview-title" className="text-sm font-semibold">Empleados listos para crear</h2>
-                  <div className="mt-3 overflow-hidden rounded-lg border border-border">
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -495,10 +477,11 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
       <ModalFooter
         onCancel={step === "preview" ? reset : closeDialog}
         cancelLabel={step === "preview" ? "Volver" : step === "done" ? "Cerrar" : "Cancelar"}
-        onConfirm={step === "preview" ? handleImport : undefined}
-        confirmLabel={`Importar ${validCount} empleado(s)`}
-        confirmDisabled={saving || validCount === 0}
-        saving={saving}
+        onConfirm={step === "upload" ? () => fileInputRef.current?.click() : step === "preview" ? handleImport : undefined}
+        confirmLabel={step === "upload" ? (loading ? "Procesando..." : "Seleccionar JSON") : `Importar ${validCount} empleado(s)`}
+        confirmIcon={step === "upload" ? <Upload aria-hidden="true" /> : undefined}
+        confirmDisabled={loading || saving || (step === "preview" && validCount === 0)}
+        saving={loading || saving}
       />
     </ResponsiveShell>
   )

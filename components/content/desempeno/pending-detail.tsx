@@ -59,7 +59,7 @@ export function DetailModal({
 }: Omit<DetailCardProps, 'onClose'>) {
   const stats = buildStats(item);
   const router = useRouter();
-  return <DialogContent className="max-h-dvh overflow-y-auto sm:max-h-[90dvh] sm:max-w-xl">
+  return <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-h-[90dvh] sm:max-w-xl">
     <DialogHeader className="border-b border-border pb-4">
       <DialogTitle className="text-left text-lg">{item.nombre}</DialogTitle>
       <DialogDescription className="text-left">

@@ -41,6 +41,8 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (userLoading) return
     if (!user) {
+      setRole('admin')
+      setDepartamentos(null)
       setLoading(false)
       return
     }
@@ -73,10 +75,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     return () => { isMounted = false }
   }, [user, userLoading])
 
-  const canEdit = role === 'dev'
-  const isReadOnly = role === 'admin'
-  const isEvaluador = role === 'evaluador'
-  const canEvaluate = role === 'dev' || role === 'evaluador'
+  const canEdit = !!user && role === 'dev'
+  const isReadOnly = !user || role === 'admin'
+  const isEvaluador = !!user && role === 'evaluador'
+  const canEvaluate = !!user && (role === 'dev' || role === 'evaluador')
   const departamentosScope = isEvaluador && departamentos && departamentos.length > 0 ? departamentos : null
 
   return (

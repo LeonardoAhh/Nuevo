@@ -103,7 +103,8 @@ export default function Header({
           </div>
 
           {/* Account menu — single entry point for user actions */}
-          <nav aria-label="Menú de cuenta">
+          {user && (
+            <nav aria-label="Menú de cuenta">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -206,7 +207,8 @@ export default function Header({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </nav>
+            </nav>
+          )}
         </WorkspaceContainer>
       </header>
     </>

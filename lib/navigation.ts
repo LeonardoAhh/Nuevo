@@ -18,12 +18,13 @@ export interface NavSection {
   icon: LucideIcon
   /** Direct link when the section has no children. */
   href?: string
+  public?: boolean
   items?: NavLeaf[]
 }
 
 export const NAV_SECTIONS: NavSection[] = [
   { label: "Inicio", icon: LayoutDashboard, href: "/inicio" },
-  { label: "Eventos", icon: CalendarDays, href: "/eventos" },
+  { label: "Eventos", icon: CalendarDays, href: "/eventos", public: true },
   {
     label: "Personal",
     icon: UserPlus,

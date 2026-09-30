@@ -25,7 +25,7 @@ import { AuthForm } from "@/components/auth-form"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
 
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
-  "monochrome", "blue", "violet", "pink", "magenta", "cyan",
+  "monochrome", "blue", "violet", "pink", "magenta", "green",
 ]
 
 type Tab = "profile" | "appearance" | "developer"

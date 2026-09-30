@@ -9,9 +9,8 @@ export default function LoginShell() {
       <div className={loginStyles.container}>
         <header className={loginStyles.brand}>
           <span className={loginStyles.brandIcon} aria-hidden="true">
-            <img src="/icons/icon.svg" alt="" className="size-5" />
+            <img src="/icons/icon.svg" alt="" className="size-12" />
           </span>
-          <span>{LOGIN.brand}</span>
         </header>
 
         <section aria-label={LOGIN.pageTitle} className={loginStyles.formRegion}>

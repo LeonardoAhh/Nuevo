@@ -37,11 +37,13 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)]",
-          "max-h-[80dvh]",
+          "fixed inset-x-0 bottom-0 top-auto z-50 flex w-full max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden rounded-t-xl border bg-card text-card-foreground shadow-[0_2px_2px_hsl(0_0%_0%/0.06),0_16px_32px_-8px_hsl(0_0%_0%/0.24)]",
+          "max-h-[85dvh]",
+          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:max-h-[80dvh]",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "data-[state=closed]:slide-out-to-bottom-4 data-[state=open]:slide-in-from-bottom-4",
+          "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
           "duration-200 motion-reduce:animate-none",
           className,
         )}

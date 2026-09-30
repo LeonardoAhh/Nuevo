@@ -54,16 +54,15 @@ export function EventosAdminPanel({ eventos, onChange }: Props) {
   }
 
   return (
-    <section className="rounded-xl border border-border/60 bg-card p-4 space-y-4">
+    <section aria-labelledby="eventos-admin-heading" className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-sm font-semibold">Panel de administración</p>
-          <p className="text-xs text-muted-foreground">
-            Crea eventos y sube fotos. Solo visible para rol <code>dev</code>.
-          </p>
+          <h2 id="eventos-admin-heading" className="text-base font-semibold">Panel de administración</h2>
+          <p className="text-sm text-muted-foreground">Crea eventos y agrega fotos o videos.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="icon" aria-label="Nuevo evento" title="Nuevo evento">
-          <Plus size={14} />
+        <Button onClick={() => setCreateOpen(true)} className="min-h-10 gap-2">
+          <Plus size={16} aria-hidden="true" />
+          Nuevo evento
         </Button>
       </div>
 
@@ -198,8 +197,8 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-2">
-      <div className="relative h-14 w-14 shrink-0 rounded-md overflow-hidden bg-muted/40 border border-border/60">
+    <li className="flex items-center gap-3 rounded-md border border-border bg-background p-2">
+      <div className="relative h-14 w-14 shrink-0 rounded-md overflow-hidden bg-muted/40 border border-border">
         {coverUrl ? (
           isVideoPath(coverUrl) ? (
             <video src={coverUrl} className="h-full w-full object-cover" muted playsInline />
@@ -237,8 +236,8 @@ function EventoAdminRow({ evento, saving, onUpload, onDelete }: RowProps) {
         size="icon"
         onClick={() => fileRef.current?.click()}
         disabled={saving}
-        aria-label="Subir fotos"
-        title="Subir fotos"
+        aria-label="Subir archivos"
+        title="Subir archivos"
       >
         <Upload size={14} />
       </Button>

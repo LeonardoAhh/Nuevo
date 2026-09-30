@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { LoginSubmitButton, type LoginSubmitStatus } from "@/components/login-submit-button"
@@ -110,10 +110,12 @@ export default function LoginForm() {
               </div>
             </div>
 
-            {submitStatus === "error" && <Alert variant="destructive">
-              <AlertCircle className="size-4" aria-hidden="true" />
-              <AlertDescription>{LOGIN.error}</AlertDescription>
-            </Alert>}
+            {submitStatus === "error" && (
+              <p className="flex items-center justify-center gap-2 text-sm font-medium text-destructive">
+                <AlertCircle className="size-4" aria-hidden="true" />
+                {LOGIN.error}
+              </p>
+            )}
 
             <LoginSubmitButton status={submitStatus} data-testid="login-submit">
               {LOGIN.submit}

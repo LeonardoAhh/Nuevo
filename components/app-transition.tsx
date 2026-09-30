@@ -18,6 +18,30 @@ export function useAppReducedMotion() {
   return systemReducedMotion || reducedMotion
 }
 
+export function AppMark({ className }: { className: string }) {
+  const reducedMotion = useAppReducedMotion()
+
+  return (
+    <motion.img
+      src="/icons/icon.svg"
+      alt=""
+      aria-hidden="true"
+      className={className}
+      initial={false}
+      animate={
+        reducedMotion
+          ? { opacity: 1, scale: 1 }
+          : { opacity: [0.7, 1, 0.7], scale: [0.96, 1, 0.96] }
+      }
+      transition={
+        reducedMotion
+          ? { duration: 0 }
+          : { duration: 2.2, ease: "easeInOut", repeat: Infinity }
+      }
+    />
+  )
+}
+
 export function AppTransition({
   message,
   mode = "page",
@@ -41,23 +65,7 @@ export function AppTransition({
       }
     >
       <div className="flex flex-col items-center gap-5 px-6 text-center">
-        <motion.img
-          src="/icons/icon.svg"
-          alt=""
-          aria-hidden="true"
-          className="size-14 dark:invert"
-          initial={false}
-          animate={
-            reducedMotion
-              ? { opacity: 1, scale: 1 }
-              : { opacity: [0.7, 1, 0.7], scale: [0.96, 1, 0.96] }
-          }
-          transition={
-            reducedMotion
-              ? { duration: 0 }
-              : { duration: 2.2, ease: "easeInOut", repeat: Infinity }
-          }
-        />
+        <AppMark className="size-14 dark:invert" />
         <p className="text-sm font-medium text-muted-foreground">{message}</p>
       </div>
     </motion.div>

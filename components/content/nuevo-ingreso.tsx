@@ -169,11 +169,7 @@ export default function NuevoIngresoContent() {
       {/* Card principal con header + filtros */}
       <Card className="bg-card mb-6">
         <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <CardTitle>Nuevos Empleados</CardTitle>
-              <CardDescription>Seguimiento de evaluaciones y documentación de empleados nuevos.</CardDescription>
-            </div>
+          <div className="flex items-center justify-end gap-3">
             {!isReadOnly && (
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button className="h-9 w-9 p-0 sm:w-auto sm:px-3" variant="outline" onClick={() => setWhatsappModalOpen(true)} aria-label="Compartir Pendientes" title="Compartir Pendientes por WhatsApp">

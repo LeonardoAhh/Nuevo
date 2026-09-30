@@ -167,7 +167,7 @@ export function ModalFooter({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ResponsiveShell — shared centered Dialog on every screen
+// ResponsiveShell — shared bottom sheet on mobile, centered Dialog on larger screens
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type ModalSize = "xs" | "sm" | "md" | "lg" | "xl"
@@ -187,7 +187,7 @@ export interface ResponsiveShellProps {
   size?: ModalSize
   maxWidth?: string
   contentClassName?: string
-  /** @deprecated Modals now use the same centered Dialog on every screen. */
+  /** @deprecated The shared Dialog primitive controls the responsive presentation. */
   mobileVariant?: 'drawer' | 'dialog'
   title: string
   description?: string

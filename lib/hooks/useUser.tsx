@@ -20,10 +20,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     // Obtener usuario inicial
     const getInitialUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (isMounted) {
-        setUser(user)
-        setLoading(false)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (isMounted) setUser(user)
+      } catch {
+        // La ruta publica puede mostrarse sin respuesta de autenticacion.
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 

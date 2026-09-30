@@ -21,13 +21,26 @@ export function LoginSubmitButton({ status, children, className, ...props }: Log
   return (
     <Button
       type="submit"
-      className={cn(loginStyles.submit, className)}
+      className={cn(
+        loginStyles.submit, 
+        isSuccess && "bg-brand text-brand-foreground hover:bg-brand/90",
+        className
+      )}
       disabled={isLoading || isSuccess}
       aria-busy={isLoading}
       {...props}
     >
-      <Icon className={cn("size-4", isLoading && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
-      {isLoading ? LOGIN.submitting : isSuccess ? LOGIN.success : status === "error" ? LOGIN.retry : children}
+      <Icon 
+        className={cn(
+          "size-4 transition-all duration-300", 
+          isLoading && "animate-spin motion-reduce:animate-none",
+          isSuccess && "animate-in zoom-in duration-300"
+        )} 
+        aria-hidden="true" 
+      />
+      <span className={cn("transition-all duration-300", isSuccess && "animate-in fade-in slide-in-from-bottom-1")}>
+        {isLoading ? LOGIN.submitting : isSuccess ? LOGIN.success : status === "error" ? LOGIN.retry : children}
+      </span>
     </Button>
   )
 }

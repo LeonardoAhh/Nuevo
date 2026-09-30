@@ -10,6 +10,7 @@ import { NAV_SECTIONS, findActiveLeaf, isActiveRoute, type NavSection } from "@/
 import { useRole } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 import { useIsMobile } from "@/components/ui/responsive-shell"
+import { AppMark } from "@/components/app-transition"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -42,8 +43,9 @@ export function useSidebar(): SidebarApi & {
 
 // ─── Role filtering ───────────────────────────────────────────────────────────
 
-function useVisibleSections(isEvaluador: boolean): NavSection[] {
+function useVisibleSections(isEvaluador: boolean, isGuest: boolean): NavSection[] {
   return useMemo(() => {
+    if (isGuest) return NAV_SECTIONS.filter((section) => section.public)
     if (!isEvaluador) return NAV_SECTIONS
     return NAV_SECTIONS
       .map((section) => ({
@@ -54,26 +56,22 @@ function useVisibleSections(isEvaluador: boolean): NavSection[] {
         (section.href && isEvaluadorAllowedRoute(section.href)) ||
         (section.items?.length ?? 0) > 0
       )
-  }, [isEvaluador])
+  }, [isEvaluador, isGuest])
 }
 
 // ─── Shared pieces ────────────────────────────────────────────────────────────
 
-function BrandMark() {
+function BrandMark({ href, label }: { href: string; label: string }) {
   return (
     <Link
-      href="/inicio"
-      aria-label="Inicio — VIÑOPLASTIC"
-      className="group flex items-center rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+      href={href}
+      aria-label={`Ir a ${label}`}
+      className="flex size-11 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="select-none overflow-hidden whitespace-nowrap text-[17px] font-medium tracking-tight">
-        <span className="text-foreground">VIÑO</span>
-        <span className="ml-0.5 text-muted-foreground">PLASTIC</span>
-      </span>
+      <AppMark className="size-9 dark:invert" />
     </Link>
   )
 }
-
 /**
  * Full navigation tree — every access always visible, grouped under uppercase
  * section headings. Shared by the desktop panel and the mobile drawer.
@@ -171,6 +169,7 @@ interface SidebarProps {
   showMobileSidebar: boolean
   setShowMobileSidebar: (v: boolean) => void
   isEvaluador?: boolean
+  isGuest?: boolean
 }
 
 export default function Sidebar({
@@ -178,9 +177,13 @@ export default function Sidebar({
   showMobileSidebar,
   setShowMobileSidebar,
   isEvaluador = false,
+  isGuest = false,
 }: SidebarProps) {
   const pathname = usePathname()
-  const sections = useVisibleSections(isEvaluador)
+  const sections = useVisibleSections(isEvaluador, isGuest)
+  const brandDestination = isGuest ? sections.find((section) => section.public) : undefined
+  const brandHref = brandDestination?.href ?? "/inicio"
+  const brandLabel = brandDestination?.label ?? "Inicio"
   const closeMobile = useCallback(() => setShowMobileSidebar(false), [setShowMobileSidebar])
 
   const isDesktop = !isMobileView
@@ -206,13 +209,13 @@ export default function Sidebar({
                 Navegación entre las secciones de la aplicación
               </DrawerDescription>
 
-              <div className="flex h-[56px] shrink-0 items-center justify-between pl-4 pr-2">
-                <BrandMark />
+              <div className="relative flex h-[56px] shrink-0 items-center justify-center px-2">
+                <BrandMark href={brandHref} label={brandLabel} />
                 <button
                   type="button"
                   onClick={closeMobile}
                   aria-label="Cerrar menú"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="absolute right-2 flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X size={18} aria-hidden="true" />
                 </button>
@@ -236,8 +239,8 @@ export default function Sidebar({
           aria-label="Menú principal"
           className="my-2 flex w-60 shrink-0 flex-col overflow-hidden bg-background"
         >
-          <div className="flex h-[60px] shrink-0 items-center px-3">
-            <BrandMark />
+          <div className="flex h-[60px] shrink-0 items-center justify-center">
+            <BrandMark href={brandHref} label={brandLabel} />
           </div>
           <NavTree sections={sections} pathname={pathname} />
         </aside>

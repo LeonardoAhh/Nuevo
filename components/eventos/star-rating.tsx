@@ -42,7 +42,19 @@ export function StarRating({
               aria-checked={i === Math.round(value)}
               aria-label={`${i} estrella${i > 1 ? "s" : ""}`}
               onClick={() => onChange?.(i)}
-              className="p-0.5 rounded hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              tabIndex={i === Math.round(value) || (value === 0 && i === 1) ? 0 : -1}
+              onKeyDown={(event) => {
+                let target = i
+                if (event.key === "ArrowRight" || event.key === "ArrowDown") target = i === 5 ? 1 : i + 1
+                else if (event.key === "ArrowLeft" || event.key === "ArrowUp") target = i === 1 ? 5 : i - 1
+                else if (event.key === "Home") target = 1
+                else if (event.key === "End") target = 5
+                else return
+                event.preventDefault()
+                onChange?.(target)
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[target - 1]?.focus()
+              }}
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Star
                 size={size}

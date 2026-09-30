@@ -13,7 +13,7 @@ export type AccentColor =
   | "violet"
   | "pink"
   | "magenta"
-  | "cyan"
+  | "green"
   | "monochrome"
 
 export type FontSize = "small" | "medium" | "large"
@@ -27,7 +27,7 @@ export const ACCENT_COLOR_MAP: Record<
   violet: { accentLight: "270 66.94% 47.45%", accentDark: "270 66.94% 47.45%", accentTextLight: "270 66.94% 47.45%", accentTextDark: "262.39 89.33% 70.59%", accentForeground: "0 0% 100%", label: "Violeta" },
   pink: { accentLight: "329.88 100% 50%", accentDark: "329.88 100% 50%", accentTextLight: "330 100% 38.82%", accentTextDark: "330 100% 65.1%", accentForeground: "0 0% 9%", label: "Rosa" },
   magenta: { accentLight: "335.8 81.9% 56.67%", accentDark: "335.8 81.9% 56.67%", accentTextLight: "336.44 70.56% 45.29%", accentTextDark: "336.27 81.71% 67.84%", accentForeground: "0 0% 9%", label: "Magenta" },
-  cyan: { accentLight: "166.53 72.41% 60.2%", accentDark: "166.53 72.41% 60.2%", accentTextLight: "169.92 88.15% 26.47%", accentTextDark: "166.53 72.41% 60.2%", accentForeground: "0 0% 9%", label: "Cian" },
+  green: { accentLight: "152 48% 38%", accentDark: "160 48% 44%", accentTextLight: "152 48% 38%", accentTextDark: "160 48% 44%", accentForeground: "0 0% 100%", label: "Verde" },
   monochrome: { accentLight: "0 0% 9.02%", accentDark: "0 0% 100%", accentTextLight: "0 0% 9.02%", accentTextDark: "0 0% 100%", accentForeground: "0 0% 100%", accentForegroundDark: "0 0% 9%", label: "Tinta" },
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Dashboard from "@/components/Dashboard"
 import { EventosLanding } from "@/components/eventos/eventos-landing"
 
 export const metadata: Metadata = {
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 }
 
 export default function EventosPage() {
-  return <EventosLanding />
+  return <Dashboard pageTitle="Eventos" publicPage content={<EventosLanding />} />
 }
