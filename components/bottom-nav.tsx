@@ -9,7 +9,6 @@ import {
   BookOpen,
   ClipboardCheck,
   FileWarning,
-  ImageIcon,
   GraduationCap,
   LayoutGrid,
   LayoutDashboard,
@@ -53,7 +52,6 @@ const PRIMARY: NavItem[] = [
 const EVALUADOR_PRIMARY: NavItem[] = [
   { label: "Desempeño", href: "/desempeno", icon: Award },
   { label: "Cursos", href: "/cursos", icon: BookOpen },
-  { label: "Eventos", href: "/eventos", icon: ImageIcon },
 ]
 
 // hrefs that evaluador sees in their primary bar — excluded from the "Más" drawer
@@ -76,7 +74,6 @@ const MORE_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Público",
     items: [
       { label: "Cursos", href: "/cursos", icon: BookOpen },
-      { label: "Eventos", href: "/eventos", icon: ImageIcon },
     ],
   },
   {
@@ -254,7 +251,6 @@ function isPublicPath(pathname: string) {
     pathname.startsWith("/auth") ||
     pathname === "/login" ||
     pathname === "/offline" ||
-    pathname.startsWith("/eventos") ||
     pathname.startsWith("/cursos") ||
     pathname.startsWith("/preview")
   )

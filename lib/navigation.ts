@@ -5,7 +5,7 @@
  * (page titles). Add new routes here once — every consumer updates itself.
  */
 import type { LucideIcon } from "lucide-react"
-import { Award, CalendarDays, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
+import { Award, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
 
 export interface NavLeaf {
   label: string
@@ -24,7 +24,6 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   { label: "Inicio", icon: LayoutDashboard, href: "/inicio" },
-  { label: "Eventos", icon: CalendarDays, href: "/eventos", public: true },
   {
     label: "Personal",
     icon: UserPlus,

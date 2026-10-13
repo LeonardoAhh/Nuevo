@@ -6,7 +6,7 @@ import { useUser } from './useUser'
 
 export type AppRole = 'dev' | 'admin' | 'evaluador'
 
-export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings', '/cursos', '/eventos']
+export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings', '/cursos']
 export const EVALUADOR_DENIED_ROUTES = ['/desempeno/cumplimiento', '/desempeno/seguimiento']
 
 export function isEvaluadorAllowedRoute(path: string): boolean {
