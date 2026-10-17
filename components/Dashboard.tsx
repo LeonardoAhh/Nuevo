@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Sidebar, { useSidebar } from "@/components/sidebar"
 import Header from "@/components/header"
 import { useRole, useUser } from "@/lib/hooks"
@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils"
 
 
 import { AppTransition } from "@/components/app-transition"
+import { MaintenanceNoticeDialog } from "@/components/maintenance-notice-dialog"
+import { MAINTENANCE_NOTICE_EXPIRES_AT, MAINTENANCE_NOTICE_PENDING_KEY } from "@/lib/maintenance-notice"
 
 interface DashboardProps {
   content?: ReactNode
@@ -31,6 +33,7 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
   const router = useRouter()
   const { isEvaluador, loading: roleLoading } = useRole()
   const { user, loading: userLoading } = useUser()
+  const [showMaintenanceNotice, setShowMaintenanceNotice] = useState(false)
 
   useEffect(() => {
     if (roleLoading || !isEvaluador) return
@@ -38,6 +41,18 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
       router.replace('/desempeno')
     }
   }, [pathname, isEvaluador, roleLoading, router])
+
+  useEffect(() => {
+    if (roleLoading || userLoading || !user || (isEvaluador && !isEvaluadorAllowedRoute(pathname ?? ""))) return
+
+    try {
+      if (sessionStorage.getItem(MAINTENANCE_NOTICE_PENDING_KEY) !== "1") return
+      sessionStorage.removeItem(MAINTENANCE_NOTICE_PENDING_KEY)
+      if (Date.now() < Date.parse(MAINTENANCE_NOTICE_EXPIRES_AT)) setShowMaintenanceNotice(true)
+    } catch {
+      // The notice is optional when browser storage is unavailable.
+    }
+  }, [roleLoading, userLoading, user, isEvaluador, pathname])
 
   if (roleLoading || (publicPage && userLoading)) return <AppTransition message="Preparando tu espacio…" />
 
@@ -89,6 +104,7 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
           </WorkspaceContainer>
         </main>
       </div>
+      <MaintenanceNoticeDialog open={showMaintenanceNotice} onClose={() => setShowMaintenanceNotice(false)} />
     </div>
   )
 }

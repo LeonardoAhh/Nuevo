@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase/client"
 import { LoginSubmitButton, type LoginSubmitStatus } from "@/components/login-submit-button"
 import LoginWelcome from "@/components/login-welcome"
 import { LOGIN, loginStyles } from "@/lib/login/presentation"
+import { MAINTENANCE_NOTICE_PENDING_KEY } from "@/lib/maintenance-notice"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -46,6 +47,12 @@ export default function LoginForm() {
         ? requestedPath
         : "/inicio"
       setSubmitStatus("success")
+
+      try {
+        sessionStorage.setItem(MAINTENANCE_NOTICE_PENDING_KEY, "1")
+      } catch {
+        // Storage may be unavailable; signing in must still succeed.
+      }
 
       await new Promise(resolve => setTimeout(resolve, 1500))
       router.push("/auth/redirect?to=" + encodeURIComponent(rawRedirect))
