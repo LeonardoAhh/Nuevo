@@ -11,6 +11,7 @@
         --workspace-header-height: 3.75rem;
         --workspace-max-width: 88rem;
         --notice-width: 22rem;
+        --notice-edge: 1rem;
         --floating-shadow: 0 2px 2px hsl(0 0% 0% / 0.04), 0 8px 16px -4px hsl(0 0% 0% / 0.1);
 
         /* Geist-aligned neutral system with local fallbacks. */
@@ -85,57 +86,6 @@
     }
 }
 
-.dark {
-    /* Dark counterpart: neutral ink surfaces and crisp hairlines. */
-    --background: 0 0% 4%;
-    --foreground: 0 0% 93%;
-
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 93%;
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 93%;
-
-    --primary: 215 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --brand-accent: 212.35 100% 47.65%;
-    --brand-accent-text: 212.2 100% 59.8%;
-    --brand-accent-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 93%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 0 0% 14%;
-    --accent-foreground: 0 0% 93%;
-
-    --destructive: 0 60% 55%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: var(--muted-foreground);
-
-    --chart-1: 221 58% 60%;
-    --chart-2: 160 45% 46%;
-    --chart-3: 30 58% 52%;
-    --chart-4: 270 48% 58%;
-    --chart-5: 340 48% 55%;
-
-    --success: 160 48% 44%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 80% 60%;
-    --warning-foreground: 0 0% 10%;
-    --info: 200 55% 50%;
-    --info-foreground: 0 0% 98%;
-
-    --alert-warning: 23 0% 100%;
-    --alert-warning-foreground: 38 0% 0%;
-    --alert-warning-border: 38 100% 0%;
-}
-
 @layer base {
     * {
         @apply border-border;
@@ -144,10 +94,6 @@
     html {
         font-size: var(--font-base-size);
         color-scheme: light;
-    }
-
-    html.dark {
-        color-scheme: dark;
     }
 
     body {
@@ -161,8 +107,7 @@
  * This ensures the background color extends into the safe-area
  * zones (home indicator, status bar) on iOS PWA standalone.
  */
-html,
-html.dark {
+html {
     background-color: hsl(var(--background));
 }
 
@@ -581,6 +526,28 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Shared floating notices */
+.app-update-banner {
+    position: fixed;
+    z-index: 50;
+    top: calc(env(safe-area-inset-top, 0px) + var(--notice-edge));
+    left: var(--notice-edge);
+    right: var(--notice-edge);
+    width: max-content;
+    max-width: min(var(--notice-width), calc(100vw - var(--notice-edge) - var(--notice-edge)));
+    margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+    .app-update-banner {
+        top: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + var(--notice-edge));
+        left: auto;
+        right: var(--notice-edge);
+        width: max-content;
+        margin-inline: 0;
+    }
+}
+
 @layer components {
     .ui-floating-surface {
         border: 1px solid hsl(var(--border));
@@ -676,10 +643,11 @@ input[type="color"]::-webkit-color-swatch {
         outline-offset: 2px;
     }
 
-@media (max-width: 600px) {
-    [data-sonner-toaster] .app-toast[data-sonner-toast][data-styled='true'] {
-        left: auto;
-        right: calc(var(--mobile-offset-left) * 2);
+@media (max-width: 639px) {
+    [data-sonner-toaster][data-x-position='center'] .app-toast[data-sonner-toast][data-styled='true'] {
+        left: 0;
+        right: 0;
+        margin-inline: auto;
     }
 }
 
@@ -1057,11 +1025,6 @@ html.guia-open .workspace-header {
     border-color: hsl(152 48% 38% / 0.25);
     margin-left: auto;
 }
-.dark .wn-nav__done {
-    color: hsl(152 55% 55%);
-    background: hsl(152 48% 38% / 0.12);
-    border-color: hsl(152 55% 40% / 0.3);
-}
 .wn-nav__done:hover {
     background: hsl(152 48% 38% / 0.18);
 }
@@ -1158,15 +1121,6 @@ html.guia-open .workspace-header {
     border-color: hsl(262 52% 56% / 0.18);
 }
 
-.dark .wn-feature-card__icon--red {
-    color: hsl(0 72% 65%);
-}
-.dark .wn-feature-card__icon--orange {
-    color: hsl(25 68% 62%);
-}
-.dark .wn-feature-card__icon--purple {
-    color: hsl(262 60% 72%);
-}
 
 .wn-feature-card__label {
     font-size: 0.8125rem;
@@ -1287,9 +1241,6 @@ html.guia-open .workspace-header {
     border-color: hsl(0 72% 51% / 0.3);
     background: hsl(0 72% 51% / 0.06);
 }
-.dark .wn-btn--red {
-    color: hsl(0 72% 65%);
-}
 
 @keyframes wn-pulse-ring {
     0% {
@@ -1337,9 +1288,6 @@ html.guia-open .workspace-header {
     border: 1px solid hsl(0 72% 51% / 0.15);
     flex-shrink: 0;
 }
-.dark .wn-modal-peek__icon {
-    color: hsl(0 72% 65%);
-}
 .wn-modal-peek__title {
     font-size: 0.75rem;
     font-weight: 700;
@@ -1379,12 +1327,6 @@ html.guia-open .workspace-header {
     color: hsl(38 58% 36%);
     border: 1px solid hsl(40 62% 44% / 0.2);
 }
-.dark .wn-chip--red {
-    color: hsl(0 72% 65%);
-}
-.dark .wn-chip--yellow {
-    color: hsl(40 62% 62%);
-}
 
 .wn-badge {
     font-size: 0.5rem;
@@ -1408,15 +1350,6 @@ html.guia-open .workspace-header {
     background: hsl(262 52% 56% / 0.08);
     color: hsl(262 52% 44%);
     border-color: hsl(262 52% 56% / 0.25);
-}
-.dark .wn-badge--green {
-    color: hsl(152 55% 55%);
-}
-.dark .wn-badge--red {
-    color: hsl(0 72% 65%);
-}
-.dark .wn-badge--purple {
-    color: hsl(262 60% 72%);
 }
 
 .wn-btn-primary {
@@ -1473,12 +1406,6 @@ html.guia-open .workspace-header {
 .wn-stat--yellow .wn-stat__val {
     color: hsl(38 58% 36%);
 }
-.dark .wn-stat--red .wn-stat__val {
-    color: hsl(0 72% 65%);
-}
-.dark .wn-stat--yellow .wn-stat__val {
-    color: hsl(40 62% 62%);
-}
 
 /* Eval cards */
 .wn-eval-card {
@@ -1533,12 +1460,6 @@ html.guia-open .workspace-header {
     color: hsl(152 48% 30%);
     border-color: hsl(152 48% 38% / 0.25);
 }
-.dark .wn-score--red {
-    color: hsl(0 72% 65%);
-}
-.dark .wn-score--green {
-    color: hsl(152 55% 55%);
-}
 
 .wn-pills {
     display: flex;
@@ -1559,9 +1480,6 @@ html.guia-open .workspace-header {
     background: hsl(0 72% 51% / 0.08);
     color: hsl(0 62% 42%);
     border-color: hsl(0 72% 51% / 0.25);
-}
-.dark .wn-pill--red {
-    color: hsl(0 72% 65%);
 }
 .wn-pill--muted {
     opacity: 0.6;

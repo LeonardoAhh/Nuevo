@@ -1,9 +1,6 @@
-import type { Metadata } from "next"
-import Dashboard from "@/components/Dashboard"
-import EvaluatorAssignments from "@/components/content/desempeno/evaluator-assignments"
+import { permanentRedirect } from "next/navigation"
+import { ASSIGNMENTS_PATH } from "@/lib/navigation"
 
-export const metadata: Metadata = { title: "Asignaciones de evaluación" }
-
-export default function EvaluatorAssignmentsPage() {
-  return <Dashboard pageTitle="Asignaciones de evaluación" content={<EvaluatorAssignments />} />
+export default function LegacyEvaluatorAssignmentsPage() {
+  permanentRedirect(ASSIGNMENTS_PATH)
 }

@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notify'
 
 export interface ThemePreferences {
-  theme?: 'light' | 'dark' | 'system'
   accentColor?: string
   customColor?: string
   fontSize?: string

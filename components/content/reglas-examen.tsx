@@ -15,7 +15,7 @@ import { CATALOGO_ORGANIZACIONAL } from "@/lib/catalogo"
 
 const DEPARTAMENTOS = Object.keys(CATALOGO_ORGANIZACIONAL)
 
-// Semantic tones (tokens from globals.css) — adapt to light/dark and accent.
+// Semantic tones use the shared color tokens from globals.css.
 // D→C = warming / next step (warning), C→B = info, B→A = final / success.
 const TRANSICION_COLOR: Record<TransicionKey, string> = {
   D_C: "bg-warning/10 border-warning/30",

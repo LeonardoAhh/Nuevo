@@ -10,7 +10,6 @@ import { Award, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
 export interface NavLeaf {
   label: string
   href: string
-  devOnly?: boolean
 }
 
 export interface NavSection {
@@ -25,6 +24,7 @@ export interface NavSection {
 export const HOME_PATH = "/inicio"
 export const LOGIN_PATH = "/login"
 export const SETTINGS_PATH = "/settings"
+export const ASSIGNMENTS_PATH = "/asignaciones"
 export const MOBILE_NAV_ID = "workspace-mobile-navigation"
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -54,7 +54,6 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Evaluaciones", href: "/desempeno" },
       { label: "Cumplimiento", href: "/desempeno/cumplimiento" },
-      { label: "Asignaciones", href: "/desempeno/asignaciones", devOnly: true },
       { label: "Compromisos", href: "/desempeno/seguimiento" },
       { label: "Guía Evaluador", href: "/guia-evaluador" },
     ],
@@ -70,6 +69,7 @@ const EXTRA_ROUTE_LABELS: Record<string, string> = {
   "/ingresos-semanales": "Ingresos Semanales",
   "/whatsapp": "WhatsApp Bot",
   "/desempeno/pendientes": "Evaluaciones Pendientes",
+  [ASSIGNMENTS_PATH]: "Asignaciones de evaluación",
 }
 
 /** True when `pathname` is `href` itself or anywhere below it. */
@@ -100,10 +100,12 @@ export function getRouteLabel(pathname: string): string {
   const exact = leaves.find((leaf) => leaf.href === pathname)
   if (exact) return exact.label
 
+  if (EXTRA_ROUTE_LABELS[pathname]) return EXTRA_ROUTE_LABELS[pathname]
+
   const prefixed = leaves
     .filter((leaf) => pathname.startsWith(`${leaf.href}/`))
     .sort((a, b) => b.href.length - a.href.length)[0]
   if (prefixed) return prefixed.label
 
-  return EXTRA_ROUTE_LABELS[pathname] ?? ""
+  return ""
 }

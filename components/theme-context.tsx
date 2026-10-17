@@ -4,55 +4,28 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import {
   ACCENT_COLOR_MAP,
-  APP_THEME_COLOR as THEME_COLOR_MAP,
   DENSITY_SCALE_MAP,
   FONT_SIZE_MAP,
   THEME_STORAGE_KEYS,
   type AccentColor,
   type Density,
   type FontSize,
-  type Theme,
 } from "@/lib/theme/constants"
 
 // Re-exported so existing consumers keep importing from this module.
-export type { Theme, AccentColor, FontSize, Density }
+export type { AccentColor, FontSize, Density }
 export { ACCENT_COLOR_MAP }
 
-const THEME_COLOR_META_ID = "dynamic-theme-color"
-
-function setMetaThemeColor(color: string) {
-  if (typeof document === "undefined") return
-  // We keep an unconditional, non-media tag that wins over any OS-media
-  // variants Next injected from `viewport.themeColor` (last matching wins).
-  // We must NOT remove React-managed nodes — doing so crashes the reconciler
-  // with `removeChild` on next render. So we own a single tag by id and only
-  // mutate its `content`.
-  let meta = document.getElementById(THEME_COLOR_META_ID) as HTMLMetaElement | null
-  if (!meta) {
-    meta = document.createElement("meta")
-    meta.id = THEME_COLOR_META_ID
-    meta.name = "theme-color"
-    document.head.appendChild(meta)
-  }
-  if (meta.content !== color) {
-    meta.content = color
-  }
-}
-
 type ThemeContextType = {
-  theme: Theme
-  resolvedTheme: "light" | "dark"
   accentColor: AccentColor
   fontSize: FontSize
   density: Density
   reducedMotion: boolean
   isColorLight: (hex?: string) => boolean
-  setTheme: (theme: Theme) => void
   setAccentColor: (color: AccentColor) => void
   setFontSize: (size: FontSize) => void
   setDensity: (d: Density) => void
   setReducedMotion: (v: boolean) => void
-  toggleTheme: () => void
   resetTheme: () => void
 }
 
@@ -135,8 +108,6 @@ function isColorLight(hex?: string): boolean {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [initialized, setInitialized] = useState(false)
-  const [theme, setTheme] = useState<Theme>("light")
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
   const [accentColor, setAccentColorRaw] = useState<AccentColor>("blue")
   const setAccentColor = useCallback((c: AccentColor) => {
     setAccentColorRaw(c in ACCENT_COLOR_MAP ? c : "blue")
@@ -145,30 +116,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [density, setDensity] = useState<Density>("comfortable")
   const [reducedMotion, setReducedMotion] = useState<boolean>(false)
 
-  // Resolve the effective theme (light or dark) from "system" or explicit
-  const resolveTheme = useCallback((t: Theme): "light" | "dark" => {
-    if (t === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    }
-    return t
-  }, [])
-
-  // Initialize from localStorage or system preference
+  // Initialize display preferences; discard the retired color-mode preference.
   useEffect(() => {
-    const storedTheme = localStorage.getItem(THEME_STORAGE_KEYS.theme) as Theme | null
+    localStorage.removeItem(THEME_STORAGE_KEYS.legacyColorMode)
+    document.documentElement.classList.remove("dark")
     const storedAccentColor = localStorage.getItem(THEME_STORAGE_KEYS.accentColor) as AccentColor | null
     const storedFontSize = localStorage.getItem(THEME_STORAGE_KEYS.fontSize) as FontSize | null
     const storedDensity = localStorage.getItem(THEME_STORAGE_KEYS.density) as Density | null
     const storedReducedMotion = localStorage.getItem(THEME_STORAGE_KEYS.reducedMotion)
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-
-    const nextTheme: Theme = storedTheme && (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system")
-      ? storedTheme
-      : window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-    setTheme(nextTheme)
-    setResolvedTheme(resolveTheme(nextTheme))
 
     if (storedAccentColor && storedAccentColor in ACCENT_COLOR_MAP) setAccentColor(storedAccentColor)
     if (storedFontSize && storedFontSize in FONT_SIZE_MAP) setFontSize(storedFontSize)
@@ -177,32 +133,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const rm = storedReducedMotion !== null ? storedReducedMotion === "true" : prefersReducedMotion
     setReducedMotion(rm)
     setInitialized(true)
-  }, [resolveTheme, setAccentColor])
-
-  // Apply dark/light class + subscribe to system changes when theme="system"
-  useEffect(() => {
-    if (!initialized) return
-
-    const apply = (resolved: "light" | "dark") => {
-      setResolvedTheme(resolved)
-      if (resolved === "dark") {
-        document.documentElement.classList.add("dark")
-      } else {
-        document.documentElement.classList.remove("dark")
-      }
-      setMetaThemeColor(THEME_COLOR_MAP[resolved])
-    }
-
-    apply(resolveTheme(theme))
-    localStorage.setItem(THEME_STORAGE_KEYS.theme, theme)
-
-    if (theme === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)")
-      const handler = (e: MediaQueryListEvent) => apply(e.matches ? "dark" : "light")
-      mq.addEventListener("change", handler)
-      return () => mq.removeEventListener("change", handler)
-    }
-  }, [initialized, theme, resolveTheme])
+  }, [setAccentColor])
 
   // Apply font size via CSS variable
   useEffect(() => {
@@ -238,26 +169,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initialized) return
     const colors = ACCENT_COLOR_MAP[accentColor] ?? ACCENT_COLOR_MAP.blue
-    const accent = resolvedTheme === "dark" ? colors.accentDark : colors.accentLight
-    const accentText = resolvedTheme === "dark" ? colors.accentTextDark : colors.accentTextLight
-    const accentForeground = (resolvedTheme === "dark" && colors.accentForegroundDark) ? colors.accentForegroundDark : colors.accentForeground
     // Clear legacy inline overrides from the previous implementation, where
     // choosing an accent replaced the semantic primary button color.
     document.documentElement.style.removeProperty("--primary")
     document.documentElement.style.removeProperty("--primary-foreground")
-    document.documentElement.style.setProperty("--brand-accent", accent)
-    document.documentElement.style.setProperty("--brand-accent-text", accentText)
-    document.documentElement.style.setProperty("--brand-accent-foreground", accentForeground)
-    document.documentElement.style.setProperty("--ring", accent)
+    document.documentElement.style.setProperty("--brand-accent", colors.accent)
+    document.documentElement.style.setProperty("--brand-accent-text", colors.accentText)
+    document.documentElement.style.setProperty("--brand-accent-foreground", colors.accentForeground)
+    document.documentElement.style.setProperty("--ring", colors.accent)
     localStorage.setItem(THEME_STORAGE_KEYS.accentColor, accentColor)
-  }, [accentColor, initialized, resolvedTheme])
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
-  }
+  }, [accentColor, initialized])
 
   const resetTheme = () => {
-    setTheme("light")
     setAccentColor("blue")
     setFontSize("medium")
     setDensity("comfortable")
@@ -268,19 +191,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider
       value={{
-        theme,
-        resolvedTheme,
         accentColor,
         fontSize,
         density,
         reducedMotion,
         isColorLight,
-        setTheme,
         setAccentColor,
         setFontSize,
         setDensity,
         setReducedMotion,
-        toggleTheme,
         resetTheme,
       }}
     >

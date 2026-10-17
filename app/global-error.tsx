@@ -22,8 +22,9 @@ export default function GlobalError({
           placeItems: "center",
           fontFamily:
             "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-          background: "#0f1013",
-          color: "#efefef",
+          background: "#fafafa",
+          color: "#171717",
+          colorScheme: "light",
           padding: "24px",
         }}
       >
@@ -33,7 +34,7 @@ export default function GlobalError({
               fontSize: 12,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "#9a9aa2",
+              color: "#666666",
               margin: 0,
             }}
           >
@@ -42,7 +43,7 @@ export default function GlobalError({
           <h1 style={{ fontSize: 22, fontWeight: 600, margin: "12px 0 8px" }}>
             No pudimos cargar la aplicación
           </h1>
-          <p style={{ fontSize: 14, color: "#c8c8cd", margin: 0 }}>
+          <p style={{ fontSize: 14, color: "#4d4d4d", margin: 0 }}>
             Intenta recargar la página. Si el problema continúa, cierra sesión y vuelve a entrar.
           </p>
           <button
@@ -53,7 +54,7 @@ export default function GlobalError({
               padding: "10px 18px",
               borderRadius: 10,
               border: "none",
-              background: "#4f46e5",
+              background: "#006aff",
               color: "#fff",
               fontSize: 14,
               fontWeight: 500,

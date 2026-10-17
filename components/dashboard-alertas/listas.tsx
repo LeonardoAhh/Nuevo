@@ -42,10 +42,10 @@ export function ListaEvals({ items, vencida, vacio, evalNum, onCalificar }: List
                                     key={item.id}
                                     item={item}
                                     evalNum={evalNum}
-                                    colorDias={vencida ? "text-red-500 dark:text-red-400" : "text-amber-500 dark:text-amber-400"}
+                                    colorDias={vencida ? "text-red-500" : "text-amber-500"}
                                     colorBadge={vencida
-                                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-amber-100 text-amber-700"}
                                     colorBorde={vencida ? "border-red-400" : "border-amber-400"}
                                     badgeLabel={vencida ? "Vencida" : "Por vencer"}
                                     onCalificar={onCalificar}

@@ -143,37 +143,37 @@ const TONE_CLASSES: Record<CursoTone, ToneClasses> = {
     gradient: "linear-gradient(135deg, #0ea5e9 0%, #2563eb 55%, #1d4ed8 100%)",
     solid: "#2563eb",
     badgeBg: "bg-sky-500/10",
-    badgeText: "text-sky-700 dark:text-sky-300",
+    badgeText: "text-sky-700",
   },
   info: {
     gradient: "linear-gradient(135deg, #6366f1 0%, #7c3aed 55%, #5b21b6 100%)",
     solid: "#6366f1",
     badgeBg: "bg-indigo-500/10",
-    badgeText: "text-indigo-700 dark:text-indigo-300",
+    badgeText: "text-indigo-700",
   },
   success: {
     gradient: "linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%)",
     solid: "#059669",
     badgeBg: "bg-emerald-500/10",
-    badgeText: "text-emerald-700 dark:text-emerald-300",
+    badgeText: "text-emerald-700",
   },
   warning: {
     gradient: "linear-gradient(135deg, #f59e0b 0%, #ea580c 55%, #c2410c 100%)",
     solid: "#ea580c",
     badgeBg: "bg-amber-500/10",
-    badgeText: "text-amber-700 dark:text-amber-300",
+    badgeText: "text-amber-700",
   },
   destructive: {
     gradient: "linear-gradient(135deg, #f43f5e 0%, #dc2626 55%, #b91c1c 100%)",
     solid: "#dc2626",
     badgeBg: "bg-rose-500/10",
-    badgeText: "text-rose-700 dark:text-rose-300",
+    badgeText: "text-rose-700",
   },
   accent: {
     gradient: "linear-gradient(135deg, #a855f7 0%, #9333ea 55%, #7e22ce 100%)",
     solid: "#9333ea",
     badgeBg: "bg-violet-500/10",
-    badgeText: "text-violet-700 dark:text-violet-300",
+    badgeText: "text-violet-700",
   },
 }
 

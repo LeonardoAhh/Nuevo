@@ -11,6 +11,8 @@ export type UpdateStatus =
   | "applying"    // User confirmed; SKIP_WAITING sent, reload imminent
   | "up-to-date"  // Check completed — no new version found
 
+export const APP_UPDATE_COMPLETED_KEY = "app-update-completed"
+
 // ─── Singleton store ──────────────────────────────────────────────────────────
 // A single shared store so every component that calls useAppUpdate() sees the
 // same state without duplicating SW event listeners.
@@ -63,6 +65,13 @@ export function useAppUpdate() {
     }
 
     const onControllerChange = () => {
+      if (getStatus() === "applying") {
+        try {
+          sessionStorage.setItem(APP_UPDATE_COMPLETED_KEY, "1")
+        } catch {
+          // Storage can be unavailable in restricted browser contexts.
+        }
+      }
       window.location.reload()
     }
 

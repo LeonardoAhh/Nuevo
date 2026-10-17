@@ -61,7 +61,7 @@ function SidebarBrand({ role, onClose }: { role: AppRole; onClose?: () => void }
           onClose && "mr-11",
         )}
       >
-        <AppMark className="size-9 shrink-0 dark:invert" />
+        <AppMark className="size-9 shrink-0" />
         <span className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-sm font-semibold text-foreground">{BRAND_NAME}</span>
           <span className="truncate text-xs font-normal text-muted-foreground">{ROLE_LABELS[role]}</span>
@@ -88,11 +88,9 @@ function SidebarBrand({ role, onClose }: { role: AppRole; onClose?: () => void }
 function NavTree({
   pathname,
   onNavigate,
-  role,
 }: {
   pathname: string
   onNavigate?: () => void
-  role: AppRole
 }) {
   return (
     <nav aria-label="Secciones" className="min-h-0 flex-1 px-3 pb-4 max-md:overflow-x-hidden max-md:overflow-y-auto max-md:scrollbar-thin">
@@ -137,7 +135,7 @@ function NavTree({
                 {section.label}
               </p>
               <ul className="ml-4 space-y-0.5 border-l border-border/70 pl-2">
-                {section.items?.filter((leaf) => !leaf.devOnly || role === "dev").map((leaf) => {
+                {section.items?.map((leaf) => {
                   const active = leaf.href === activeLeaf?.href
                   return (
                     <li key={leaf.href}>
@@ -205,7 +203,7 @@ export default function Sidebar({
             </DrawerDescription>
 
             <SidebarBrand role={role} onClose={closeMobile} />
-            <NavTree pathname={pathname} onNavigate={closeMobile} role={role} />
+            <NavTree pathname={pathname} onNavigate={closeMobile} />
             <SystemInfoFooter className="safe-bottom-content" />
           </div>
         </DrawerContent>
@@ -217,7 +215,7 @@ export default function Sidebar({
         className="workspace-sidebar hidden flex-col bg-background md:flex"
       >
         <SidebarBrand role={role} />
-        <NavTree pathname={pathname} role={role} />
+        <NavTree pathname={pathname} />
         <SystemInfoFooter />
       </aside>
     </>

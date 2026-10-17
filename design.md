@@ -19,7 +19,7 @@ Surfaces barely lift. Cards are white (`{colors.canvas-elevated}`) on the #fafaf
 
 > Source pages analyzed: the home page, the AI Gateway page, the customers page, and the pricing page. The ink/canvas/hairline trio recurs on every page; the accent blue (`{colors.link}`) surfaces on pricing, and the mesh-gradient stops live in the hero.
 
-**ViñoPlastic application override:** UI `--primary` is #006AFF in light and dark mode. Ink and body text remain neutral; blue is reserved for primary actions and selected states.
+**ViñoPlastic application override:** The application uses a single light theme. UI `--primary` is #006AFF. Ink and body text remain neutral; blue is reserved for primary actions and selected states.
 
 ### Brand & Accent
 - **Ink** (`{colors.primary}` / `{colors.ink}` — #171717): the brand's defining near-black. Headings, primary CTA fill, logo, and the darkest text tier. Paired with `{colors.on-primary}` (white).
@@ -96,6 +96,7 @@ Geist Sans and Geist Mono are freely available (open-source, via Vercel / Google
 - **Workspace frame** (`{components.workspace-frame}`): on desktop, the authenticated header and main content share one elevated-canvas panel (`{colors.canvas-elevated}`) with a 1px hairline, 12px radius, and an 8px outer inset on the top, right, and bottom. It has no shadow. The fixed-width sidebar remains on the base canvas and uses the same 8px vertical inset; it has no collapsible rail and no divider beneath the wordmark. On mobile, the frame becomes full-bleed with no outer border or radius.
 - **Workspace sidebar**: desktop and mobile navigation share the same width token and menu tree. Rows have a 44px minimum hit area; the current route uses the muted surface and dark ink. The desktop sidebar flows with the document so the workspace has one page scrollbar.
 - **Workspace header**: shares the content grid and gutter tokens, with its height and desktop sticky inset defined by the workspace tokens. The page title stays on the left; the account control stays on the right. Menu controls have a 44px minimum hit area and use the same neutral focus treatment as the sidebar.
+- **Floating notices**: toasts and update notices sit at the bottom right on desktop and top center on mobile. Their edge inset respects mobile safe areas, and their width stays within the shared notice token.
 - Feature sections use 2-up, 3-up, and 4-up hairline-card grids that collapse toward 1-up on narrow widths.
 - The pricing page uses a multi-column tier grid; the customers page a logo / case-study grid.
 
@@ -223,7 +224,7 @@ Cards are rectangles at 12–16px radius; marketing buttons and category tabs ar
 ## Do's and Don'ts
 
 ### Do
-- Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings, CTAs, and borders — the system is a black-and-white duet.
+- Keep the canvas near-white (`{colors.canvas}`) and let near-black ink (`{colors.ink}`) carry headings, CTAs, and borders.
 - Confine color to the hero mesh gradient and small illustration accents; reserve `{colors.link}` for links and focus.
 - Use the two button shapes by context: black pill (`{components.button-primary}`) for marketing CTAs, 6px square (`{components.button-primary-sm}`) for nav/app.
 - Define cards and inputs with a 1px hairline (`{colors.hairline}`) before any shadow — flat is the default.

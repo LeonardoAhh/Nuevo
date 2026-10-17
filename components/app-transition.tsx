@@ -65,7 +65,7 @@ export function AppTransition({
       }
     >
       <div className="flex flex-col items-center gap-5 px-6 text-center">
-        <AppMark className="size-14 dark:invert" />
+        <AppMark className="size-14" />
         <p className="text-sm font-medium text-muted-foreground">{message}</p>
       </div>
     </motion.div>

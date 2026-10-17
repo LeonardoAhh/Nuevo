@@ -38,11 +38,11 @@ import {
 
 const COLOR_CARD: Record<NoteColor, string> = {
   default: "border-border bg-card",
-  red:     "border-red-200    bg-red-50    dark:border-red-800    dark:bg-red-950/20",
-  yellow:  "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/20",
-  green:   "border-green-200  bg-green-50  dark:border-green-800  dark:bg-green-950/20",
-  blue:    "border-blue-200   bg-blue-50   dark:border-blue-800   dark:bg-blue-950/20",
-  purple:  "border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/20",
+  red:     "border-red-200 bg-red-50",
+  yellow:  "border-yellow-200 bg-yellow-50",
+  green:   "border-green-200 bg-green-50",
+  blue:    "border-blue-200 bg-blue-50",
+  purple:  "border-purple-200 bg-purple-50",
 }
 
 const COLOR_DOT: Record<NoteColor, string> = {

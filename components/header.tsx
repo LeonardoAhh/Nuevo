@@ -6,23 +6,19 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  Menu, Settings, LogOut, RefreshCw, ChevronDown, Palette, Loader2,
+  Menu, Settings, LogOut, RefreshCw, ChevronDown, Loader2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem,
-  DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent,
-  DropdownMenuSubTrigger, DropdownMenuTrigger,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useTheme } from "@/components/theme-context"
 import { useUser, useProfile, useRole } from "@/lib/hooks"
 import { getRouteLabel, LOGIN_PATH, MOBILE_NAV_ID, SETTINGS_PATH } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import SignOutOverlay from "@/components/signout-overlay"
 import { APP_TRANSITION_MIN_MS, useAppReducedMotion } from "@/components/app-transition"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
-import { THEME_MODE_OPTIONS, isThemeMode } from "@/components/ui/theme-mode-options"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -62,7 +58,6 @@ export default function Header({
 }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
   const { isEvaluador, loading: roleLoading } = useRole()
@@ -196,27 +191,6 @@ export default function Header({
                       </Link>
                     </DropdownMenuItem>
 
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className={accountMenuItemClass}>
-                        <Palette className="text-muted-foreground" aria-hidden="true" />
-                        Tema
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent sideOffset={8} className="p-1.5">
-                        <DropdownMenuRadioGroup
-                          aria-label="Tema"
-                          value={theme}
-                          onValueChange={(value) => {
-                            if (isThemeMode(value)) setTheme(value)
-                          }}
-                        >
-                          {THEME_MODE_OPTIONS.map(({ value, label }) => (
-                            <DropdownMenuRadioItem key={value} value={value} className="min-h-11 pl-8 pr-2.5 text-sm">
-                              {label}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
                   </>
                 )}
 

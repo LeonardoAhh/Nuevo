@@ -97,7 +97,7 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
               </div>
             </div>
           ) : (
-            <div role="status" aria-live="polite" className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
+            <div role="status" aria-live="polite" className="flex items-start gap-2 text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
               <TriangleAlert aria-hidden="true" className={`mt-0.5 ${PROMOTION_ICON.control} shrink-0`} />
               <span>Sin reglas configuradas.</span>
             </div>
@@ -170,8 +170,8 @@ export function PromDetalleDialog({ empleado, open, onClose }: PromDetalleDialog
                             <span className="text-xs text-muted-foreground">{ev.evaluador}</span>
                           )}
                           <span className={`font-bold text-base ${
-                            ev.calificacion >= 80 ? "text-emerald-600 dark:text-emerald-400"
-                            : ev.calificacion >= 60 ? "text-amber-600 dark:text-amber-400"
+                            ev.calificacion >= 80 ? "text-emerald-600"
+                            : ev.calificacion >= 60 ? "text-amber-600"
                             : "text-destructive"
                           }`}>
                             {ev.calificacion}

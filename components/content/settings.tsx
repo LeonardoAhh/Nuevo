@@ -1,12 +1,13 @@
 "use client"
 
 import React, { useState, useRef } from "react"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Palette, User, Check, AlertCircle,
   Upload, RotateCcw, Loader2, Save, X,
-  Wrench,
+  ArrowRight, Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useTheme, ACCENT_COLOR_MAP, type AccentColor } from "@/components/theme-context"
-import { THEME_MODE_OPTIONS } from "@/components/ui/theme-mode-options"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -24,6 +24,8 @@ import { useProfile, useUser } from "@/lib/hooks"
 import { profileSchema, ProfileFormData } from "@/lib/validations/profile"
 import { AuthForm } from "@/components/auth-form"
 import { useMaintenanceMode } from "@/lib/hooks/useMaintenanceMode"
+import { hasPrivateDeveloperAccess } from "@/lib/auth/private-developer"
+import { ASSIGNMENTS_PATH } from "@/lib/navigation"
 
 const ALL_ACCENTS: ReadonlyArray<AccentColor> = [
   "monochrome", "blue", "violet", "pink", "magenta", "green",
@@ -33,7 +35,7 @@ type Tab = "profile" | "appearance" | "developer"
 
 const NAV_ITEMS_BASE: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
   { id: "profile",       label: "Perfil",          icon: User,    description: "Nombre, avatar y datos personales" },
-  { id: "appearance",    label: "Apariencia",       icon: Palette, description: "Tema, colores y densidad" },
+  { id: "appearance",    label: "Apariencia",       icon: Palette, description: "Colores y densidad" },
 ]
 
 // ─── Shared section header ────────────────────────────────────────────────────
@@ -321,54 +323,18 @@ function ProfileTab({
 
 // ─── APPEARANCE TAB ───────────────────────────────────────────────────────────
 function AppearanceTab() {
-  const { theme, resolvedTheme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
+  const { accentColor, fontSize, density, reducedMotion, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
 
   return (
     <div className="space-y-6">
       <SectionHeader title="Apariencia" description="Personaliza cómo se ve la aplicación en tu dispositivo." />
-
-      {/* Theme mode */}
-      <SettingGroup title="Modo de color">
-        <div className="py-5">
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {THEME_MODE_OPTIONS.map(({ value, label, icon: Icon }) => {
-              const selected = theme === value
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setTheme(value)}
-                  className={cn(
-                    "flex min-h-24 flex-col items-center justify-center gap-2 rounded-md border bg-card px-2 py-3 text-center transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    selected
-                      ? "border-foreground bg-muted/50 text-foreground"
-                      : "border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  )}
-                >
-                  <Icon className="size-5" aria-hidden="true" />
-                  <span className="text-sm font-medium">{label}</span>
-                  {selected && (
-                    <span className="sr-only">(seleccionado)</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </SettingGroup>
 
       {/* Accent */}
       <SettingGroup title="Color de acento">
         <div className="space-y-3 py-5">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {ALL_ACCENTS.map((name) => {
-              const { accentLight, accentDark, accentForeground, accentForegroundDark, label } = ACCENT_COLOR_MAP[name]
-              const swatchColor = resolvedTheme === "dark" ? accentDark : accentLight
-              const checkColor = resolvedTheme === "dark" && accentForegroundDark
-                ? accentForegroundDark
-                : accentForeground
+              const { accent, accentForeground, label } = ACCENT_COLOR_MAP[name]
               return (
                 <TooltipProvider key={name}>
                   <Tooltip>
@@ -384,11 +350,11 @@ function AppearanceTab() {
                             ? "border-foreground"
                             : "border-transparent hover:border-border",
                         )}
-                        style={{ backgroundColor: `hsl(${swatchColor})` }}
+                        style={{ backgroundColor: `hsl(${accent})` }}
                         onClick={() => setAccentColor(name)}
                       >
                         {accentColor === name && (
-                          <Check className="size-4" style={{ color: `hsl(${checkColor})` }} />
+                          <Check className="size-4" style={{ color: `hsl(${accentForeground})` }} />
                         )}
                       </button>
                     </TooltipTrigger>
@@ -547,6 +513,20 @@ function DeveloperTab() {
           {feedback && <p role="status" className="text-sm">{feedback}</p>}
         </div>
       </SettingGroup>
+
+      <SettingGroup title="Evaluaciones">
+        <SettingRow
+          label="Asignaciones de evaluadores"
+          description="Elige las áreas y personas que puede evaluar cada cuenta."
+        >
+          <Button asChild variant="outline" className="min-h-11">
+            <Link href={ASSIGNMENTS_PATH}>
+              Abrir asignaciones
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </SettingRow>
+      </SettingGroup>
     </div>
   )
 }
@@ -566,7 +546,7 @@ export default function SettingsContent() {
 
   if (!user && !userLoading) return <AuthForm />
 
-  const isDev = user?.email?.toLowerCase().trim() === "leo@adm.com"
+  const isDev = hasPrivateDeveloperAccess(user?.email)
   const navItems = isDev
     ? [...NAV_ITEMS_BASE, { id: "developer" as Tab, label: "Desarrollador", icon: Wrench, description: "Control y mantenimiento" }]
     : NAV_ITEMS_BASE

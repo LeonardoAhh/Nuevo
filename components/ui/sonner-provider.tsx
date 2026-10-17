@@ -2,10 +2,17 @@
 
 import { useEffect } from "react"
 import { Toaster, toast } from "sonner"
-import { useTheme } from "@/components/theme-context"
+import { useMobileNoticePlacement } from "@/lib/hooks/useMobileNoticePlacement"
+
+const noticeOffset = {
+  top: "calc(env(safe-area-inset-top, 0px) + var(--notice-edge))",
+  right: "var(--notice-edge)",
+  bottom: "calc(env(safe-area-inset-bottom, 0px) + var(--notice-edge))",
+  left: "var(--notice-edge)",
+}
 
 export function SonnerProvider() {
-  const { resolvedTheme } = useTheme()
+  const isMobile = useMobileNoticePlacement()
   // Dev-only handle: lets you trigger toasts from the browser console
   // (window.__toast.success(...)) to verify styles per variant.
   useEffect(() => {
@@ -16,13 +23,13 @@ export function SonnerProvider() {
 
   return (
     <Toaster
-      theme={resolvedTheme}
+      theme="light"
       closeButton
       expand={false}
       visibleToasts={1}
-      position="bottom-right"
-      offset={16}
-      mobileOffset={16}
+      position={isMobile ? "top-center" : "bottom-right"}
+      offset={noticeOffset}
+      mobileOffset={noticeOffset}
       gap={12}
       toastOptions={{
         duration: 4000,

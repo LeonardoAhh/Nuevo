@@ -47,7 +47,7 @@ export function NoticeCard({
   title: string;
   children: React.ReactNode;
 }) {
-  // Color semántico via tokens del tema (se adapta a claro/oscuro).
+  // Color semántico mediante los tokens compartidos.
   const color = tone === "danger" ? "text-destructive" : "text-warning";
   return <div role="alert" className="flex items-center gap-1.5 py-1">
     <span className={cn("flex shrink-0 items-center justify-center", color)} aria-hidden="true">

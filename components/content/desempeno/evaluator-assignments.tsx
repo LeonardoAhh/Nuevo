@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useRole } from "@/lib/hooks"
+import { useRole, useUser } from "@/lib/hooks"
+import { hasPrivateDeveloperAccess } from "@/lib/auth/private-developer"
 import { CATALOGO_ORGANIZACIONAL } from "@/lib/catalogos/organizacion"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
@@ -77,6 +78,8 @@ async function loadAssignedEmployees(numbers: string[]): Promise<Employee[]> {
 
 export default function EvaluatorAssignments() {
   const { canEdit, loading: roleLoading } = useRole()
+  const { user, loading: userLoading } = useUser()
+  const canManageAssignments = canEdit && hasPrivateDeveloperAccess(user?.email)
   const [accounts, setAccounts] = useState<EvaluatorAccount[]>([])
   const [selectedUserId, setSelectedUserId] = useState("")
   const [departments, setDepartments] = useState<string[]>([])
@@ -99,7 +102,7 @@ export default function EvaluatorAssignments() {
   const hasDepartmentChanges = JSON.stringify([...departments].sort()) !== JSON.stringify([...(selectedAccount?.departamentos ?? [])].sort())
 
   useEffect(() => {
-    if (roleLoading || !canEdit) return
+    if (roleLoading || userLoading || !canManageAssignments) return
     let active = true
     supabase.from("profiles")
       .select("user_id,display_name,email,departamentos")
@@ -114,14 +117,14 @@ export default function EvaluatorAssignments() {
         setSelectedUserId(current => next.some(account => account.user_id === current) ? current : next[0]?.user_id ?? "")
       })
     return () => { active = false }
-  }, [canEdit, roleLoading])
+  }, [canManageAssignments, roleLoading, userLoading])
 
   useEffect(() => {
     setDepartments(selectedAccount?.departamentos ?? [])
   }, [selectedAccount])
 
   useEffect(() => {
-    if (!selectedUserId || !canEdit) return
+    if (!selectedUserId || !canManageAssignments) return
     let active = true
     setLoadingAssignments(true)
     Promise.resolve(supabase.from("evaluator_employee_assignments")
@@ -140,11 +143,11 @@ export default function EvaluatorAssignments() {
       .catch(() => { if (active) notify.error("No se pudieron cargar las personas asignadas") })
       .finally(() => { if (active) setLoadingAssignments(false) })
     return () => { active = false }
-  }, [selectedUserId, canEdit])
+  }, [selectedUserId, canManageAssignments])
 
   useEffect(() => {
     const term = query.trim()
-    if (!canEdit || term.length < 2) { setResults([]); setSearching(false); return }
+    if (!canManageAssignments || term.length < 2) { setResults([]); setSearching(false); return }
     let active = true
     setSearching(true)
     const timer = window.setTimeout(() => {
@@ -154,7 +157,7 @@ export default function EvaluatorAssignments() {
         .finally(() => { if (active) setSearching(false) })
     }, 250)
     return () => { active = false; window.clearTimeout(timer) }
-  }, [query, canEdit])
+  }, [query, canManageAssignments])
 
   const saveDepartments = async () => {
     if (!selectedUserId || !selectedAccount || !hasDepartmentChanges) return
@@ -195,8 +198,8 @@ export default function EvaluatorAssignments() {
     notify.success("Asignación eliminada")
   }
 
-  if (roleLoading) return <p className="text-sm text-muted-foreground">Verificando acceso…</p>
-  if (!canEdit) return <p role="alert" className="text-sm text-muted-foreground">No tienes acceso a las asignaciones.</p>
+  if (roleLoading || userLoading) return <p className="text-sm text-muted-foreground">Verificando acceso…</p>
+  if (!canManageAssignments) return <p role="alert" className="text-sm text-muted-foreground">No tienes acceso a las asignaciones.</p>
 
   return <div className="space-y-5">
     <Card>

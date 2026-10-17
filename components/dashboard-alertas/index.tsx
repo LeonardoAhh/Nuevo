@@ -110,10 +110,10 @@ export default function DashboardAlertas() {
                 <CardContent className="grid grid-cols-1 gap-3 pt-0 md:grid-cols-2">
                     <Seccion
                         label="Evaluación 1er Mes"
-                        vencidas={n(eval1Venc)} colorV="text-red-600 dark:text-red-400"
-                        bordeV="border-red-100 dark:border-red-800/30"
-                        porVencer={n(eval1Prox)} colorP="text-amber-600 dark:text-amber-400"
-                        bordeP="border-amber-100 dark:border-amber-800/30"
+                        vencidas={n(eval1Venc)} colorV="text-red-600"
+                        bordeV="border-red-100"
+                        porVencer={n(eval1Prox)} colorP="text-amber-600"
+                        bordeP="border-amber-100"
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval1_vencidas")}
                         onPorVencer={() => setDialogTipo("eval1_por_vencer")}
@@ -121,10 +121,10 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Evaluación 2° Mes"
-                        vencidas={n(eval2Venc)} colorV="text-red-600 dark:text-red-400"
-                        bordeV="border-red-100 dark:border-red-800/30"
-                        porVencer={n(eval2Prox)} colorP="text-amber-600 dark:text-amber-400"
-                        bordeP="border-amber-100 dark:border-amber-800/30"
+                        vencidas={n(eval2Venc)} colorV="text-red-600"
+                        bordeV="border-red-100"
+                        porVencer={n(eval2Prox)} colorP="text-amber-600"
+                        bordeP="border-amber-100"
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval2_vencidas")}
                         onPorVencer={() => setDialogTipo("eval2_por_vencer")}
@@ -132,10 +132,10 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Evaluación 3er Mes"
-                        vencidas={n(eval3Venc)} colorV="text-red-600 dark:text-red-400"
-                        bordeV="border-red-100 dark:border-red-800/30"
-                        porVencer={n(eval3Prox)} colorP="text-amber-600 dark:text-amber-400"
-                        bordeP="border-amber-100 dark:border-amber-800/30"
+                        vencidas={n(eval3Venc)} colorV="text-red-600"
+                        bordeV="border-red-100"
+                        porVencer={n(eval3Prox)} colorP="text-amber-600"
+                        bordeP="border-amber-100"
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval3_vencidas")}
                         onPorVencer={() => setDialogTipo("eval3_por_vencer")}
@@ -143,10 +143,10 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="RG-REC-048"
-                        vencidas={n(rgVenc)} colorV="text-purple-600 dark:text-purple-400"
-                        bordeV="border-purple-100 dark:border-purple-800/30"
-                        porVencer={n(rgProx)} colorP="text-violet-600 dark:text-violet-400"
-                        bordeP="border-violet-100 dark:border-violet-800/30"
+                        vencidas={n(rgVenc)} colorV="text-purple-600"
+                        bordeV="border-purple-100"
+                        porVencer={n(rgProx)} colorP="text-violet-600"
+                        bordeP="border-violet-100"
                         umbrales={RG_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("rg_vencidas")}
                         onPorVencer={() => setDialogTipo("rg_por_vencer")}
@@ -154,10 +154,10 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Término de Contrato"
-                        vencidas={n(termVenc)} colorV="text-orange-600 dark:text-orange-400"
-                        bordeV="border-orange-100 dark:border-orange-800/30"
-                        porVencer={n(termProx)} colorP="text-blue-600 dark:text-blue-400"
-                        bordeP="border-blue-100 dark:border-blue-800/30"
+                        vencidas={n(termVenc)} colorV="text-orange-600"
+                        bordeV="border-orange-100"
+                        porVencer={n(termProx)} colorP="text-blue-600"
+                        bordeP="border-blue-100"
                         umbrales={TERMINO_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("termino_vencidos")}
                         onPorVencer={() => setDialogTipo("termino_por_vencer")}
@@ -165,7 +165,7 @@ export default function DashboardAlertas() {
                     />
 
                     {!loading && totalAlertas === 0 && (
-                        <div className="flex items-center justify-center py-3 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-800/30">
+                        <div className="flex items-center justify-center py-3 text-sm text-green-600 bg-green-50 rounded-lg border border-green-100">
                             <span>Sin alertas pendientes. ¡Todo al día!</span>
                         </div>
                     )}

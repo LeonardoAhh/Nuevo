@@ -14,7 +14,7 @@ import { UserProvider } from "@/lib/hooks/useUser"
 import { RoleProvider } from "@/lib/hooks/useRole"
 import {
   buildThemeBootstrapScript,
-  OS_THEME_COLOR_FALLBACK as THEME_FALLBACK,
+  APP_THEME_COLOR,
 } from "@/lib/theme/constants"
 
 // Geist is the single app type system. Existing `font-serif` consumers are
@@ -32,10 +32,7 @@ const fontMono = Geist_Mono({
 })
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: THEME_FALLBACK.light },
-    { media: "(prefers-color-scheme: dark)", color: THEME_FALLBACK.dark },
-  ],
+  themeColor: APP_THEME_COLOR,
   width: "device-width",
   initialScale: 1,
   // Zoom stays enabled (WCAG 1.4.4): users with low vision must be able
@@ -53,7 +50,7 @@ export const metadata: Metadata = {
     capable: true,
     // "black-translucent" lets the app draw under the status bar; our sticky
     // header already reserves env(safe-area-inset-top) so the header color
-    // shows through the bar in both light and dark themes.
+    // shows through the bar.
     statusBarStyle: "black-translucent",
     title: "Vertx System",
     startupImage: "/icons/apple-touch-icon.png",
@@ -94,8 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <UserProvider>
             <RoleProvider>
               <MaintenanceGuard>{children}</MaintenanceGuard>
-              {/* App-wide overlays live inside ThemeProvider so any theme-aware
-                  consumer (toasts, dialogs) resolves the active theme correctly. */}
+              {/* App-wide overlays share the display preferences provider. */}
               <PWARegister />
               <UpdateBanner />
               <SonnerProvider />
