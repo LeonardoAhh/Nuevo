@@ -158,9 +158,12 @@ body {
     }
 
     .workspace-sidebar {
+        position: sticky;
+        top: 0;
         width: var(--workspace-sidebar-width);
+        height: 100dvh;
         flex: none;
-        align-self: stretch;
+        align-self: flex-start;
         padding-block: var(--workspace-inset);
     }
 }

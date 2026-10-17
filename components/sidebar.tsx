@@ -93,7 +93,7 @@ function NavTree({
   onNavigate?: () => void
 }) {
   return (
-    <nav aria-label="Secciones" className="min-h-0 flex-1 px-3 pb-4 max-md:overflow-x-hidden max-md:overflow-y-auto max-md:scrollbar-thin">
+    <nav aria-label="Secciones" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 pb-4 scrollbar-thin">
       <ul className="space-y-1 pt-1">
         {NAV_SECTIONS.map((section) => {
           const activeLeaf = findActiveLeaf(section.items, pathname)
