@@ -7,12 +7,6 @@ export default function LoginShell() {
   return (
     <main className={loginStyles.page}>
       <div className={loginStyles.container}>
-        <header className={loginStyles.brand}>
-          <span className={loginStyles.brandIcon} aria-hidden="true">
-            <img src="/icons/icon.svg" alt="" className="size-12" />
-          </span>
-        </header>
-
         <section aria-label={LOGIN.pageTitle} className={loginStyles.formRegion}>
           <Suspense fallback={
             <div role="status" className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">

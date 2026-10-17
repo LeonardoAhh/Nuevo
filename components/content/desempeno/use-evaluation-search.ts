@@ -1,13 +1,12 @@
 "use client";
 
 import { SEARCH_OPTIONS } from "@/lib/desempeno/presentation";
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDesempeno } from "@/lib/hooks/useDesempeno";
-import { getPeriodoActual, getPeriodosDesempeno, normalizarPeriodoDesempeno, type DesempenoPeriodo } from "@/lib/catalogo";
-import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad";
+import { normalizarPeriodoDesempeno } from "@/lib/catalogo";
 import { UMBRAL_CALIFICACION_APROBATORIA, calcularPonderacion } from "@/lib/types/desempeno";
-import { guiaYaVista } from "../desempeno-guia";
+import { useMaintenanceNoticeStatus } from "@/components/maintenance-notice-status";
 import { useRole } from "@/lib/hooks";
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals";
 import { confirm } from "@/components/ui/confirm-dialog";
@@ -15,19 +14,12 @@ export function useEvaluationSearch() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [numeroBuscado, setNumeroBuscado] = useState("");
-  const [periodoModo, setPeriodoModo] = useState<"semestrales" | "mensuales">("semestrales");
-  const [periodoYear, setPeriodoYear] = useState(() => Number(getPeriodoActual("semestrales").match(/(\d{4})$/)?.[1]) || new Date().getFullYear());
-  const periodosDisponibles = useMemo(() => getPeriodosDesempeno(periodoYear), [periodoYear]);
-  const [periodoSeleccionado, setPeriodoSeleccionado] = useState<DesempenoPeriodo>(() => getPeriodoActual("semestrales"));
   const {
     data,
     setData,
     existingEvaluation,
     clearEvaluation,
     origen,
-    requiereSemestral,
-    semestreObjetivo,
-    fechaIngreso,
     loading,
     saving,
     saveSuccess,
@@ -36,25 +28,32 @@ export function useEvaluationSearch() {
     buscarEmpleado,
     buscarSugerencias,
     guardar,
-    recalcularAsistencia,
     cargarEvaluacion
   } = useDesempeno();
   const {
     isEvaluador,
-    departamentosScope
+    canEdit,
   } = useRole();
   const {
     totalEvals,
     totalVencidas,
     totalProximas,
     totalATiempo
-  } = usePendingEvals(departamentosScope);
-  const [guiaOpen, setGuiaOpen] = useState(false);
+  } = usePendingEvals();
+  const [guiaRequested, setGuiaRequested] = useState(false);
+  const [practiceAcknowledged, setPracticeAcknowledged] = useState(false);
+  const maintenanceNoticeStatus = useMaintenanceNoticeStatus();
+  const practiceLocked = isEvaluador && !practiceAcknowledged;
+  const guiaOpen = guiaRequested || (practiceLocked && maintenanceNoticeStatus === false);
+  const setGuiaOpen = (open: boolean) => {
+    setGuiaRequested(open);
+    if (!open) setPracticeAcknowledged(true);
+  };
   const [modoEdicion, setModoEdicion] = useState(false);
   const handledEvalIdRef = useRef<string | null>(null);
   const handledQueryRef = useRef<string | null>(null);
 
-  // Typeahead + recientes
+  // Typeahead
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<Array<{
     numero: string;
@@ -64,10 +63,6 @@ export function useEvaluationSearch() {
   const [suggLoading, setSuggLoading] = useState(false);
   const [showSugg, setShowSugg] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
-  const [recientes, setRecientes] = useState<Array<{
-    numero: string;
-    nombre: string;
-  }>>([]);
   // Gate de impresión: solo se puede imprimir una evaluación ya guardada y sin ediciones posteriores.
   const savedSnapshotRef = useRef<string | null>(null);
   const baselineSnapshotRef = useRef<string | null>(null);
@@ -80,62 +75,24 @@ export function useEvaluationSearch() {
     if (!evalId) { handledEvalIdRef.current = null; return; }
     if (handledEvalIdRef.current === evalId) return;
     handledEvalIdRef.current = evalId;
+    if (isEvaluador) {
+      router.replace('/desempeno', { scroll: false });
+      return;
+    }
     if (cargarEvaluacion) {
       // Legacy URL-driven flow: the editing flag must flip before the async
       // load resolves. Suppressed until this effect is refactored to a
       // render-derived state machine.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setModoEdicion(true);
-      cargarEvaluacion(evalId).then(result => {
-        if (result?.periodo) {
-          const year = Number(result.periodo.match(/(\d{4})$/)?.[1]);
-          if (year) {
-            const delYear = getPeriodosDesempeno(year);
-            const normalizado = normalizarPeriodoDesempeno(result.periodo);
-            const modo = delYear.semestrales.some(p => normalizarPeriodoDesempeno(p) === normalizado) ? "semestrales" : "mensuales";
-            setPeriodoYear(year);
-            setPeriodoModo(modo);
-            setPeriodoSeleccionado(result.periodo as DesempenoPeriodo);
-          }
-        }
+      cargarEvaluacion(evalId).then(() => {
         // Limpiar URL después de cargar
         router.replace('/desempeno', {
           scroll: false
         });
       });
     }
-  }, [searchParams, cargarEvaluacion, router]);
-  useEffect(() => {
-    if (!isEvaluador) return;
-    if (!guiaYaVista()) setGuiaOpen(true);
-  }, [isEvaluador]);
-
-  // Al cambiar de modo, conserva el periodo si sigue siendo válido para ese
-  // modo; si no (p.ej. venías de semestral), cae al primero del modo nuevo.
-  // No clobberea el periodo auto-seleccionado al cargar un empleado.
-  useEffect(() => {
-    const currentMonth = new Date().getMonth();
-    const fallback = periodoModo === "mensuales"
-      ? periodosDisponibles.mensuales[currentMonth]
-      : periodosDisponibles.semestrales[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
-    setPeriodoSeleccionado(prev => periodosDisponibles[periodoModo].some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(prev)) ? prev : fallback);
-  }, [periodoModo, periodoYear, periodosDisponibles]);
-
-  // Carga búsquedas recientes desde localStorage.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(SEARCH_OPTIONS.recentStorageKey);
-      if (raw) setRecientes(JSON.parse(raw));
-    } catch {/* ignore */}
-  }, []);
-
-  // Recalcula la asistencia cuando cambia el periodo seleccionado
-  useEffect(() => {
-    if (data && recalcularAsistencia) {
-      recalcularAsistencia(periodoSeleccionado);
-    }
-  }, [periodoSeleccionado, recalcularAsistencia]);
-
+  }, [searchParams, cargarEvaluacion, isEvaluador, router]);
   // Atajo "/" para enfocar el buscador.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -174,34 +131,15 @@ export function useEvaluationSearch() {
       clearTimeout(t);
     };
   }, [numeroBuscado, buscarSugerencias]);
-  const addReciente = useCallback((item: {
-    numero: string;
-    nombre: string;
-  }) => {
-    setRecientes(prev => {
-      const next = [item, ...prev.filter(r => r.numero !== item.numero)].slice(0, SEARCH_OPTIONS.recentLimit);
-      try {
-        localStorage.setItem("desempeno_recientes", JSON.stringify(next));
-      } catch {/* ignore */}
-      return next;
-    });
-  }, []);
-  const doBuscar = useCallback(async (valor: string, nombre?: string) => {
+  const doBuscar = useCallback(async (valor: string) => {
     const v = valor.trim();
     if (!v) return;
     setShowSugg(false);
     setActiveIdx(-1);
     setModoEdicion(false); // Salir del modo edición al buscar nuevo empleado
     resetSaveSuccess();
-    const res = await buscarEmpleado(v, departamentosScope, periodoSeleccionado);
-    if (res) {
-      // Auto-selecciona el modo/periodo correcto según el origen del empleado:
-      // planta → Semestral, nuevo ingreso → Mensual (con auto-avance de semestre).
-      setPeriodoModo(res.modo);
-      setPeriodoSeleccionado(res.periodo as DesempenoPeriodo);
-      addReciente({ numero: v, nombre: nombre ?? "" });
-    }
-  }, [buscarEmpleado, departamentosScope, periodoSeleccionado, addReciente, resetSaveSuccess]);
+    await buscarEmpleado(v);
+  }, [buscarEmpleado, resetSaveSuccess]);
 
   const identityKey = data ? `${data.numero_empleado}:${normalizarPeriodoDesempeno(data.periodo)}` : null;
   useEffect(() => {
@@ -216,7 +154,7 @@ export function useEvaluationSearch() {
       baselineSnapshotRef.current = JSON.stringify(data);
     }
   }, [data, identityKey, loading]);
-  const hasUnsavedChanges = Boolean(!loading && data && baselineSnapshotRef.current && JSON.stringify(data) !== baselineSnapshotRef.current && !guardado);
+  const hasUnsavedChanges = Boolean(!loading && !saveSuccess && data && baselineSnapshotRef.current && JSON.stringify(data) !== baselineSnapshotRef.current && !guardado);
 
   const confirmDiscard = useCallback(async () => {
     if (!hasUnsavedChanges) return true;
@@ -225,7 +163,8 @@ export function useEvaluationSearch() {
       description: "Si continúas, se perderá la captura que todavía no has guardado.",
       confirmLabel: "Descartar cambios",
       cancelLabel: "Seguir capturando",
-      tone: "warning",
+      tone: "destructive",
+      appearance: "minimal",
     });
   }, [hasUnsavedChanges]);
 
@@ -260,48 +199,10 @@ export function useEvaluationSearch() {
     router.replace(newParams.size ? `/desempeno?${newParams.toString()}` : "/desempeno", { scroll: false });
   }, [confirmDiscard, router, searchParams, clearEvaluation]);
 
-  const changePeriodo = useCallback(async (periodo: string) => {
-    if (periodo === periodoSeleccionado || !(await confirmDiscard())) return;
-    const numero = data?.numero_empleado ?? existingEvaluation?.numero;
-    if (numero && !(await buscarEmpleado(numero, departamentosScope, periodo, true))) return;
-    setModoEdicion(false);
-    setPeriodoSeleccionado(periodo);
-  }, [buscarEmpleado, confirmDiscard, data, existingEvaluation, departamentosScope, periodoSeleccionado]);
-
-  const changePeriodoYear = useCallback(async (year: number) => {
+  const guardedSearch = useCallback(async (valor: string) => {
     if (!(await confirmDiscard())) return;
-    const next = getPeriodosDesempeno(year)[periodoModo];
-    const currentMonth = new Date().getMonth();
-    const periodo = periodoModo === "mensuales" ? next[currentMonth] : next[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
-    const numero = data?.numero_empleado ?? existingEvaluation?.numero;
-    if (numero && !(await buscarEmpleado(numero, departamentosScope, periodo, true))) return;
-    setModoEdicion(false);
-    setPeriodoYear(year);
-    setPeriodoSeleccionado(periodo);
-  }, [buscarEmpleado, confirmDiscard, data, existingEvaluation, departamentosScope, periodoModo]);
-
-  const guardedSearch = useCallback(async (valor: string, nombre?: string) => {
-    if (!(await confirmDiscard())) return;
-    await doBuscar(valor, nombre);
+    await doBuscar(valor);
   }, [confirmDiscard, doBuscar]);
-
-  const changePeriodoModo = useCallback(async (modo: "semestrales" | "mensuales") => {
-    if (modo === periodoModo || !(await confirmDiscard())) return;
-    const currentPeriod = getPeriodoActual(periodoModo);
-    const followsCurrentPeriod = normalizarPeriodoDesempeno(periodoSeleccionado) === normalizarPeriodoDesempeno(currentPeriod);
-    const currentMonth = new Date().getMonth();
-    const options = getPeriodosDesempeno(periodoYear)[modo];
-    const periodo = followsCurrentPeriod
-      ? getPeriodoActual(modo)
-      : modo === "mensuales" ? options[currentMonth] : options[currentMonth <= 4 || currentMonth === 11 ? 0 : 1];
-    const numero = data?.numero_empleado ?? existingEvaluation?.numero;
-    if (numero && !(await buscarEmpleado(numero, departamentosScope, periodo, true))) return;
-    setModoEdicion(false);
-    const nextYear = Number(periodo.match(/(\d{4})$/)?.[1]);
-    if (nextYear) setPeriodoYear(nextYear);
-    setPeriodoModo(modo);
-    setPeriodoSeleccionado(periodo);
-  }, [buscarEmpleado, confirmDiscard, data, existingEvaluation, departamentosScope, periodoModo, periodoYear, periodoSeleccionado]);
 
   // Realizar búsqueda inicial si existe el parámetro 'q'
   useEffect(() => {
@@ -332,7 +233,7 @@ export function useEvaluationSearch() {
       const s = showSugg && !suggLoading && activeIdx >= 0 ? suggestions[activeIdx] : undefined;
       if (s) {
         setNumeroBuscado(s.numero);
-        guardedSearch(s.numero, s.nombre);
+        guardedSearch(s.numero);
       } else {
         guardedSearch(numeroBuscado);
       }
@@ -367,45 +268,16 @@ export function useEvaluationSearch() {
   const bloqueado = requiereCompromisos && !tieneCompromisos;
   const faltaEvaluador = data ? !data.evaluador_nombre : false;
 
-  // Elegibilidad por antigüedad para evaluaciones semestrales.
-  // Empleados con menos de 3 meses respecto al fin del periodo no son evaluables.
-  const periodoEvaluacion = data?.periodo || periodoSeleccionado;
-  const elegibilidad = data ? esElegibleParaPeriodo(fechaIngreso, periodoEvaluacion) : {
-    elegible: true,
-    motivo: "",
-    cutoff: null,
-    reglaAplica: false
-  };
-  const noElegible = elegibilidad.reglaAplica && !elegibilidad.elegible;
-
-  // Guardrail de periodo según origen del empleado:
-  //  - planta YA elegible para el semestre activo en modo Mensual → ERROR
-  //    (bloquea guardar/imprimir). Planta recién ingresado (no elegible) NO se
-  //    bloquea: se evalúa mensual como onboarding hasta cumplir antigüedad.
-  //  - nuevo ingreso en modo Semestral → aviso suave (no bloquea).
-  const mismatchBloqueo = Boolean(data && requiereSemestral && periodoModo === "mensuales");
-  const mismatchSuave = Boolean(data && origen === "nuevo_ingreso" && periodoModo === "semestrales");
-  const periodoSemestralObjetivo = semestreObjetivo ?? periodosDisponibles.semestrales[0];
+  const periodoVisible = data?.periodo ?? existingEvaluation?.periodo ?? null;
   return {
     searchParams,
     router,
     numeroBuscado,
     setNumeroBuscado,
-    periodoModo,
-    setPeriodoModo: changePeriodoModo,
-    periodoSeleccionado,
-    setPeriodoSeleccionado,
-    periodoYear,
-    periodosDisponibles,
-    changePeriodo,
-    changePeriodoYear,
+    periodoVisible,
     data,
     setData,
     existingEvaluation,
-    origen,
-    requiereSemestral,
-    semestreObjetivo,
-    fechaIngreso,
     loading,
     saving,
     saveSuccess,
@@ -414,16 +286,16 @@ export function useEvaluationSearch() {
     buscarEmpleado,
     buscarSugerencias,
     guardar,
-    recalcularAsistencia,
     cargarEvaluacion,
     isEvaluador,
-    departamentosScope,
+    canEdit,
     totalEvals,
     totalVencidas,
     totalProximas,
     totalATiempo,
     guiaOpen,
     setGuiaOpen,
+    practiceLocked,
     modoEdicion,
     setModoEdicion,
     inputRef,
@@ -435,29 +307,19 @@ export function useEvaluationSearch() {
     setShowSugg,
     activeIdx,
     setActiveIdx,
-    recientes,
-    setRecientes,
     savedSnapshotRef,
     guardado,
     setGuardado,
     hasUnsavedChanges,
     confirmDiscard,
     closeEvaluation,
-    addReciente,
     doBuscar: guardedSearch,
-    handleSearch: () => guardedSearch(numeroBuscado),
     onInputKeyDown,
     ponderacion,
     requiereCompromisos,
     tieneCompromisos,
     bloqueado,
     faltaEvaluador,
-    periodoEvaluacion,
-    elegibilidad,
-    noElegible,
-    mismatchBloqueo,
-    mismatchSuave,
-    periodoSemestralObjetivo
   };
 }
 export type EvaluationSearchContext = ReturnType<typeof useEvaluationSearch>;

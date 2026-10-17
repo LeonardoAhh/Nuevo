@@ -2,7 +2,7 @@ import { LOGIN, loginStyles } from "@/lib/login/presentation"
 
 export default function LoginWelcome() {
   return (
-    <header className="space-y-3">
+    <header className="space-y-2">
       <h1 id="login-title" className={loginStyles.heading}>
         {LOGIN.title}
       </h1>

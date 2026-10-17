@@ -4,9 +4,9 @@ import React, { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  Moon, Monitor, Palette, Sun, User, Check, AlertCircle,
+  Palette, User, Check, AlertCircle,
   Upload, RotateCcw, Loader2, Save, X,
-  ChevronRight, Wrench,
+  Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +15,8 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useTheme, ACCENT_COLOR_MAP, type AccentColor, type Theme } from "@/components/theme-context"
+import { useTheme, ACCENT_COLOR_MAP, type AccentColor } from "@/components/theme-context"
+import { THEME_MODE_OPTIONS } from "@/components/ui/theme-mode-options"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -38,20 +39,15 @@ const NAV_ITEMS_BASE: { id: Tab; label: string; icon: React.ElementType; descrip
 // ─── Shared section header ────────────────────────────────────────────────────
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mb-6">
-      <h2 className="text-xl font-semibold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>
+    <div className="space-y-1">
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">
         {title}
       </h2>
-      <p className="text-sm mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+      <p className="text-sm text-muted-foreground">
         {description}
       </p>
     </div>
   )
-}
-
-// ─── Divider ──────────────────────────────────────────────────────────────────
-function Divider() {
-  return <div className="h-px w-full" style={{ background: "hsl(var(--border))" }} />
 }
 
 // ─── Row — label + description + control ─────────────────────────────────────
@@ -67,14 +63,14 @@ function SettingRow({
   htmlFor?: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3.5">
+    <div className="flex flex-wrap items-center justify-between gap-3 py-4 sm:flex-nowrap">
       <div className="min-w-0 flex-1">
         {htmlFor
           ? <Label htmlFor={htmlFor} className="text-sm font-medium cursor-pointer">{label}</Label>
-          : <p className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>{label}</p>
+          : <p className="text-sm font-medium text-foreground">{label}</p>
         }
         {description && (
-          <p className="text-xs mt-0.5 leading-snug" style={{ color: "hsl(var(--muted-foreground))" }}>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}
@@ -93,31 +89,18 @@ function SettingGroup({
   children: React.ReactNode
 }) {
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: "hsl(var(--card))",
-        border: "1px solid hsl(var(--border))",
-      }}
-    >
+    <section className="overflow-hidden rounded-xl border border-border bg-card">
       {title && (
-        <div
-          className="px-4 py-2.5 border-b"
-          style={{
-            borderColor: "hsl(var(--border))",
-            background: "hsl(var(--muted) / 0.5)",
-          }}
-        >
-          <p className="font-mono text-xs font-medium uppercase tracking-normal"
-            style={{ color: "hsl(var(--muted-foreground))" }}>
+        <div className="border-b border-border px-5 py-4">
+          <h3 className="font-mono text-xs font-medium uppercase tracking-normal text-muted-foreground">
             {title}
-          </p>
+          </h3>
         </div>
       )}
-      <div className="px-4 divide-y" style={{ "--tw-divide-opacity": 1 } as React.CSSProperties}>
+      <div className="divide-y divide-border px-5">
         {children}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -194,15 +177,15 @@ function ProfileTab({
 
   if (userLoading || profileLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
-        <span className="ml-2 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Cargando perfil…</span>
+      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+        <Loader2 className="size-5 animate-spin text-primary" />
+        <span>Cargando perfil…</span>
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SectionHeader title="Perfil" description="Tu información personal y foto de perfil." />
 
       {showSaved && (
@@ -220,30 +203,30 @@ function ProfileTab({
 
       {/* Avatar */}
       <SettingGroup title="Foto de perfil">
-        <div className="py-4 flex items-center gap-4">
-          <Avatar className="h-16 w-16 shrink-0">
-            <AvatarImage src={profile?.avatar || "/diverse-group-city.png"} alt="Avatar" />
-            <AvatarFallback>
-              {profile ? `${profile.firstName[0]}${profile.lastName[0]}` : "??"}
+        <div className="flex flex-wrap items-center gap-4 py-5">
+          <Avatar className="size-16 shrink-0">
+            {profile?.avatar && <AvatarImage src={profile.avatar} alt="Foto de perfil" />}
+            <AvatarFallback className="bg-muted text-foreground">
+              {profile ? `${profile.firstName?.[0] ?? ""}${profile.lastName?.[0] ?? ""}` || "U" : "U"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
               {profile ? `${profile.firstName} ${profile.lastName}` : "—"}
             </p>
-            <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               JPG, PNG o GIF · máx. 2 MB · imagen cuadrada recomendada
             </p>
             <Button
               variant="outline"
               size="sm"
-              className="mt-2 h-7 text-xs gap-1.5"
+              className="mt-3 min-h-10 gap-2"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAvatar}
             >
               {isUploadingAvatar
-                ? <Loader2 className="h-3 w-3 animate-spin" />
-                : <Upload className="h-3 w-3" />}
+                ? <Loader2 className="size-4 animate-spin" />
+                : <Upload className="size-4" />}
               {isUploadingAvatar ? "Subiendo…" : "Cambiar foto"}
             </Button>
             <input
@@ -260,48 +243,48 @@ function ProfileTab({
       {/* Form */}
       <form id="profile-form" onSubmit={handleSubmit(onSubmit)}>
         <SettingGroup title="Datos personales">
-          <div className="py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-4 py-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="first-name" className="text-xs font-medium">Nombre *</Label>
+              <Label htmlFor="first-name" className="text-sm font-medium">Nombre *</Label>
               <Input
                 id="first-name"
                 {...register("firstName")}
-                className={cn("text-base md:text-sm h-9", errors.firstName && "border-destructive")}
+                className={cn(errors.firstName && "border-destructive")}
               />
               {errors.firstName && (
                 <p className="text-xs text-destructive">{errors.firstName.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="last-name" className="text-xs font-medium">Apellido *</Label>
+              <Label htmlFor="last-name" className="text-sm font-medium">Apellido *</Label>
               <Input
                 id="last-name"
                 {...register("lastName")}
-                className={cn("text-base md:text-sm h-9", errors.lastName && "border-destructive")}
+                className={cn(errors.lastName && "border-destructive")}
               />
               {errors.lastName && (
                 <p className="text-xs text-destructive">{errors.lastName.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="display-name" className="text-xs font-medium">Nombre visible *</Label>
+              <Label htmlFor="display-name" className="text-sm font-medium">Nombre visible *</Label>
               <Input
                 id="display-name"
                 {...register("displayName")}
-                className={cn("text-base md:text-sm h-9", errors.displayName && "border-destructive")}
+                className={cn(errors.displayName && "border-destructive")}
               />
               {errors.displayName && (
                 <p className="text-xs text-destructive">{errors.displayName.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-medium">Correo electrónico</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Correo electrónico</Label>
               <Input
                 id="email"
                 type="email"
                 value={user?.email || ""}
                 readOnly
-                className="cursor-not-allowed opacity-60 h-9"
+                className="bg-muted/30 text-muted-foreground"
               />
             </div>
           </div>
@@ -309,28 +292,26 @@ function ProfileTab({
       </form>
 
       {/* Footer actions */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="gap-1.5 text-xs"
+          className="min-h-11 gap-2"
           onClick={() => reset()}
           disabled={isSubmitting}
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="size-4" />
           Descartar
         </Button>
         <Button
           type="submit"
           form="profile-form"
-          size="sm"
-          className="gap-1.5 text-xs"
+          className="min-h-11 gap-2"
           disabled={isSubmitting || profileLoading}
         >
           {isSubmitting
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            : <Save className="h-3.5 w-3.5" />}
+            ? <Loader2 className="size-4 animate-spin" />
+            : <Save className="size-4" />}
           Guardar cambios
         </Button>
       </div>
@@ -343,20 +324,14 @@ function AppearanceTab() {
   const { theme, resolvedTheme, accentColor, fontSize, density, reducedMotion, setTheme, setAccentColor, setFontSize, setDensity, setReducedMotion, resetTheme } = useTheme()
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SectionHeader title="Apariencia" description="Personaliza cómo se ve la aplicación en tu dispositivo." />
 
       {/* Theme mode */}
       <SettingGroup title="Modo de color">
-        <div className="py-3">
-          <div className="grid grid-cols-3 gap-2">
-            {(
-              [
-                { value: "light" as Theme, label: "Claro",   Icon: Sun,     iconBg: "bg-background border",  iconFg: "text-foreground" },
-                { value: "dark"  as Theme, label: "Oscuro",  Icon: Moon,    iconBg: "bg-foreground border",  iconFg: "text-background" },
-                { value: "system"as Theme, label: "Sistema", Icon: Monitor, iconBg: "bg-muted border",       iconFg: "text-foreground" },
-              ] as const
-            ).map(({ value, label, Icon, iconBg, iconFg }) => {
+        <div className="py-5">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {THEME_MODE_OPTIONS.map(({ value, label, icon: Icon }) => {
               const selected = theme === value
               return (
                 <button
@@ -365,17 +340,15 @@ function AppearanceTab() {
                   aria-pressed={selected}
                   onClick={() => setTheme(value)}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-md border px-2 py-3 text-center transition-colors",
+                    "flex min-h-24 flex-col items-center justify-center gap-2 rounded-md border bg-card px-2 py-3 text-center transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selected
-                      ? "border-brand bg-brand/10"
-                      : "border-border hover:bg-accent/40"
+                      ? "border-foreground bg-muted/50 text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
-                  <div className={cn("rounded-md p-2", iconBg)}>
-                    <Icon className={cn("h-5 w-5", iconFg)} />
-                  </div>
-                  <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground))" }}>{label}</span>
+                  <Icon className="size-5" aria-hidden="true" />
+                  <span className="text-sm font-medium">{label}</span>
                   {selected && (
                     <span className="sr-only">(seleccionado)</span>
                   )}
@@ -388,7 +361,7 @@ function AppearanceTab() {
 
       {/* Accent */}
       <SettingGroup title="Color de acento">
-        <div className="py-3 space-y-3">
+        <div className="space-y-3 py-5">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {ALL_ACCENTS.map((name) => {
               const { accentLight, accentDark, accentForeground, accentForegroundDark, label } = ACCENT_COLOR_MAP[name]
@@ -405,7 +378,7 @@ function AppearanceTab() {
                         aria-pressed={accentColor === name}
                         aria-label={`Acento ${label}`}
                         className={cn(
-                          "flex h-8 w-full items-center justify-center rounded-md border-2 transition-colors",
+                          "flex min-h-10 w-full items-center justify-center rounded-md border-2 transition-colors",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           accentColor === name
                             ? "border-foreground"
@@ -415,7 +388,7 @@ function AppearanceTab() {
                         onClick={() => setAccentColor(name)}
                       >
                         {accentColor === name && (
-                          <Check className="h-3.5 w-3.5" style={{ color: `hsl(${checkColor})` }} />
+                          <Check className="size-4" style={{ color: `hsl(${checkColor})` }} />
                         )}
                       </button>
                     </TooltipTrigger>
@@ -425,7 +398,7 @@ function AppearanceTab() {
               )
             })}
           </div>
-          <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+          <p className="text-xs leading-relaxed text-muted-foreground">
             Afecta la navegación activa, indicadores y foco. Los botones primarios conservan la tinta del sistema.
           </p>
         </div>
@@ -435,7 +408,7 @@ function AppearanceTab() {
       <SettingGroup title="Pantalla">
         <SettingRow label="Tamaño de fuente" description="Ajusta el tamaño del texto en toda la app.">
           <Select value={fontSize} onValueChange={(v) => setFontSize(v as "small" | "medium" | "large")}>
-            <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectTrigger className="w-36 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -447,7 +420,7 @@ function AppearanceTab() {
         </SettingRow>
         <SettingRow label="Densidad" description="Reduce el espaciado para mostrar más contenido.">
           <Select value={density} onValueChange={(v) => setDensity(v as "comfortable" | "compact")}>
-            <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectTrigger className="w-36 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -467,17 +440,17 @@ function AppearanceTab() {
 
       {/* Preview */}
       <SettingGroup title="Vista previa">
-        <div className="py-4 space-y-3">
+        <div className="space-y-4 py-5">
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" className="text-xs h-8">Primario</Button>
-            <Button size="sm" variant="outline" className="text-xs h-8">Secundario</Button>
-            <Button size="sm" variant="ghost" className="text-xs h-8">Fantasma</Button>
+            <Button size="sm">Primario</Button>
+            <Button size="sm" variant="outline">Secundario</Button>
+            <Button size="sm" variant="ghost">Fantasma</Button>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Switch id="preview-sw" defaultChecked />
-            <Label htmlFor="preview-sw" className="text-xs">Interruptor</Label>
+            <Label htmlFor="preview-sw" className="text-sm">Interruptor</Label>
             <Badge className="text-xs">Tinta</Badge>
-            <span className="inline-flex items-center rounded-md border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand-text">
+            <span className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
               Acento
             </span>
             <Badge variant="outline" className="text-xs">Contorno</Badge>
@@ -489,11 +462,10 @@ function AppearanceTab() {
       <div className="flex justify-end">
         <Button
           variant="ghost"
-          size="sm"
-          className="gap-1.5 text-xs"
+          className="min-h-11 gap-2"
           onClick={resetTheme}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className="size-4" />
           Restablecer valores
         </Button>
       </div>
@@ -519,7 +491,7 @@ function DeveloperTab() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <SectionHeader title="Desarrollador" description="Peligro: Opciones avanzadas de control global del sistema." />
 
       <SettingGroup title="Control de Sistema">
@@ -535,7 +507,6 @@ function DeveloperTab() {
             disabled={loading || saving || (!isMaintenance && !validDuration)}
           />
         </SettingRow>
-        <Divider />
         <div className="space-y-3 py-4">
           <Label htmlFor="maintenance-duration">Duración estimada</Label>
           <div className="flex flex-wrap items-center gap-3">
@@ -585,7 +556,7 @@ export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("tab")
-      return (p as Tab) || "profile"
+      return p === "appearance" || p === "developer" ? p : "profile"
     }
     return "profile"
   })
@@ -599,88 +570,41 @@ export default function SettingsContent() {
   const navItems = isDev
     ? [...NAV_ITEMS_BASE, { id: "developer" as Tab, label: "Desarrollador", icon: Wrench, description: "Control y mantenimiento" }]
     : NAV_ITEMS_BASE
+  const visibleTab = activeTab === "developer" && !isDev ? "profile" : activeTab
 
   return (
-    <>
-      <style>{`
-        .settings-nav-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.625rem 0.75rem;
-          border-radius: 0.5rem;
-          transition: background 0.12s ease, color 0.12s ease;
-          cursor: pointer;
-          width: 100%;
-          text-align: left;
-          border: none;
-          background: transparent;
-        }
-        .settings-nav-item:hover:not(.active) {
-          background: hsl(var(--accent) / 0.6);
-        }
-        .settings-nav-item.active {
-          background: hsl(var(--brand-accent) / 0.1);
-          color: hsl(var(--brand-accent-text));
-        }
-        .settings-nav-item.active .nav-icon {
-          color: hsl(var(--brand-accent-text));
-        }
-        .settings-nav-item:not(.active) .nav-icon {
-          color: hsl(var(--muted-foreground));
-        }
-      `}</style>
-
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8 min-h-0">
+    <div className="flex min-h-0 flex-col gap-6 md:flex-row md:gap-8">
 
         {/* ── Sidebar (desktop) / Horizontal strip (mobile) ── */}
         <nav
-          className={cn(
-            /* Mobile: horizontal scroll strip */
-            "flex flex-row md:flex-col gap-1",
-            "overflow-x-auto md:overflow-x-visible",
-            "pb-1 md:pb-0",
-            /* Desktop */
-            "md:w-52 md:shrink-0",
-          )}
+          className="flex flex-wrap gap-2 border-b border-border pb-4 md:w-52 md:shrink-0 md:flex-col md:flex-nowrap md:gap-1 md:border-b-0 md:border-r md:pb-0 md:pr-6"
           aria-label="Secciones de configuración"
         >
           {navItems.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id
+            const active = visibleTab === id
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => setActiveTab(id)}
-                className={cn("settings-nav-item", active && "active")}
-                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-full",
+                  active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                )}
+                aria-pressed={active}
               >
-                <Icon className="nav-icon h-4 w-4 shrink-0" />
-                <span className={cn(
-                  "text-sm whitespace-nowrap",
-                  active ? "font-semibold" : "font-medium",
-                  !active && "text-foreground"
-                )}>
+                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                <span className="whitespace-nowrap">
                   {label}
                 </span>
-                {/* Chevron solo en desktop */}
-                {active && (
-                  <ChevronRight className="ml-auto h-3.5 w-3.5 hidden md:block shrink-0 opacity-60" style={{ color: "hsl(var(--brand-accent-text))" }} />
-                )}
               </button>
             )
           })}
         </nav>
 
-        {/* Separator desktop */}
-        <div
-          className="hidden md:block w-px self-stretch"
-          style={{ background: "hsl(var(--border))" }}
-        />
-
         {/* ── Content ── */}
-        <div className="flex-1 min-w-0">
-          {activeTab === "profile" && (
+        <div className="min-w-0 flex-1">
+          {visibleTab === "profile" && (
             <ProfileTab
               user={user}
               profile={profile}
@@ -689,10 +613,9 @@ export default function SettingsContent() {
               profileError={profileError}
             />
           )}
-          {activeTab === "appearance" && <AppearanceTab />}
-          {activeTab === "developer" && isDev && <DeveloperTab />}
+          {visibleTab === "appearance" && <AppearanceTab />}
+          {visibleTab === "developer" && isDev && <DeveloperTab />}
         </div>
-      </div>
-    </>
+    </div>
   )
 }

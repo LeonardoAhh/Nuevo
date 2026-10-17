@@ -6,6 +6,12 @@
         /* Theme overrides & scales */
         --font-base-size: 16px;
         --density-scale: 1;
+        --workspace-inset: 0.5rem;
+        --workspace-sidebar-width: 15rem;
+        --workspace-header-height: 3.75rem;
+        --workspace-max-width: 88rem;
+        --notice-width: 22rem;
+        --floating-shadow: 0 2px 2px hsl(0 0% 0% / 0.04), 0 8px 16px -4px hsl(0 0% 0% / 0.1);
 
         /* Geist-aligned neutral system with local fallbacks. */
         --font-sans: "Geist", Arial, sans-serif;
@@ -21,8 +27,8 @@
         --popover: 0 0% 100%;
         --popover-foreground: 0 0% 9%;
 
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
+        --primary: 215 100% 50%;
+        --primary-foreground: 0 0% 100%;
         --brand-accent: 212.35 100% 47.65%;
         --brand-accent-text: 212.02 100% 43.73%;
         --brand-accent-foreground: 0 0% 100%;
@@ -41,7 +47,7 @@
 
         --border: 0 0% 92%;
         --input: 0 0% 92%;
-        --ring: 212 100% 48%;
+        --ring: var(--muted-foreground);
 
         --chart-1: 221 55% 55%;
         --chart-2: 152 45% 40%;
@@ -90,8 +96,8 @@
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 93%;
 
-    --primary: 0 0% 93%;
-    --primary-foreground: 0 0% 9%;
+    --primary: 215 100% 50%;
+    --primary-foreground: 0 0% 100%;
     --brand-accent: 212.35 100% 47.65%;
     --brand-accent-text: 212.2 100% 59.8%;
     --brand-accent-foreground: 0 0% 100%;
@@ -110,7 +116,7 @@
 
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 212 100% 48%;
+    --ring: var(--muted-foreground);
 
     --chart-1: 221 58% 60%;
     --chart-2: 160 45% 46%;
@@ -163,7 +169,53 @@ html.dark {
 body {
     background-color: hsl(var(--background));
     min-height: 100dvh;
-    min-height: -webkit-fill-available;
+}
+
+/* The document owns workspace scrolling; the frame grows with its content. */
+.workspace-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+
+.workspace-frame {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 0%;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .workspace-shell {
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .workspace-frame {
+        min-height: calc(100dvh - var(--workspace-inset) - var(--workspace-inset));
+        margin-block: var(--workspace-inset);
+        margin-right: var(--workspace-inset);
+    }
+
+    .workspace-frame--full-width {
+        margin-left: var(--workspace-inset);
+    }
+
+    .workspace-sidebar {
+        width: var(--workspace-sidebar-width);
+        flex: none;
+        align-self: stretch;
+        padding-block: var(--workspace-inset);
+    }
+}
+
+/* Keep keyboard focus subtle and consistent across shared and page controls. */
+:is(:focus-visible, :focus-within) {
+    --tw-ring-color: hsl(var(--ring));
+}
+
+:is([class~="focus-visible:ring-2"]:focus-visible, [class~="focus-within:ring-2"]:focus-within, [class~="focus:ring-2"]:focus) {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width, 0px)) var(--tw-ring-color);
 }
 
 /*
@@ -207,6 +259,10 @@ body {
 [role="dialog"],
 [data-radix-popper-content-wrapper] {
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+[role="dialog"][data-dialog-layout="standard"] {
+    padding-bottom: 0 !important;
 }
 
 /* Modal portal para captura de calificación
@@ -436,7 +492,8 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Dialog content */
-.density-compact [role="dialog"] > div {
+.density-compact [role="dialog"]:not([data-dialog-layout="standard"]) > div,
+.density-compact [role="dialog"][data-dialog-layout="standard"] > div:first-child {
     padding: 1rem;
 }
 
@@ -523,16 +580,106 @@ input[type="color"]::-webkit-color-swatch {
     }
 }
 
-/* Sonner toasts — full-width on mobile, fixed width on desktop */
+/* Shared floating notices */
 @layer components {
-    [data-sonner-toaster] {
-        --width: 356px;
+    .ui-floating-surface {
+        border: 1px solid hsl(var(--border));
+        border-radius: calc(var(--radius) - 2px);
+        background: hsl(var(--card));
+        color: hsl(var(--card-foreground));
+        box-shadow: var(--floating-shadow);
+    }
+}
+
+/* Sonner injects unlayered CSS. These overrides must be unlayered too. */
+    [data-sonner-toast][data-styled='true'].app-toast {
+        align-items: flex-start;
+        gap: 0.5rem;
+        width: max-content;
+        max-width: min(var(--notice-width), calc(100vw - 2rem));
+        padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+        border: 1px solid hsl(var(--border));
+        border-radius: calc(var(--radius) - 2px);
+        background: hsl(var(--card));
+        color: hsl(var(--card-foreground));
+        box-shadow: var(--floating-shadow);
+        font-family: var(--font-sans);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
     }
 
-    @media (max-width: 640px) {
-        [data-sonner-toaster] {
-            --width: calc(100vw - 2rem);
-        }
+    .app-toast[data-sonner-toast][data-styled='true'] [data-title] {
+        color: hsl(var(--foreground));
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.25rem;
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-description] {
+        color: hsl(var(--muted-foreground));
+        font-size: 0.75rem;
+        line-height: 1rem;
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-icon] {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: hsl(var(--foreground));
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'].app-toast--success [data-icon] { color: hsl(var(--success)); }
+    .app-toast[data-sonner-toast][data-styled='true'].app-toast--error [data-icon] { color: hsl(var(--destructive)); }
+    .app-toast[data-sonner-toast][data-styled='true'].app-toast--warning [data-icon] { color: hsl(var(--warning)); }
+    .app-toast[data-sonner-toast][data-styled='true'].app-toast--info [data-icon] { color: hsl(var(--info)); }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-button],
+    .app-toast[data-sonner-toast][data-styled='true'] [data-cancel] {
+        min-height: 2rem;
+        border-radius: calc(var(--radius) - 2px);
+        padding-inline: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-button] {
+        background: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-cancel] {
+        background: hsl(var(--muted));
+        color: hsl(var(--foreground));
+    }
+
+    [data-sonner-toaster] .app-toast[data-sonner-toast][data-styled='true'] [data-close-button] {
+        top: 0.625rem;
+        right: 0.625rem;
+        left: auto;
+        width: 1.5rem;
+        height: 1.5rem;
+        transform: none;
+        border: 0;
+        border-radius: calc(var(--radius) - 2px);
+        background: transparent;
+        color: hsl(var(--muted-foreground));
+    }
+
+    [data-sonner-toaster] .app-toast[data-sonner-toast][data-styled='true'] [data-close-button]:hover {
+        background: hsl(var(--accent));
+        color: hsl(var(--foreground));
+    }
+
+    .app-toast[data-sonner-toast][data-styled='true'] [data-close-button]:focus-visible,
+    .app-toast[data-sonner-toast][data-styled='true'] [data-button]:focus-visible,
+    .app-toast[data-sonner-toast][data-styled='true'] [data-cancel]:focus-visible {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: 2px;
+    }
+
+@media (max-width: 600px) {
+    [data-sonner-toaster] .app-toast[data-sonner-toast][data-styled='true'] {
+        left: auto;
+        right: calc(var(--mobile-offset-left) * 2);
     }
 }
 
@@ -567,165 +714,6 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* ─── Print: Generador de Exámenes ─────────────────────── */
-
-/* ─── Login Hero ──────────────────────────────────────── */
-
-/* Aurora gradient – usa primary como base, funciona en light y dark */
-.login-aurora {
-    background: linear-gradient(
-        135deg,
-        hsl(var(--primary)) 0%,
-        hsl(var(--primary) / 0.7) 25%,
-        hsl(var(--primary) / 0.4) 50%,
-        hsl(var(--primary) / 0.8) 75%,
-        hsl(var(--primary) / 0.6) 100%
-    );
-    background-size: 400% 400%;
-    animation: loginAuroraShift 16s ease-in-out infinite;
-}
-
-@keyframes loginAuroraShift {
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-
-    25% {
-        background-position: 100% 0%;
-    }
-
-    50% {
-        background-position: 100% 100%;
-    }
-
-    75% {
-        background-position: 0% 100%;
-    }
-}
-
-/* Orbs flotantes – derivan de --primary */
-.login-orb {
-    position: absolute;
-    border-radius: 9999px;
-    filter: blur(80px);
-    pointer-events: none;
-    opacity: 0.35;
-}
-
-.login-orb-1 {
-    width: min(360px, 50vw);
-    height: min(360px, 50vw);
-    background: radial-gradient(
-        circle,
-        hsl(var(--primary) / 0.8),
-        transparent 70%
-    );
-    top: -10%;
-    left: 10%;
-    animation: loginOrb1 10s ease-in-out infinite;
-}
-
-.login-orb-2 {
-    width: min(280px, 40vw);
-    height: min(280px, 40vw);
-    background: radial-gradient(
-        circle,
-        hsl(var(--primary) / 0.6),
-        transparent 70%
-    );
-    bottom: 5%;
-    right: 15%;
-    animation: loginOrb2 13s ease-in-out infinite;
-}
-
-.login-orb-3 {
-    width: min(200px, 30vw);
-    height: min(200px, 30vw);
-    background: radial-gradient(
-        circle,
-        hsl(var(--primary-foreground) / 0.3),
-        transparent 70%
-    );
-    top: 40%;
-    right: 5%;
-    animation: loginOrb3 11s ease-in-out infinite;
-}
-
-@keyframes loginOrb1 {
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    50% {
-        transform: translate(30px, -40px) scale(1.08);
-    }
-}
-
-@keyframes loginOrb2 {
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    33% {
-        transform: translate(-20px, 25px) scale(0.94);
-    }
-
-    66% {
-        transform: translate(15px, -15px) scale(1.04);
-    }
-}
-
-@keyframes loginOrb3 {
-    0%,
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-
-    50% {
-        transform: translate(-25px, 20px) scale(1.06);
-    }
-}
-
-/* Grid decorativo */
-.login-grid-overlay {
-    background-image:
-        linear-gradient(
-            hsl(var(--primary-foreground) / 0.15) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            hsl(var(--primary-foreground) / 0.15) 1px,
-            transparent 1px
-        );
-    background-size: 40px 40px;
-}
-
-/* Grain / Noise texture (CSS only) */
-.login-grain {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-}
-
-/* Logo: flotación suave (entrada gestionada por framer-motion) */
-.login-logo-float {
-    animation: loginLogoFloat 6s ease-in-out infinite;
-}
-
-@keyframes loginLogoFloat {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-/* ─── Fin Login Hero ──────────────────────────────────── */
 
 /* ─── Examen: columnas (pantalla + impresión) ──────────── */
 .examen-columnas {
@@ -852,7 +840,7 @@ input[type="color"]::-webkit-color-swatch {
    aplicada al <html>, desactiva ese backdrop-filter mientras la guía esté
    visible, permitiendo que el overlay cubra toda la pantalla uniformemente.
 ──────────────────────────────────────────────────────────────────────────── */
-html.guia-open header[role="banner"] {
+html.guia-open .workspace-header {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     background-color: hsl(var(--card)) !important;

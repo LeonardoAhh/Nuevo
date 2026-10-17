@@ -14,20 +14,17 @@ export function SavedDetail({ context }: { context: SavedEvaluationsContext }) {
 
   return (
     <ResponsiveShell open={!!empleadoSel} onClose={close} title={`${SAVED_DETAIL.title}: ${empleadoSel.nombre}`} description={SAVED_DETAIL.description} maxWidth="sm:max-w-lg">
-      <header className="flex shrink-0 items-start gap-3 border-b p-4">
-        <div className="min-w-0 flex-1 space-y-2">
-          <h2 className="break-words text-base font-semibold leading-snug">{empleadoSel.nombre}</h2>
-        </div>
-        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={close} aria-label={SAVED_DETAIL.close}>
+      <header className="flex shrink-0 items-center gap-3 border-b px-4 py-3 sm:px-6 sm:py-4">
+        <h2 className="min-w-0 flex-1 break-words text-xl font-semibold leading-7 tracking-tight text-foreground">{empleadoSel.nombre}</h2>
+        <Button type="button" variant="ghost" size="icon" className="min-h-11 min-w-11 shrink-0" onClick={close} aria-label={SAVED_DETAIL.close}>
           <X aria-hidden="true" />
         </Button>
       </header>
-      <div className="min-h-0 overflow-y-auto overscroll-contain p-4 safe-bottom-content">
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-          <span className="font-mono">{empleadoSel.numero}</span>
-          {" · "}{empleadoSel.puesto || "—"}
-        </p>
-        <p className="mb-3 text-xs font-medium tabular-nums text-muted-foreground">{SAVED_DETAIL.count(empleadoSel.evals.length)}</p>
+      <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 safe-bottom-content">
+        <div className="mb-4 min-w-0 space-y-1">
+          <p className="text-sm leading-5 tabular-nums text-muted-foreground">{empleadoSel.numero}</p>
+          <p className="truncate text-sm leading-5 text-muted-foreground" title={empleadoSel.puesto || undefined}>{empleadoSel.puesto || "—"}</p>
+        </div>
         {empleadoSel.evals.length ? <ul className="space-y-3">
           {empleadoSel.evals.map(ev => <li key={ev.id}>
             <SavedEvaluationCard evaluation={ev} actions={context} />

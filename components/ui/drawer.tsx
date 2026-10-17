@@ -41,14 +41,13 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { raw?: boolean; showHandle?: boolean }
->(({ className, children, raw, showHandle = true, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { raw?: boolean; showHandle?: boolean; fullViewport?: boolean }
+>(({ className, children, raw, showHandle = true, fullViewport = false, ...props }, ref) => {
   // Detecta cuando el teclado está visible para ajustar la altura
   const [keyboardVisible, setKeyboardVisible] = React.useState(false)
-  const contentRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return
+    if (fullViewport) return
 
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement
@@ -82,7 +81,7 @@ const DrawerContent = React.forwardRef<
       document.removeEventListener("focusout", handleFocusOut)
       window.visualViewport?.removeEventListener("resize", handleViewportResize)
     }
-  }, [])
+  }, [fullViewport])
 
   return (
     <DrawerPortal>
@@ -100,8 +99,8 @@ const DrawerContent = React.forwardRef<
           "mt-24",
           className
         )}
-        style={{
-          // Altura dinámica según estado del teclado
+        style={fullViewport ? undefined : {
+          // Altura dinámica según estado del teclado para drawers inferiores.
           maxHeight: keyboardVisible
             ? `calc(var(--visual-viewport-height, 100dvh) - env(safe-area-inset-top, 44px))`
             : `calc(100dvh - env(safe-area-inset-top, 44px))`,

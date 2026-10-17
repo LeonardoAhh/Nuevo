@@ -16,6 +16,7 @@ export interface ConfirmOptions {
   cancelLabel?: string
   size?: ModalSize
   tone?: ConfirmTone
+  appearance?: "standard" | "minimal"
   icon?: React.ReactNode
   requireInputText?: string
 }
@@ -56,12 +57,13 @@ interface ConfirmationDialogProps extends ConfirmOptions {
 
 export function ConfirmationDialog({
   open, title, description, confirmLabel = "Confirmar", cancelLabel = "Cancelar",
-  size = "xs", tone = "default", icon, requireInputText, inputValue,
+  size = "xs", tone = "default", appearance = "standard", icon, requireInputText, inputValue,
   onInputChange, onCancel, onConfirm,
 }: ConfirmationDialogProps) {
   const styles = TONE_STYLES[tone]
   const confirmDisabled = Boolean(requireInputText && inputValue !== requireInputText)
   const confirmVariant = tone === "destructive" ? "destructive" : tone === "warning" ? "warning" : "primary"
+  const minimal = appearance === "minimal"
 
   return (
     <ResponsiveShell
@@ -72,14 +74,14 @@ export function ConfirmationDialog({
       size={size}
       contentClassName="border-border"
     >
-      <div className="px-5 py-5 sm:px-6">
+      <div className={cn("px-5 py-5 sm:px-6", minimal && "sm:py-6")}>
         <div className="flex items-start gap-3">
-          <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-md border border-current/15 bg-card [&_svg]:size-4", styles.container)}>
+          {!minimal && <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-md border border-current/15 bg-card [&_svg]:size-4", styles.container)}>
             {icon ?? styles.icon}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p aria-hidden="true" className="text-base font-semibold leading-6 tracking-tight text-foreground">{title}</p>
-            {description && <p aria-hidden="true" className="mt-0.5 text-sm leading-5 text-muted-foreground">{description}</p>}
+          </div>}
+          <div className={cn("min-w-0 flex-1", minimal && "space-y-2")}>
+            <h2 aria-hidden="true" className={cn("font-semibold tracking-tight text-foreground", minimal ? "text-lg leading-7" : "text-base leading-6")}>{title}</h2>
+            {description && <p aria-hidden="true" className={cn("text-sm leading-5 text-muted-foreground", !minimal && "mt-0.5")}>{description}</p>}
           </div>
         </div>
         {requireInputText && (
@@ -99,7 +101,7 @@ export function ConfirmationDialog({
         )}
       </div>
       <ModalFooter
-        className="bg-muted/30 [&_button]:min-h-11 [&_button]:whitespace-nowrap"
+        className={cn("[&_button]:min-h-11 [&_button]:whitespace-nowrap", minimal ? "bg-card" : "bg-muted/30")}
         onCancel={onCancel}
         cancelLabel={cancelLabel}
         onConfirm={onConfirm}

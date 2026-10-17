@@ -4,19 +4,19 @@ import { SectionTitle } from "./desempeno/presentation";
 import { EvaluationWorkspace } from "./desempeno/workspace";
 import { EASE_OUT } from "./desempeno/pending-presentation";
 import { VistaMensual } from "./desempeno/pending-monthly";
+import { DepartmentPager } from "./desempeno/department-pager";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw, UserPlus, CalendarRange } from "lucide-react";
+import { UserPlus, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals";
-import { useRole } from "@/lib/hooks";
+import { useSemestralPendientes } from "@/lib/hooks/useSemestralPendientes";
 import { PERIODOS_DESEMPENO } from "@/lib/catalogo";
 import DesempenoSemestralPendientes from "./desempeno-semestral-pendientes";
 type Vista = "mensual" | "semestral";
 interface Props {
-  /** Department scope override; defaults to the role's departamentosScope. */
+  /** Optional department filter for administrative views; RLS scopes evaluators. */
   filterDepartamentos?: string[] | null;
   periodoSemestral?: string;
 }
@@ -25,42 +25,71 @@ export default function DesempenoPendientes({
   periodoSemestral
 }: Props = {}) {
   const {
-    departamentosScope
-  } = useRole();
-  const {
     loading,
     deptGroups,
     totalEmployees,
-    totalEvals,
-    cargar
-  } = usePendingEvals(filterDepartamentos ?? departamentosScope);
+  } = usePendingEvals(filterDepartamentos);
   const [vista, setVista] = useState<Vista>("mensual");
-  // First department acts as the default tab until the user picks one.
+  const periodoActual = periodoSemestral ?? PERIODOS_DESEMPENO.semestrales[0];
+  const semestrales = useSemestralPendientes(periodoActual, filterDepartamentos, vista === "semestral");
+  // The first available department is the default page for each view.
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const currentTab = activeTab ?? deptGroups[0]?.departamento ?? null;
+  const currentTab = deptGroups.some(group => group.departamento === activeTab)
+    ? activeTab
+    : deptGroups[0]?.departamento ?? null;
+  const monthlyIndex = deptGroups.findIndex(group => group.departamento === currentTab);
+  const monthlyGroup = deptGroups[monthlyIndex];
+  const [monthlyDirection, setMonthlyDirection] = useState<-1 | 1>(1);
+  const [semestralTab, setSemestralTab] = useState<string | null>(null);
+  const currentSemestralTab = semestrales.deptGroups.some(group => group.departamento === semestralTab)
+    ? semestralTab
+    : semestrales.deptGroups[0]?.departamento ?? null;
+  const semestralIndex = semestrales.deptGroups.findIndex(group => group.departamento === currentSemestralTab);
+  const semestralGroup = semestrales.deptGroups[semestralIndex];
+  const [semestralDirection, setSemestralDirection] = useState<-1 | 1>(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const handleTabChange = (dept: string) => {
-    setActiveTab(dept);
+  const currentSelectedId = deptGroups.find(group => group.departamento === currentTab)?.items.some(item => item.dbId === selectedId)
+    ? selectedId
+    : null;
+  const navigateMonthly = (direction: -1 | 1) => {
+    const next = deptGroups[monthlyIndex + direction];
+    if (!next) return;
+    setMonthlyDirection(direction);
+    setActiveTab(next.departamento);
     setSelectedId(null);
+  };
+  const navigateSemestral = (direction: -1 | 1) => {
+    const next = semestrales.deptGroups[semestralIndex + direction];
+    if (!next) return;
+    setSemestralDirection(direction);
+    setSemestralTab(next.departamento);
   };
   return <EvaluationWorkspace section="pending"><Card>
       {/* Header */}
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <SectionTitle>Evaluaciones Pendientes</SectionTitle>
-            {vista === "mensual" && !loading && totalEmployees > 0 && <p className="mt-0.5 text-xs text-muted-foreground">
-                {totalEmployees} empleado{totalEmployees !== 1 ? "s" : ""}
-                {" · "}
-                {totalEvals} evaluación{totalEvals !== 1 ? "es" : ""}
-            </p>}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <SectionTitle>Evaluaciones Pendientes</SectionTitle>
+          <div className="min-w-0">
+            {vista === "mensual" && !loading && deptGroups.length > 1 && monthlyIndex >= 0 && <DepartmentPager
+              label={monthlyGroup.departamento}
+              index={monthlyIndex}
+              total={deptGroups.length}
+              previousLabel={deptGroups[monthlyIndex - 1]?.departamento}
+              nextLabel={deptGroups[monthlyIndex + 1]?.departamento}
+              onPrevious={() => navigateMonthly(-1)}
+              onNext={() => navigateMonthly(1)}
+            />}
+            {vista === "semestral" && !semestrales.loading && semestrales.deptGroups.length > 1 && semestralIndex >= 0 && <DepartmentPager
+              label={semestralGroup.departamento}
+              index={semestralIndex}
+              total={semestrales.deptGroups.length}
+              previousLabel={semestrales.deptGroups[semestralIndex - 1]?.departamento}
+              nextLabel={semestrales.deptGroups[semestralIndex + 1]?.departamento}
+              onPrevious={() => navigateSemestral(-1)}
+              onNext={() => navigateSemestral(1)}
+            />}
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={cargar} disabled={loading} aria-label="Actualizar evaluaciones">
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
         </div>
-      </div>
     </CardHeader>
 
       <CardContent className="space-y-4">
@@ -75,13 +104,6 @@ export default function DesempenoPendientes({
               Semestrales
         </Button>
       </div>
-
-        {/* Info banner — solo en vista mensual */}
-        {vista === "mensual" && <Alert className="[&>svg~*]:pl-0 [&>svg]:static [&>svg]:translate-y-0 bg-warning/10 text-warning border-warning/30">
-          <AlertDescription className="text-xs">
-              Desglose por departamento de evaluaciones pendientes de nuevo ingreso
-        </AlertDescription>
-      </Alert>}
 
         {/* Contenido por vista */}
         <AnimatePresence mode="wait">
@@ -98,7 +120,7 @@ export default function DesempenoPendientes({
             duration: 0.2,
             ease: EASE_OUT
           }}>
-            <DesempenoSemestralPendientes periodo={periodoSemestral ?? PERIODOS_DESEMPENO.semestrales[0]} filterDepartamentos={filterDepartamentos} />
+            <DesempenoSemestralPendientes loading={semestrales.loading} deptGroups={semestrales.deptGroups} activeTab={currentSemestralTab} direction={semestralDirection} />
         </motion.div> : <motion.div key="mensual" initial={{
             opacity: 0,
             y: 6
@@ -112,7 +134,7 @@ export default function DesempenoPendientes({
             duration: 0.2,
             ease: EASE_OUT
           }}>
-            <VistaMensual loading={loading} deptGroups={deptGroups} totalEmployees={totalEmployees} activeTab={currentTab} onTabChange={handleTabChange} selectedId={selectedId} onSelectId={setSelectedId} />
+            <VistaMensual loading={loading} deptGroups={deptGroups} totalEmployees={totalEmployees} activeTab={currentTab} direction={monthlyDirection} selectedId={currentSelectedId} onSelectId={setSelectedId} />
         </motion.div>}
       </AnimatePresence>
     </CardContent>

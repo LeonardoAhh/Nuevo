@@ -43,7 +43,7 @@ export function EvaluationWorkspace({
           key,
           href,
           icon: Icon
-        }) => <Button key={key} asChild variant={section === key ? "default" : "outline"} className="min-w-0 gap-1 px-2 text-xs sm:gap-2 sm:px-4 sm:text-sm">
+        }) => <Button key={key} asChild variant={section === key ? "default" : "outline"} className="min-h-11 min-w-0 gap-1 px-2 text-sm font-medium sm:gap-2 sm:px-4">
             <Link href={href} aria-current={section === key ? "page" : undefined} onNavigate={confirmNavigation ? event => {
               event.preventDefault();
               void confirmNavigation().then(confirmed => {
@@ -55,7 +55,7 @@ export function EvaluationWorkspace({
             </Link>
           </Button>)}
       </nav>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="ml-auto flex shrink-0 items-center justify-end gap-2">{actions}</div>}
     </header>
     {children}
   </div>;

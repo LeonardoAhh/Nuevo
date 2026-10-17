@@ -3,12 +3,9 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   ClipboardList,
   FileText,
-  FolderOpen,
   Info,
   LockKeyhole,
   Printer,
@@ -35,7 +32,7 @@ export function GuiaEvaluadorPage() {
             Guía del evaluador
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Consulta el flujo vigente para buscar a una persona, seleccionar el periodo,
+            Consulta el flujo vigente para buscar a una persona, revisar el periodo asignado,
             completar la evaluación, guardarla e imprimir el formato oficial.
           </p>
 
@@ -133,11 +130,10 @@ export function GuiaEvaluadorPage() {
               Vistas disponibles en Desempeño
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              Pendientes e Historial son páginas independientes; no se abren como paneles laterales.
-              La disponibilidad de Historial depende de los permisos de la cuenta.
+              Evaluar y Pendientes son las vistas de trabajo disponibles para el evaluador.
             </p>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
               <ViewCard
                 icon={SquarePen}
                 title={DESEMPENO.pages.evaluation.title}
@@ -149,13 +145,6 @@ export function GuiaEvaluadorPage() {
                 title={DESEMPENO.pages.pending.title}
                 body="Consulta Nuevo Ingreso o Semestrales. Los resultados respetan los departamentos asignados a tu perfil."
                 href={DESEMPENO.routes.pending}
-              />
-              <ViewCard
-                icon={FolderOpen}
-                title={DESEMPENO.pages.saved.title}
-                body="Consulta evaluaciones guardadas cuando tu rol tenga permiso para acceder a esta vista."
-                href={DESEMPENO.routes.saved}
-                restricted
               />
             </div>
           </div>
@@ -262,16 +251,10 @@ function StepPreview({ id }: { id: GuideStep["id"] }) {
       <PreviewFrame label="Evaluar · Buscar empleado">
         <div className="space-y-3 p-4">
           <MockSearch value="3204 o nombre del colaborador" />
-          <div className="flex flex-wrap gap-2">
-            <MockButton active>Semestral</MockButton>
-            <MockButton>Mensual</MockButton>
+          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Periodo</span>
+            <span className="font-medium">Se asigna al buscar</span>
           </div>
-          <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
-            <MockIcon icon={ChevronLeft} label="Año anterior" />
-            <div className="text-center font-mono text-sm font-semibold tabular-nums">2026</div>
-            <MockIcon icon={ChevronRight} label="Año siguiente" />
-          </div>
-          <div className="rounded-md border border-border bg-background px-3 py-2 text-sm">DIC - MAY</div>
           <p className="text-xs text-muted-foreground">La búsqueda acepta número o nombre y muestra sugerencias.</p>
         </div>
       </PreviewFrame>
@@ -282,11 +265,10 @@ function StepPreview({ id }: { id: GuideStep["id"] }) {
     return (
       <PreviewFrame label="Periodo de evaluación">
         <div className="space-y-3 p-4">
-          <MockField label="Modalidad" value="Semestral" />
-          <MockField label="Año" value="2026" />
-          <MockField label="Periodo" value="DIC - MAY" />
-          <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-xs leading-relaxed text-muted-foreground">
-            Revisa los avisos de elegibilidad y confirma que el periodo corresponda al colaborador.
+          <MockField label="Empleado" value="Nombre y número del empleado" />
+          <MockField label="Periodo asignado" value="Modalidad · periodo vigente" />
+          <div className="rounded-md border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
+            La modalidad y el periodo se asignan al buscar. Si ya existe una evaluación guardada, puedes abrirla para revisarla o editarla.
           </div>
         </div>
       </PreviewFrame>
@@ -381,13 +363,10 @@ function InfoCard({ icon: Icon, title, body }: { icon: typeof LockKeyhole; title
   )
 }
 
-function ViewCard({ icon: Icon, title, body, href, restricted = false }: { icon: typeof Users; title: string; body: string; href: string; restricted?: boolean }) {
+function ViewCard({ icon: Icon, title, body, href }: { icon: typeof Users; title: string; body: string; href: string }) {
   return (
     <article className="flex flex-col rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-3">
-        <Icon className="size-5 text-primary" aria-hidden="true" />
-        {restricted && <span className="rounded-md bg-muted px-2 py-1 font-mono text-[10px] uppercase text-muted-foreground">Según permisos</span>}
-      </div>
+      <Icon className="size-5 text-primary" aria-hidden="true" />
       <h3 className="mt-4 font-semibold">{title}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
       <Link href={href} className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -415,18 +394,6 @@ function MockSearch({ value }: { value: string }) {
     <div className="flex min-h-11 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-muted-foreground">
       <Search className="size-4 shrink-0" aria-hidden="true" />
       {value}
-    </div>
-  )
-}
-
-function MockButton({ active = false, children }: { active?: boolean; children: React.ReactNode }) {
-  return <div className={`rounded-md border px-3 py-2 text-xs font-medium ${active ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground"}`}>{children}</div>
-}
-
-function MockIcon({ icon: Icon, label }: { icon: typeof ChevronLeft; label: string }) {
-  return (
-    <div className="flex size-11 items-center justify-center rounded-md border border-border bg-background" title={label}>
-      <Icon className="size-4" aria-hidden="true" />
     </div>
   )
 }

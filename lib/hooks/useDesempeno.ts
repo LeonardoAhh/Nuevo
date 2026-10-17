@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
+import { useRole } from "@/lib/hooks/useRole"
 import {
 
   DEFAULT_OBJETIVOS_POR_TIPO,
@@ -16,11 +17,11 @@ import {
   type Competencia,
 } from "@/lib/types/desempeno"
 import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
-import { getTipoDesempenoByPuesto, normalizeDepartamento, mesesDePeriodo, getPeriodosDesempeno, normalizarPeriodoDesempeno } from "@/lib/catalogo"
-import { esElegibleParaPeriodo } from "@/lib/desempeno/elegibilidad"
+import { getTipoDesempenoByPuesto, mesesDePeriodo, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
+import { periodoVigenteParaEmpleado, type OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
-export type OrigenEmpleado = "planta" | "nuevo_ingreso"
+export type { OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
 
 interface EmpleadoOrigenData {
   numero: string
@@ -35,6 +36,17 @@ interface NuevoIngresoOrigenData extends EmpleadoOrigenData {
 }
 
 const CONTRATO_INDETERMINADO = "Indeterminado"
+
+class EvaluationMessageError extends Error {
+  constructor(readonly title: string, message: string) {
+    super(message)
+  }
+}
+
+interface EvaluationUiError {
+  title: string
+  description: string
+}
 
 /**
  * Un contrato de prueba vigente es la fuente autoritativa aunque el número ya
@@ -81,7 +93,7 @@ function calcularAsistenciaPorcentaje(incidencias: Record<string, unknown>[], ta
     return aplicarEscala(totalFaltas)
   }
 }
-export type PeriodoModo = "semestrales" | "mensuales"
+export type { PeriodoModo } from "@/lib/catalogo"
 
 /** Resultado de `buscarEmpleado`: origen + modo/periodo recomendado para el selector. */
 export interface BusquedaResultado {
@@ -90,7 +102,7 @@ export interface BusquedaResultado {
   periodo: string
   /** true si es planta Y elegible para el semestre activo → debe evaluarse semestral. */
   requiereSemestral: boolean
-  /** Semestre activo (primer semestral sin evaluación) usado para el guardrail. */
+  /** Semestre vigente usado para determinar la modalidad. */
   semestreObjetivo: string
 }
 
@@ -124,8 +136,14 @@ export interface EvaluacionHistorial {
 }
 
 export function useDesempeno() {
+  const { isEvaluador } = useRole()
   const [data, setData] = useState<DesempenoData | null>(null)
-  const [existingEvaluation, setExistingEvaluation] = useState<{ id: string; periodo: string; numero: string } | null>(null)
+  const [existingEvaluation, setExistingEvaluation] = useState<{
+    periodo: string
+    numero: string
+    nombre: string
+    calificacion: number | null
+  } | null>(null)
   const [origen, setOrigen] = useState<OrigenEmpleado | null>(null)
   const [requiereSemestral, setRequiereSemestral] = useState(false)
   const [semestreObjetivo, setSemestreObjetivo] = useState<string | null>(null)
@@ -133,7 +151,7 @@ export function useDesempeno() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<EvaluationUiError | null>(null)
   const [historial, setHistorial] = useState<EvaluacionHistorial[]>([])
   const [historialLoading, setHistorialLoading] = useState(false)
   const lastEvalId = useRef<string | null>(null)
@@ -189,7 +207,7 @@ export function useDesempeno() {
     [],
   )
 
-  const buscarEmpleado = useCallback(async (numero: string, restrictDepartamentos?: string[] | null, periodoSeleccionado?: string | null, forzarPeriodo = false) => {
+  const buscarEmpleado = useCallback(async (numero: string) => {
     const requestId = ++searchRequest.current
     setLoading(true)
     setError(null)
@@ -233,17 +251,7 @@ export function useDesempeno() {
         }
       }
 
-      if (!empleadoData || !origenEmpleado) throw new Error("Empleado no encontrado")
-
-      // Scope por departamento: el evaluador solo puede abrir empleados de las áreas asignadas
-      if (restrictDepartamentos && restrictDepartamentos.length > 0) {
-        const permitidos = restrictDepartamentos.map(normalizeDepartamento)
-        if (!permitidos.includes(normalizeDepartamento(empleadoData.departamento))) {
-          throw new Error(
-            `Este empleado pertenece a otro departamento. Solo puedes evaluar a tu área (${restrictDepartamentos.join(", ")}).`,
-          )
-        }
-      }
+      if (!empleadoData || !origenEmpleado) throw new EvaluationMessageError("Empleado no encontrado", "Verifica el número o el nombre e inténtalo de nuevo.")
 
       // Trae TODAS las evaluaciones del empleado (más reciente primero) para
       // poder resolver el periodo correcto y cargar la fila de ESE periodo.
@@ -255,50 +263,23 @@ export function useDesempeno() {
 
       if (evalsError) throw evalsError
       const evals = (evalsRaw ?? []) as EvalRowFull[]
-      const periodosConEval = new Set(evals.map((e) => e.periodo).filter(Boolean) as string[])
+      // La modalidad y el periodo se asignan al buscar; no se elige un año anterior.
+      const { modo, periodo: periodoResuelto, semestreActual: semestreActivo, requiereSemestral: requiereSemestralEmp } =
+        periodoVigenteParaEmpleado(origenEmpleado, empleadoData.fechaIngreso)
 
-      // Semestre activo = primer semestral SIN evaluación guardada (auto-avance:
-      // si ya hizo DIC-MAY, pasa a JUN-NOV). Si todos están hechos, usa el último.
-      const selectedYear = Number(periodoSeleccionado?.match(/(\d{4})$/)?.[1]) || new Date().getFullYear()
-      const periodosContexto = getPeriodosDesempeno(selectedYear)
-      const periodosNormalizados = new Set([...periodosConEval].map(normalizarPeriodoDesempeno))
-      const semestreActivo =
-        periodosContexto.semestrales.find((p) => !periodosNormalizados.has(normalizarPeriodoDesempeno(p))) ??
-        periodosContexto.semestrales[periodosContexto.semestrales.length - 1]
-
-      // Un empleado de planta solo se evalúa SEMESTRAL si ya cumple la antigüedad
-      // mínima para el semestre activo. Si es planta pero recién ingresado (aún
-      // no elegible), se evalúa MENSUAL (onboarding) hasta que califique; en ese
-      // caso NO se bloquea el modo mensual.
-      const elegibleSemestreActivo =
-        origenEmpleado === "planta" &&
-        esElegibleParaPeriodo(empleadoData.fechaIngreso, semestreActivo).elegible
-      const requiereSemestralEmp = origenEmpleado === "planta" && elegibleSemestreActivo
-
-      const mensuales = periodosContexto.mensuales as readonly string[]
-      const mensualResuelto =
-        periodoSeleccionado && mensuales.includes(periodoSeleccionado)
-          ? periodoSeleccionado
-          : periodosContexto.mensuales[0]
-
-      const semestralSeleccionado = periodoSeleccionado && periodosContexto.semestrales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
-      const mensualSeleccionado = periodoSeleccionado && periodosContexto.mensuales.some(p => normalizarPeriodoDesempeno(p) === normalizarPeriodoDesempeno(periodoSeleccionado))
-      const periodoForzado = forzarPeriodo && periodoSeleccionado && (semestralSeleccionado || mensualSeleccionado)
-      const modo: PeriodoModo = periodoForzado
-        ? (semestralSeleccionado ? "semestrales" : "mensuales")
-        : (requiereSemestralEmp ? "semestrales" : "mensuales")
-      const periodoResuelto: string = periodoForzado
-        ? periodoSeleccionado
-        : requiereSemestralEmp ? semestreActivo : mensualResuelto
-
-      // Buscar solo detecta las evaluaciones guardadas; abrirlas requiere una accion explicita.
+      // Buscar solo detecta las evaluaciones guardadas; no carga el formulario para editarlas.
       const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
       const evalData = evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null
       if (evalData) {
         if (requestId !== searchRequest.current) return null
         lastEvalId.current = null
         lastEvalKey.current = null
-        setExistingEvaluation({ id: evalData.id, periodo: periodoResuelto, numero })
+        setExistingEvaluation({
+          periodo: periodoResuelto,
+          numero,
+          nombre: empleadoData.nombre,
+          calificacion: evalData.calificacion_final,
+        })
         setFechaIngreso(empleadoData.fechaIngreso)
         setOrigen(origenEmpleado)
         setRequiereSemestral(requiereSemestralEmp)
@@ -381,8 +362,9 @@ export function useDesempeno() {
       } satisfies BusquedaResultado
     } catch (e) {
       if (requestId !== searchRequest.current) return null
-      setError(e instanceof Error ? e.message : "Error")
-      notify.error("Empleado no encontrado")
+      setError(e instanceof EvaluationMessageError
+        ? { title: e.title, description: e.message }
+        : { title: "Búsqueda no disponible", description: "No se pudo buscar al empleado. Inténtalo de nuevo." })
       return null
     } finally {
       if (requestId === searchRequest.current) setLoading(false)
@@ -430,6 +412,9 @@ export function useDesempeno() {
       }
 
       const evalKey = `${evalData.numero_empleado}:${normalizarPeriodoDesempeno(evalData.periodo)}`
+      if (isEvaluador && lastEvalId.current) {
+        throw new EvaluationMessageError("Evaluación cerrada", "No puedes modificar una evaluación guardada.")
+      }
       if (lastEvalId.current && lastEvalKey.current === evalKey) {
         const { error: err } = await supabase
           .from("evaluaciones_desempeno")
@@ -437,13 +422,16 @@ export function useDesempeno() {
           .eq("id", lastEvalId.current)
         if (err) throw err
       } else {
+        if (!origen || normalizarPeriodoDesempeno(evalData.periodo) !== normalizarPeriodoDesempeno(periodoVigenteParaEmpleado(origen, fechaIngreso).periodo)) {
+          throw new EvaluationMessageError("Periodo fuera de vigencia", "Busca de nuevo al empleado para evaluar el periodo vigente.")
+        }
         const { data: existingRows, error: existingError } = await supabase
           .from("evaluaciones_desempeno")
           .select("periodo")
           .eq("numero_empleado", evalData.numero_empleado)
         if (existingError) throw existingError
         if (existingRows?.some((row) => row.periodo && normalizarPeriodoDesempeno(row.periodo) === normalizarPeriodoDesempeno(evalData.periodo))) {
-          throw new Error("Ya existe una evaluación para este periodo. Ábrela desde Historial.")
+          throw new EvaluationMessageError("Evaluación ya guardada", "Ya existe una evaluación para este periodo. Busca otra persona para continuar.")
         }
         const { data: inserted, error: err } = await supabase
           .from("evaluaciones_desempeno")
@@ -460,9 +448,9 @@ export function useDesempeno() {
       return true
       // notify.success ya no es necesario — el modal DesempenoSaveSuccess lo muestra
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message
-        : typeof e === "object" && e !== null && "message" in e ? String((e as Record<string, unknown>).message)
-        : "Error al guardar"
+      const msg = e instanceof EvaluationMessageError
+        ? e.message
+        : "No se pudo guardar la evaluación. Inténtalo de nuevo."
       console.error("[guardar]", e)
       notify.error(msg)
       return false
@@ -470,7 +458,7 @@ export function useDesempeno() {
       savingRef.current = false
       setSaving(false)
     }
-  }, [])
+  }, [origen, fechaIngreso, isEvaluador])
 
   const fetchHistorial = useCallback(async () => {
     setHistorialLoading(true)
@@ -559,6 +547,10 @@ export function useDesempeno() {
   }, [])
 
   const cargarEvaluacion = useCallback(async (evalId: string) => {
+    if (isEvaluador) {
+      setError({ title: "Evaluación cerrada", description: "No puedes modificar una evaluación guardada." })
+      return null
+    }
     const requestId = ++searchRequest.current
     setLoading(true)
     setError(null)
@@ -572,7 +564,7 @@ export function useDesempeno() {
         .eq("id", evalId)
         .single()
 
-      if (err || !evalRow) throw err ?? new Error("Evaluación no encontrada")
+      if (err || !evalRow) throw err ?? new EvaluationMessageError("Evaluación no encontrada", "Vuelve a buscar al empleado para abrir la evaluación.")
 
       // Find employee info
       let nombre = ""
@@ -649,22 +641,16 @@ export function useDesempeno() {
       return { periodo: periodoStr, origen: origenEmpleado }
     } catch (e) {
       if (requestId !== searchRequest.current) return null
-      setError(e instanceof Error ? e.message : "Error")
-      notify.error("Evaluación no encontrada")
+      setError(e instanceof EvaluationMessageError
+        ? { title: e.title, description: e.message }
+        : { title: "Evaluación no disponible", description: "No se pudo abrir la evaluación. Inténtalo de nuevo." })
       return null
     } finally {
       if (requestId === searchRequest.current) setLoading(false)
     }
-  }, [])
+  }, [isEvaluador])
 
   const eliminarEvaluacion = useCallback(async (evalId: string) => {
-    const confirmed = await notify.confirm({
-      title: "¿Eliminar esta evaluación?",
-      description: "Esta acción no se puede deshacer.",
-      tone: "destructive",
-    })
-    if (!confirmed) return false
-
     try {
       const { error: err } = await supabase
         .from("evaluaciones_desempeno")

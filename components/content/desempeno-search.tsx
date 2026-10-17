@@ -1,26 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EvaluationWorkspace } from "./desempeno/workspace";
 import { useEvaluationSearch } from "./desempeno/use-evaluation-search";
 import { SearchPanel } from "./desempeno/search-panel";
 import { PendingSummary } from "./desempeno/pending-summary";
+import { ExistingEvaluationNotice } from "./desempeno/existing-evaluation-notice";
 import { Suspense } from "react";
-import { AlertCircle, CalendarX2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno";
 import DesempenoPrint from "./desempeno-print";
 import { DesempenoForm } from "./desempeno-form-operativo";
 import { DesempenoSaveSuccess } from "./desempeno-save-success";
 import { DesempenoGuia } from "./desempeno-guia";
-import { NoticeCard, DesempenoFormSkeleton, GuiaButton } from "./desempeno/search-controls";
-import { MESES_MIN_ANTIGUEDAD_SEMESTRAL } from "@/lib/desempeno/elegibilidad";
+import { GuiaButton } from "./desempeno/search-controls";
 function DesempenoSearchContent() {
   const context = useEvaluationSearch();
   const {
-    periodoSeleccionado,
     data,
     setData,
     existingEvaluation,
@@ -32,17 +30,21 @@ function DesempenoSearchContent() {
     guardar,
     guiaOpen,
     setGuiaOpen,
+    practiceLocked,
     ponderacion,
     bloqueado,
-    faltaEvaluador,
-    fechaIngreso,
-    noElegible,
-    mismatchBloqueo,
-    mismatchSuave,
-    periodoSemestralObjetivo
+    faltaEvaluador
   } = context;
   return <TooltipProvider>
-    <EvaluationWorkspace section="evaluation" confirmNavigation={context.confirmDiscard} actions={!data && <GuiaButton onClick={() => setGuiaOpen(true)} />}>
+    <div inert={practiceLocked}>
+    <EvaluationWorkspace
+      section="evaluation"
+      confirmNavigation={context.confirmDiscard}
+      actions={<>
+        {context.modoEdicion && data && <Button type="button" variant="outline" disabled className="min-h-11 px-4">Editando</Button>}
+        <GuiaButton onClick={() => setGuiaOpen(true)} />
+      </>}
+    >
 
       {/* ── Buscador ── */}
       <SearchPanel context={context} />
@@ -51,51 +53,32 @@ function DesempenoSearchContent() {
       <PendingSummary context={context} />
 
       {/* Alertas */}
-      {error && <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+      {error && <Alert variant="destructive" className="font-sans">
+        <AlertCircle className="size-4" aria-hidden="true" />
+        <div>
+          <AlertTitle className="text-sm font-semibold leading-5 tracking-normal">{error.title}</AlertTitle>
+          <AlertDescription className="text-sm font-normal leading-5">{error.description}</AlertDescription>
+        </div>
     </Alert>}
 
-      {existingEvaluation && !loading && <Alert>
-        <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
-          <span>La evaluación de {existingEvaluation.periodo} ya está guardada.</span>
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/desempeno?evalId=${encodeURIComponent(existingEvaluation.id)}`}>Abrir evaluación</Link>
-          </Button>
-        </AlertDescription>
-      </Alert>}
+      {existingEvaluation && !loading && <ExistingEvaluationNotice evaluation={existingEvaluation} />}
 
-      {noElegible && <NoticeCard tone="warning" icon={<CalendarX2 className="h-5 w-5" />} title="Semestral no disponible">
-        {fechaIngreso ? <>Aún no cumple {MESES_MIN_ANTIGUEDAD_SEMESTRAL} meses. Usa Mensual.</> : "Falta la fecha de ingreso."}
-    </NoticeCard>}
-
-      {mismatchBloqueo && <NoticeCard tone="danger" icon={<CalendarX2 className="h-5 w-5" />} title="Usa Semestral">
-          {periodoSemestralObjetivo}
-    </NoticeCard>}
-
-      {mismatchSuave && !noElegible && <NoticeCard tone="warning" icon={<AlertCircle className="h-5 w-5" />} title="Nuevo ingreso">
-          Normalmente se evalúa en Mensual.
-    </NoticeCard>}
-
-      {loading ? <DesempenoFormSkeleton /> : data ? <DesempenoForm data={data} onUpdate={next => {
+      {!loading && data ? <div className={saveSuccess ? "hidden" : undefined}><DesempenoForm data={data} onUpdate={next => {
         resetSaveSuccess();
         setData(next);
-      }} onGuardar={() => guardar({
-        ...data,
-        periodo: data.periodo || periodoSeleccionado
-      })} saving={saving} guardarDisabled={saving || saveSuccess || bloqueado || noElegible || mismatchBloqueo || faltaEvaluador} guardarTooltip={faltaEvaluador ? "Selecciona un evaluador primero" : mismatchBloqueo ? "Empleado de planta: evalúalo en modo Semestral, no Mensual" : noElegible ? `Empleado no elegible para este periodo semestral (menos de ${MESES_MIN_ANTIGUEDAD_SEMESTRAL} meses)` : bloqueado ? `Captura compromisos primero (calificación < ${UMBRAL_CALIFICACION_APROBATORIA}%)` : saveSuccess ? "La evaluación ya está guardada" : undefined} /> : null}
+      }} onGuardar={() => guardar(data)} saving={saving} guardarDisabled={saving || saveSuccess || bloqueado || faltaEvaluador} guardarTooltip={faltaEvaluador ? "Selecciona al evaluador antes de guardar." : bloqueado ? `Captura los compromisos antes de guardar una evaluación menor a ${UMBRAL_CALIFICACION_APROBATORIA}%.` : undefined} /></div> : null}
 
-      {data && context.guardado && saveSuccess && !loading && <div className="print-area hidden print:block">
+      {data && saveSuccess && !loading && <div className="print-area hidden print:block">
         <DesempenoPrint data={data} />
     </div>}
 
       <DesempenoSaveSuccess visible={saveSuccess} nombre={data?.nombre} calificacion={ponderacion?.calificacionFinal} onPrint={() => window.print()} onNew={() => {
-        resetSaveSuccess();
         context.closeEvaluation();
-      }} />
+      }} onEdit={context.canEdit ? resetSaveSuccess : undefined} />
 
-      <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
   </EvaluationWorkspace>
+    </div>
+    <DesempenoGuia open={guiaOpen} onClose={() => setGuiaOpen(false)} />
 </TooltipProvider>;
 }
 

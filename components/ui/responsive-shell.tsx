@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useSyncExternalStore } from "react"
+import React from "react"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,25 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// useIsMobile
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function useIsMobile(breakpoint = 639) {
-  const subscribe = useCallback((onStoreChange: () => void) => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`)
-    mq.addEventListener("change", onStoreChange)
-    return () => mq.removeEventListener("change", onStoreChange)
-  }, [breakpoint])
-
-  const getSnapshot = useCallback(
-    () => window.matchMedia(`(max-width: ${breakpoint}px)`).matches,
-    [breakpoint]
-  )
-
-  return useSyncExternalStore(subscribe, getSnapshot, () => false)
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ModalHeader / ModalFooter

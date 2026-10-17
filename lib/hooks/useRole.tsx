@@ -6,23 +6,18 @@ import { useUser } from './useUser'
 
 export type AppRole = 'dev' | 'admin' | 'evaluador'
 
-export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/objetivos', '/settings', '/cursos']
-export const EVALUADOR_DENIED_ROUTES = ['/desempeno/cumplimiento', '/desempeno/seguimiento']
+export const EVALUADOR_ALLOWED_ROUTES = ['/desempeno', '/desempeno/pendientes', '/settings', '/cursos']
 
 export function isEvaluadorAllowedRoute(path: string): boolean {
-  const denied = EVALUADOR_DENIED_ROUTES.some(
-    (r) => path === r || path.startsWith(r + '/'),
-  )
-  if (denied) return false
+  if (path === '/desempeno') return true
   return EVALUADOR_ALLOWED_ROUTES.some(
-    (r) => path === r || path.startsWith(r + '/'),
+    (r) => r !== '/desempeno' && (path === r || path.startsWith(r + '/')),
   )
 }
 
 export type RoleContextType = {
   role: AppRole
   departamentos: string[] | null
-  departamentosScope: string[] | null
   canEdit: boolean
   isReadOnly: boolean
   isEvaluador: boolean
@@ -79,10 +74,9 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const isReadOnly = !user || role === 'admin'
   const isEvaluador = !!user && role === 'evaluador'
   const canEvaluate = !!user && (role === 'dev' || role === 'evaluador')
-  const departamentosScope = isEvaluador && departamentos && departamentos.length > 0 ? departamentos : null
 
   return (
-    <RoleContext.Provider value={{ role, departamentos, departamentosScope, canEdit, isReadOnly, isEvaluador, canEvaluate, loading }}>
+    <RoleContext.Provider value={{ role, departamentos, canEdit, isReadOnly, isEvaluador, canEvaluate, loading }}>
       {children}
     </RoleContext.Provider>
   )
@@ -96,7 +90,6 @@ export function useRole() {
     return {
       role: 'admin' as AppRole,
       departamentos: null,
-      departamentosScope: null,
       canEdit: false,
       isReadOnly: true,
       isEvaluador: false,

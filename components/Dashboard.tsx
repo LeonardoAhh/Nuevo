@@ -8,22 +8,22 @@ import Header from "@/components/header"
 import { useRole, useUser } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
+import { SystemInfoFooter } from "@/components/system-info-footer"
 import { cn } from "@/lib/utils"
 
 
 import { AppTransition } from "@/components/app-transition"
 import { MaintenanceNoticeDialog } from "@/components/maintenance-notice-dialog"
+import { MaintenanceNoticeStatusContext } from "@/components/maintenance-notice-status"
 import { MAINTENANCE_NOTICE_EXPIRES_AT, MAINTENANCE_NOTICE_PENDING_KEY } from "@/lib/maintenance-notice"
 
 interface DashboardProps {
   content?: ReactNode
   pageTitle?: string
-  publicPage?: boolean
 }
 
-export default function Dashboard({ content, pageTitle, publicPage = false }: DashboardProps) {
+export default function Dashboard({ content, pageTitle }: DashboardProps) {
   const {
-    isMobileView,
     showMobileSidebar,
     setShowMobileSidebar,
     openMobileSidebar,
@@ -33,7 +33,7 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
   const router = useRouter()
   const { isEvaluador, loading: roleLoading } = useRole()
   const { user, loading: userLoading } = useUser()
-  const [showMaintenanceNotice, setShowMaintenanceNotice] = useState(false)
+  const [showMaintenanceNotice, setShowMaintenanceNotice] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (roleLoading || !isEvaluador) return
@@ -46,20 +46,20 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
     if (roleLoading || userLoading || !user || (isEvaluador && !isEvaluadorAllowedRoute(pathname ?? ""))) return
 
     try {
-      if (sessionStorage.getItem(MAINTENANCE_NOTICE_PENDING_KEY) !== "1") return
-      sessionStorage.removeItem(MAINTENANCE_NOTICE_PENDING_KEY)
-      if (Date.now() < Date.parse(MAINTENANCE_NOTICE_EXPIRES_AT)) setShowMaintenanceNotice(true)
+      const pending = sessionStorage.getItem(MAINTENANCE_NOTICE_PENDING_KEY) === "1"
+      const active = Date.now() < Date.parse(MAINTENANCE_NOTICE_EXPIRES_AT)
+      if (!active) sessionStorage.removeItem(MAINTENANCE_NOTICE_PENDING_KEY)
+      setShowMaintenanceNotice(pending && active)
     } catch {
-      // The notice is optional when browser storage is unavailable.
+      setShowMaintenanceNotice(false)
     }
   }, [roleLoading, userLoading, user, isEvaluador, pathname])
 
-  if (roleLoading || (publicPage && userLoading)) return <AppTransition message="Preparando tu espacio…" />
+  if (roleLoading) return <AppTransition message="Preparando tu espacio…" />
 
   return (
     <div 
-      className="flex h-[100dvh] flex-col overflow-hidden bg-background md:flex-row"
-      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      className="workspace-shell safe-top bg-background"
     >
       {/* Skip link accesible */}
       <a
@@ -71,40 +71,53 @@ export default function Dashboard({ content, pageTitle, publicPage = false }: Da
         Saltar al contenido
       </a>
 
-      <Sidebar
-        isMobileView={isMobileView}
-        showMobileSidebar={showMobileSidebar}
-        setShowMobileSidebar={setShowMobileSidebar}
-        isEvaluador={isEvaluador}
-        isGuest={publicPage && !user}
-      />
+      {!isEvaluador && (
+        <Sidebar
+          showMobileSidebar={showMobileSidebar}
+          setShowMobileSidebar={setShowMobileSidebar}
+        />
+      )}
 
-      {/* Área principal con scroll controlado */}
+      {/* El documento es el único scroll de la página. */}
       <div
         className={cn(
-          "flex min-w-0 flex-1 flex-col overflow-hidden bg-card",
-          "md:my-2 md:mr-2 md:rounded-xl md:border md:border-border",
+          "workspace-frame bg-card md:rounded-xl md:border md:border-border",
+          isEvaluador && "workspace-frame--full-width",
         )}
       >
         <Header
           title={pageTitle}
-          isMobileView={isMobileView}
           showMobileSidebar={showMobileSidebar}
           onOpenSidebar={openMobileSidebar}
+          showSidebarToggle={!isEvaluador}
         />
 
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin safe-right safe-bottom-content"
+          className="min-w-0 flex-1 safe-right safe-bottom-content"
         >
-          <WorkspaceContainer className="py-5 sm:py-6 lg:py-8">
-            <div className="min-w-0 space-y-6">
-              {content}
-            </div>
-          </WorkspaceContainer>
+          <MaintenanceNoticeStatusContext.Provider value={showMaintenanceNotice}>
+            <WorkspaceContainer className="py-5 sm:py-6 lg:py-8">
+              <div className="min-w-0 space-y-6">
+                {content}
+              </div>
+            </WorkspaceContainer>
+          </MaintenanceNoticeStatusContext.Provider>
         </main>
+        {isEvaluador && <SystemInfoFooter variant="workspace" />}
       </div>
-      <MaintenanceNoticeDialog open={showMaintenanceNotice} onClose={() => setShowMaintenanceNotice(false)} />
+      <MaintenanceNoticeDialog
+        open={showMaintenanceNotice === true}
+        onClose={() => {
+          try {
+            sessionStorage.removeItem(MAINTENANCE_NOTICE_PENDING_KEY)
+          } catch {
+            // The notice can still close when browser storage is unavailable.
+          }
+          setShowMaintenanceNotice(false)
+        }}
+        isEvaluador={isEvaluador}
+      />
     </div>
   )
 }

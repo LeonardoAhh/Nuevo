@@ -1,87 +1,45 @@
 "use client"
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { RefreshCw, CheckCircle2, Clock3, Ban, Users } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle2, Clock3, Ban, Users } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  useSemestralPendientes,
-  type SemestralEmployee,
-} from "@/lib/hooks/useSemestralPendientes"
+import { type SemestralEmployee, type SemestralDeptGroup } from "@/lib/hooks/useSemestralPendientes"
+import { PendingCard, PendingCardFields, PendingCardStatus } from "./desempeno/pending-card"
+import { DepartmentPage } from "./desempeno/department-page"
 
 interface Props {
-  periodo: string
-  filterDepartamentos?: string[] | null
-}
-
-const containerV = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04, delayChildren: 0.04 } },
-}
-
-const itemV = {
-  hidden: { opacity: 0, y: 6 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as const } },
+  loading: boolean
+  deptGroups: SemestralDeptGroup[]
+  activeTab: string | null
+  direction: -1 | 1
 }
 
 function EstadoBadge({ item }: { item: SemestralEmployee }) {
   if (item.estado === "completado") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-success/20 bg-success/10 px-2 py-1 text-xs font-semibold text-success">
-        <CheckCircle2 className="size-3.5" aria-hidden="true" /> Completado · {item.calificacion}%
-      </span>
+      <PendingCardStatus tone="success" icon={<CheckCircle2 className="size-3.5" aria-hidden="true" />}>
+        Completado · {item.calificacion}%
+      </PendingCardStatus>
     )
   }
   if (item.estado === "no_elegible") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-        <Ban className="size-3.5" aria-hidden="true" /> No aplica (&lt; 3 meses)
-      </span>
+      <PendingCardStatus tone="muted" icon={<Ban className="size-3.5" aria-hidden="true" />}>
+        No aplica
+      </PendingCardStatus>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1 text-xs font-semibold text-warning">
-      <Clock3 className="size-3.5" aria-hidden="true" /> Pendiente
-    </span>
+    <PendingCardStatus tone="warning" icon={<Clock3 className="size-3.5" aria-hidden="true" />}>
+      Pendiente
+    </PendingCardStatus>
   )
 }
 
-export default function DesempenoSemestralPendientes({ periodo, filterDepartamentos }: Props) {
-  const { loading, deptGroups, totalEmployees, totalPendientes, cargar } = useSemestralPendientes(
-    periodo,
-    filterDepartamentos,
-  )
-  const [activeTab, setActiveTab] = useState<string | null>(null)
-
+export default function DesempenoSemestralPendientes({ loading, deptGroups, activeTab, direction }: Props) {
   const activeGroup = deptGroups.find((g) => g.departamento === activeTab) ?? deptGroups[0] ?? null
-
-  if (!loading && deptGroups.length > 0 && activeTab === null) {
-    setActiveTab(deptGroups[0].departamento)
-  }
 
   return (
     <div className="space-y-4">
-      <Alert className="flex items-center justify-between gap-2 [&>svg]:static [&>svg]:translate-y-0 [&>svg~*]:pl-0 bg-info/10 text-foreground border-border/60">
-        <AlertDescription className="text-sm">
-          Avance semestral · <strong>{periodo}</strong>
-          {!loading && (
-            <> · {totalPendientes} pendiente{totalPendientes !== 1 ? "s" : ""} de {totalEmployees}</>
-          )}
-        </AlertDescription>
-        <Button
-          variant="outline"
-          size="icon"
-          className="shrink-0"
-          onClick={cargar}
-          disabled={loading}
-          aria-label="Actualizar semestrales"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-        </Button>
-      </Alert>
-
       {!loading && deptGroups.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card py-8 text-muted-foreground">
           <Users className="size-6 opacity-60" aria-hidden="true" />
@@ -91,79 +49,25 @@ export default function DesempenoSemestralPendientes({ periodo, filterDepartamen
 
       {(loading || deptGroups.length > 0) && (
         <div className="space-y-4">
-          {/* Dept tabs */}
-          <div
-            role="group"
-            aria-label="Departamentos"
-            className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin"
-          >
-            {loading
-              ? Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-28 flex-shrink-0 rounded-md" />
-              ))
-              : deptGroups.map((g) => {
-                const isActive = g.departamento === (activeTab ?? deptGroups[0]?.departamento)
-                const pendCount = g.items.filter((i) => i.estado === "pendiente").length
-                return (
-                  <Button
-                    key={g.departamento}
-                    variant={isActive ? "default" : "outline"}
-                    size="sm"
-
-                    aria-pressed={isActive}
-                    onClick={() => setActiveTab(g.departamento)}
-                    className="flex-shrink-0 gap-1.5"
-                  >
-                    {g.departamento}
-                    <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-sm font-bold ${isActive
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-muted-foreground/15 text-muted-foreground"
-                      }`}>
-                      {pendCount}
-                    </span>
-                  </Button>
-                )
-              })}
-          </div>
-
-          {/* Employee list */}
-          <AnimatePresence mode="wait">
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {loading ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full rounded-xl" />
+                  <Skeleton key={i} className="h-20 w-full rounded-xl" />
                 ))}
               </div>
             ) : activeGroup ? (
-              <motion.ul
-                key={activeGroup.departamento}
-                variants={containerV}
-                initial="hidden"
-                animate="show"
-                exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
-              >
+              <DepartmentPage pageKey={activeGroup.departamento} direction={direction}>
+                <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                 {activeGroup.items.map((item) => (
-                  <motion.li
-                    key={item.dbId}
-                    variants={itemV}
-                    className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5 ${item.estado === "no_elegible" ? "opacity-60" : ""
-                      }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm font-medium text-foreground leading-snug">{item.nombre}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        #{item.numero ?? "—"}{item.puesto ? ` · ${item.puesto}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <EstadoBadge item={item} />
-                    </div>
-                  </motion.li>
+                  <PendingCard asChild key={item.dbId}>
+                    <li>
+                      <PendingCardFields number={item.numero} name={item.nombre} detail={item.puesto} status={<EstadoBadge item={item} />} />
+                    </li>
+                  </PendingCard>
                 ))}
-              </motion.ul>
+                </ul>
+              </DepartmentPage>
             ) : null}
-          </AnimatePresence>
         </div>
       )}
     </div>

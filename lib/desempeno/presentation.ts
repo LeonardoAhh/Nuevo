@@ -2,7 +2,7 @@
 export const DESEMPENO = {
   title: "Evaluación de Desempeño",
   pages: {
-    evaluation: { title: "Evaluar", description: "Busca un empleado, selecciona el periodo y completa su evaluación." },
+    evaluation: { title: "Evaluar", description: "Busca un empleado, revisa el periodo asignado y completa su evaluación." },
     pending: { title: "Pendientes", description: "Consulta las evaluaciones pendientes por departamento y tipo de periodo." },
     saved: { title: "Historial", description: "Consulta objetivos por puesto y revisa las evaluaciones guardadas." },
   },
@@ -19,7 +19,6 @@ export const DESEMPENO = {
     clear: "Limpiar búsqueda",
     loading: "Buscando…",
     empty: "Sin coincidencias",
-    recent: "Búsquedas recientes",
     period: "Periodo de evaluación",
   },
   modes: { semestrales: "Semestral", mensuales: "Mensual" },
@@ -50,4 +49,4 @@ export const DESEMPENO = {
 
 export const EVALUATION_WEIGHTS = { objetivos: 0.4, cumplimiento: 0.3, competencias: 0.3 } as const
 
-export const SEARCH_OPTIONS = { minLength: 2, debounceMs: 300, recentLimit: 5, recentStorageKey: "desempeno_recientes" } as const
+export const SEARCH_OPTIONS = { minLength: 2, debounceMs: 300 } as const

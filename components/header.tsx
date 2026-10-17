@@ -1,13 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useAppUpdate } from "@/lib/hooks/useAppUpdate"
+import { useAppUpdate, type UpdateStatus } from "@/lib/hooks/useAppUpdate"
 import { toast } from "sonner"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  Menu, Moon, Sun, Monitor, Settings, LogOut,
-  RefreshCw, ChevronDown, Palette, Loader2, CheckCircle2,
+  Menu, Settings, LogOut, RefreshCw, ChevronDown, Palette, Loader2,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,42 +15,57 @@ import {
   DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent,
   DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useTheme, type Theme } from "@/components/theme-context"
-import { useUser, useProfile } from "@/lib/hooks"
-import { getRouteLabel } from "@/lib/navigation"
+import { useTheme } from "@/components/theme-context"
+import { useUser, useProfile, useRole } from "@/lib/hooks"
+import { getRouteLabel, LOGIN_PATH, MOBILE_NAV_ID, SETTINGS_PATH } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import SignOutOverlay from "@/components/signout-overlay"
-import { useAppReducedMotion } from "@/components/app-transition"
+import { APP_TRANSITION_MIN_MS, useAppReducedMotion } from "@/components/app-transition"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
-
-// ─── Theme options (single source for label + icon) ──────────────────────────
-
-const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
-  { value: "light",  label: "Claro",   icon: Sun },
-  { value: "dark",   label: "Oscuro",  icon: Moon },
-  { value: "system", label: "Sistema", icon: Monitor },
-]
+import { THEME_MODE_OPTIONS, isThemeMode } from "@/components/ui/theme-mode-options"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface HeaderProps {
   title?: string
-  isMobileView: boolean
   showMobileSidebar: boolean
   onOpenSidebar: () => void
+  showSidebarToggle?: boolean
+}
+
+const UPDATE_ACTION_LABEL: Record<UpdateStatus, string> = {
+  idle: "Buscar actualización",
+  checking: "Buscando actualización…",
+  available: "Actualizar ahora",
+  applying: "Actualizando…",
+  "up-to-date": "Buscar actualización",
+}
+
+const accountMenuItemClass = "min-h-11 gap-2.5 px-2.5 text-sm"
+
+function AccountAvatar({ src, initials, className }: { src?: string | null; initials: string; className?: string }) {
+  return (
+    <Avatar className={cn("size-8 shrink-0 rounded-full border border-border", className)}>
+      <AvatarImage src={src || undefined} alt="" />
+      <AvatarFallback className="rounded-full bg-primary text-xs font-medium text-primary-foreground">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+  )
 }
 
 export default function Header({
   title,
-  isMobileView,
   showMobileSidebar,
   onOpenSidebar,
+  showSidebarToggle = true,
 }: HeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
   const { profile } = useProfile(user?.id)
+  const { isEvaluador, loading: roleLoading } = useRole()
   const [signingOut, setSigningOut] = useState(false)
   const reducedMotion = useAppReducedMotion()
   const { status: updateStatus, checkForUpdate, applyUpdate, getLatestStatus } = useAppUpdate()
@@ -64,12 +78,49 @@ export default function Header({
   const pageLabel = title || getRouteLabel(pathname)
 
   const handleLogout = async () => {
+    if (signingOut) return
     setSigningOut(true)
     try {
       const { supabase } = await import("@/lib/supabase/client")
-      await supabase.auth.signOut()
-    } catch { /* redirect anyway */ }
-    setTimeout(() => { router.replace("/login") }, reducedMotion ? 0 : 1600)
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      if (!reducedMotion) {
+        await new Promise((resolve) => setTimeout(resolve, APP_TRANSITION_MIN_MS))
+      }
+      router.replace(LOGIN_PATH)
+    } catch {
+      setSigningOut(false)
+      toast.error("No se pudo cerrar la sesión. Inténtalo de nuevo.")
+    }
+  }
+
+  const handleCheckForUpdate = async () => {
+    if (updateStatus === "available") {
+      applyUpdate()
+      toast.loading("Actualizando…", { id: "app-update" })
+      return
+    }
+
+    toast.loading("Buscando actualización…", { id: "app-update" })
+    try {
+      await checkForUpdate()
+      const latest = getLatestStatus()
+      if (latest === "available") {
+        toast.success("¡Nueva versión disponible!", {
+          id: "app-update",
+          description: "Abre el menú de nuevo para actualizar.",
+        })
+      } else if (latest === "up-to-date") {
+        toast.success("Estás al día", {
+          id: "app-update",
+          description: "No hay actualizaciones disponibles.",
+        })
+      } else {
+        toast.dismiss("app-update")
+      }
+    } catch {
+      toast.error("No se pudo buscar una actualización.", { id: "app-update" })
+    }
   }
 
   return (
@@ -77,19 +128,19 @@ export default function Header({
       <SignOutOverlay show={signingOut} />
 
       <header
-        role="banner"
-        className="sticky top-0 z-20 h-[60px] shrink-0 border-b border-border bg-card"
+        className="workspace-header sticky top-0 z-20 h-[var(--workspace-header-height)] shrink-0 border-b border-border bg-card md:top-[var(--workspace-inset)]"
       >
         <WorkspaceContainer className="flex h-full items-center gap-2">
-          {/* Hamburger — mobile only, when sidebar is closed */}
-          {isMobileView && !showMobileSidebar && (
+          {showSidebarToggle && (
             <button
               type="button"
               onClick={onOpenSidebar}
               aria-label="Abrir menú de navegación"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+              aria-controls={showMobileSidebar ? MOBILE_NAV_ID : undefined}
+              aria-expanded={showMobileSidebar}
+              className="flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
             >
-              <Menu size={19} />
+              <Menu className="size-5" aria-hidden="true" />
             </button>
           )}
 
@@ -102,112 +153,96 @@ export default function Header({
             )}
           </div>
 
-          {/* Account menu — single entry point for user actions */}
           {user && (
-            <nav aria-label="Menú de cuenta">
+            <div className="shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   aria-label={`Cuenta de ${displayName}`}
                   className={cn(
-                    "flex h-10 items-center gap-2 rounded-md py-1 pl-1 pr-2 transition-colors",
-                    "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex min-h-11 max-w-full items-center gap-2 rounded-md border border-border bg-card px-2 text-foreground transition-colors",
+                    "hover:bg-accent data-[state=open]:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   )}
                 >
-                  <Avatar className="size-8 shrink-0 rounded-md border border-border">
-                    <AvatarImage src={profile?.avatar || undefined} alt="" />
-                    <AvatarFallback className="rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-[110px] truncate text-sm font-medium sm:inline">
+                  <AccountAvatar src={profile?.avatar} initials={initials} />
+                  <span className="hidden max-w-32 truncate text-sm font-medium sm:inline">
                     {displayName}
                   </span>
-                  <ChevronDown size={14} className="mr-1 hidden text-muted-foreground sm:block" aria-hidden="true" />
+                  <ChevronDown className="hidden size-4 text-muted-foreground sm:block" aria-hidden="true" />
                 </button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" sideOffset={8} className="w-64 max-w-[calc(100vw-2rem)] p-1.5">
                 {/* Identity */}
-                <DropdownMenuLabel className="font-normal">
-                  <p className="truncate text-sm font-medium">{displayName}</p>
-                  {user?.email && (
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                  )}
+                <DropdownMenuLabel className="flex min-w-0 items-center gap-3 px-2 py-2.5 font-normal">
+                  <AccountAvatar src={profile?.avatar} initials={initials} className="size-9" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-foreground">{displayName}</span>
+                    {user?.email && (
+                      <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+                    )}
+                  </span>
                 </DropdownMenuLabel>
 
-                <DropdownMenuSeparator />
-
                 {/* Preferences */}
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <Settings size={16} aria-hidden="true" />
-                    Configuración
-                  </Link>
-                </DropdownMenuItem>
+                {!roleLoading && !isEvaluador && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className={accountMenuItemClass}>
+                      <Link href={SETTINGS_PATH}>
+                        <Settings className="text-muted-foreground" aria-hidden="true" />
+                        Configuración
+                      </Link>
+                    </DropdownMenuItem>
 
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Palette size={16} aria-hidden="true" />
-                    Tema
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuRadioGroup
-                      value={theme}
-                      onValueChange={(value) => setTheme(value as Theme)}
-                    >
-                      {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-                        <DropdownMenuRadioItem key={value} value={value}>
-                          <Icon size={16} aria-hidden="true" />
-                          {label}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className={accountMenuItemClass}>
+                        <Palette className="text-muted-foreground" aria-hidden="true" />
+                        Tema
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent sideOffset={8} className="p-1.5">
+                        <DropdownMenuRadioGroup
+                          aria-label="Tema"
+                          value={theme}
+                          onValueChange={(value) => {
+                            if (isThemeMode(value)) setTheme(value)
+                          }}
+                        >
+                          {THEME_MODE_OPTIONS.map(({ value, label }) => (
+                            <DropdownMenuRadioItem key={value} value={value} className="min-h-11 pl-8 pr-2.5 text-sm">
+                              {label}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </>
+                )}
 
                 {/* Session */}
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem onSelect={async () => {
-                  if (updateStatus === "available") {
-                    applyUpdate()
-                    toast.loading("Actualizando…", { id: "app-update" })
-                    return
-                  }
-                  toast.loading("Buscando actualización…", { id: "app-update" })
-                  await checkForUpdate()
-                  // Read the live status from the store (not the stale closure value)
-                  const latest = getLatestStatus()
-                  if (latest === "available") {
-                    toast.success("¡Nueva versión disponible!", {
-                      id: "app-update",
-                      description: "Abre el menú de nuevo para actualizar.",
-                    })
-                  } else {
-                    toast.success("Estás al día", {
-                      id: "app-update",
-                      description: "No hay actualizaciones disponibles.",
-                    })
-                  }
-                }}>
-                  <RefreshCw size={16} aria-hidden="true" />
-                  {updateStatus === "available" ? "Actualizar ahora" : "Buscar Actualización"}
+                <DropdownMenuItem className={accountMenuItemClass} disabled={updateStatus === "checking" || updateStatus === "applying"} onSelect={() => { void handleCheckForUpdate() }}>
+                  {updateStatus === "checking" || updateStatus === "applying"
+                    ? <Loader2 className="animate-spin text-muted-foreground" aria-hidden="true" />
+                    : <RefreshCw className="text-muted-foreground" aria-hidden="true" />}
+                  {UPDATE_ACTION_LABEL[updateStatus]}
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  className={cn(accountMenuItemClass, "text-destructive focus:bg-destructive/10 focus:text-destructive")}
+                  disabled={signingOut}
                   onSelect={() => { void handleLogout() }}
                 >
-                  <LogOut size={16} aria-hidden="true" />
+                  <LogOut className="size-4" aria-hidden="true" />
                   Cerrar sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            </nav>
+            </div>
           )}
         </WorkspaceContainer>
       </header>

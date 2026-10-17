@@ -1,6 +1,5 @@
-import { Check, ChevronDown, FileCheck2, Printer, Save, Search, UserRound } from "lucide-react";
+import { Check, FileCheck2, Printer, Save, Search, UserRound } from "lucide-react";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
-import { PERIODOS_DESEMPENO } from "@/lib/catalogo";
 import { cn } from "@/lib/utils";
 import { GUIDE_COPY, type GuideStep } from "./guide-steps";
 import { GuideMockupFrame, mockupStyles } from "./guide-mockup-frame";
@@ -29,27 +28,18 @@ function SearchPreview() {
 }
 
 function PeriodPreview() {
-  const options = PERIODOS_DESEMPENO.semestrales.slice(0, 2);
   return (
     <div className={mockupStyles.card}>
-      <p className="text-xs font-medium text-foreground">{DESEMPENO.search.period}</p>
-      <div className="grid grid-cols-2 gap-1 rounded-md bg-muted p-1">
-        {(["semestrales", "mensuales"] as const).map(mode => (
-          <span key={mode} className={cn(mockupStyles.action, mode === "semestrales" ? mockupStyles.primary : "border-transparent text-muted-foreground")}>
-            {DESEMPENO.modes[mode]}
-          </span>
-        ))}
+      <p className="text-xs font-medium text-foreground">Empleado encontrado</p>
+      <div className={cn(mockupStyles.field, "text-foreground")}>
+        <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
+        <span>Nombre y número del empleado</span>
       </div>
-      <div className="overflow-hidden rounded-md border bg-background">
-        <div className="flex items-center justify-between gap-2 border-b px-3 py-2 text-xs">
-          <span>{options[0] ?? DESEMPENO.search.period}</span><ChevronDown className="size-4 text-muted-foreground" />
-        </div>
-        {options.map((period, index) => (
-          <div key={period} className={cn("flex items-center justify-between gap-2 px-3 py-2 text-xs", index === 0 ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
-            {period}{index === 0 && <Check className="size-3.5" />}
-          </div>
-        ))}
+      <div className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-xs">
+        <span className="text-muted-foreground">Periodo</span>
+        <span className="font-medium text-foreground">Modalidad · periodo vigente</span>
       </div>
+      <p className="text-xs text-muted-foreground">Se asigna automáticamente al buscar.</p>
     </div>
   );
 }

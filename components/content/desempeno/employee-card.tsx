@@ -25,8 +25,8 @@ export function EmployeeCard({
     {/* ── Header ── */}
     <Card>
       <CardHeader className="space-y-3">
-        <p className="text-xs text-muted-foreground italic leading-relaxed">
-          <strong>Instrucciones para el evaluador:</strong> {DESEMPENO.instructions}
+        <p className="text-xs leading-4 text-muted-foreground">
+          <span className="font-medium text-foreground">Instrucciones para el evaluador:</span> {DESEMPENO.instructions}
       </p>
 
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -35,7 +35,7 @@ export function EmployeeCard({
               <SectionTitle>
                   EVALUACIÓN DE DESEMPEÑO PERSONAL {getTipoLabel(data.tipo)}
             </SectionTitle>
-              <Badge variant="default" className="text-xs">{data.periodo || "—"}</Badge>
+              <Badge variant="default" className="text-xs font-medium">{data.periodo || "—"}</Badge>
           </div>
         </div>
           <img src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" className="h-10 w-auto object-contain" onError={e => {
@@ -46,30 +46,25 @@ export function EmployeeCard({
     </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <InfoField label={DESEMPENO.fields.employeeNumber}>
-            <span className="text-lg font-bold">{data.numero_empleado || "—"}</span>
+            <span className="text-base font-medium leading-6">{data.numero_empleado || "—"}</span>
         </InfoField>
 
           <InfoField label={DESEMPENO.fields.name}>
-            <span className="font-bold">{data.nombre || "—"}</span>
+            <span className="text-base font-medium leading-6">{data.nombre || "—"}</span>
         </InfoField>
 
           <InfoField label={DESEMPENO.fields.position}>
-            <span className="font-bold">{data.puesto || "—"}</span>
+            <span className="text-base font-medium leading-6">{data.puesto || "—"}</span>
         </InfoField>
 
           <InfoField label={DESEMPENO.fields.evaluator}>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1">
-              <div className="flex-1 w-full sm:w-auto">
-                {canEdit ? <ComboboxEvaluador value={data.evaluador_nombre ?? ""} onChange={handleEvaluadorChange} /> : <span className="font-medium" aria-label={`Evaluador: ${data.evaluador_nombre || "sin asignar"}`}>
-                  {data.evaluador_nombre || "—"}
+            <div className="min-w-0">
+              {canEdit ? <ComboboxEvaluador value={data.evaluador_nombre ?? ""} onChange={handleEvaluadorChange} /> : <span className="break-words font-medium" aria-label={`Evaluador: ${data.evaluador_nombre || "sin asignar"}`}>
+                {data.evaluador_nombre || "—"}
               </span>}
             </div>
-              {data.evaluador_puesto && <span className="text-sm text-muted-foreground break-words">
-                  — {data.evaluador_puesto}
-            </span>}
-          </div>
         </InfoField>
       </div>
     </CardContent>

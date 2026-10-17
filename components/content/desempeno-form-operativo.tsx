@@ -11,9 +11,12 @@ import { CommitmentsCard } from "./desempeno/commitments-card";
 import { CompetenciesCard } from "./desempeno/competencies-card";
 import { ResponsibilitiesCard } from "./desempeno/responsibilities-card";
 import { ObjectivesCard } from "./desempeno/objectives-card";
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
+import { PercentageCriterionCard } from "./desempeno/percentage-criterion-card";
+import { CompetencyRatingCard } from "./desempeno/competency-rating-card";
+import { ReviewDateField } from "./desempeno/review-date-field";
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,50 +33,46 @@ interface Props {
 
 const STEPS = ["Datos", "Objetivos", "Responsabilidades", "Competencias", "Revisión"] as const;
 
-function PercentageControl({ id, label, value, noAplica, automatic, onChange }: {
+function PercentageControl({ id, label, value, noAplica, automatic, helpId, showError, onChange }: {
   id: string;
   label: string;
   value: string;
   noAplica?: boolean;
   automatic?: boolean;
+  helpId: string;
+  showError: boolean;
   onChange: (value: string, noAplica?: boolean) => void;
 }) {
-  const helpId = `${id}-help`;
   const pending = !automatic && noAplica !== true && !esPorcentajeValido(value);
-  return <div className="space-y-3">
-    <div className="flex items-center justify-between gap-3">
-      <Label htmlFor={id}>{label}</Label>
-      {automatic && <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">Dato automático</span>}
-    </div>
-    <div className="grid gap-2 sm:grid-cols-[minmax(0,10rem)_auto] sm:items-center">
-      <Input id={id} name={id} type="number" inputMode="numeric" min={0} max={100}
-        value={noAplica ? "" : value === "NA" ? "" : value}
-        onChange={(event) => {
-          const digits = event.target.value.replace(/\D/g, "").slice(0, 3);
-          onChange(digits && Number(digits) > 100 ? "100" : digits, false);
-        }}
-        disabled={noAplica || automatic} readOnly={automatic} aria-describedby={helpId}
-        aria-invalid={pending} className="min-h-11" />
-      {!automatic && <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent">
-        <input type="checkbox" checked={noAplica === true} onChange={(event) => onChange("", event.target.checked)} className="size-4 accent-primary" />
-        No aplica
-      </label>}
-    </div>
-    <p id={helpId} className={cn("text-xs", pending ? "text-destructive" : "text-muted-foreground")}>
-      {automatic ? "Calculado por el sistema para el periodo seleccionado." : pending ? "Captura un entero de 0 a 100 o selecciona No aplica." : "Respuesta registrada."}
-    </p>
+  return <div className="flex flex-wrap items-center gap-2">
+    <Label htmlFor={id} className="mr-auto">{label}</Label>
+    {automatic && <span className="text-xs font-medium text-muted-foreground">Dato automático</span>}
+    <Input id={id} name={id} type="number" inputMode="numeric" min={0} max={100}
+      value={noAplica ? "" : value === "NA" ? "" : value}
+      onChange={(event) => {
+        const digits = event.target.value.replace(/\D/g, "").slice(0, 3);
+        onChange(digits && Number(digits) > 100 ? "100" : digits, false);
+      }}
+      disabled={noAplica || automatic} readOnly={automatic} aria-describedby={helpId}
+      aria-invalid={showError && pending} className={cn("h-11 w-24 shrink-0 text-sm font-medium tabular-nums", showError && pending && "border-destructive")} />
+    {!automatic && <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-sm font-medium hover:bg-muted">
+      <input type="checkbox" checked={noAplica === true} onChange={(event) => onChange("", event.target.checked)} className="size-4 accent-primary" />
+      No aplica
+    </label>}
   </div>;
 }
 
 function StepHeading({ context, title, description }: { context: EvaluationFormContext; title: string; description: string }) {
-  return <div className="space-y-1">
-    <h2 ref={context.headingRef} tabIndex={-1} className="scroll-mt-6 text-xl font-semibold tracking-tight outline-none">{title}</h2>
-    <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+  return <div className="space-y-1 xl:flex xl:items-baseline xl:justify-between xl:gap-6 xl:space-y-0">
+    <h2 ref={context.headingRef} tabIndex={-1} className="scroll-mt-24 text-xl font-semibold tracking-tight outline-none xl:shrink-0">{title}</h2>
+    <p className="text-sm leading-relaxed text-muted-foreground xl:min-w-0 xl:text-right">{description}</p>
   </div>;
 }
 
 export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guardarTooltip, saving }: Props) {
   const formId = useId();
+  const percentageHelpId = `${formId}-percentage-help`;
+  const automaticHelpId = `${formId}-automatic-help`;
   const context = useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, guardarTooltip });
   const { activeView, goNextView, goPrevView, canEdit, stepError } = context;
   const validation = validarEvaluacion(data);
@@ -90,6 +89,8 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
   };
 
   return <form className="space-y-5 print:hidden" onSubmit={submit} noValidate>
+    <p id={percentageHelpId} className="sr-only">Ingresa un porcentaje entero de 0 a 100 o marca No aplica.</p>
+    <p id={automaticHelpId} className="sr-only">Calculado por el sistema para el periodo seleccionado.</p>
 
     {stepError && <div tabIndex={-1} data-step-error={activeView} role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />{stepError}
@@ -98,57 +99,80 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
     {activeView === 1 && <div className="space-y-4"><StepHeading context={context} title="Datos de la evaluación" description="Verifica a la persona, el periodo y selecciona al evaluador responsable." /><EmployeeCard context={context} /></div>}
 
     {activeView === 2 && <div className="space-y-4">
-      <StepHeading context={context} title={`Objetivos (${EVALUATION_WEIGHTS.objetivos * 100}%)`} description="Registra el resultado obtenido para cada meta. Todos los criterios requieren una respuesta." />
-      <div className="grid items-stretch gap-4 md:grid-cols-2">{data.objetivos.map((item, index) => <Card key={`${item.numero}-${index}`} className="h-full"><fieldset>
-        <legend className="px-6 pt-6 text-base font-semibold">Objetivo {item.numero}</legend>
-        <CardHeader className="space-y-2 pt-2"><p className="text-sm leading-relaxed">{item.descripcion}</p><p className="text-sm text-muted-foreground"><strong>Meta:</strong> {item.resultado || "Sin meta definida"}</p></CardHeader>
-        <CardContent><PercentageControl id={`${formId}-objetivo-${index}`} label="Porcentaje obtenido" value={item.porcentaje} noAplica={item.no_aplica} onChange={(value, na) => context.updateObjetivo(index, value, na)} /></CardContent>
-      </fieldset></Card>)}</div>
+      <StepHeading context={context} title={`Objetivos (${EVALUATION_WEIGHTS.objetivos * 100}%)`} description="Ingresa de 0 a 100% o marca No aplica en cada objetivo." />
+      <div className="grid gap-3 lg:auto-rows-fr lg:grid-cols-2">{data.objetivos.map((item, index) => <PercentageCriterionCard
+        key={`${item.numero}-${index}`}
+        title={`Objetivo ${item.numero}`}
+        description={item.descripcion}
+        metadataLabel="Meta"
+        metadata={item.resultado || "Sin meta definida"}
+      >
+        <PercentageControl id={`${formId}-objetivo-${index}`} label="Resultado (%)" value={item.porcentaje} noAplica={item.no_aplica} helpId={percentageHelpId} showError={Boolean(stepError)} onChange={(value, na) => context.updateObjetivo(index, value, na)} />
+      </PercentageCriterionCard>)}</div>
     </div>}
 
     {activeView === 3 && <div className="space-y-4">
-      <StepHeading context={context} title={`Responsabilidades (${EVALUATION_WEIGHTS.cumplimiento * 100}%)`} description="Completa cada criterio. Los datos calculados por el sistema permanecen identificados y bloqueados." />
-      <div className="grid items-stretch gap-4 md:grid-cols-2">{data.cumplimiento_responsabilidades.map((item, index) => {
+      <StepHeading context={context} title={`Responsabilidades (${EVALUATION_WEIGHTS.cumplimiento * 100}%)`} description="Ingresa de 0 a 100% o marca No aplica. Los datos automáticos permanecen bloqueados." />
+      <div className="grid gap-3 lg:auto-rows-fr lg:grid-cols-2">{data.cumplimiento_responsabilidades.map((item, index) => {
         const automatic = data.tipo !== "jefe" && index === CumplimientoOperativoIndex.Asistencia;
-        return <Card key={`${item.descripcion}-${index}`} className="h-full"><fieldset>
-          <legend className="px-6 pt-6 text-base font-semibold">Responsabilidad {index + 1}</legend>
-          <CardHeader className="space-y-2 pt-2"><p className="text-sm leading-relaxed">{item.descripcion}</p><p className="text-xs font-medium text-muted-foreground">Evalúa: {item.evalua}</p></CardHeader>
-          <CardContent><PercentageControl id={`${formId}-responsabilidad-${index}`} label="Porcentaje de cumplimiento" value={item.porcentaje} noAplica={item.no_aplica} automatic={automatic} onChange={(value, na) => context.updateResponsabilidad(index, value, na)} /></CardContent>
-        </fieldset></Card>;
+        return <PercentageCriterionCard
+          key={`${item.descripcion}-${index}`}
+          title={`Responsabilidad ${index + 1}`}
+          description={item.descripcion}
+          metadataLabel="Evalúa"
+          metadata={item.evalua}
+        >
+          <PercentageControl id={`${formId}-responsabilidad-${index}`} label="Cumplimiento (%)" value={item.porcentaje} noAplica={item.no_aplica} automatic={automatic} helpId={automatic ? automaticHelpId : percentageHelpId} showError={Boolean(stepError)} onChange={(value, na) => context.updateResponsabilidad(index, value, na)} />
+        </PercentageCriterionCard>;
       })}</div>
     </div>}
 
     {activeView === 4 && <div className="space-y-4">
-      <StepHeading context={context} title={`Competencias (${EVALUATION_WEIGHTS.competencias * 100}%)`} description="Selecciona una calificación de 0 a 4 para cada competencia. El cero es una respuesta válida." />
-      {data.competencias.map((item, index) => <Card key={`${item.nombre}-${index}`}><fieldset>
-        <legend className="px-6 pt-6 text-base font-semibold">{item.nombre}</legend>
-        <CardHeader className="space-y-2 pt-2"><p className="text-sm leading-relaxed text-muted-foreground">{item.descripcion}</p></CardHeader>
-        <CardContent><div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-          {ESCALA_COMPETENCIAS.map(({ valor, etiqueta }) => <label key={valor} className={cn("flex min-h-14 cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors focus-within:ring-2 focus-within:ring-ring sm:flex-col sm:justify-center sm:text-center", item.evaluada && item.calificacion === valor && "border-primary bg-primary/10")}>
-            <input type="radio" name={`${formId}-competencia-${index}`} value={valor} checked={item.evaluada === true && item.calificacion === valor} onChange={() => context.updateCompetencia(index, valor)} className="size-4 accent-primary" />
-            <span><strong className="block text-base">{valor}</strong>{etiqueta}</span>
-          </label>)}
-        </div>{!item.evaluada && <p className="mt-3 text-xs text-destructive">Selecciona una calificación.</p>}</CardContent>
-      </fieldset></Card>)}
+      <StepHeading context={context} title={`Competencias (${EVALUATION_WEIGHTS.competencias * 100}%)`} description="Selecciona una calificación para cada competencia. El cero es una respuesta válida." />
+      <div role="note" aria-label="Escala de competencias" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs leading-4 text-muted-foreground">
+        <span className="font-medium text-foreground">Escala</span>
+        {ESCALA_COMPETENCIAS.map(({ valor, etiqueta }) => <span key={valor}>
+          <span className="font-medium text-foreground">{valor}</span> {etiqueta}
+        </span>)}
+      </div>
+      <div className="space-y-3">{data.competencias.map((item, index) => <CompetencyRatingCard
+        key={`${item.nombre}-${index}`}
+        item={item}
+        name={`${formId}-competencia-${index}`}
+        showError={Boolean(stepError)}
+        onChange={(value) => context.updateCompetencia(index, value)}
+      />)}</div>
     </div>}
 
     {activeView === 5 && <div className="space-y-4">
       <StepHeading context={context} title="Revisión y compromisos" description="Revisa el resultado y registra los acuerdos de seguimiento antes de guardar." />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card><CardHeader><h3 className="font-semibold">Compromisos y observaciones</h3></CardHeader><CardContent className="space-y-4">
-          <div className="space-y-2"><Label htmlFor={`${formId}-compromisos`}>Compromisos / Acuerdos{context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA ? " (obligatorio)" : ""}</Label><Textarea id={`${formId}-compromisos`} value={data.compromisos} onChange={(e) => context.updateReview({ compromisos: e.target.value })} aria-required={context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA} className="min-h-28" /></div>
-          <div className="space-y-2"><Label htmlFor={`${formId}-fecha`}>Fecha de revisión</Label><Input id={`${formId}-fecha`} type="date" value={data.fecha_revision.includes("/") ? data.fecha_revision.split("/").reverse().join("-") : data.fecha_revision} onChange={(e) => context.updateReview({ fecha_revision: e.target.value ? e.target.value.split("-").reverse().join("/") : "" })} /></div>
-          <div className="space-y-2"><Label htmlFor={`${formId}-observaciones`}>Observaciones</Label><Textarea id={`${formId}-observaciones`} value={data.observaciones} onChange={(e) => context.updateReview({ observaciones: e.target.value })} /></div>
-        </CardContent></Card>
-        <div className="space-y-4"><ScoreCard context={context} /><Card><CardContent className="pt-6"><h3 className="font-semibold">Estado de la evaluación</h3><ul className="mt-3 space-y-2 text-sm">{STEPS.slice(0, 4).map((label, index) => <li key={label} className="flex items-center gap-2"><span className={cn("flex size-5 items-center justify-center rounded-full border", validation.pasos[index] && "border-primary bg-primary text-primary-foreground")}>{validation.pasos[index] ? <Check className="size-3" /> : index + 1}</span>{label}</li>)}</ul></CardContent></Card></div>
-      </div>
-      {(guardarTooltip || !validation.valida) && <p role="status" className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">{!validation.valida ? validation.errores[0] : guardarTooltip}</p>}
+      <Card><CardContent className="space-y-5 p-4 sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-border pb-4">
+          <h3 className="text-sm font-medium text-muted-foreground">Calificación del periodo</h3>
+          <p className="text-3xl font-semibold tracking-tight tabular-nums text-foreground" aria-live="polite" aria-atomic="true">{context.ponderacion.calificacionFinal}%</p>
+        </div>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <Label htmlFor={`${formId}-compromisos`}>Compromisos y acuerdos</Label>
+            {context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA && <span id={`${formId}-compromisos-hint`} className="text-xs text-muted-foreground">Obligatorios si la calificación es menor a {UMBRAL_CALIFICACION_APROBATORIA}%</span>}
+          </div>
+          <Textarea id={`${formId}-compromisos`} value={data.compromisos} onChange={(e) => context.updateReview({ compromisos: e.target.value })} aria-required={context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA} aria-describedby={context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA ? `${formId}-compromisos-hint` : undefined} className="min-h-24" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <ReviewDateField id={`${formId}-fecha`} value={data.fecha_revision} onChange={fecha_revision => context.updateReview({ fecha_revision })} />
+          <div className="min-w-0 space-y-2">
+            <div className="flex min-h-5 items-center"><Label htmlFor={`${formId}-observaciones`} className="leading-5">Observaciones</Label></div>
+            <Textarea id={`${formId}-observaciones`} value={data.observaciones} onChange={(e) => context.updateReview({ observaciones: e.target.value })} className="h-36 resize-none" />
+          </div>
+        </div>
+      </CardContent></Card>
+      {guardarTooltip && <p role="status" className="text-sm text-muted-foreground">{guardarTooltip}</p>}
     </div>}
 
-    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3">
-      <Button type="button" variant="outline" size="lg" onClick={goPrevView} disabled={activeView === 1 || saving} className="min-h-11 min-w-0 flex-1 sm:flex-none"><ChevronLeft className="mr-2 size-4" />Atrás</Button>
-      {activeView < STEPS.length ? <Button type="submit" size="lg" className="min-h-11 min-w-0 flex-1 sm:flex-none">Siguiente<ChevronRight className="ml-2 size-4" /></Button>
-        : <Button type="submit" size="lg" className="min-h-11 min-w-0 flex-1 sm:flex-none" disabled={!validation.valida || guardarDisabled || saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}{saving ? "Guardando…" : "Guardar evaluación"}</Button>}
+    <div role="group" aria-label="Navegación de la evaluación" className="flex items-center justify-between gap-3">
+      <Button type="button" variant="outline" onClick={goPrevView} disabled={activeView === 1 || saving} className="min-h-11 min-w-0 flex-1 sm:flex-none"><ChevronLeft className="size-4" />Atrás</Button>
+      {activeView < STEPS.length ? <Button type="submit" className="min-h-11 min-w-0 flex-1 sm:flex-none">Siguiente<ChevronRight className="size-4" /></Button>
+        : <Button type="submit" className="min-h-11 min-w-0 flex-1 sm:flex-none" disabled={!validation.valida || guardarDisabled || saving}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Guardando…" : "Guardar evaluación"}</Button>}
     </div>
   </form>;
 }

@@ -1,31 +1,30 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { X } from "lucide-react"
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer"
+import { SystemInfoFooter } from "@/components/system-info-footer"
 import { cn } from "@/lib/utils"
-import { NAV_SECTIONS, findActiveLeaf, isActiveRoute, type NavSection } from "@/lib/navigation"
-import { useRole } from "@/lib/hooks"
-import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
-import { useIsMobile } from "@/components/ui/responsive-shell"
+import { HOME_PATH, MOBILE_NAV_ID, NAV_SECTIONS, findActiveLeaf, isActiveRoute } from "@/lib/navigation"
 import { AppMark } from "@/components/app-transition"
+import { useRole, type AppRole } from "@/lib/hooks/useRole"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Matches Tailwind's `md` boundary; layout visibility itself stays in CSS.
+const DESKTOP_QUERY = "(min-width: 48rem)"
 
-/** Matches the `md:` breakpoint used by Dashboard's flex layout. */
-const MOBILE_BREAKPOINT = 768
-
-// Traditional navigation language: restrained backgrounds, compact radii and
-// clear hierarchy without floating surfaces or shadows.
 const rowIdle = "text-muted-foreground hover:bg-accent hover:text-foreground"
-const rowActiveSolid = "bg-brand/10 text-brand-text font-medium"
-
-// ─── Hook (public API consumed by Dashboard) ──────────────────────────────────
+const rowActiveSolid = "bg-muted font-medium text-foreground"
+const navLinkBase = "flex min-h-11 w-full items-center rounded-md px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const BRAND_NAME = "ViñoPlastic"
+const ROLE_LABELS: Record<AppRole, string> = {
+  dev: "Desarrollador",
+  admin: "Administrador",
+  evaluador: "Evaluador",
+}
 
 export interface SidebarApi {
-  isMobileView: boolean
   showMobileSidebar: boolean
   openMobileSidebar: () => void
 }
@@ -33,62 +32,72 @@ export interface SidebarApi {
 export function useSidebar(): SidebarApi & {
   setShowMobileSidebar: (v: boolean) => void
 } {
-  const isMobileView = useIsMobile(MOBILE_BREAKPOINT)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
 
   const openMobileSidebar = useCallback(() => setShowMobileSidebar(true), [])
 
-  return { isMobileView, showMobileSidebar, setShowMobileSidebar, openMobileSidebar }
+  useEffect(() => {
+    const desktop = window.matchMedia(DESKTOP_QUERY)
+    const closeOnDesktop = () => {
+      if (desktop.matches) setShowMobileSidebar(false)
+    }
+    desktop.addEventListener("change", closeOnDesktop)
+    closeOnDesktop()
+    return () => desktop.removeEventListener("change", closeOnDesktop)
+  }, [])
+
+  return { showMobileSidebar, setShowMobileSidebar, openMobileSidebar }
 }
 
-// ─── Role filtering ───────────────────────────────────────────────────────────
-
-function useVisibleSections(isEvaluador: boolean, isGuest: boolean): NavSection[] {
-  return useMemo(() => {
-    if (isGuest) return NAV_SECTIONS.filter((section) => section.public)
-    if (!isEvaluador) return NAV_SECTIONS
-    return NAV_SECTIONS
-      .map((section) => ({
-        ...section,
-        items: section.items?.filter((leaf) => isEvaluadorAllowedRoute(leaf.href)),
-      }))
-      .filter((section) =>
-        (section.href && isEvaluadorAllowedRoute(section.href)) ||
-        (section.items?.length ?? 0) > 0
-      )
-  }, [isEvaluador, isGuest])
-}
-
-// ─── Shared pieces ────────────────────────────────────────────────────────────
-
-function BrandMark({ href, label }: { href: string; label: string }) {
+function SidebarBrand({ role, onClose }: { role: AppRole; onClose?: () => void }) {
   return (
-    <Link
-      href={href}
-      aria-label={`Ir a ${label}`}
-      className="flex size-11 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <AppMark className="size-9 dark:invert" />
-    </Link>
+    <div className="relative flex h-[var(--workspace-header-height)] shrink-0 items-center px-3">
+      <Link
+        href={HOME_PATH}
+        onClick={onClose}
+        aria-label={`${BRAND_NAME}, ir a Inicio`}
+        className={cn(
+          "flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-border bg-card px-2 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          onClose && "mr-11",
+        )}
+      >
+        <AppMark className="size-9 shrink-0 dark:invert" />
+        <span className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-sm font-semibold text-foreground">{BRAND_NAME}</span>
+          <span className="truncate text-xs font-normal text-muted-foreground">{ROLE_LABELS[role]}</span>
+        </span>
+      </Link>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar menú"
+          className="absolute right-3 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
+      )}
+    </div>
   )
 }
+
 /**
  * Full navigation tree — every access always visible, grouped under uppercase
  * section headings. Shared by the desktop panel and the mobile drawer.
  */
 function NavTree({
-  sections,
   pathname,
   onNavigate,
+  role,
 }: {
-  sections: NavSection[]
   pathname: string
   onNavigate?: () => void
+  role: AppRole
 }) {
   return (
-    <nav aria-label="Secciones" className="flex-1 overflow-x-hidden overflow-y-auto px-3 pb-4 scrollbar-thin">
+    <nav aria-label="Secciones" className="min-h-0 flex-1 px-3 pb-4 max-md:overflow-x-hidden max-md:overflow-y-auto max-md:scrollbar-thin">
       <ul className="space-y-1 pt-1">
-        {sections.map((section) => {
+        {NAV_SECTIONS.map((section) => {
           const activeLeaf = findActiveLeaf(section.items, pathname)
 
           // Section without children → single direct row.
@@ -101,17 +110,18 @@ function NavTree({
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    navLinkBase,
+                    "gap-3",
                     active ? rowActiveSolid : rowIdle,
                   )}
                 >
                   <span
                     className={cn(
                       "grid size-6 shrink-0 place-items-center rounded-md",
-                      active ? "text-brand-text" : "text-muted-foreground",
+                      active ? "text-foreground" : "text-muted-foreground",
                     )}
                   >
-                    <section.icon size={16} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
+                    <section.icon className="size-4" aria-hidden="true" />
                   </span>
                   <span className="truncate">{section.label}</span>
                 </Link>
@@ -122,12 +132,12 @@ function NavTree({
           // Grouped section → heading + always-visible links.
           return (
             <li key={section.label} className="pt-3">
-              <p className="flex items-center gap-2 px-1 pb-1 font-mono text-[11px] font-medium uppercase text-muted-foreground">
-                <section.icon size={14} aria-hidden="true" />
+              <p className="flex items-center gap-2 px-1 pb-1 font-mono text-xs font-medium uppercase text-muted-foreground">
+                <section.icon className="size-3.5" aria-hidden="true" />
                 {section.label}
               </p>
               <ul className="ml-4 space-y-0.5 border-l border-border/70 pl-2">
-                {section.items?.map((leaf) => {
+                {section.items?.filter((leaf) => !leaf.devOnly || role === "dev").map((leaf) => {
                   const active = leaf.href === activeLeaf?.href
                   return (
                     <li key={leaf.href}>
@@ -136,8 +146,8 @@ function NavTree({
                         onClick={onNavigate}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          "h-9",
+                          navLinkBase,
+                          "gap-2.5",
                           active ? rowActiveSolid : rowIdle,
                         )}
                       >
@@ -145,7 +155,7 @@ function NavTree({
                           aria-hidden="true"
                           className={cn(
                             "size-1.5 shrink-0 rounded-[2px]",
-                            active ? "bg-brand" : "bg-border",
+                            active ? "bg-foreground" : "bg-border",
                           )}
                         />
                         <span className="truncate">{leaf.label}</span>
@@ -165,86 +175,51 @@ function NavTree({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface SidebarProps {
-  isMobileView: boolean
   showMobileSidebar: boolean
   setShowMobileSidebar: (v: boolean) => void
-  isEvaluador?: boolean
-  isGuest?: boolean
 }
 
 export default function Sidebar({
-  isMobileView,
   showMobileSidebar,
   setShowMobileSidebar,
-  isEvaluador = false,
-  isGuest = false,
 }: SidebarProps) {
   const pathname = usePathname()
-  const sections = useVisibleSections(isEvaluador, isGuest)
-  const brandDestination = isGuest ? sections.find((section) => section.public) : undefined
-  const brandHref = brandDestination?.href ?? "/inicio"
-  const brandLabel = brandDestination?.label ?? "Inicio"
+  const { role } = useRole()
   const closeMobile = useCallback(() => setShowMobileSidebar(false), [setShowMobileSidebar])
-
-  const isDesktop = !isMobileView
 
   return (
     <>
       {/* ── Mobile drawer (focus trap + Escape + scroll lock via Radix/vaul) ── */}
-      {isMobileView && (
-        <Drawer direction="left" open={showMobileSidebar} onOpenChange={(open) => !open && closeMobile()}>
-          <DrawerContent
-            raw
-            showHandle={false}
-            // Anchor BOTH top and bottom so the panel always spans the viewport.
-            className="inset-y-0 left-0 right-auto mt-0 w-[286px] max-w-[86vw] rounded-none border-y-0 border-l-0"
-          >
-            <div
-              className="flex h-full flex-col bg-background"
-              style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-            >
-              {/* Accessible drawer title (visually replaced by the brand mark) */}
-              <DrawerTitle className="sr-only">Menú principal</DrawerTitle>
-              <DrawerDescription className="sr-only">
-                Navegación entre las secciones de la aplicación
-              </DrawerDescription>
+      <Drawer direction="left" shouldScaleBackground={false} open={showMobileSidebar} onOpenChange={setShowMobileSidebar}>
+        <DrawerContent
+          id={MOBILE_NAV_ID}
+          raw
+          fullViewport
+          showHandle={false}
+          className="inset-y-0 left-0 right-auto mt-0 w-[var(--workspace-sidebar-width)] max-w-[calc(100vw-2rem)] rounded-none border-y-0 border-l-0"
+        >
+          <div className="safe-top flex h-full min-h-0 flex-col bg-background">
+            <DrawerTitle className="sr-only">Menú principal</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Navegación entre las secciones de la aplicación
+            </DrawerDescription>
 
-              <div className="relative flex h-[56px] shrink-0 items-center justify-center px-2">
-                <BrandMark href={brandHref} label={brandLabel} />
-                <button
-                  type="button"
-                  onClick={closeMobile}
-                  aria-label="Cerrar menú"
-                  className="absolute right-2 flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <X size={18} aria-hidden="true" />
-                </button>
-              </div>
-
-              <NavTree sections={sections} pathname={pathname} onNavigate={closeMobile} />
-
-              <div
-                className="shrink-0"
-                style={{ height: "env(safe-area-inset-bottom, 0px)" }}
-                aria-hidden="true"
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
+            <SidebarBrand role={role} onClose={closeMobile} />
+            <NavTree pathname={pathname} onNavigate={closeMobile} role={role} />
+            <SystemInfoFooter className="safe-bottom-content" />
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* ── Desktop sidebar ── */}
-      {isDesktop && (
-        <aside
-          aria-label="Menú principal"
-          className="my-2 flex w-60 shrink-0 flex-col overflow-hidden bg-background"
-        >
-          <div className="flex h-[60px] shrink-0 items-center justify-center">
-            <BrandMark href={brandHref} label={brandLabel} />
-          </div>
-          <NavTree sections={sections} pathname={pathname} />
-        </aside>
-      )}
+      <aside
+        aria-label="Menú principal"
+        className="workspace-sidebar hidden flex-col bg-background md:flex"
+      >
+        <SidebarBrand role={role} />
+        <NavTree pathname={pathname} role={role} />
+        <SystemInfoFooter />
+      </aside>
     </>
   )
 }

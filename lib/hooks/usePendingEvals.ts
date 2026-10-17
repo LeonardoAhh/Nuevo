@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { daysFromToday } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
 import { normalizeDepartamento } from "@/lib/catalogo"
+import { cargarPeriodosGuardados, tieneEvaluacionGuardada } from "@/lib/desempeno/evaluaciones-guardadas"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -43,15 +44,26 @@ export interface DeptGroup {
 
 export function usePendingEvals(filterDepartamentos?: string[] | null) {
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [deptGroups, setDeptGroups] = useState<DeptGroup[]>([])
   const [totalEmployees, setTotalEmployees] = useState(0)
   const [totalEvals, setTotalEvals] = useState(0)
   const [totalVencidas, setTotalVencidas] = useState(0)
   const [totalProximas, setTotalProximas] = useState(0)
   const [totalATiempo, setTotalATiempo] = useState(0)
+  const requestId = useRef(0)
 
-  const cargar = useCallback(async () => {
-    setLoading(true)
+  const departmentKey = JSON.stringify(filterDepartamentos?.length
+    ? filterDepartamentos.map(normalizeDepartamento).sort()
+    : null)
+
+  const load = useCallback(async (showSkeleton: boolean) => {
+    const currentRequest = ++requestId.current
+    if (showSkeleton) {
+      setLoading(true)
+      setRefreshing(false)
+    }
+    else setRefreshing(true)
     try {
       const COLS = [
         "id",
@@ -100,14 +112,12 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
         eval_3_calificacion: number | null
       }>
 
-      // Scope por departamento: si el evaluador tiene departamentos
-      // asignados, solo se consideran empleados de esas áreas.
-      const deptFiltro = filterDepartamentos && filterDepartamentos.length > 0
-        ? filterDepartamentos.map(normalizeDepartamento)
-        : null
+      // Filtro opcional para vistas administrativas; RLS delimita a evaluadores.
+      const deptFiltro = JSON.parse(departmentKey) as string[] | null
       const registrosScope = deptFiltro
         ? registros.filter((r) => deptFiltro.includes(normalizeDepartamento(r.departamento)))
         : registros
+      const periodosGuardados = await cargarPeriodosGuardados(registrosScope.map(r => r.numero))
 
       // Build one EmployeePending per employee (only if they have pending evals)
       const employeeMap = new Map<string, EmployeePending>()
@@ -128,7 +138,7 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
 
         const pendingEvals: PendingEvalEntry[] = []
         for (const [fecha, cal, periodo] of evalDefs) {
-          if (!fecha || cal != null) continue
+          if (!fecha || cal != null || tieneEvaluacionGuardada(periodosGuardados, r.numero, fecha)) continue
           const diff = daysFromToday(fecha)
           if (diff === null) continue
           pendingEvals.push({ periodo, fecha, diasDiff: diff })
@@ -180,6 +190,7 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
         }))
         .sort((a, b) => a.departamento.localeCompare(b.departamento, "es"))
 
+      if (currentRequest !== requestId.current) return
       setDeptGroups(groups)
       setTotalEmployees(employeeMap.size)
       setTotalEvals(evalCount)
@@ -187,14 +198,20 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
       setTotalProximas(proximasCount)
       setTotalATiempo(aTiempoCount)
     } catch (err) {
+      if (currentRequest !== requestId.current) return
       console.error("usePendingEvals:", err)
       notify.error("No se pudieron cargar las evaluaciones pendientes")
     } finally {
-      setLoading(false)
+      if (currentRequest === requestId.current) {
+        if (showSkeleton) setLoading(false)
+        else setRefreshing(false)
+      }
     }
-  }, [filterDepartamentos])
+  }, [departmentKey])
 
-  useEffect(() => { cargar() }, [cargar])
+  const cargar = useCallback(() => load(false), [load])
 
-  return { loading, deptGroups, totalEmployees, totalEvals, totalVencidas, totalProximas, totalATiempo, cargar }
+  useEffect(() => { void load(true) }, [load])
+
+  return { loading, refreshing, deptGroups, totalEmployees, totalEvals, totalVencidas, totalProximas, totalATiempo, cargar }
 }

@@ -2,12 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CircleHelp } from "lucide-react";
-import { DESEMPENO } from "@/lib/desempeno/presentation";
-import { motion } from "framer-motion";
+import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 interface ActionButtonProps {
@@ -66,7 +62,7 @@ export function NoticeCard({
   </div>;
 }
 
-// ─── Botón "Guía" ─────────────────────────────────────────────────────────────
+// ─── Botón de práctica ────────────────────────────────────────────────────────
 
 interface GuiaButtonProps {
   onClick: () => void;
@@ -76,62 +72,11 @@ export function GuiaButton({
 }: GuiaButtonProps) {
   return <Tooltip>
     <TooltipTrigger asChild>
-      <Button type="button" variant="outline" onClick={onClick} aria-label="Ver guía de evaluación" aria-haspopup="dialog" className="w-10 shrink-0 gap-2 px-0 sm:w-auto sm:px-4">
-        <CircleHelp className="size-4" aria-hidden="true" />
-        <span className="sr-only sm:not-sr-only">{DESEMPENO.actions.guide}</span>
+      <Button type="button" variant="default" onClick={onClick} aria-label="Practicar evaluación con ejemplo" aria-haspopup="dialog" className="min-h-11 w-11 shrink-0 gap-2 px-0 sm:w-auto sm:px-4">
+        <GraduationCap className="size-4" aria-hidden="true" />
+        <span className="sr-only sm:not-sr-only">Practicar</span>
       </Button>
     </TooltipTrigger>
-    <TooltipContent>Ver guía de evaluación</TooltipContent>
+    <TooltipContent>Practicar evaluación con ejemplo</TooltipContent>
   </Tooltip>;
-}
-
-// ─── Skeletons ──────────────────────────────────────────────────────────────
-
-export function DesempenoFormSkeleton() {
-  return <motion.div initial={{
-    opacity: 0
-  }} animate={{
-    opacity: 1
-  }} exit={{
-    opacity: 0
-  }} className="space-y-6">
-    <Card>
-      <CardHeader className="pb-3 border-b">
-        <Skeleton className="h-6 w-48 mb-2" />
-        <Skeleton className="h-4 w-32" />
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-full max-w-52" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-full max-w-52" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-full max-w-52" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-full max-w-52" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-6">
-        <Skeleton className="h-72 w-full rounded-xl" />
-        <Skeleton className="h-72 w-full rounded-xl" />
-      </div>
-      <div className="space-y-6">
-        <Skeleton className="h-72 w-full rounded-xl" />
-        <Skeleton className="h-36 w-full rounded-xl" />
-        <Skeleton className="h-52 w-full rounded-xl" />
-      </div>
-    </div>
-  </motion.div>;
 }

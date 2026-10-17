@@ -1,28 +1,50 @@
 "use client"
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Loader2, RefreshCw, Sparkles, X } from "lucide-react"
+import { Download, Loader2, RefreshCw, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAppUpdate } from "@/lib/hooks/useAppUpdate"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-/**
- * Floating, non-blocking notice shown when a new service worker version
- * is installed and ready to activate. Powered by the shared useAppUpdate
- * hook so the banner, the header button, and any future consumer all see
- * the same status without duplicating SW event listeners.
- *
- * Sizing relies on the Tailwind type scale (rem-based), so it follows the
- * app's font-size setting; colors come exclusively from theme tokens
- * (accent color aware).
- */
+type BannerPreview = "available" | "applying" | null
+
+type BannerPreviewWindow = Window & {
+  __previewUpdateBanner?: () => void
+  __hideUpdateBanner?: () => void
+}
+
 export function UpdateBanner() {
   const { status, applyUpdate } = useAppUpdate()
   const [dismissed, setDismissed] = useState(false)
+  const [preview, setPreview] = useState<BannerPreview>(null)
   const reduced = useReducedMotion()
 
-  const visible = status === "available" && !dismissed
-  const applying = status === "applying"
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return
+
+    const previewWindow = window as BannerPreviewWindow
+    previewWindow.__previewUpdateBanner = () => {
+      setDismissed(false)
+      setPreview("available")
+    }
+    previewWindow.__hideUpdateBanner = () => setPreview(null)
+
+    return () => {
+      delete previewWindow.__previewUpdateBanner
+      delete previewWindow.__hideUpdateBanner
+    }
+  }, [])
+
+  const applying = preview === "applying" || (preview === null && status === "applying")
+  const visible = (preview !== null || status === "available" || applying) && !dismissed
+
+  const handleUpdate = () => {
+    if (preview !== null) {
+      setPreview("applying")
+      return
+    }
+    applyUpdate()
+  }
 
   return (
     <AnimatePresence>
@@ -34,67 +56,45 @@ export function UpdateBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-x-4 bottom-4 z-50 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm"
+          className="fixed inset-x-4 top-[calc(var(--workspace-header-height)+1rem)] z-50 sm:inset-x-auto sm:right-6 sm:w-[var(--notice-width)]"
         >
-          <div className="rounded-md border border-border bg-card p-4 shadow-[0_2px_2px_hsl(0_0%_0%/0.04),0_8px_16px_-4px_hsl(0_0%_0%/0.10)]">
-            <div className="flex items-start gap-3">
-              {/* Icon tile */}
-              <span className="grid size-10 shrink-0 place-items-center rounded-md border border-primary/25 bg-primary/10 text-primary">
-                <Sparkles className="size-5" aria-hidden="true" />
-              </span>
-
-              {/* Copy */}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Nueva versión disponible
-                </p>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                  Actualiza para aplicar los cambios más recientes.
-                </p>
-
-                {/* Actions */}
-                <div className="mt-3 flex items-center gap-2">
-                  <Button size="sm" onClick={applyUpdate} disabled={applying}>
-                    {applying ? (
-                      <>
-                        <Loader2 className="animate-spin" aria-hidden="true" />
-                        Actualizando…
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw aria-hidden="true" />
-                        Actualizar
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDismissed(true)}
-                    disabled={applying}
-                    aria-label="Cerrar aviso de actualización"
-                  >
-                    Más tarde
-                  </Button>
-                </div>
-              </div>
-
-              {/* Close button — top right */}
-              <button
-                type="button"
-                onClick={() => setDismissed(true)}
-                disabled={applying}
-                className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Cerrar aviso de actualización"
-              >
-                <X className="size-4" aria-hidden="true" />
-              </button>
+          <div className="ui-floating-surface relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 p-3 pr-12">
+            <div className="col-span-2 flex min-w-0 items-center gap-2">
+              <Download className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <p className="min-w-0 truncate text-sm font-semibold leading-5 text-foreground">
+                {applying ? "Actualizando…" : "Actualización disponible"}
+              </p>
             </div>
 
-            {/* Screen-reader-only completion cue while the reload settles */}
-            <span className="sr-only" aria-live="polite">
-              {applying ? "Actualización en proceso, la página se recargará." : ""}
-            </span>
+            <p className="min-w-0 truncate text-xs leading-4 text-muted-foreground">
+              {applying ? "Recargando…" : "Lista para instalar."}
+            </p>
+
+            <Button type="button" size="sm" onClick={handleUpdate} disabled={applying}>
+              {applying ? (
+                <>
+                  <Loader2 className="animate-spin" aria-hidden="true" />
+                  Actualizando…
+                </>
+              ) : (
+                <>
+                  <RefreshCw aria-hidden="true" />
+                  Actualizar
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => setDismissed(true)}
+              disabled={applying}
+              className="absolute right-1 top-1 size-10 text-muted-foreground hover:text-foreground"
+              aria-label="Cerrar aviso de actualización"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </Button>
           </div>
         </motion.div>
       )}

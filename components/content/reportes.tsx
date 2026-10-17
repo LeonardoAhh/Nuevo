@@ -209,7 +209,7 @@ export default function ReportesContent() {
         </Button>
       </div>
 
-      <Card className="border-border/50 shadow-sm flex flex-col h-[calc(100vh-220px)] sm:h-[calc(100vh-200px)] min-h-[400px]">
+      <Card className="border-border">
         <CardHeader className="p-4 border-b border-border/50 bg-muted/20 flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative w-full sm:w-96">
@@ -233,13 +233,13 @@ export default function ReportesContent() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0 flex-1 overflow-y-auto bg-background scrollbar-thin">
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center items-center h-full min-h-[200px]">
+            <div className="flex min-h-48 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/50" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex justify-center items-center h-full min-h-[200px] text-muted-foreground">
+            <div className="flex min-h-48 items-center justify-center text-muted-foreground">
               <p>No se encontraron colaboradores.</p>
             </div>
           ) : (

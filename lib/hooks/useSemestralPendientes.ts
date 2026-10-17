@@ -33,14 +33,14 @@ export interface SemestralDeptGroup {
 
 /**
  * Avance de evaluaciones SEMESTRALES del personal de planta (`employees`),
- * acotado a los departamentos del evaluador.
+ * acotado por RLS a las personas permitidas para la cuenta evaluadora.
  *
  * Para el `periodo` semestral indicado, cada empleado queda en uno de:
  *  - completado: ya existe `evaluaciones_desempeno` para ese periodo (muestra %).
  *  - no_elegible: < 3 meses de antigüedad al cierre del periodo.
  *  - pendiente: elegible y sin evaluación guardada.
  */
-export function useSemestralPendientes(periodo: string, filterDepartamentos?: string[] | null) {
+export function useSemestralPendientes(periodo: string, filterDepartamentos?: string[] | null, enabled = true) {
   const [loading, setLoading] = useState(true)
   const [deptGroups, setDeptGroups] = useState<SemestralDeptGroup[]>([])
   const [totalEmployees, setTotalEmployees] = useState(0)
@@ -65,7 +65,7 @@ export function useSemestralPendientes(periodo: string, filterDepartamentos?: st
         fecha_ingreso: string | null
       }>
 
-      // Scope por departamento del evaluador
+      // Filtro opcional para vistas administrativas; RLS delimita a evaluadores.
       const deptFiltro = filterDepartamentos && filterDepartamentos.length > 0
         ? filterDepartamentos.map(normalizeDepartamento)
         : null
@@ -151,7 +151,7 @@ export function useSemestralPendientes(periodo: string, filterDepartamentos?: st
     }
   }, [periodo, filterDepartamentos])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => { if (enabled) cargar() }, [cargar, enabled])
 
   return { loading, deptGroups, totalEmployees, totalPendientes, cargar }
 }

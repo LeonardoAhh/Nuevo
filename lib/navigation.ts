@@ -10,6 +10,7 @@ import { Award, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
 export interface NavLeaf {
   label: string
   href: string
+  devOnly?: boolean
 }
 
 export interface NavSection {
@@ -18,12 +19,16 @@ export interface NavSection {
   icon: LucideIcon
   /** Direct link when the section has no children. */
   href?: string
-  public?: boolean
   items?: NavLeaf[]
 }
 
+export const HOME_PATH = "/inicio"
+export const LOGIN_PATH = "/login"
+export const SETTINGS_PATH = "/settings"
+export const MOBILE_NAV_ID = "workspace-mobile-navigation"
+
 export const NAV_SECTIONS: NavSection[] = [
-  { label: "Inicio", icon: LayoutDashboard, href: "/inicio" },
+  { label: "Inicio", icon: LayoutDashboard, href: HOME_PATH },
   {
     label: "Personal",
     icon: UserPlus,
@@ -49,6 +54,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Evaluaciones", href: "/desempeno" },
       { label: "Cumplimiento", href: "/desempeno/cumplimiento" },
+      { label: "Asignaciones", href: "/desempeno/asignaciones", devOnly: true },
       { label: "Compromisos", href: "/desempeno/seguimiento" },
       { label: "Guía Evaluador", href: "/guia-evaluador" },
     ],
@@ -60,7 +66,7 @@ export const NAV_SECTIONS: NavSection[] = [
  * but still need a display title in the header.
  */
 const EXTRA_ROUTE_LABELS: Record<string, string> = {
-  "/settings": "Configuración",
+  [SETTINGS_PATH]: "Configuración",
   "/ingresos-semanales": "Ingresos Semanales",
   "/whatsapp": "WhatsApp Bot",
   "/desempeno/pendientes": "Evaluaciones Pendientes",

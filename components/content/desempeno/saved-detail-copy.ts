@@ -10,5 +10,4 @@ export const SAVED_DETAIL = {
   noScore: "Sin calificación",
   noPeriod: "Sin periodo",
   empty: "No hay evaluaciones guardadas para este empleado.",
-  count: (total: number) => `${total} ${total === 1 ? "evaluación" : "evaluaciones"}`,
 } as const;

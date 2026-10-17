@@ -1,28 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, CircleHelp, X } from "lucide-react";
+import { GraduationCap, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { GUIDE_COPY, GUIDE_STEPS } from "./desempeno/guide-steps";
-import { GuideProgress } from "./desempeno/guide-progress";
-import { GuideStepContent } from "./desempeno/guide-step-content";
+import { EvaluationTutorial } from "./desempeno/evaluation-tutorial";
 import { useEvaluationReducedMotion } from "./desempeno/use-evaluation-motion";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "desempeno-guia-vista";
-export function guiaYaVista(): boolean {
-  try {
-    return !!localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return false;
-  }
-}
-function marcarGuiaVista(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, "1");
-  } catch { /* SSR / modo privado */ }
-}
 
 interface DesempenoGuiaProps {
   open: boolean;
@@ -30,12 +15,10 @@ interface DesempenoGuiaProps {
 }
 
 export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
-  const [step, setStep] = useState(0);
+  const [mode, setMode] = useState<"intro" | "practice">("intro");
   const titleRef = useRef<HTMLHeadingElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useEvaluationReducedMotion();
-  const isLast = step === GUIDE_STEPS.length - 1;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -43,12 +26,7 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
     return () => root.classList.remove("guia-open");
   }, [open]);
 
-  const goTo = (next: number) => {
-    setStep(Math.max(0, Math.min(GUIDE_STEPS.length - 1, next)));
-    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
-  };
   const handleClose = () => {
-    marcarGuiaVista();
     onClose();
   };
 
@@ -56,7 +34,9 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
     <Dialog open={open} onOpenChange={nextOpen => { if (!nextOpen) handleClose(); }}>
       <DialogContent
         raw
-        className={cn("overflow-hidden sm:max-w-md", reducedMotion && "!animate-none")}
+        className={cn("overflow-hidden", mode === "practice" ? "sm:max-h-[90dvh] sm:max-w-3xl" : "sm:max-w-md", reducedMotion && "!animate-none")}
+        onPointerDownOutside={event => event.preventDefault()}
+        onEscapeKeyDown={event => { if (mode === "intro") event.preventDefault(); }}
         onOpenAutoFocus={event => {
           event.preventDefault();
           previousFocusRef.current = document.activeElement as HTMLElement | null;
@@ -65,44 +45,38 @@ export function DesempenoGuia({ open, onClose }: DesempenoGuiaProps) {
         onCloseAutoFocus={event => {
           event.preventDefault();
           previousFocusRef.current?.focus();
-          setStep(0);
-        }}
-        onKeyDown={event => {
-          if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-          if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-            event.preventDefault();
-            goTo(step + (event.key === "ArrowRight" ? 1 : -1));
-          }
+          setMode("intro");
         }}
       >
         <header className="flex shrink-0 items-center gap-2 border-b px-4 py-2">
-          <span className="shrink-0 text-primary" aria-hidden="true">
-            <CircleHelp className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1 space-y-2">
-            <DialogTitle ref={titleRef} tabIndex={-1} className="text-base leading-snug outline-none">{GUIDE_COPY.title}</DialogTitle>
-            <DialogDescription className="sr-only">{GUIDE_COPY.description}</DialogDescription>
-          </div>
-          <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={handleClose} aria-label={GUIDE_COPY.close}>
+          <DialogTitle ref={titleRef} tabIndex={-1} className="min-w-0 flex-1 text-base leading-snug outline-none">
+            {mode === "intro" ? "Primero, practica" : "Práctica de evaluación"}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === "intro" ? "Elige practicar con un ejemplo o continuar sin práctica." : "Practica cada sección de una evaluación con datos ficticios. Ningún dato se guarda."}
+          </DialogDescription>
+          {mode === "practice" && <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={handleClose} aria-label="Salir de la práctica">
             <X aria-hidden="true" />
-          </Button>
+          </Button>}
         </header>
-
-        <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 pb-4 pt-1">
-          <GuideProgress current={step} onSelect={goTo} />
-          <GuideStepContent key={GUIDE_STEPS[step].id} step={GUIDE_STEPS[step]} index={step} />
-        </div>
-
-        <footer className="flex shrink-0 items-center justify-between gap-3 border-t px-4 pt-3 pb-3 safe-bottom-content">
-          <Button type="button" variant="outline" onClick={() => goTo(step - 1)} disabled={step === 0}>
-            <ChevronLeft aria-hidden="true" />
-            {GUIDE_COPY.previous}
-          </Button>
-          <Button type="button" onClick={isLast ? handleClose : () => goTo(step + 1)}>
-            {isLast ? GUIDE_COPY.finish : GUIDE_COPY.next}
-            {isLast ? <Check aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
-          </Button>
-        </footer>
+        {mode === "intro" ? (
+          <div className="space-y-4 p-4 sm:p-6">
+            <p className="text-sm leading-relaxed">
+              Aprende a evaluar con un ejemplo. Son 7 pasos con datos ficticios; nada se guarda ni se imprime.
+            </p>
+            <div className="flex flex-col items-stretch gap-2">
+              <motion.div
+                animate={reducedMotion ? undefined : { scale: [1, 1.035, 1] }}
+                transition={reducedMotion ? undefined : { duration: 1.2, repeat: Infinity, repeatDelay: 2 }}
+              >
+                <Button type="button" onClick={() => setMode("practice")} className="min-h-11 w-full">
+                  <GraduationCap aria-hidden="true" /> Empezar práctica
+                </Button>
+              </motion.div>
+              <Button type="button" variant="ghost" onClick={handleClose} className="min-h-11 text-muted-foreground">Omitir y evaluar ahora</Button>
+            </div>
+          </div>
+        ) : <EvaluationTutorial onFinish={handleClose} />}
       </DialogContent>
     </Dialog>
   );

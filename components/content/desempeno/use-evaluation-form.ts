@@ -51,7 +51,7 @@ export function useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, 
         const selector = activeView === 1
           ? '[aria-label="Evaluador"]'
           : activeView === 4
-            ? 'input[type="radio"]'
+            ? '[data-competency-pending="true"] input[type="radio"]'
             : '[aria-invalid="true"]';
         (document.querySelector<HTMLElement>(selector) ?? document.querySelector<HTMLElement>(`[data-step-error="${activeView}"]`))?.focus();
       });

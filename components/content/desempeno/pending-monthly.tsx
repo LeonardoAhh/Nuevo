@@ -1,12 +1,10 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Users, Layers, CheckCircle2 } from "lucide-react";
+import { Layers, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog } from "@/components/ui/dialog";
 import { usePendingEvals, type EmployeePending } from "@/lib/hooks/usePendingEvals";
-import { containerV } from "./pending-presentation";
-import { DeptTab } from "./department-filter";
+import { DepartmentPage } from "./department-page";
 import { DetailModal } from "./pending-detail";
 import { EmployeeBadge } from "./pending-employee";
 interface MensualProps {
@@ -14,7 +12,7 @@ interface MensualProps {
   deptGroups: ReturnType<typeof usePendingEvals>["deptGroups"];
   totalEmployees: number;
   activeTab: string | null;
-  onTabChange: (dept: string) => void;
+  direction: -1 | 1;
   selectedId: string | null;
   onSelectId: (id: string | null) => void;
 }
@@ -23,7 +21,7 @@ export function VistaMensual({
   deptGroups,
   totalEmployees,
   activeTab,
-  onTabChange,
+  direction,
   selectedId,
   onSelectId
 }: MensualProps) {
@@ -36,35 +34,13 @@ export function VistaMensual({
     </div>}
 
     {(loading || deptGroups.length > 0) && <div className="space-y-4">
-      {/* Dept tabs */}
-      <div role="group" aria-label="Departamentos con evaluaciones pendientes" className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-        {loading ? Array.from({
-          length: 4
-        }).map((_, i) => <Skeleton key={i} className="h-8 w-28 flex-shrink-0 rounded-md" />) : deptGroups.map(g => <DeptTab key={g.departamento} label={g.departamento} count={g.items.length} isActive={g.departamento === activeTab} onClick={() => onTabChange(g.departamento)} />)}
-      </div>
-
-      {/* Badge grid */}
-      <AnimatePresence mode="wait">
-        {loading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {loading ? <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({
             length: 8
-          }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
-        </div> : activeGroup ? <motion.div key={activeGroup.departamento} variants={containerV} initial="hidden" animate="show" exit={{
-          opacity: 0,
-          transition: {
-            duration: 0.15
-          }
-        }} className="space-y-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users className="size-3" aria-hidden="true" />
-            <span>
-              {activeGroup.items.length} empleado{activeGroup.items.length !== 1 ? "s" : ""}
-              {" · "}
-              <span className="font-bold text-foreground">{activeGroup.departamento}</span>
-            </span>
-          </div>
-
-          <div className="space-y-6">
+          }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+        </div> : activeGroup ? <DepartmentPage pageKey={activeGroup.departamento} direction={direction}>
+          <div className="space-y-3">
+          <div className="space-y-4">
             {(() => {
               const getGroupKey = (item: EmployeePending) => {
                 const cleanString = (str: string) => {
@@ -100,7 +76,7 @@ export function VistaMensual({
                     {key}
                     <span className="text-xs font-normal opacity-70">({grouped[key].length})</span>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                     {grouped[key].map(item => <EmployeeBadge key={item.dbId} item={item} isSelected={selectedId === item.dbId} onSelect={() => onSelectId(selectedId === item.dbId ? null : item.dbId)} />)}
                   </div>
                 </div>);
@@ -113,8 +89,8 @@ export function VistaMensual({
               return current ? <DetailModal key={current.dbId} item={current} /> : null;
             })()}
           </Dialog>
-        </motion.div> : null}
-      </AnimatePresence>
+          </div>
+        </DepartmentPage> : null}
     </div>}
 
     {/* Leyenda */}

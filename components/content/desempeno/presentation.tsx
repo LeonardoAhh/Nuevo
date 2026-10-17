@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 
 /** Uses the application's rem spacing, density, font scale and semantic colors. */
 export const evaluationStyles = {
-  page: "mx-auto w-full min-w-0 max-w-7xl space-y-6",
+  page: "w-full min-w-0 space-y-6",
   stack: "space-y-4",
   sectionTitle: "text-base font-semibold leading-snug tracking-tight text-foreground",
   description: "text-sm leading-relaxed text-muted-foreground",
+  fieldLabel: "text-sm font-medium leading-5 text-muted-foreground",
   caption: "text-xs leading-relaxed text-muted-foreground",
   actions: "flex flex-wrap items-center gap-2",
   sectionHeader: "flex flex-wrap items-start justify-between gap-3",
@@ -26,5 +27,5 @@ export function FieldValue({
   label: string;
   children: ReactNode;
 }) {
-  return <dl className="min-w-0 space-y-2"><dt className={evaluationStyles.description}>{label}</dt><dd className="break-words text-base text-foreground">{children}</dd></dl>;
+  return <dl className="min-w-0 space-y-1"><dt className={evaluationStyles.fieldLabel}>{label}</dt><dd className="break-words text-base leading-6 text-foreground">{children}</dd></dl>;
 }
