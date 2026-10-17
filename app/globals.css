@@ -136,6 +136,17 @@ body {
         align-items: stretch;
     }
 
+    .workspace-header::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: 100%;
+        left: 0;
+        height: var(--workspace-inset);
+        background: hsl(var(--background));
+        pointer-events: none;
+    }
+
     .workspace-frame {
         min-height: calc(100dvh - var(--workspace-inset) - var(--workspace-inset));
         margin-block: var(--workspace-inset);
