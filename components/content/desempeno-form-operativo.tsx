@@ -29,6 +29,10 @@ interface Props {
   guardarDisabled?: boolean;
   guardarTooltip?: string;
   saving?: boolean;
+  lateCapture?: {
+    motivo: string;
+    onMotivoChange: (value: string) => void;
+  };
 }
 
 const STEPS = ["Datos", "Objetivos", "Responsabilidades", "Competencias", "Revisión"] as const;
@@ -64,12 +68,12 @@ function PercentageControl({ id, label, value, noAplica, automatic, helpId, show
 
 function StepHeading({ context, title, description }: { context: EvaluationFormContext; title: string; description: string }) {
   return <div className="space-y-1 xl:flex xl:items-baseline xl:justify-between xl:gap-6 xl:space-y-0">
-    <h2 ref={context.headingRef} tabIndex={-1} className="scroll-mt-24 text-xl font-semibold tracking-tight outline-none xl:shrink-0">{title}</h2>
+    <h2 id={context.headingId} tabIndex={-1} className="scroll-mt-24 text-xl font-semibold tracking-tight outline-none xl:shrink-0">{title}</h2>
     <p className="text-sm leading-relaxed text-muted-foreground xl:min-w-0 xl:text-right">{description}</p>
   </div>;
 }
 
-export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guardarTooltip, saving }: Props) {
+export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guardarTooltip, saving, lateCapture }: Props) {
   const formId = useId();
   const percentageHelpId = `${formId}-percentage-help`;
   const automaticHelpId = `${formId}-automatic-help`;
@@ -159,12 +163,19 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
           <Textarea id={`${formId}-compromisos`} value={data.compromisos} onChange={(e) => context.updateReview({ compromisos: e.target.value })} aria-required={context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA} aria-describedby={context.ponderacion.calificacionFinal < UMBRAL_CALIFICACION_APROBATORIA ? `${formId}-compromisos-hint` : undefined} className="min-h-24" />
         </div>
         <div className="grid gap-4 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-          <ReviewDateField id={`${formId}-fecha`} value={data.fecha_revision} onChange={fecha_revision => context.updateReview({ fecha_revision })} />
+          {lateCapture ? <div className="min-w-0 space-y-2">
+            <p className="text-sm font-medium">Fecha de captura tardía</p>
+            <p className="flex min-h-11 items-center rounded-md border border-input bg-muted/30 px-3 text-sm text-muted-foreground">Se asigna automáticamente al guardar.</p>
+          </div> : <ReviewDateField id={`${formId}-fecha`} value={data.fecha_revision} onChange={fecha_revision => context.updateReview({ fecha_revision })} />}
           <div className="min-w-0 space-y-2">
             <div className="flex min-h-5 items-center"><Label htmlFor={`${formId}-observaciones`} className="leading-5">Observaciones</Label></div>
             <Textarea id={`${formId}-observaciones`} value={data.observaciones} onChange={(e) => context.updateReview({ observaciones: e.target.value })} className="h-36 resize-none" />
           </div>
         </div>
+        {lateCapture && <div className="space-y-2">
+          <Label htmlFor={`${formId}-motivo`}>Motivo de la captura tardía</Label>
+          <Textarea id={`${formId}-motivo`} required value={lateCapture.motivo} onChange={event => lateCapture.onMotivoChange(event.target.value)} className="min-h-24" />
+        </div>}
       </CardContent></Card>
       {guardarTooltip && <p role="status" className="text-sm text-muted-foreground">{guardarTooltip}</p>}
     </div>}

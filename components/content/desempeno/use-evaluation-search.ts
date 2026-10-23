@@ -35,6 +35,7 @@ export function useEvaluationSearch() {
     canEdit,
   } = useRole();
   const {
+    deptGroups,
     totalEvals,
     totalVencidas,
     totalProximas,
@@ -289,6 +290,7 @@ export function useEvaluationSearch() {
     cargarEvaluacion,
     isEvaluador,
     canEdit,
+    deptGroups,
     totalEvals,
     totalVencidas,
     totalProximas,

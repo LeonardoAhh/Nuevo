@@ -17,6 +17,14 @@ export interface PendingEvalEntry {
   diasDiff: number
 }
 
+export type PendingEvalStatus = "vencidas" | "proximas" | "a-tiempo"
+
+export function pendingEvalStatus(diasDiff: number): PendingEvalStatus {
+  if (diasDiff < 0) return "vencidas"
+  if (diasDiff <= 7) return "proximas"
+  return "a-tiempo"
+}
+
 /** One record per employee, with all pending evals grouped */
 export interface EmployeePending {
   dbId: string
@@ -143,8 +151,9 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
           if (diff === null) continue
           pendingEvals.push({ periodo, fecha, diasDiff: diff })
           
-          if (diff < 0) vencidasCount++
-          else if (diff <= 7) proximasCount++
+          const status = pendingEvalStatus(diff)
+          if (status === "vencidas") vencidasCount++
+          else if (status === "proximas") proximasCount++
           else aTiempoCount++
         }
 

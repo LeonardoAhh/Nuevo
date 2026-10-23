@@ -6,7 +6,6 @@ import { notify } from "@/lib/notify"
 import { useRole } from "@/lib/hooks/useRole"
 import {
 
-  DEFAULT_OBJETIVOS_POR_TIPO,
   DEFAULT_CUMPLIMIENTO,
   DEFAULT_CUMPLIMIENTO_POR_TIPO,
   DEFAULT_COMPETENCIAS_POR_TIPO,
@@ -16,9 +15,9 @@ import {
   type CumplimientoItem,
   type Competencia,
 } from "@/lib/types/desempeno"
-import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo"
-import { getTipoDesempenoByPuesto, mesesDePeriodo, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
+import { getTipoDesempenoByPuesto, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
 import { periodoVigenteParaEmpleado, type OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
+import { calcularAsistenciaPorcentaje, crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type { OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
@@ -63,36 +62,6 @@ function resolverOrigenEmpleado(
   return null
 }
 
-// Graduated scale: 0→100%, 1→66%, 2→33%, 3+→0%
-const ESCALA_GRADUADA: Record<number, number> = { 0: 100, 1: 66, 2: 33 }
-const aplicarEscala = (count: number): number => ESCALA_GRADUADA[count] ?? 0
-
-function calcularAsistenciaPorcentaje(incidencias: Record<string, unknown>[], targetPeriodo: string): number {
-  const mesesPeriodo = mesesDePeriodo(targetPeriodo)
-  const faltasDeMes = (mes: string): number =>
-    incidencias
-      .filter((i) => i.mes === mes && i.categoria === 'FALTA INJUSTIFICADA')
-      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
-
-  if (mesesPeriodo.length > 0) {
-    const mesesConDatos = mesesPeriodo.filter((mes) =>
-      incidencias.some((i) => i.mes === mes),
-    )
-    if (mesesConDatos.length > 0) {
-      const promedio =
-        mesesConDatos.reduce((sum, mes) => sum + aplicarEscala(faltasDeMes(mes)), 0) /
-        mesesConDatos.length
-      return Math.round(promedio)
-    } else {
-      return 100
-    }
-  } else {
-    const totalFaltas = incidencias
-      .filter((i) => i.categoria === 'FALTA INJUSTIFICADA')
-      .reduce((sum, i) => sum + ((i.valor as number) ?? 0), 0)
-    return aplicarEscala(totalFaltas)
-  }
-}
 export type { PeriodoModo } from "@/lib/catalogo"
 
 /** Resultado de `buscarEmpleado`: origen + modo/periodo recomendado para el selector. */
@@ -295,55 +264,11 @@ export function useDesempeno() {
 
       if (incidenciaError) throw incidenciaError
 
-      const puesto = empleadoData.puesto
-      const tipoPuesto = getTipoDesempenoByPuesto(puesto)
-      const objetivosFallback = OBJETIVOS_POR_PUESTO[puesto]
-        ?? DEFAULT_OBJETIVOS_POR_TIPO[tipoPuesto]
-
-      // Auto-calculate cumplimiento from incidencias using graduated scale
-      const incidencias = incidenciaData ?? []
-
-      // "Cumplir con asistencia": se evalúa por mes del periodo y se promedian
-      // los % de los meses CON datos (≥1 incidencia registrada).
-      //   Mensual  → 2 meses del label (ej "ENE-FEB 2026").
-      //   Semestral → 6 meses del label (ej "DIC-MAY 2026").
-      // Si el periodo no mapea a meses conocidos, fallback: todas las faltas.
-      const targetPeriodo = periodoResuelto
-      const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as Record<string, unknown>[], targetPeriodo)
-
-
-      const cumplimiento: CumplimientoItem[] = (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipoPuesto] ?? DEFAULT_CUMPLIMIENTO).map((c) => ({ ...c }))
-
-      // Override auto-calculated fields with graduated scale values
-      // index 2 = "Cumplir con asistencia" → based on faltas (only for operativo/administrativo)
-      if (tipoPuesto !== "jefe" && cumplimiento[2]) {
-        cumplimiento[2].porcentaje = String(asistenciaPorcentaje)
-      }
-
-      const competencias: Competencia[] = (DEFAULT_COMPETENCIAS_POR_TIPO[tipoPuesto] ?? DEFAULT_COMPETENCIAS_POR_TIPO.operativo).map((c) => ({ ...c }))
-
-      const result: DesempenoData = {
-        numero_empleado: empleadoData.numero,
-        nombre: empleadoData.nombre,
-        puesto,
-        evaluador_nombre: "",
-        evaluador_puesto: "",
-        tipo: tipoPuesto,
-        periodo: periodoResuelto,
-        objetivos: objetivosFallback.map((obj) => ({ ...obj })),
-        cumplimiento_responsabilidades: cumplimiento,
-        competencias,
-        compromisos: "",
-        fecha_revision: "",
-        observaciones: "",
-        calificacion_final: 0,
-        incidencias: (incidenciaData ?? []).map((item: Record<string, unknown>) => ({
-          categoria: (item.categoria as string) ?? "",
-          valor: (item.valor as number) ?? null,
-          notas: (item.notas as string) ?? null,
-          mes: (item.mes as string) ?? null,
-        })),
-      }
+      const result = crearBorradorEvaluacion(
+        empleadoData,
+        periodoResuelto,
+        incidenciaData ?? [],
+      )
 
       if (requestId !== searchRequest.current) return null
       lastEvalId.current = null
@@ -679,9 +604,8 @@ export function useDesempeno() {
     const currentData = dataRef.current
     if (!currentData) return
 
-    const mesesPeriodo = mesesDePeriodo(nuevoPeriodo)
     const incidencias = currentData.incidencias ?? []
-    const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias as unknown as Record<string, unknown>[], nuevoPeriodo)
+    const asistenciaPorcentaje = calcularAsistenciaPorcentaje(incidencias, nuevoPeriodo)
 
     const tipoPuesto = getTipoDesempenoByPuesto(currentData.puesto)
     const cumplimiento = [...(currentData.cumplimiento_responsabilidades ?? [])]

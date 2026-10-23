@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ import { getPeriodoActual } from "@/lib/catalogo";
 import { periodoMensualDeFecha } from "@/lib/desempeno/evaluaciones-guardadas";
 import { periodoLabel } from "./pending-presentation";
 
-export function DetailModal({ item }: { item: EmployeePending }) {
+export function DetailModal({ item, onBack }: { item: EmployeePending; onBack?: () => void }) {
   const router = useRouter();
   const planEntregado = item.rg_rec_048 === "Entregado";
   const tienePendienteVigente = item.evals.some(entry => periodoMensualDeFecha(entry.fecha) === getPeriodoActual("mensuales"));
@@ -26,6 +26,9 @@ export function DetailModal({ item }: { item: EmployeePending }) {
       </Button> : <p className="text-sm leading-5 text-muted-foreground">{!item.numero ? "Falta el número de empleado." : "No hay una evaluación pendiente del periodo vigente."}</p>}
     </DialogFooter>}
   >
+    {onBack && <Button type="button" variant="ghost" onClick={onBack} className="mb-3 min-h-11 px-2">
+      <ChevronLeft className="size-4" aria-hidden="true" /> Volver a la lista
+    </Button>}
     <div className="border-b pb-4 pr-12">
       <DialogDescription className="mb-1 text-xs leading-4">#{item.numero ?? "—"}</DialogDescription>
       <DialogTitle className="text-xl leading-7">{item.nombre}</DialogTitle>

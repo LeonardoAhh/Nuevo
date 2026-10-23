@@ -60,7 +60,7 @@
     "lucide": "^1.58.0",
     "lucide-react": "^1.58.0",
     "morphicons": "^2.0.0",
-    "next": "^16.3.5",
+    "next": "^16.4.3",
     "next-themes": "^0.4.6",
     "react": "^19",
     "react-day-picker": "latest",
@@ -74,16 +74,16 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^10.10.0",
-    "eslint-config-next": "^16.3.5",
+    "eslint-config-next": "^16.4.3",
     "postcss": "^8.5",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }

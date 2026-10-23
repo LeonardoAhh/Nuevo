@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useEvaluationReducedMotion } from "./use-evaluation-motion";
 import {
   calcularPonderacion,
@@ -23,7 +23,7 @@ export function useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, 
   const reducedMotion = useEvaluationReducedMotion();
   const [activeView, setActiveView] = useState(1);
   const [stepError, setStepError] = useState("");
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const headingId = useId();
   const identity = `${data.numero_empleado}:${data.periodo}`;
 
   useEffect(() => {
@@ -32,8 +32,9 @@ export function useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, 
   }, [identity]);
 
   const focusStep = () => requestAnimationFrame(() => {
-    headingRef.current?.focus({ preventScroll: true });
-    headingRef.current?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    const heading = document.getElementById(headingId);
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   });
 
   const goNextView = () => {
@@ -110,7 +111,7 @@ export function useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, 
     setActiveView,
     goNextView,
     goPrevView,
-    headingRef,
+    headingId,
     stepError,
     setStepError,
     ponderacion,

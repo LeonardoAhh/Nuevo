@@ -1,13 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { EvaluationWorkspace } from "./desempeno/workspace";
 import { useEvaluationSearch } from "./desempeno/use-evaluation-search";
 import { SearchPanel } from "./desempeno/search-panel";
 import { PendingSummary } from "./desempeno/pending-summary";
 import { ExistingEvaluationNotice } from "./desempeno/existing-evaluation-notice";
 import { Suspense } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ClipboardClock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UMBRAL_CALIFICACION_APROBATORIA } from "@/lib/types/desempeno";
@@ -16,7 +18,13 @@ import { DesempenoForm } from "./desempeno-form-operativo";
 import { DesempenoSaveSuccess } from "./desempeno-save-success";
 import { DesempenoGuia } from "./desempeno-guia";
 import { GuiaButton } from "./desempeno/search-controls";
+import { useRole } from "@/lib/hooks/useRole";
+import { useUser } from "@/lib/hooks/useUser";
+import { DESEMPENO } from "@/lib/desempeno/presentation";
 function DesempenoSearchContent() {
+  const router = useRouter();
+  const { role, loading: roleLoading } = useRole();
+  const { user } = useUser();
   const context = useEvaluationSearch();
   const {
     data,
@@ -42,6 +50,14 @@ function DesempenoSearchContent() {
       confirmNavigation={context.confirmDiscard}
       actions={<>
         {context.modoEdicion && data && <Button type="button" variant="outline" disabled className="min-h-11 px-4">Editando</Button>}
+        {!roleLoading && user && (role === "admin" || role === "dev") && <Button asChild variant="outline" className="min-h-11 px-3 text-sm font-medium sm:px-4">
+          <Link href={DESEMPENO.routes.late} onNavigate={event => {
+            event.preventDefault();
+            void context.confirmDiscard().then(confirmed => {
+              if (confirmed) router.push(DESEMPENO.routes.late);
+            });
+          }} aria-label="Regularizar evaluaciones vencidas"><ClipboardClock className="hidden size-4 sm:block" aria-hidden="true" /><span className="sm:hidden">Regularizar</span><span className="hidden sm:inline">Regularizar vencidas</span></Link>
+        </Button>}
         <GuiaButton onClick={() => setGuiaOpen(true)} />
       </>}
     >

@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  Menu, Settings, LogOut, RefreshCw, ChevronDown, Loader2,
+  Menu, Settings, LogOut, RefreshCw, ChevronDown, Loader2, ArrowLeft,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -24,6 +24,8 @@ import { WorkspaceContainer } from "@/components/ui/workspace-container"
 
 interface HeaderProps {
   title?: string
+  titleHref?: string
+  titleHrefLabel?: string
   showMobileSidebar: boolean
   onOpenSidebar: () => void
   showSidebarToggle?: boolean
@@ -52,6 +54,8 @@ function AccountAvatar({ src, initials, className }: { src?: string | null; init
 
 export default function Header({
   title,
+  titleHref,
+  titleHrefLabel,
   showMobileSidebar,
   onOpenSidebar,
   showSidebarToggle = true,
@@ -142,8 +146,11 @@ export default function Header({
           {/* Page title */}
           <div className="flex min-w-0 flex-1 items-center">
             {pageLabel && (
-              <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
-                {pageLabel}
+              <h1 className="min-w-0 text-sm font-semibold text-foreground sm:text-base">
+                {titleHref ? <Link href={titleHref} aria-label={titleHrefLabel ? `${pageLabel}. ${titleHrefLabel}` : pageLabel} className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-md py-1 pr-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{pageLabel}</span>
+                </Link> : <span className="block truncate">{pageLabel}</span>}
               </h1>
             )}
           </div>

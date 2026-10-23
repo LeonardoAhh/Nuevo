@@ -20,9 +20,11 @@ import { MAINTENANCE_NOTICE_EXPIRES_AT, MAINTENANCE_NOTICE_PENDING_KEY } from "@
 interface DashboardProps {
   content?: ReactNode
   pageTitle?: string
+  headerTitleHref?: string
+  headerTitleHrefLabel?: string
 }
 
-export default function Dashboard({ content, pageTitle }: DashboardProps) {
+export default function Dashboard({ content, pageTitle, headerTitleHref, headerTitleHrefLabel }: DashboardProps) {
   const {
     showMobileSidebar,
     setShowMobileSidebar,
@@ -87,6 +89,8 @@ export default function Dashboard({ content, pageTitle }: DashboardProps) {
       >
         <Header
           title={pageTitle}
+          titleHref={headerTitleHref}
+          titleHrefLabel={headerTitleHrefLabel}
           showMobileSidebar={showMobileSidebar}
           onOpenSidebar={openMobileSidebar}
           showSidebarToggle={!isEvaluador}

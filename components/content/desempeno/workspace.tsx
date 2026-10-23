@@ -37,8 +37,8 @@ export function EvaluationWorkspace({
   } = useRole();
   const router = useRouter();
   return <div className={evaluationStyles.page}>
-    <header className="flex items-center justify-between gap-1.5 sm:gap-3 print:hidden">
-      <nav aria-label="Evaluación de desempeño" className="grid min-w-0 flex-1 grid-flow-col auto-cols-fr gap-1.5 sm:flex sm:flex-none sm:gap-2">
+    <header className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 print:hidden">
+      <nav aria-label="Evaluación de desempeño" className="grid min-w-max flex-1 grid-flow-col auto-cols-fr gap-1.5 sm:flex sm:flex-none sm:gap-2">
         {navigation.filter(item => item.key !== "saved" || !isEvaluador).map(({
           key,
           href,
@@ -55,7 +55,7 @@ export function EvaluationWorkspace({
             </Link>
           </Button>)}
       </nav>
-      {actions && <div className="ml-auto flex shrink-0 items-center justify-end gap-2">{actions}</div>}
+      {actions && <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div>}
     </header>
     {children}
   </div>;
