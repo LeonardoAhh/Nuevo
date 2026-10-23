@@ -120,3 +120,13 @@ export const _OBJETIVOS_JEFE_TALLER_MOLDES: Objetivo[] = [
         comentarios: "",
     }
 ];
+
+export const _OBJETIVOS_COORDINADOR_TALLER_MOLDES: Objetivo[] = [
+    {
+        numero: 1,
+        descripcion: "OBJETIVOS PENDIENTES DE DEFINIR",
+        resultado: "N/A",
+        porcentaje: "",
+        comentarios: "",
+    }
+];
