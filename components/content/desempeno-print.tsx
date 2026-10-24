@@ -5,6 +5,7 @@ import {
   type DesempenoData,
 } from "@/lib/types/desempeno"
 import { fechaParaImpresion, ponderacionParaImpresion, porcentajeParaImpresion } from "@/lib/desempeno/impresion"
+import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso"
 import styles from "./desempeno-print.module.css"
 
 interface Props {
@@ -63,7 +64,7 @@ export default function DesempenoPrint({ data, blankMode }: Props) {
               <div className={styles.headerRow}>
                 <div className={styles.headerLeft}>
                   <h1>EVALUACIÓN DE DESEMPEÑO PERSONAL {data.tipo === "operativo" ? "OPERATIVO" : "ADMINISTRATIVO"}</h1>
-                  <p>Periodo de evaluación: <span className={styles.periodBadge}>{data.periodo || "—"}</span></p>
+                  <p>Periodo de evaluación: <span className={styles.periodBadge}>{data.periodo || "—"}{data.hito_nuevo_ingreso ? ` · ${HITOS_NUEVO_INGRESO[data.hito_nuevo_ingreso - 1].etiqueta}` : ""}</span></p>
                 </div>
                 <div className={styles.headerRight}>
                   <img src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" className={styles.logo} />

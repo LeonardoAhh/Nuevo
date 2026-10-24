@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase/client"
 import { daysFromToday, formatDate } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
 import type { NuevoIngreso } from "@/lib/hooks/useNuevoIngreso"
-import { cargarPeriodosGuardados, tieneEvaluacionGuardada } from "@/lib/desempeno/evaluaciones-guardadas"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -63,7 +62,6 @@ function clasificarEval(
     fechaKey: keyof NuevoIngreso,
     calKey: keyof NuevoIngreso,
     sufijo: string,
-    periodosGuardados: Map<string, Set<string>>,
 ): { vencidas: EvalItem[]; porVencer: EvalItem[] } {
     const vencidas: EvalItem[] = []
     const porVencer: EvalItem[] = []
@@ -72,7 +70,7 @@ function clasificarEval(
         if (r.tipo_contrato === "Indeterminado") continue
         const fecha = r[fechaKey] as string | null
         const cal = r[calKey] as number | null
-        if (!fecha || cal != null || tieneEvaluacionGuardada(periodosGuardados, r.numero, fecha)) continue
+        if (!fecha || cal != null) continue
         const diff = daysFromToday(fecha)
         if (diff === null) continue
 
@@ -145,11 +143,9 @@ export function useDashboardAlertas() {
 
             if (error) throw new Error(error.message)
             const registros = (data ?? []) as unknown as NuevoIngreso[]
-            const periodosGuardados = await cargarPeriodosGuardados(registros.map(r => r.numero))
-
-            const e1 = clasificarEval(registros, "eval_1_fecha", "eval_1_calificacion", "e1", periodosGuardados)
-            const e2 = clasificarEval(registros, "eval_2_fecha", "eval_2_calificacion", "e2", periodosGuardados)
-            const e3 = clasificarEval(registros, "eval_3_fecha", "eval_3_calificacion", "e3", periodosGuardados)
+            const e1 = clasificarEval(registros, "eval_1_fecha", "eval_1_calificacion", "e1")
+            const e2 = clasificarEval(registros, "eval_2_fecha", "eval_2_calificacion", "e2")
+            const e3 = clasificarEval(registros, "eval_3_fecha", "eval_3_calificacion", "e3")
 
             setEval1Venc(e1.vencidas); setEval1Prox(e1.porVencer)
             setEval2Venc(e2.vencidas); setEval2Prox(e2.porVencer)

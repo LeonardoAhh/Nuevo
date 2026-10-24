@@ -91,7 +91,7 @@ export function useRegularizacion(enabled: boolean) {
         .eq("numero_empleado", entry.numero)
       if (queryError) throw queryError
       if (id !== request.current) return
-      const draft = crearBorradorEvaluacion(entry, entry.periodo, incidencias ?? [])
+      const draft = crearBorradorEvaluacion(entry, entry.periodo, incidencias ?? [], entry.hito_nuevo_ingreso)
       setBaseline(JSON.stringify(draft))
       setData(draft)
     } catch (cause) {

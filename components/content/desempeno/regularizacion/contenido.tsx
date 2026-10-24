@@ -7,6 +7,7 @@ import { PendientesLista } from "./pendientes-lista"
 import { useRegularizacion } from "./use-regularizacion"
 import { useRole } from "@/lib/hooks/useRole"
 import { useUser } from "@/lib/hooks/useUser"
+import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 export function RegularizacionContenido() {
   const { role, loading: roleLoading } = useRole()
@@ -24,7 +25,7 @@ export function RegularizacionContenido() {
     {flow.selected ? <section aria-label={`Captura tardía de ${flow.selected.nombre}`} className="space-y-5">
       <Button type="button" variant="outline" className="min-h-11" onClick={flow.cerrar}>Volver a pendientes</Button>
       <div className="rounded-lg border bg-card p-4 text-sm">
-        <p className="font-semibold">{flow.selected.nombre} · {flow.selected.periodo}</p>
+        <p className="font-semibold">{flow.selected.nombre} · {flow.selected.periodo}{flow.selected.hito_nuevo_ingreso ? ` · ${HITOS_NUEVO_INGRESO[flow.selected.hito_nuevo_ingreso - 1].etiqueta}` : ""}</p>
         <p className="text-muted-foreground">Fecha límite: <time dateTime={flow.selected.fecha_limite}>{flow.selected.fecha_limite}</time></p>
       </div>
       {flow.loadingDraft ? <p role="status" className="text-sm text-muted-foreground">Preparando evaluación…</p> : flow.data && <DesempenoForm

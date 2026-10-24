@@ -18,6 +18,7 @@ import {
 import { getTipoDesempenoByPuesto, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
 import { periodoVigenteParaEmpleado, type OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
 import { calcularAsistenciaPorcentaje, crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
+import { hitoVigentePendiente, type SeguimientoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type { OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
@@ -32,6 +33,12 @@ interface EmpleadoOrigenData {
 
 interface NuevoIngresoOrigenData extends EmpleadoOrigenData {
   tipo_contrato: string | null
+  eval_1_fecha: string | null
+  eval_1_calificacion: number | null
+  eval_2_fecha: string | null
+  eval_2_calificacion: number | null
+  eval_3_fecha: string | null
+  eval_3_calificacion: number | null
 }
 
 const CONTRATO_INDETERMINADO = "Indeterminado"
@@ -79,6 +86,7 @@ export interface BusquedaResultado {
 interface EvalRowFull {
   id: string
   periodo: string | null
+  hito_nuevo_ingreso: 1 | 2 | 3 | null
   evaluador_nombre: string | null
   evaluador_puesto: string | null
   tipo: string | null
@@ -99,6 +107,7 @@ export interface EvaluacionHistorial {
   evaluador_nombre: string | null
   tipo: string
   periodo: string | null
+  hito_nuevo_ingreso: 1 | 2 | 3 | null
   calificacion_final: number
   created_at: string
   origen?: "planta" | "nuevo_ingreso"
@@ -195,7 +204,7 @@ export function useDesempeno() {
           .maybeSingle(),
         supabase
           .from("nuevo_ingreso")
-          .select("numero, nombre, puesto, departamento, fecha_ingreso, tipo_contrato")
+          .select("numero, nombre, puesto, departamento, fecha_ingreso, tipo_contrato, eval_1_fecha, eval_1_calificacion, eval_2_fecha, eval_2_calificacion, eval_3_fecha, eval_3_calificacion")
           .eq("numero", numero)
           .maybeSingle(),
       ])
@@ -235,10 +244,15 @@ export function useDesempeno() {
       // La modalidad y el periodo se asignan al buscar; no se elige un año anterior.
       const { modo, periodo: periodoResuelto, semestreActual: semestreActivo, requiereSemestral: requiereSemestralEmp } =
         periodoVigenteParaEmpleado(origenEmpleado, empleadoData.fechaIngreso)
+      const hitoPendiente = origenEmpleado === "nuevo_ingreso" && ni
+        ? hitoVigentePendiente(ni as SeguimientoNuevoIngreso, periodoResuelto)
+        : null
 
       // Buscar solo detecta las evaluaciones guardadas; no carga el formulario para editarlas.
       const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
-      const evalData = evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null
+      const evalData = hitoPendiente
+        ? null
+        : (evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null)
       if (evalData) {
         if (requestId !== searchRequest.current) return null
         lastEvalId.current = null
@@ -256,6 +270,10 @@ export function useDesempeno() {
         return { origen: origenEmpleado, modo, periodo: periodoResuelto, requiereSemestral: requiereSemestralEmp, semestreObjetivo: semestreActivo }
       }
 
+      if (origenEmpleado === "nuevo_ingreso" && !hitoPendiente) {
+        throw new EvaluationMessageError("Sin evaluación programada", "No hay una evaluación de nuevo ingreso pendiente para el periodo vigente.")
+      }
+
       const { data: incidenciaData, error: incidenciaError } = await supabase
         .from("incidencias")
         .select("categoria, valor, notas, mes")
@@ -268,6 +286,7 @@ export function useDesempeno() {
         empleadoData,
         periodoResuelto,
         incidenciaData ?? [],
+        hitoPendiente?.numero,
       )
 
       if (requestId !== searchRequest.current) return null
@@ -327,6 +346,7 @@ export function useDesempeno() {
         evaluador_puesto: evalData.evaluador_puesto || null,
         tipo: evalData.tipo,
         periodo: evalData.periodo || null,
+        hito_nuevo_ingreso: evalData.hito_nuevo_ingreso ?? null,
         objetivos: evalData.objetivos,
         cumplimiento_responsabilidades: evalData.cumplimiento_responsabilidades,
         competencias: evalData.competencias,
@@ -336,7 +356,7 @@ export function useDesempeno() {
         calificacion_final: ponderacion.calificacionFinal,
       }
 
-      const evalKey = `${evalData.numero_empleado}:${normalizarPeriodoDesempeno(evalData.periodo)}`
+      const evalKey = `${evalData.numero_empleado}:${normalizarPeriodoDesempeno(evalData.periodo)}:${evalData.hito_nuevo_ingreso ?? ""}`
       if (isEvaluador && lastEvalId.current) {
         throw new EvaluationMessageError("Evaluación cerrada", "No puedes modificar una evaluación guardada.")
       }
@@ -350,13 +370,26 @@ export function useDesempeno() {
         if (!origen || normalizarPeriodoDesempeno(evalData.periodo) !== normalizarPeriodoDesempeno(periodoVigenteParaEmpleado(origen, fechaIngreso).periodo)) {
           throw new EvaluationMessageError("Periodo fuera de vigencia", "Busca de nuevo al empleado para evaluar el periodo vigente.")
         }
+        if (origen === "nuevo_ingreso") {
+          const { data: seguimiento, error: seguimientoError } = await supabase
+            .from("nuevo_ingreso")
+            .select("eval_1_fecha, eval_1_calificacion, eval_2_fecha, eval_2_calificacion, eval_3_fecha, eval_3_calificacion")
+            .eq("numero", evalData.numero_empleado)
+            .maybeSingle()
+          if (seguimientoError) throw seguimientoError
+          if (!seguimiento || hitoVigentePendiente(seguimiento, evalData.periodo)?.numero !== evalData.hito_nuevo_ingreso) {
+            throw new EvaluationMessageError("Evaluación no disponible", "Esta evaluación ya se registró o su fecha programada cambió. Busca de nuevo al empleado.")
+          }
+        }
         const { data: existingRows, error: existingError } = await supabase
           .from("evaluaciones_desempeno")
-          .select("periodo")
+          .select("periodo, hito_nuevo_ingreso")
           .eq("numero_empleado", evalData.numero_empleado)
         if (existingError) throw existingError
-        if (existingRows?.some((row) => row.periodo && normalizarPeriodoDesempeno(row.periodo) === normalizarPeriodoDesempeno(evalData.periodo))) {
-          throw new EvaluationMessageError("Evaluación ya guardada", "Ya existe una evaluación para este periodo. Busca otra persona para continuar.")
+        if (existingRows?.some((row) => origen === "nuevo_ingreso"
+          ? row.hito_nuevo_ingreso === evalData.hito_nuevo_ingreso
+          : row.periodo && normalizarPeriodoDesempeno(row.periodo) === normalizarPeriodoDesempeno(evalData.periodo))) {
+          throw new EvaluationMessageError("Evaluación ya guardada", "Ya existe una evaluación para esta fecha programada. Busca de nuevo al empleado.")
         }
         const { data: inserted, error: err } = await supabase
           .from("evaluaciones_desempeno")
@@ -395,6 +428,7 @@ export function useDesempeno() {
         evaluador_nombre: string | null
         tipo: string
         periodo: string | null
+        hito_nuevo_ingreso: 1 | 2 | 3 | null
         calificacion_final: number
         created_at: string
       }
@@ -403,7 +437,7 @@ export function useDesempeno() {
       for (let from = 0; ; from += PAGE) {
         const { data: page, error: err } = await supabase
           .from("evaluaciones_desempeno")
-          .select("id, numero_empleado, evaluador_nombre, tipo, periodo, calificacion_final, created_at")
+          .select("id, numero_empleado, evaluador_nombre, tipo, periodo, hito_nuevo_ingreso, calificacion_final, created_at")
           .order("created_at", { ascending: false })
           .range(from, from + PAGE - 1)
 
@@ -459,6 +493,7 @@ export function useDesempeno() {
           evaluador_nombre: e.evaluador_nombre,
           tipo: e.tipo,
           periodo: e.periodo,
+          hito_nuevo_ingreso: e.hito_nuevo_ingreso,
           calificacion_final: e.calificacion_final,
           created_at: e.created_at,
           origen: empleadoMap[e.numero_empleado]?.origen,
@@ -535,6 +570,7 @@ export function useDesempeno() {
         evaluador_puesto: evalRow.evaluador_puesto || "",
         tipo: (evalRow.tipo as DesempenoData["tipo"]) || "operativo",
         periodo: evalRow.periodo || "",
+        hito_nuevo_ingreso: evalRow.hito_nuevo_ingreso ?? null,
         objetivos: evalRow.objetivos?.length ? evalRow.objetivos : [],
         cumplimiento_responsabilidades: evalRow.cumplimiento_responsabilidades?.length
           ? (evalRow.cumplimiento_responsabilidades as CumplimientoItem[])
@@ -556,7 +592,7 @@ export function useDesempeno() {
 
       if (requestId !== searchRequest.current) return null
       lastEvalId.current = evalRow.id
-      lastEvalKey.current = evalRow.numero_empleado + ":" + normalizarPeriodoDesempeno(evalRow.periodo || "")
+      lastEvalKey.current = `${evalRow.numero_empleado}:${normalizarPeriodoDesempeno(evalRow.periodo || "")}:${evalRow.hito_nuevo_ingreso ?? ""}`
       setFechaIngreso(fechaIngresoEmp)
       setOrigen(origenEmpleado)
       setData(result)

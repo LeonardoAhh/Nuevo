@@ -47,6 +47,7 @@ export function crearBorradorEvaluacion(
   empleado: EmpleadoParaEvaluacion,
   periodo: string,
   incidencias: IncidenciaParaEvaluacion[],
+  hitoNuevoIngreso?: 1 | 2 | 3 | null,
 ): DesempenoData {
   const tipo = getTipoDesempenoByPuesto(empleado.puesto)
   const cumplimiento: CumplimientoItem[] = (DEFAULT_CUMPLIMIENTO_POR_TIPO[tipo] ?? DEFAULT_CUMPLIMIENTO).map((item) => ({ ...item }))
@@ -63,6 +64,7 @@ export function crearBorradorEvaluacion(
     evaluador_puesto: "",
     tipo,
     periodo,
+    hito_nuevo_ingreso: hitoNuevoIngreso ?? null,
     objetivos: (OBJETIVOS_POR_PUESTO[empleado.puesto] ?? DEFAULT_OBJETIVOS_POR_TIPO[tipo]).map((item) => ({ ...item })),
     cumplimiento_responsabilidades: cumplimiento,
     competencias,

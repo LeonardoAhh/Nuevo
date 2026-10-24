@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { EvaluacionVencida } from "@/lib/desempeno/regularizacion/servicio"
+import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso"
 import { EstadoVacioRegularizacion } from "./estado-vacio"
 
 export function PendientesLista({ items, onSelect }: {
@@ -34,14 +35,14 @@ export function PendientesLista({ items, onSelect }: {
       </div>
     </div>
     {buscando && visibles.length ? <ul className="grid gap-3 lg:grid-cols-2">
-      {visibles.map((item) => <li key={`${item.numero}:${item.periodo}`}>
+      {visibles.map((item) => <li key={`${item.numero}:${item.periodo}:${item.hito_nuevo_ingreso ?? "planta"}`}>
         <Card className="h-full"><CardContent className="flex h-full flex-wrap items-center justify-between gap-4 p-4">
           <div className="min-w-0 space-y-1">
             <p className="break-words font-semibold">{item.nombre}</p>
-            <p className="text-sm text-muted-foreground">#{item.numero} · {item.periodo} · {item.origen === "planta" ? "Semestral" : "Nuevo ingreso"}</p>
+            <p className="text-sm text-muted-foreground">#{item.numero} · {item.periodo} · {item.hito_nuevo_ingreso ? HITOS_NUEVO_INGRESO[item.hito_nuevo_ingreso - 1].etiqueta : "Semestral"}</p>
             <p className="text-sm text-muted-foreground">Venció el <time dateTime={item.fecha_limite}>{item.fecha_limite}</time></p>
           </div>
-          <Button type="button" variant="outline" className="min-h-11" onClick={() => onSelect(item)} aria-label={`Capturar ${item.periodo} de ${item.nombre}`}>
+          <Button type="button" variant="outline" className="min-h-11" onClick={() => onSelect(item)} aria-label={`Capturar ${item.hito_nuevo_ingreso ? HITOS_NUEVO_INGRESO[item.hito_nuevo_ingreso - 1].etiqueta + " de " : ""}${item.periodo} de ${item.nombre}`}>
             Capturar
           </Button>
         </CardContent></Card>

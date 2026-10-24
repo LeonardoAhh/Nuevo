@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { TIPO_LABEL } from "@/lib/catalogo";
 import { InfoField } from "./form-controls";
 import { ComboboxEvaluador } from "./evaluator-select";
+import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso";
 function getTipoLabel(tipo: string | undefined): string {
   return tipo ? (TIPO_LABEL[tipo] ?? tipo).toUpperCase() : "";
 }
@@ -36,6 +37,7 @@ export function EmployeeCard({
                   EVALUACIÓN DE DESEMPEÑO PERSONAL {getTipoLabel(data.tipo)}
             </SectionTitle>
               <Badge variant="default" className="text-xs font-medium">{data.periodo || "—"}</Badge>
+              {data.hito_nuevo_ingreso && <Badge variant="outline" className="text-xs font-medium">{HITOS_NUEVO_INGRESO[data.hito_nuevo_ingreso - 1].etiqueta}</Badge>}
           </div>
         </div>
           <img src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" className="h-10 w-auto object-contain" onError={e => {

@@ -7,6 +7,7 @@ import { esPeriodoSemestral } from "@/lib/desempeno/elegibilidad";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
 import type { SavedEvaluationsContext } from "./use-saved-evaluations";
 import { SAVED_DETAIL } from "./saved-detail-copy";
+import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso";
 
 type Evaluation = NonNullable<SavedEvaluationsContext["empleadoSel"]>["evals"][number];
 type Actions = Pick<SavedEvaluationsContext, "loading" | "pendingPrintId" | "handlePrint" | "eliminarEvaluacion">;
@@ -37,7 +38,7 @@ export function SavedEvaluationCard({ evaluation: ev, actions }: { evaluation: E
     <article aria-labelledby={titleId} className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex flex-wrap items-start justify-between gap-3 p-4">
         <div className="min-w-0 space-y-1">
-          <h3 id={titleId} className="break-words text-sm font-medium leading-5 text-foreground">{ev.periodo || SAVED_DETAIL.noPeriod}</h3>
+          <h3 id={titleId} className="break-words text-sm font-medium leading-5 text-foreground">{ev.periodo || SAVED_DETAIL.noPeriod}{ev.hito_nuevo_ingreso ? ` · ${HITOS_NUEVO_INGRESO[ev.hito_nuevo_ingreso - 1].etiqueta}` : ""}</h3>
           <p className="text-xs leading-4 text-muted-foreground">
             {ev.periodo && <>{isSemestral ? DESEMPENO.modes.semestrales : DESEMPENO.modes.mensuales}{" · "}</>}
             <time dateTime={ev.created_at}>{date}</time>

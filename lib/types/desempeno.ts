@@ -430,6 +430,7 @@ export interface DesempenoData {
     evaluador_puesto: string;
     tipo: DesempenoTipo;
     periodo: string;
+    hito_nuevo_ingreso?: 1 | 2 | 3 | null;
     objetivos: Objetivo[];
     cumplimiento_responsabilidades: CumplimientoItem[];
     competencias: Competencia[];

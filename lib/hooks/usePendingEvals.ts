@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase/client"
 import { daysFromToday } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
 import { normalizeDepartamento } from "@/lib/catalogo"
-import { cargarPeriodosGuardados, tieneEvaluacionGuardada } from "@/lib/desempeno/evaluaciones-guardadas"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -125,7 +124,6 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
       const registrosScope = deptFiltro
         ? registros.filter((r) => deptFiltro.includes(normalizeDepartamento(r.departamento)))
         : registros
-      const periodosGuardados = await cargarPeriodosGuardados(registrosScope.map(r => r.numero))
 
       // Build one EmployeePending per employee (only if they have pending evals)
       const employeeMap = new Map<string, EmployeePending>()
@@ -146,7 +144,7 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
 
         const pendingEvals: PendingEvalEntry[] = []
         for (const [fecha, cal, periodo] of evalDefs) {
-          if (!fecha || cal != null || tieneEvaluacionGuardada(periodosGuardados, r.numero, fecha)) continue
+          if (!fecha || cal != null) continue
           const diff = daysFromToday(fecha)
           if (diff === null) continue
           pendingEvals.push({ periodo, fecha, diasDiff: diff })
