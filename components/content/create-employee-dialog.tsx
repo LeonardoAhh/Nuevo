@@ -8,8 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { addDays } from "@/lib/hooks"
-import type { NuevoIngreso, TipoContrato } from "@/lib/hooks"
-import { CATALOGO_ORGANIZACIONAL, TURNOS, ESCOLARIDAD, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
+import type { NuevoIngreso } from "@/lib/hooks"
+import { CATALOGO_ORGANIZACIONAL, TURNOS, JEFES_DE_AREA_POR_DEPARTAMENTO } from "@/lib/catalogo"
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ interface FormFieldProps {
 
 function FormField({ id, label, required = false, children }: FormFieldProps) {
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <Label htmlFor={id} className="text-sm font-medium">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
@@ -41,17 +41,13 @@ interface NuevoEmpleadoForm {
   area: string
   turno: string
   fecha_ingreso: string
-  curp: string
-  escolaridad: string
   jefe_area: string
-  tipo_contrato: TipoContrato
 }
 
 const FORM_INICIAL: NuevoEmpleadoForm = {
   numero: '', nombre: '', puesto: '', departamento: '', area: '',
   turno: '', fecha_ingreso: new Date().toISOString().split('T')[0],
-  curp: '', escolaridad: '', jefe_area: '',
-  tipo_contrato: 'A prueba',
+  jefe_area: '',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,8 +99,8 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
       area: form.area.trim() || null,
       turno: form.turno.trim() || null,
       fecha_ingreso: fi,
-      curp: form.curp.trim() || null,
-      escolaridad: form.escolaridad.trim() || null,
+      curp: null,
+      escolaridad: null,
       jefe_area: form.jefe_area.trim() || null,
       eval_1_fecha: addDays(fi, 30),
       eval_1_calificacion: null,
@@ -113,7 +109,7 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
       eval_3_fecha: addDays(fi, 80),
       eval_3_calificacion: null,
       termino_contrato: addDays(fi, 90),
-      tipo_contrato: form.tipo_contrato,
+      tipo_contrato: 'A prueba',
       rg_rec_048: 'Pendiente',
       fecha_vencimiento_rg: form.departamento.trim().toUpperCase() === 'CALIDAD' ? addDays(fi, 7) : addDays(fi, 60),
       fecha_nacimiento: null,
@@ -127,7 +123,7 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
     <ResponsiveShell
       open={open}
       onClose={onClose}
-      maxWidth="sm:max-w-2xl"
+      size="sm"
       title="Nuevo Empleado"
       description="Formulario para registrar a un nuevo trabajador en el sistema."
     >
@@ -160,34 +156,22 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
                   placeholder="PÉREZ GARCÍA JUAN" className="bg-muted" />
               </FormField>
             </div>
-            <FormField id="curp" label="CURP">
-              <Input
-                id="curp"
-                value={form.curp}
-                onChange={e => set('curp', e.target.value.toUpperCase().slice(0, 18))}
-                placeholder="PELJ900101HDFRZN09"
-                maxLength={18}
-                autoComplete="off"
-                spellCheck={false}
-                className="bg-muted uppercase tracking-wide"
-              />
-            </FormField>
           </fieldset>
 
           {/* Organización */}
           <fieldset className="space-y-2">
             <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Organización</legend>
-            <FormField id="departamento" label="Departamento" required>
-              <Select value={form.departamento} onValueChange={setDepartamento}>
-                <SelectTrigger id="departamento" className="bg-muted">
-                  <SelectValue placeholder="Selecciona..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </FormField>
             <div className="grid grid-cols-2 gap-3">
+              <FormField id="departamento" label="Departamento" required>
+                <Select value={form.departamento} onValueChange={setDepartamento}>
+                  <SelectTrigger id="departamento" className="bg-muted">
+                    <SelectValue placeholder="Selecciona..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card max-h-56">
+                    {departamentos.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </FormField>
               <FormField id="area" label="Área" required>
                 <Select value={form.area} onValueChange={v => set('area', v)} disabled={!form.departamento}>
                   <SelectTrigger id="area" className="bg-muted">
@@ -198,6 +182,8 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
                   </SelectContent>
                 </Select>
               </FormField>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <FormField id="puesto" label="Puesto" required>
                 <Select value={form.puesto} onValueChange={v => set('puesto', v)} disabled={!form.departamento}>
                   <SelectTrigger id="puesto" className="bg-muted">
@@ -208,8 +194,6 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
                   </SelectContent>
                 </Select>
               </FormField>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <FormField id="turno" label="Turno" required>
                 <Select value={form.turno} onValueChange={v => set('turno', v)}>
                   <SelectTrigger id="turno" className="bg-muted">
@@ -220,17 +204,7 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
                   </SelectContent>
                 </Select>
               </FormField>
-              <FormField id="jefe_area" label="Jefe de área">
-                <div className="flex items-center h-9 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
-                  {form.jefe_area || <span className="italic opacity-50">Se asigna por departamento</span>}
-                </div>
-              </FormField>
             </div>
-          </fieldset>
-
-          {/* Contrato */}
-          <fieldset className="space-y-2">
-            <legend className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contrato</legend>
             <div className="grid grid-cols-2 gap-3">
               <FormField id="fecha_ingreso" label="Fecha de ingreso" required>
                 <Input id="fecha_ingreso" type="date"
@@ -238,22 +212,14 @@ export function CreateEmployeeDialog({ open, saving, onClose, onCreate }: Create
                   onChange={e => set('fecha_ingreso', e.target.value)}
                   className="text-base md:text-sm bg-muted" />
               </FormField>
-              <FormField id="tipo_contrato" label="Tipo de contrato">
-                <div className="flex items-center h-9 px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
-                  A prueba
+              <FormField id="jefe_area" label="Jefe de área">
+                <div className="flex h-10 min-w-0 items-center overflow-hidden rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground" title={form.jefe_area || undefined}>
+                  <span className={`min-w-0 truncate ${form.jefe_area ? '' : 'italic opacity-50'}`}>
+                    {form.jefe_area || 'Se asigna por departamento'}
+                  </span>
                 </div>
               </FormField>
             </div>
-            <FormField id="escolaridad" label="Escolaridad">
-              <Select value={form.escolaridad} onValueChange={v => set('escolaridad', v)}>
-                <SelectTrigger id="escolaridad" className="bg-muted">
-                  <SelectValue placeholder="Selecciona..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card max-h-56">
-                  {ESCOLARIDAD.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </FormField>
           </fieldset>
         </div>
       </div>

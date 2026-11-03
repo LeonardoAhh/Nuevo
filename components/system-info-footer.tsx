@@ -7,7 +7,6 @@ import { useAppReducedMotion } from "@/components/app-transition"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
 import { cn } from "@/lib/utils"
-import { version as appVersion } from "@/package.json"
 
 const CREDIT_PREFIX = "Designed by "
 const CREDIT_NAME = "LAHH"
@@ -35,7 +34,7 @@ export function SystemInfoFooter({ variant = "sidebar", className }: {
 
   const version = <div className={cn("flex items-center gap-2", variant === "sidebar" && "justify-between")}>
     <span>Versión del sistema</span>
-    <span className="font-mono tabular-nums">1.0.1</span>
+    <span className="font-mono tabular-nums">1.0.5</span>
   </div>
 
   const credit = <TooltipProvider>

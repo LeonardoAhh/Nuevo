@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ResponsiveShell, ModalHeader, ModalFooter } from "@/components/ui/responsive-shell"
 import { formatDate } from "@/lib/hooks"
 import type { NuevoIngreso, NuevoIngresoUpdate, TipoContrato, EstadoRG } from "@/lib/hooks"
-import { ESCOLARIDAD, CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
+import { CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
 
 export interface EditEmployeeDialogProps {
   record: NuevoIngreso | null
@@ -27,7 +27,8 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
   useEffect(() => {
     if (record) {
       setForm({
-        escolaridad: record.escolaridad ?? '',
+        departamento: record.departamento ?? '',
+        area: record.area ?? '',
         puesto: record.puesto ?? '',
         turno: record.turno ?? '',
         eval_1_calificacion: record.eval_1_calificacion ?? undefined,
@@ -45,15 +46,19 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
 
   if (!record) return null
 
-  // Derive puestos list from the employee's department
-  const puestosDisponibles = (() => {
-    const dept = record.departamento
-    if (dept && CATALOGO_ORGANIZACIONAL[dept]) {
-      return CATALOGO_ORGANIZACIONAL[dept].puestos
-    }
-    // Fallback: all puestos from every department
-    return Object.values(CATALOGO_ORGANIZACIONAL).flatMap(v => v.puestos)
-  })()
+  const departamento = form.departamento ?? ''
+  const catalogoDepartamento = CATALOGO_ORGANIZACIONAL[departamento]
+  const areasDisponibles = catalogoDepartamento?.areas ?? []
+  const puestosDisponibles = catalogoDepartamento?.puestos ?? []
+
+  const setDepartamento = (value: string) => {
+    const catalogo = CATALOGO_ORGANIZACIONAL[value]
+    setForm(prev => ({
+      ...prev,
+      departamento: value,
+      area: catalogo?.areas.includes(prev.area ?? '') ? prev.area : null,
+    }))
+  }
 
   const set = (key: keyof NuevoIngresoUpdate, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value === '' ? null : value }))
@@ -62,6 +67,7 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
     <ResponsiveShell
       open={open}
       onClose={onClose}
+      size="sm"
       title={record.nombre}
       description={`${record.puesto} · ${record.departamento}`}
     >
@@ -73,15 +79,28 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
         <div className="space-y-3 px-4 py-3">
-          {/* Escolaridad */}
-          <div className="space-y-1">
-            <Label className="text-xs font-medium">Escolaridad</Label>
-            <Select value={form.escolaridad ?? ''} onValueChange={v => set('escolaridad', v)}>
-              <SelectTrigger className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
-              <SelectContent className="bg-card max-h-56">
-                {ESCOLARIDAD.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          {/* Departamento y Área */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="min-w-0 space-y-1">
+              <Label htmlFor="edit-departamento" className="text-xs font-medium">Departamento</Label>
+              <Select value={departamento} onValueChange={setDepartamento}>
+                <SelectTrigger id="edit-departamento" className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
+                <SelectContent className="bg-card max-h-56">
+                  {Object.keys(CATALOGO_ORGANIZACIONAL).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  {departamento && !catalogoDepartamento && <SelectItem value={departamento}>{departamento}</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-0 space-y-1">
+              <Label htmlFor="edit-area" className="text-xs font-medium">Área</Label>
+              <Select value={form.area ?? ''} onValueChange={v => set('area', v)} disabled={!departamento}>
+                <SelectTrigger id="edit-area" className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
+                <SelectContent className="bg-card max-h-56">
+                  {areasDisponibles.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  {form.area && !areasDisponibles.includes(form.area) && <SelectItem value={form.area}>{form.area}</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Puesto y Turno */}
@@ -92,6 +111,7 @@ export function EditEmployeeDialog({ record, open, saving, onClose, onSave, onDe
                 <SelectTrigger className="bg-muted"><SelectValue placeholder="Selecciona..." /></SelectTrigger>
                 <SelectContent className="bg-card max-h-56">
                   {puestosDisponibles.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  {form.puesto && !puestosDisponibles.includes(form.puesto) && <SelectItem value={form.puesto}>{form.puesto}</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
