@@ -55,6 +55,7 @@ export const CATALOGO_ORGANIZACIONAL: CatalogoJerarquia = {
   "CALIDAD": {
     areas: ["A. CALIDAD 1ER TURNO",
       "A. CALIDAD 2DO TURNO",
+      "A. CALIDAD 3ER TURNO",
       "CALIDAD ADMINISTRATIVO",
       "RESIDENTES DE CALIDAD"
     ],
