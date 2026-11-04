@@ -10,7 +10,7 @@ import { SAVED_DETAIL } from "./saved-detail-copy";
 import { HITOS_NUEVO_INGRESO } from "@/lib/desempeno/hitos-nuevo-ingreso";
 
 type Evaluation = NonNullable<SavedEvaluationsContext["empleadoSel"]>["evals"][number];
-type Actions = Pick<SavedEvaluationsContext, "loading" | "pendingPrintId" | "handlePrint" | "eliminarEvaluacion">;
+type Actions = Pick<SavedEvaluationsContext, "loading" | "pendingPrintId" | "handlePrint" | "eliminarEvaluacion" | "canEdit">;
 
 export function SavedEvaluationCard({ evaluation: ev, actions }: { evaluation: Evaluation; actions: Actions }) {
   const titleId = useId();
@@ -59,7 +59,7 @@ export function SavedEvaluationCard({ evaluation: ev, actions }: { evaluation: E
           {printing ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Printer aria-hidden="true" />}
           {printing ? SAVED_DETAIL.printing : SAVED_DETAIL.print}
         </Button>
-        <Tooltip open={confirmingDelete ? false : undefined}>
+        {actions.canEdit && <Tooltip open={confirmingDelete ? false : undefined}>
           <TooltipTrigger asChild>
             <Button
               type="button"
@@ -77,7 +77,7 @@ export function SavedEvaluationCard({ evaluation: ev, actions }: { evaluation: E
             </Button>
           </TooltipTrigger>
           <TooltipContent>{SAVED_DETAIL.remove}</TooltipContent>
-        </Tooltip>
+        </Tooltip>}
       </div>
     </article>
   );

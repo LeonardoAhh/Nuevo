@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { describeSupabaseError } from "@/lib/supabase/errors"
 import { notify } from "@/lib/notify"
 import { useRole } from "@/lib/hooks/useRole"
 import {
@@ -18,7 +19,7 @@ import {
 import { getTipoDesempenoByPuesto, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
 import { periodoVigenteParaEmpleado, type OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
 import { calcularAsistenciaPorcentaje, crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
-import { hitoVigentePendiente, type SeguimientoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
+import { resolverHitoNuevoIngreso, type SeguimientoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 /** Origen del empleado: planta (`employees`) o nuevo ingreso (`nuevo_ingreso`). */
 export type { OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
@@ -244,13 +245,14 @@ export function useDesempeno() {
       // La modalidad y el periodo se asignan al buscar; no se elige un año anterior.
       const { modo, periodo: periodoResuelto, semestreActual: semestreActivo, requiereSemestral: requiereSemestralEmp } =
         periodoVigenteParaEmpleado(origenEmpleado, empleadoData.fechaIngreso)
-      const hitoPendiente = origenEmpleado === "nuevo_ingreso" && ni
-        ? hitoVigentePendiente(ni as SeguimientoNuevoIngreso, periodoResuelto)
+      const estadoHito = origenEmpleado === "nuevo_ingreso" && ni
+        ? resolverHitoNuevoIngreso(ni as SeguimientoNuevoIngreso, periodoResuelto)
         : null
+      const hitoPendiente = estadoHito?.estado === "disponible" ? estadoHito.hito : null
 
       // Buscar solo detecta las evaluaciones guardadas; no carga el formulario para editarlas.
       const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
-      const evalData = hitoPendiente
+      const evalData = estadoHito && estadoHito.estado !== "sin_pendientes"
         ? null
         : (evals.find((e) => e.periodo && normalizarPeriodoDesempeno(e.periodo) === periodoNormalizado) ?? null)
       if (evalData) {
@@ -268,6 +270,20 @@ export function useDesempeno() {
         setRequiereSemestral(requiereSemestralEmp)
         setSemestreObjetivo(semestreActivo)
         return { origen: origenEmpleado, modo, periodo: periodoResuelto, requiereSemestral: requiereSemestralEmp, semestreObjetivo: semestreActivo }
+      }
+
+      if (estadoHito?.estado === "vencido") {
+        throw new EvaluationMessageError(
+          "Regularización requerida",
+          `El ${estadoHito.hito.etiqueta} venció el ${ni?.[estadoHito.hito.fecha]}. Debe regularizarse antes de continuar con el siguiente hito.`,
+        )
+      }
+
+      if (estadoHito?.estado === "proximo") {
+        throw new EvaluationMessageError(
+          "Evaluación aún no disponible",
+          `El ${estadoHito.hito.etiqueta} está programado para el ${ni?.[estadoHito.hito.fecha]}. Los hitos se habilitan en orden, al llegar su fecha.`,
+        )
       }
 
       if (origenEmpleado === "nuevo_ingreso" && !hitoPendiente) {
@@ -377,7 +393,8 @@ export function useDesempeno() {
             .eq("numero", evalData.numero_empleado)
             .maybeSingle()
           if (seguimientoError) throw seguimientoError
-          if (!seguimiento || hitoVigentePendiente(seguimiento, evalData.periodo)?.numero !== evalData.hito_nuevo_ingreso) {
+          const estadoHito = seguimiento ? resolverHitoNuevoIngreso(seguimiento, evalData.periodo) : null
+          if (!estadoHito || estadoHito.estado !== "disponible" || estadoHito.hito.numero !== evalData.hito_nuevo_ingreso) {
             throw new EvaluationMessageError("Evaluación no disponible", "Esta evaluación ya se registró o su fecha programada cambió. Busca de nuevo al empleado.")
           }
         }
@@ -613,11 +630,26 @@ export function useDesempeno() {
 
   const eliminarEvaluacion = useCallback(async (evalId: string) => {
     try {
-      const { error: err } = await supabase
+      const { data: deleted, error: err } = await supabase
         .from("evaluaciones_desempeno")
         .delete()
         .eq("id", evalId)
-      if (err) throw err
+        .select("id")
+        .maybeSingle()
+      if (err) {
+        console.error("[eliminarEvaluacion]", {
+          code: err.code,
+          message: err.message,
+          details: err.details,
+          hint: err.hint,
+        })
+        notify.error(describeSupabaseError(err, "Error al eliminar"))
+        return false
+      }
+      if (!deleted) {
+        notify.error("No se eliminó la evaluación. Verifica tus permisos o actualiza el historial.")
+        return false
+      }
 
       if (lastEvalId.current === evalId) {
         lastEvalId.current = null
@@ -631,7 +663,8 @@ export function useDesempeno() {
       notify.success("Evaluación eliminada")
       return true
     } catch (e) {
-      notify.error(e instanceof Error ? e.message : "Error al eliminar")
+      console.error("[eliminarEvaluacion]", e instanceof Error ? e.message : e)
+      notify.error(describeSupabaseError(e, "Error al eliminar"))
       return false
     }
   }, [])

@@ -73,7 +73,12 @@ function DesempenoSearchContent() {
         <AlertCircle className="size-4" aria-hidden="true" />
         <div>
           <AlertTitle className="text-sm font-semibold leading-5 tracking-normal">{error.title}</AlertTitle>
-          <AlertDescription className="text-sm font-normal leading-5">{error.description}</AlertDescription>
+          <AlertDescription className="text-sm font-normal leading-5">
+            {error.description}
+            {error.title === "Regularización requerida" && (role === "admin" || role === "dev"
+              ? <> <Link href={DESEMPENO.routes.late} className="font-medium underline underline-offset-4">Abrir Regularización</Link></>
+              : " Solicita a administración que capture el hito en Regularización.")}
+          </AlertDescription>
         </div>
     </Alert>}
 

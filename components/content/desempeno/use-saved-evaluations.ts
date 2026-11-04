@@ -5,6 +5,7 @@ import { DEFAULT_OBJETIVOS_POR_TIPO, UMBRAL_CALIFICACION_APROBATORIA, type Objet
 import { OBJETIVOS_POR_PUESTO } from "@/lib/desempeno/objetivos-catalogo";
 import { CATALOGO_ORGANIZACIONAL, getTipoDesempenoByPuesto, getDepartamentoByPuesto, DEPARTAMENTO_SIN_ASIGNAR } from "@/lib/catalogo";
 import { useDesempeno, type EvaluacionHistorial } from "@/lib/hooks/useDesempeno";
+import { useRole } from "@/lib/hooks/useRole";
 function getObjetivosForPuesto(puesto: string): Objetivo[] {
   if (OBJETIVOS_POR_PUESTO[puesto]) {
     return OBJETIVOS_POR_PUESTO[puesto];
@@ -21,6 +22,7 @@ interface EmpleadoAgrupado {
   origen?: "planta" | "nuevo_ingreso";
 }
 export function useSavedEvaluations() {
+  const { canEdit } = useRole();
   const departamentos = useMemo(() => Object.entries(CATALOGO_ORGANIZACIONAL), []);
   const [puesto, setPuesto] = useState("");
   const [histSearch, setHistSearch] = useState("");
@@ -113,6 +115,7 @@ export function useSavedEvaluations() {
   };
   return {
     departamentos,
+    canEdit,
     puesto,
     setPuesto,
     histSearch,
