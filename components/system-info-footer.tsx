@@ -34,7 +34,7 @@ export function SystemInfoFooter({ variant = "sidebar", className }: {
 
   const version = <div className={cn("flex items-center gap-2", variant === "sidebar" && "justify-between")}>
     <span>Versión del sistema</span>
-    <span className="font-sans tabular-nums">2.0.0</span>
+    <span className="font-sans tabular-nums">2.0.1</span>
   </div>
 
   const credit = <TooltipProvider>
