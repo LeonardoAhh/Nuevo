@@ -5,46 +5,33 @@ import { createPortal } from "react-dom"
 import {
     CheckCircle2,
     ChevronRight,
-    Clock,
     Loader2,
     Minus,
     Pencil,
     Plus,
     Save,
-    Search,
     UserRound,
     X,
-    XCircle,
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import {
     dias,
     formatDate,
     type EvalItem,
     type FechaItem,
 } from "@/lib/hooks/useDashboardAlertas"
-import { iniciales, periodoEval } from "./utils"
+import { periodoEval } from "./utils"
 
 // ─── Métrica clickeable ──────────────────────────────────────────────────────
 
 interface MetricaProps {
     label: string
     valor: number
-    colorValor: string
-    colorBorder: string
     onClick: () => void
     loading: boolean
 }
 
-export function Metrica({ label, valor, colorValor, colorBorder, onClick, loading }: MetricaProps) {
+export function Metrica({ label, valor, onClick, loading }: MetricaProps) {
     // Use semantic colors instead of arbitrary category colors to unify the palette
     const isVencida = label.toLowerCase().includes('vencida')
     const isProxima = label.toLowerCase().includes('próxima') || label.toLowerCase().includes('proxima')
@@ -62,7 +49,7 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
             disabled={loading || valor === 0}
             aria-label={`${label}: ${valor}`}
             className={`
-        group flex items-center gap-2.5 rounded-md p-2.5 text-left transition-colors sm:p-3
+        group flex min-h-11 items-center gap-2.5 rounded-md px-3 py-0 text-left transition-colors
         ${valor > 0 && !loading
                     ? `cursor-pointer hover:opacity-90 ${solidBg}`
                     : "cursor-default bg-muted text-muted-foreground opacity-75"
@@ -89,7 +76,7 @@ export function Metrica({ label, valor, colorValor, colorBorder, onClick, loadin
 function SeccionHeader({ label }: { label: string }) {
     return (
         <div className="mb-2 flex items-center gap-1.5">
-            <span className="font-mono text-xs font-medium uppercase text-primary">
+            <span className="text-sm font-medium text-muted-foreground">
                 {label}
             </span>
         </div>
@@ -100,8 +87,8 @@ function SeccionHeader({ label }: { label: string }) {
 
 interface SeccionProps {
     label: string
-    vencidas: number; colorV: string; bordeV: string
-    porVencer: number; colorP: string; bordeP: string
+    vencidas: number
+    porVencer: number
     umbrales: number
     onVencidas: () => void
     onPorVencer: () => void
@@ -110,27 +97,23 @@ interface SeccionProps {
 
 export function Seccion({
     label,
-    vencidas, colorV, bordeV,
-    porVencer, colorP, bordeP,
+    vencidas,
+    porVencer,
     umbrales, onVencidas, onPorVencer, loading,
 }: SeccionProps) {
     return (
-        <div className="rounded-md border border-border bg-card p-4">
+        <div className="rounded-md border border-border bg-card p-3">
             <SeccionHeader label={label} />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                 <Metrica
                     label="Vencidas"
                     valor={vencidas}
-                    colorValor={colorV}
-                    colorBorder={bordeV}
                     onClick={onVencidas}
                     loading={loading}
                 />
                 <Metrica
                     label={`Próximas (${umbrales}d)`}
                     valor={porVencer}
-                    colorValor={colorP}
-                    colorBorder={bordeP}
                     onClick={onPorVencer}
                     loading={loading}
                 />
@@ -144,10 +127,10 @@ export function Seccion({
 export function DeptoHeader({ nombre, count }: { nombre: string; count: number }) {
     return (
         <div className="flex items-center gap-2 pb-1 pt-1.5">
-            <span className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="truncate text-xs font-semibold uppercase text-muted-foreground">
                 {nombre}
             </span>
-            <span className="flex-shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <span className="flex-shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                 {count}
             </span>
             <div className="h-px flex-1 bg-border/70" />
@@ -162,7 +145,6 @@ interface FilaEvalProps {
     evalNum: 1 | 2 | 3
     colorDias: string
     colorBadge: string
-    colorBorde: string
     badgeLabel: string
     onCalificar: (dbId: string, calificacion: number) => Promise<void>
 }
@@ -252,7 +234,7 @@ export function CalificacionModal({
                                 size="sm"
                                 onClick={deferredClose}
                                 disabled={saving}
-                                className="h-8 px-2 text-muted-foreground"
+                                className="h-11 min-h-11 px-3 py-0 text-sm text-muted-foreground"
                             >
                                 <X size={14} />
                                 Cerrar
@@ -262,7 +244,7 @@ export function CalificacionModal({
                                 size="sm"
                                 onClick={handleGuardar}
                                 disabled={saving}
-                                className="h-8 gap-1.5 px-3"
+                                className="h-11 min-h-11 gap-2 px-3 py-0 text-sm"
                             >
                                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                 Guardar
@@ -292,7 +274,7 @@ export function CalificacionModal({
                                     onClick={() => adjust(-1)}
                                     disabled={saving || cal <= 0}
                                     aria-label="Restar calificación"
-                                    className="h-10 w-10 rounded-full"
+                                    className="h-11 w-11 rounded-md"
                                 >
                                     <Minus size={18} />
                                 </Button>
@@ -316,7 +298,7 @@ export function CalificacionModal({
                                     onClick={() => adjust(1)}
                                     disabled={saving || cal >= 100}
                                     aria-label="Sumar calificación"
-                                    className="h-10 w-10 rounded-full"
+                                    className="h-11 w-11 rounded-md"
                                 >
                                     <Plus size={18} />
                                 </Button>
@@ -330,7 +312,7 @@ export function CalificacionModal({
     )
 }
 
-export function FilaEval({ item, evalNum, colorDias, colorBadge, colorBorde, badgeLabel, onCalificar }: FilaEvalProps) {
+export function FilaEval({ item, evalNum, colorDias, colorBadge, badgeLabel, onCalificar }: FilaEvalProps) {
     const [open, setOpen] = useState(false)
 
     function openModal() {
@@ -339,28 +321,29 @@ export function FilaEval({ item, evalNum, colorDias, colorBadge, colorBorde, bad
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-md border border-border border-l-4 bg-card p-3.5 transition-colors ${colorBorde}`}>
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4 transition-colors">
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
+                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${colorDias} bg-current/10`}>
                     {dias(item.diasDiff)}
                 </span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
                 {[item.departamento, item.turno].filter(Boolean).join(" · ") || "Sin departamento"}
             </p>
             <div className="flex items-center justify-between gap-2">
-                <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
+                <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
                     {badgeLabel}
                 </span>
                 <span className="text-xs font-medium text-muted-foreground">{formatDate(item.fecha)}</span>
             </div>
 
             <button
+                type="button"
                 onClick={openModal}
-                className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md px-3 py-0 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-                <Pencil size={11} /> Calificar
+                <Pencil size={14} aria-hidden="true" /> Calificar
             </button>
             <CalificacionModal
                 open={open}
@@ -381,12 +364,11 @@ interface FilaFechaProps {
     item: FechaItem
     colorBadge: string
     colorDias: string
-    colorBorde: string
     onEntregado?: (id: string) => Promise<void>
     onIndeterminado?: (id: string) => Promise<void>
 }
 
-export function FilaFecha({ item, colorBadge, colorDias, colorBorde, onEntregado, onIndeterminado }: FilaFechaProps) {
+export function FilaFecha({ item, colorBadge, colorDias, onEntregado, onIndeterminado }: FilaFechaProps) {
     const [saving, setSaving] = useState(false)
 
     async function handle(action: (id: string) => Promise<void>) {
@@ -395,18 +377,18 @@ export function FilaFecha({ item, colorBadge, colorDias, colorBorde, onEntregado
     }
 
     return (
-        <div className={`flex flex-col gap-2 rounded-md border border-border border-l-4 bg-card p-3.5 transition-colors ${colorBorde}`}>
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4 transition-colors">
             <div className="flex items-start justify-between gap-2.5">
                 <p className="text-sm font-semibold leading-snug text-foreground">{item.nombre}</p>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${colorDias} bg-current/10`}>
+                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${colorDias} bg-current/10`}>
                     {dias(item.diasDiff)}
                 </span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
                 {[item.puesto, item.departamento].filter(Boolean).join(" · ") || "Sin información"}
             </p>
             <div className="flex items-center justify-between gap-2">
-                <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
+                <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorBadge}`}>
                     {item.etiqueta}
                 </span>
                 <span className="text-xs font-medium text-muted-foreground">{formatDate(item.fecha)}</span>
@@ -414,87 +396,29 @@ export function FilaFecha({ item, colorBadge, colorDias, colorBorde, onEntregado
 
             {onEntregado && (
                 <button
+                    type="button"
                     onClick={() => handle(onEntregado!)}
                     disabled={saving}
-                    className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+                    className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md px-3 py-0 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 >
-                    <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar entregado"}
+                    <CheckCircle2 size={14} aria-hidden="true" /> {saving ? "Guardando…" : "Marcar entregado"}
                 </button>
             )}
 
             {onIndeterminado && (
                 <button
+                    type="button"
                     onClick={() => handle(onIndeterminado!)}
                     disabled={saving}
-                    className="inline-flex w-fit items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+                    className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md px-3 py-0 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 >
-                    <CheckCircle2 size={11} /> {saving ? "Guardando…" : "Marcar como Indeterminado"}
+                    <CheckCircle2 size={14} aria-hidden="true" /> {saving ? "Guardando…" : "Marcar como Indeterminado"}
                 </button>
             )}
         </div>
     )
 }
 
-// ─── Master-detail primitives (shared desktop + mobile) ──────────────────────
-
-export interface MasterHeaderProps {
-    total: number
-    filtrados: number
-    search: string
-    onSearchChange: (v: string) => void
-    depto: string
-    onDeptoChange: (v: string) => void
-    deptos: string[]
-}
-
-export function MasterHeader({
-    total, filtrados, search, onSearchChange, depto, onDeptoChange, deptos,
-}: MasterHeaderProps) {
-    return (
-        <div className="sticky top-0 z-10 flex flex-col gap-2 border-b bg-card/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-            <div className="relative">
-                <Search
-                    size={14}
-                    aria-hidden
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                    value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Buscar..."
-                    className="h-9 pl-8 text-sm"
-                    aria-label="Buscar en alertas"
-                />
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-                <Select
-                    value={depto || "__all__"}
-                    onValueChange={(v) => onDeptoChange(v === "__all__" ? "" : v)}
-                >
-                    <SelectTrigger
-                        aria-label="Filtrar por departamento"
-                        className="h-8 max-w-[60%] flex-1 truncate rounded-md px-2 text-xs"
-                    >
-                        <SelectValue placeholder="Deptos." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="__all__">Deptos.</SelectItem>
-                        {deptos.map((d) => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <span
-                    aria-live="polite"
-                    className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                >
-                    {filtrados}{filtrados !== total ? ` / ${total}` : ""}
-                </span>
-            </div>
-        </div>
-    )
-}
 
 interface MasterListItemProps {
     nombre: string
@@ -517,7 +441,7 @@ export function MasterListItem({ nombre, meta, diasLabel, fechaLabel, selected, 
             type="button"
             onClick={onSelect}
             aria-pressed={selected}
-            className={`group relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${selected ? selectedBg : "hover:bg-muted/40"
+            className={`group relative flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selected ? selectedBg : "hover:bg-muted/40"
                 }`}
         >
             {selected && (
@@ -528,11 +452,11 @@ export function MasterListItem({ nombre, meta, diasLabel, fechaLabel, selected, 
             </span>
             <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{nombre}</p>
-                <p className="truncate text-[11px] text-muted-foreground/80">{meta}</p>
+                <p className="truncate text-xs text-muted-foreground">{meta}</p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <span className={`text-[11px] font-medium ${toneText}`}>{diasLabel}</span>
-                <span className="text-[10px] text-muted-foreground/60">{fechaLabel}</span>
+                <span className={`text-xs font-medium ${toneText}`}>{diasLabel}</span>
+                <span className="text-xs text-muted-foreground">{fechaLabel}</span>
             </div>
         </button>
     )
@@ -552,12 +476,12 @@ export function DetalleStat({
 }: { label: string; value: string; icon: React.ReactNode; valueClass?: string; nota?: string }) {
     return (
         <div className="rounded-xl border bg-card p-3">
-            <dt className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <dt className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground">
                 {icon}
                 {label}
             </dt>
             <dd className={`mt-1 text-sm font-semibold ${valueClass ?? "text-foreground"}`}>{value}</dd>
-            {nota && <p className="mt-0.5 text-[11px] text-muted-foreground">{nota}</p>}
+            {nota && <p className="mt-1 text-xs text-muted-foreground">{nota}</p>}
         </div>
     )
 }

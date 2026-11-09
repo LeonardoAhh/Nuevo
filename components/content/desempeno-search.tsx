@@ -21,6 +21,43 @@ import { GuiaButton } from "./desempeno/search-controls";
 import { useRole } from "@/lib/hooks/useRole";
 import { useUser } from "@/lib/hooks/useUser";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function EvaluationLoadingSkeleton() {
+  return (
+    <div role="status" aria-busy="true" className="space-y-4">
+      <span className="sr-only">Cargando evaluación del empleado</span>
+      <div aria-hidden="true" className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-11 w-24" />
+          <Skeleton className="h-11 w-28" />
+          <Skeleton className="h-11 w-24" />
+        </div>
+        <div className="rounded-xl border bg-card p-4 sm:p-6">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-full max-w-2xl" />
+            <Skeleton className="h-4 w-3/4 max-w-xl" />
+            <Skeleton className="h-6 w-2/3 max-w-md" />
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {[0, 1, 2, 3].map(item => (
+              <div key={item} className="space-y-3">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-5 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[0, 1].map(item => (
+            <Skeleton key={item} className="h-32 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DesempenoSearchContent() {
   const router = useRouter();
   const { role, loading: roleLoading } = useRole();
@@ -68,6 +105,8 @@ function DesempenoSearchContent() {
       {/* Banner de Pendientes en estado vacío */}
       <PendingSummary context={context} />
 
+      {loading && <EvaluationLoadingSkeleton />}
+
       {/* Alertas */}
       {error && <Alert variant="destructive" className="font-sans">
         <AlertCircle className="size-4" aria-hidden="true" />
@@ -77,7 +116,7 @@ function DesempenoSearchContent() {
             {error.description}
             {error.title === "Regularización requerida" && (role === "admin" || role === "dev"
               ? <> <Link href={DESEMPENO.routes.late} className="font-medium underline underline-offset-4">Abrir Regularización</Link></>
-              : " Solicita a administración que capture el hito en Regularización.")}
+              : " Acude a Recursos Humanos para capturar la evaluación vencida.")}
           </AlertDescription>
         </div>
     </Alert>}
@@ -106,9 +145,7 @@ function DesempenoSearchContent() {
 // ─── Export con Suspense boundary ─────────────────────────────────────────────
 
 export default function DesempenoSearch() {
-  return <Suspense fallback={<div className="flex items-center justify-center py-12">
-      <div className="text-sm text-muted-foreground">Cargando...</div>
-  </div>}>
+  return <Suspense fallback={<EvaluationLoadingSkeleton />}>
     <DesempenoSearchContent />
 </Suspense>;
 }

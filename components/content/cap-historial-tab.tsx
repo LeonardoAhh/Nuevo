@@ -3,26 +3,26 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   BadgeCheck, BookPlus, CalendarClock, EllipsisVertical, FilePenLine,
-  LayoutGrid, Layers, Search, Trash2, UserPlus, UserRoundPen, Users, X,
+  LayoutGrid, Layers, Search, ShieldAlert, Trash2, UserPlus, UserRoundPen, Users, X,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PaginationBar } from "@/components/ui/pagination-bar"
+import { Badge } from "@/components/ui/badge"
 import { CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
 import type { Employee } from "@/lib/hooks"
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 7
+const employeeActionItemClass = "gap-1 px-1 text-sm font-normal"
 
 interface CapHistorialTabProps {
   employees: Employee[]
   loadingEmployees: boolean
-  isReadOnly: boolean
   newEmpSuccess: boolean
   addCoursesSuccess: boolean
   onNewEmployee: () => void
@@ -35,7 +35,7 @@ interface CapHistorialTabProps {
 }
 
 export function CapHistorialTab({
-  employees, loadingEmployees, isReadOnly,
+  employees, loadingEmployees,
   newEmpSuccess, addCoursesSuccess,
   onNewEmployee, onBulkImport, onBulkCreateEmployees,
   onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee,
@@ -80,15 +80,15 @@ export function CapHistorialTab({
               <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">Empleados</h2>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <Button variant="outline" className="h-10 px-4" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
+              <Button variant="outline" className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
                 <span className="hidden sm:inline">Cargar cursos</span>
                 <Layers className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button variant="outline" className="h-10 px-4" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
+              <Button variant="outline" className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
                 <span className="hidden sm:inline">Cargar empleados</span>
                 <Users className="h-4 w-4 sm:hidden" />
               </Button>
-              <Button className="h-10 px-4" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
+              <Button className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
                 <span className="hidden sm:inline">Nuevo empleado</span>
                 <UserPlus className="h-4 w-4 sm:hidden" />
               </Button>
@@ -100,28 +100,28 @@ export function CapHistorialTab({
           <div className="flex flex-col sm:flex-row items-center gap-4">
             {/* Search */}
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 value={empSearch}
                 onChange={e => setEmpSearch(e.target.value)}
                 placeholder="Buscar empleado..."
-                className={`h-11 pl-11 text-base ${empSearch ? "pr-11" : ""}`}
+                className={`h-11 pl-9 text-sm ${empSearch ? "pr-11" : ""}`}
               />
               {empSearch && (
                 <button
                   type="button"
                   aria-label="Limpiar búsqueda"
                   onClick={() => setEmpSearch("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink transition-colors"
+                  className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <X className="h-[18px] w-[18px]" />
+                  <X className="size-4" aria-hidden="true" />
                 </button>
               )}
             </div>
             {/* Filters row */}
             <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
               <Select value={empFilterDept} onValueChange={setEmpFilterDept}>
-                <SelectTrigger className="h-11 flex-1 text-base sm:w-48 sm:flex-none">
+                <SelectTrigger className="h-11 flex-1 text-sm sm:w-48 sm:flex-none">
                   <SelectValue placeholder="Departamento" />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,7 +132,7 @@ export function CapHistorialTab({
                 </SelectContent>
               </Select>
               <Select value={empFilterTurno} onValueChange={setEmpFilterTurno}>
-                <SelectTrigger className="h-11 flex-1 text-base sm:w-40 sm:flex-none">
+                <SelectTrigger className="h-11 flex-1 text-sm sm:w-40 sm:flex-none">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,14 +147,14 @@ export function CapHistorialTab({
             <div className="overflow-hidden rounded-md border border-border bg-card">
               <div className="divide-y divide-border/60">
                 {Array.from({ length: 15 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-3">
-                  <Skeleton className="h-4 w-8 hidden sm:block bg-muted" />
-                  <Skeleton className="h-4 flex-1 bg-muted" />
-                  <Skeleton className="h-4 w-24 hidden sm:block bg-muted" />
-                  <Skeleton className="h-4 w-28 bg-muted" />
-                  <Skeleton className="h-4 w-4 rounded bg-muted" />
-                </div>
-              ))}
+                  <div key={i} className="flex items-center gap-4 px-4 py-2">
+                    <Skeleton className="hidden h-4 w-8 bg-muted sm:block" />
+                    <Skeleton className="h-4 flex-1 bg-muted" />
+                    <Skeleton className="hidden h-4 w-24 bg-muted sm:block" />
+                    <Skeleton className="h-4 w-28 bg-muted" />
+                    <Skeleton className="h-4 w-4 rounded bg-muted" />
+                  </div>
+                ))}
               </div>
             </div>
           ) : filtered.length === 0 ? (
@@ -166,7 +166,7 @@ export function CapHistorialTab({
           ) : (
             <>
               <div className="overflow-hidden rounded-md border border-border bg-card">
-                <Table>
+                <Table className="[&_td]:!py-0">
                   <TableHeader>
                     <TableRow className="bg-transparent hover:bg-transparent border-border/60">
                       <TableHead className="w-14 hidden sm:table-cell">No.</TableHead>
@@ -179,13 +179,13 @@ export function CapHistorialTab({
                   <TableBody>
                     {paginated.map(emp => (
                       <TableRow key={emp.id} className="hover:bg-muted/30 border-border/60">
-                        <TableCell className="text-sm text-muted-foreground font-mono hidden sm:table-cell">
+                        <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
                           {emp.numero ?? "—"}
                         </TableCell>
                         <TableCell className="text-sm font-medium text-ink">
                           <div className="flex flex-col">
                             <span>{emp.nombre}</span>
-                            <span className="text-xs text-muted-foreground font-mono sm:hidden">
+                            <span className="text-xs text-muted-foreground sm:hidden">
                               {emp.numero ?? ""}
                             </span>
                           </div>
@@ -207,36 +207,48 @@ export function CapHistorialTab({
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onViewEmployee(emp)}>
+                                <DropdownMenuItem className={employeeActionItemClass} onClick={() => onViewEmployee(emp)}>
                                   <LayoutGrid />
                                   <span>Matriz de capacitación</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onAddCourses(emp)}>
+                                <DropdownMenuItem className={employeeActionItemClass} onClick={() => onAddCourses(emp)}>
                                   <BookPlus />
                                   <span>Agregar cursos</span>
                                 </DropdownMenuItem>
                                 {emp.numero && (
                                   <>
-                                    <DropdownMenuItem asChild>
-                                      <Link href={`/capacitacion/incidencias/${encodeURIComponent(emp.numero)}`}>
+                                    <DropdownMenuItem asChild className={employeeActionItemClass}>
+                                      <Link href={`/plantilla/incidencias/${encodeURIComponent(emp.numero)}`}>
                                         <CalendarClock />
                                         <span>Incidencias</span>
                                       </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                      <Link href={`/capacitacion/actas/${encodeURIComponent(emp.numero)}`}>
+                                    <DropdownMenuItem asChild className={employeeActionItemClass}>
+                                      <Link href={`/plantilla/actas/${encodeURIComponent(emp.numero)}`}>
                                         <FilePenLine />
-                                        <span>Actas y seguimiento</span>
+                                        <span>Actas administrativas</span>
                                       </Link>
                                     </DropdownMenuItem>
                                   </>
                                 )}
+                                <DropdownMenuItem
+                                  disabled
+                                  className={`${employeeActionItemClass} relative min-h-12 items-end pb-1 pt-4 text-muted-foreground data-[disabled]:opacity-100`}
+                                >
+                                  <span className="flex items-center gap-1">
+                                    <ShieldAlert />
+                                    Incumplimiento
+                                  </span>
+                                  <Badge variant="secondary" size="sm" className="absolute right-2 top-1 font-normal">
+                                    Próximamente
+                                  </Badge>
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => onEditEmployee(emp)}>
+                                <DropdownMenuItem className={employeeActionItemClass} onClick={() => onEditEmployee(emp)}>
                                   <UserRoundPen />
                                   <span>Editar empleado</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onDeleteEmployee(emp)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <DropdownMenuItem onClick={() => onDeleteEmployee(emp)} className={`${employeeActionItemClass} text-destructive focus:bg-destructive/10 focus:text-destructive`}>
                                   <Trash2 />
                                   <span>Eliminar</span>
                                 </DropdownMenuItem>

@@ -41,6 +41,7 @@ export function useTrainingHours(): TrainingHoursStats {
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      const currentYear = new Date().getFullYear()
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
         .select("id, duration_hours, tipo")
@@ -73,6 +74,8 @@ export function useTrainingHours(): TrainingHoursStats {
           .select("employee_id, course_id, fecha_aplicacion")
           .in("course_id", courseIds)
           .not("fecha_aplicacion", "is", null)
+          .gte("fecha_aplicacion", `${currentYear - 2}-01-01`)
+          .lt("fecha_aplicacion", `${currentYear + 1}-01-01`)
           .range(from, from + PAGE_SIZE - 1)
         if (error) throw new Error(error.message)
         const rows = (data ?? []) as { employee_id: string; course_id: string | null; fecha_aplicacion: string | null }[]
@@ -106,7 +109,6 @@ export function useTrainingHours(): TrainingHoursStats {
         g.monthCourses.get(month)!.add(r.course_id)
       }
 
-      const currentYear = new Date().getFullYear()
       const allowedYears = [String(currentYear - 2), String(currentYear - 1), String(currentYear)]
 
       const stats: TrainingHoursYearStat[] = Array.from(grouped.entries())

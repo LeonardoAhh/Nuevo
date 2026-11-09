@@ -398,7 +398,7 @@ export default function IngresosSemanalesContent() {
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="min-w-0 flex-1">
                               {r.numero && (
-                                <p className="text-[11px] font-mono text-muted-foreground leading-none mb-0.5">
+                                <p className="text-[11px] font-sans text-muted-foreground leading-none mb-0.5">
                                   #{r.numero}
                                 </p>
                               )}
@@ -415,7 +415,7 @@ export default function IngresosSemanalesContent() {
                                 className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground"
                                 aria-label={`Ver incidencias de ${r.nombre}`}
                               >
-                                <Link href={`/capacitacion/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
+                                <Link href={`/plantilla/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
                                   <CalendarDays className="h-4 w-4" />
                                 </Link>
                               </Button>
@@ -469,7 +469,7 @@ export default function IngresosSemanalesContent() {
                           {sorted.map((r) => (
                             <TableRow key={r.id} className="hover:bg-muted/40">
                               <TableCell>
-                                <span className="font-mono text-xs text-muted-foreground">
+                                <span className="font-sans text-xs text-muted-foreground">
                                   {r.numero ?? "—"}
                                 </span>
                               </TableCell>
@@ -510,7 +510,7 @@ export default function IngresosSemanalesContent() {
                                     aria-label={`Ver incidencias de ${r.nombre}`}
                                     title="Ver incidencias"
                                   >
-                                    <Link href={`/capacitacion/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
+                                    <Link href={`/plantilla/incidencias/${encodeURIComponent(r.numero)}?origen=ingresos-semanales`}>
                                       <CalendarDays className="h-4 w-4" />
                                     </Link>
                                   </Button>

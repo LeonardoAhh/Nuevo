@@ -119,7 +119,6 @@ export function CumpleanosImportModal({
 
   function validateEntry(
     entry: JsonEntry,
-    _index: number,
   ): { invalid: true; reasons: string[]; numero: string | null } | { invalid: false; record: Omit<ValidRecord, "id" | "tabla" | "nombre"> } {
     const reasons: string[] = []
     const numero    = normalize(entry.numero)
@@ -179,7 +178,7 @@ export function CumpleanosImportModal({
           invalidList.push({ index: i, numero: null, reasons: ["El elemento no es un objeto válido."] })
           continue
         }
-        const result = validateEntry(item, i)
+        const result = validateEntry(item)
         if (result.invalid) { invalidList.push({ index: i, numero: result.numero, reasons: result.reasons }); continue }
 
         const num = result.record.numero
@@ -286,7 +285,7 @@ export function CumpleanosImportModal({
         onClose={closeDialog}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -296,11 +295,11 @@ export function CumpleanosImportModal({
 
         {/* ── Paso 1: upload ──────────────────────────────────────────────── */}
         {step === "upload" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <Alert>
               <AlertDescription className="space-y-2">
-                <p className="font-semibold text-sm">Estructura del archivo</p>
-                <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">{`[
+                <p className="text-sm font-semibold">Estructura del archivo</p>
+                <pre className="overflow-x-auto rounded-xl border border-border bg-muted p-4 font-sans text-sm leading-5">{`[
   {
     "numero": "1001",
     "fecha_nacimiento": "17/05/1990",
@@ -326,18 +325,18 @@ export function CumpleanosImportModal({
 
             <Button
               variant="outline"
-              className="w-full border-dashed border-border py-8"
+              className="min-h-11 w-full justify-start gap-3 border-dashed border-border px-3 py-0 text-sm"
               onClick={() => fileRef.current?.click()}
               disabled={loading}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                   Procesando...
                 </span>
               ) : (
-                <span className="flex flex-col items-center gap-2 text-sm">
-                  <FileJson className="h-6 w-6" />
+                <span className="flex items-center gap-3">
+                  <FileJson className="size-5" aria-hidden="true" />
                   Seleccionar archivo JSON
                 </span>
               )}
@@ -350,17 +349,17 @@ export function CumpleanosImportModal({
           <section className="space-y-5">
             {/* Resumen */}
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border-0 gap-1">
-                <CheckCircle2 className="h-3 w-3" />
+              <Badge variant="success" className="gap-1">
+                <CheckCircle2 className="size-3" aria-hidden="true" />
                 {validCount} listo(s) para actualizar
               </Badge>
               {nfCount > 0 && (
-                <Badge className="bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-0">
+                <Badge variant="warning">
                   {nfCount} numero(s) no encontrado(s)
                 </Badge>
               )}
               {invalidCount > 0 && (
-                <Badge className="bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] border-0">
+                <Badge variant="destructive">
                   {invalidCount} inválido(s)
                 </Badge>
               )}
@@ -369,14 +368,14 @@ export function CumpleanosImportModal({
             {/* Registros válidos */}
             {validCount > 0 && (
               <article>
-                <h2 className="text-sm font-semibold mb-3">
+                <h2 className="mb-3 text-xl font-semibold leading-7 tracking-tight">
                   Colaboradores que se actualizarán
                 </h2>
                 <ul className="space-y-2">
                   {validRecords.map((r) => (
                     <li
                       key={r.numero}
-                      className="rounded-lg border border-border bg-card p-3 space-y-2"
+                      className="space-y-2 rounded-xl border border-border bg-card p-4"
                     >
                       {/* Fila principal: nombre + badge tabla */}
                       <div className="flex items-start justify-between gap-2">
@@ -384,13 +383,13 @@ export function CumpleanosImportModal({
                           <p className="font-semibold text-sm leading-snug break-words">
                             {r.nombre}
                           </p>
-                          <p className="font-mono text-[11px] text-muted-foreground mt-0.5">
+                          <p className="mt-0.5 text-xs text-muted-foreground">
                             #{r.numero}
                           </p>
                         </div>
                         <Badge
                           variant="outline"
-                          className="shrink-0 text-[10px] h-5 px-1.5 mt-0.5"
+                          className="mt-0.5 h-6 shrink-0 px-2 text-xs"
                         >
                           {r.tabla === "employees" ? "Planta" : "Ingreso"}
                         </Badge>
@@ -398,12 +397,12 @@ export function CumpleanosImportModal({
 
                       {/* Detalles: fecha y email */}
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
                           <span>{r.fecha_nacimiento}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Mail className="size-4 shrink-0" aria-hidden="true" />
                           <span className="break-all">{r.email}</span>
                         </div>
                       </div>
@@ -416,13 +415,13 @@ export function CumpleanosImportModal({
             {/* No encontrados */}
             {nfCount > 0 && (
               <article>
-                <h3 className="text-sm font-semibold text-[hsl(var(--warning))] mb-2">
+                <h3 className="mb-2 text-sm font-semibold text-warning">
                   Números no encontrados en la base de datos
                 </h3>
-                <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.08)] p-3">
-                  <ul className="space-y-1 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
+                  <ul className="space-y-1 text-sm text-foreground">
                     {notFound.map((nf) => (
-                      <li key={nf.numero} className="font-mono">#{nf.numero}</li>
+                      <li key={nf.numero} className="font-sans">#{nf.numero}</li>
                     ))}
                   </ul>
                 </div>
@@ -432,18 +431,18 @@ export function CumpleanosImportModal({
             {/* Inválidos */}
             {invalidCount > 0 && (
               <article>
-                <h3 className="text-sm font-semibold text-destructive mb-2">
+                <h3 className="mb-2 text-sm font-semibold text-destructive">
                   Registros inválidos
                 </h3>
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
                   <ul className="space-y-3 text-sm">
                     {invalidEntries.map((item) => (
                       <li key={item.index} className="space-y-1">
                         <p className="font-medium">
                           Fila {item.index + 1}
-                          {item.numero && <span className="font-mono ml-1 text-muted-foreground">#{item.numero}</span>}
+                          {item.numero && <span className="font-sans ml-1 text-muted-foreground">#{item.numero}</span>}
                         </p>
-                        <ul className="list-disc list-inside text-xs text-destructive space-y-0.5">
+                        <ul className="list-disc list-inside space-y-0.5 text-sm text-destructive">
                           {item.reasons.map((r, i) => <li key={i}>{r}</li>)}
                         </ul>
                       </li>
@@ -458,8 +457,8 @@ export function CumpleanosImportModal({
         {/* ── Paso 3: done ────────────────────────────────────────────────── */}
         {step === "done" && (
           <div className="grid place-items-center gap-3 py-10">
-            <CheckCircle2 className="h-12 w-12 text-[hsl(var(--success))]" />
-            <p className="text-lg font-semibold">Importación completada</p>
+            <CheckCircle2 className="size-12 text-success" aria-hidden="true" />
+            <p className="text-xl font-semibold leading-7 tracking-tight">Importación completada</p>
             <p className="text-sm text-muted-foreground">
               Se actualizaron {updatedCount} colaborador(es) correctamente.
             </p>
@@ -468,6 +467,7 @@ export function CumpleanosImportModal({
       </div>
 
       <ModalFooter
+        className="[&>div>button]:h-11"
         onCancel={step === "preview" ? reset : closeDialog}
         cancelLabel={step === "preview" ? "Volver" : step === "done" ? "Cerrar" : "Cancelar"}
         onConfirm={step === "preview" ? handleSave : undefined}

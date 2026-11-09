@@ -16,10 +16,8 @@ export interface ListaEvalsProps {
 export interface ListaFechasProps {
     items: FechaItem[]
     vacio: string
-    colorAvatar?: string
     colorBadge: string
     colorDias: string
-    colorBorde: string
     onEntregado?: (id: string) => Promise<void>
     onIndeterminado?: (id: string) => Promise<void>
 }

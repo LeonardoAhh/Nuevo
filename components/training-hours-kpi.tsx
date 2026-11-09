@@ -18,7 +18,7 @@ import {
   Tooltip as TooltipUI, TooltipTrigger, TooltipContent, TooltipProvider
 } from "@/components/ui/tooltip"
 import {
-  Clock, RefreshCw, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info, TrendingDown
+  Clock, AlertTriangle, Users, BookOpen, TrendingUp, Maximize2, Info, TrendingDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTrainingHours, type TrainingHoursYearStat } from "@/lib/hooks/useTrainingHours"
@@ -73,7 +73,7 @@ function HoursTooltip({
 
 export default function TrainingHoursKPI() {
   const {
-    loading, years, totalCoursesInCatalog, coursesWithDurationCount, refresh,
+    loading, years, coursesWithDurationCount,
   } = useTrainingHours()
 
   const grandTotal = years.reduce((s, y) => s + y.totalHours, 0)
@@ -272,13 +272,13 @@ export default function TrainingHoursKPI() {
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/15">
-              <Clock size={18} className="text-primary" />
+              <Clock size={18} className="text-primary" aria-hidden="true" />
             </div>
             <div>
-              <CardTitle className="text-base leading-tight">
+              <CardTitle className="text-xl font-semibold leading-7 tracking-tight">
                 Horas de capacitación
               </CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Últimos {years.length} años
               </p>
             </div>
@@ -287,7 +287,7 @@ export default function TrainingHoursKPI() {
           <div className="flex items-center gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={loading || hasNoYearData}>
+                <Button variant="outline" size="sm" className="h-11 min-h-11 gap-2 px-3 py-0 text-sm" disabled={loading || hasNoYearData}>
                   <Maximize2 size={14} />
                   <span className="hidden sm:inline">Detalle</span>
                 </Button>
@@ -304,13 +304,6 @@ export default function TrainingHoursKPI() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button
-              data-testid="hours-kpi-refresh-btn"
-              variant="ghost" size="icon" className="h-8 w-8"
-              onClick={refresh} disabled={loading}
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            </Button>
           </div>
         </div>
       </CardHeader>

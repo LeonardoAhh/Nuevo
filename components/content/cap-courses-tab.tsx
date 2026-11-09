@@ -12,7 +12,7 @@ import { CapCourseDetailView } from "@/components/content/cap-course-detail-view
 import { motion, AnimatePresence } from "framer-motion"
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
 
-const PAGE_SIZE = 16
+const PAGE_SIZE = 14
 
 interface CapCoursesTabProps {
   courses: Course[]
@@ -54,11 +54,11 @@ export function CapCoursesTab({
       <div className="pb-6 pt-6 px-6 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Catálogo de cursos</h2>
+            <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">Catálogo de cursos</h2>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
             <Button
-              className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors"
+              className="h-11 min-h-11 px-3 py-0 text-sm font-medium"
               onClick={() => setAuditOpen(true)}
               aria-label="Auditoría Global"
               title="Auditoría Global"
@@ -66,7 +66,7 @@ export function CapCoursesTab({
               Auditoría
             </Button>
             <Button
-              className="h-10 px-4 rounded-md bg-card border border-border/60 hover:bg-muted/30 text-ink shadow-none font-medium transition-colors"
+              className="h-11 min-h-11 px-3 py-0 text-sm font-medium"
               onClick={() => setPreviewOpen(true)}
               aria-label="Descargar reporte Excel"
               title="Descargar Excel"
@@ -74,7 +74,7 @@ export function CapCoursesTab({
               Reporte
             </Button>
             {!isReadOnly && (
-              <Button onClick={onNewCourse} className="h-10 px-4 rounded-md bg-primary text-primary-foreground shadow-none font-medium transition-colors" aria-label="Nuevo curso" title="Nuevo curso">
+              <Button onClick={onNewCourse} className="h-11 min-h-11 px-3 py-0 text-sm font-medium" aria-label="Nuevo curso" title="Nuevo curso">
                 Nuevo curso
               </Button>
             )}
@@ -83,21 +83,21 @@ export function CapCoursesTab({
       </div>
       <div className="p-6 space-y-6">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             value={courseSearch}
             onChange={e => { setCourseSearch(e.target.value); setCoursePage(1) }}
             placeholder="Buscar curso..."
-            className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${courseSearch ? "pr-11" : ""}`}
+            className={`h-11 pl-9 text-sm ${courseSearch ? "pr-11" : ""}`}
           />
           {courseSearch && (
             <button
               type="button"
               aria-label="Limpiar búsqueda"
               onClick={() => setCourseSearch("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -145,16 +145,17 @@ export function CapCoursesTab({
                     <>
                       <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {paginated.map((course) => (
-                          <div 
-                            key={course.id} 
-                            className="rounded-md border border-border/60 bg-transparent px-4 py-3 hover:bg-muted/30 hover:border-border transition-all cursor-pointer group flex items-center gap-3 shadow-none"
+                          <button
+                            type="button"
+                            key={course.id}
+                            className="flex min-h-11 w-full items-center gap-3 rounded-md border border-border bg-card px-3 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => setSelectedCourseId(course.id)}
                           >
-                            <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm font-medium text-ink leading-tight flex-1 line-clamp-2">
+                            <BookOpen className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                            <span className="min-w-0 flex-1 line-clamp-2 font-medium leading-5 text-foreground">
                               {course.name}
                             </span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                       

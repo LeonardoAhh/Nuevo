@@ -17,9 +17,17 @@ export interface DeptCumplimiento {
 
 interface PositionRow { id: string; name: string; department_id: string }
 interface PositionCourseRow { position_id: string; course_id: string }
-interface EmployeeRow { id: string; nombre: string; puesto: string | null; departamento: string | null }
+interface EmployeeRow { id: string; nombre: string; puesto: string | null; departamento: string | null; fecha_ingreso: string | null }
 interface EmployeeCourseRow { employee_id: string; course_id: string | null; calificacion: number | null }
 export interface DepartmentRow { id: string; name: string }
+
+interface ComplianceSourceData {
+  departments: DepartmentRow[]
+  positions: PositionRow[]
+  positionCourses: PositionCourseRow[]
+  employees: EmployeeRow[]
+  employeeCourses: EmployeeCourseRow[]
+}
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -50,6 +58,7 @@ export function useCumplimiento() {
   const [totalEmpleados, setTotalEmpleados] = useState(0)
   const [totalEmpleadosConPuesto, setTotalEmpleadosConPuesto] = useState(0)
   const [deptData, setDeptData] = useState<DeptCumplimiento[]>([])
+  const [sourceData, setSourceData] = useState<ComplianceSourceData | null>(null)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -59,7 +68,7 @@ export function useCumplimiento() {
           fetchAllRows<DepartmentRow>("departments", "id, name"),
           fetchAllRows<PositionRow>("positions", "id, name, department_id"),
           fetchAllRows<PositionCourseRow>("position_courses", "position_id, course_id"),
-          fetchAllRows<EmployeeRow>("employees", "id, nombre, puesto, departamento"),
+          fetchAllRows<EmployeeRow>("employees", "id, nombre, puesto, departamento, fecha_ingreso"),
           fetchAllRows<EmployeeCourseRow>("employee_courses", "employee_id, course_id, calificacion"),
         ])
 
@@ -121,6 +130,13 @@ export function useCumplimiento() {
       setTotalAprobados(gAprobados)
       setTotalReprobados(gReprobados)
       setTotalPendientes(gPendientes)
+      setSourceData({
+        departments: depts,
+        positions,
+        positionCourses: posCourses,
+        employees,
+        employeeCourses: empCourses,
+      })
 
       const deptArr: DeptCumplimiento[] = Array.from(deptAccum.entries())
         .map(([departamento, v]) => ({
@@ -145,6 +161,6 @@ export function useCumplimiento() {
     loading, departments, deptData,
     totalAsignados, totalAprobados, totalReprobados, totalPendientes,
     totalEmpleados, totalEmpleadosConPuesto,
-    cargar,
+    sourceData, cargar,
   }
 }

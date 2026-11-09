@@ -1,5 +1,7 @@
 "use client"
 
+import fontSans from "@/lib/fonts"
+
 /**
  * Last-resort error boundary. Rendered only when the root layout itself
  * crashes (e.g. ThemeProvider throws), so it ships its own <html> + <body>
@@ -15,13 +17,13 @@ export default function GlobalError({
   return (
     <html lang="es">
       <body
+        className={fontSans.variable}
         style={{
           margin: 0,
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+          fontFamily: "var(--font-sans)",
           background: "#fafafa",
           color: "#171717",
           colorScheme: "light",

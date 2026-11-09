@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { PendingEvalStatus } from "@/lib/hooks/usePendingEvals";
 import { PendingSummaryDetail } from "./pending-summary-detail";
 import type { EvaluationSearchContext } from "./use-evaluation-search";
+import { Skeleton } from "@/components/ui/skeleton";
 export function PendingSummary({
   context
 }: {
@@ -18,6 +19,7 @@ export function PendingSummary({
   const {
     data,
     existingEvaluation,
+    pendingLoading,
     loading,
     deptGroups,
     totalEvals,
@@ -25,7 +27,22 @@ export function PendingSummary({
     totalProximas,
     totalATiempo
   } = context;
-  return <>{!loading && !data && !existingEvaluation && totalEvals > 0 && <div className="mx-auto w-full max-w-[var(--evaluation-summary-max-width)]">
+  return <>{pendingLoading && !loading && !data && !existingEvaluation && <div role="status" aria-busy="true" className="mx-auto w-full max-w-[var(--evaluation-summary-max-width)] rounded-xl border bg-card p-4">
+      <span className="sr-only">Consultando evaluaciones pendientes</span>
+      <div aria-hidden="true" className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-12 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-5 w-2/5 max-w-64" />
+            <Skeleton className="h-4 w-full max-w-xl" />
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map(item => <Skeleton key={item} className="h-11 w-full" />)}
+        </div>
+      </div>
+    </div>}
+    {!loading && !pendingLoading && !data && !existingEvaluation && totalEvals > 0 && <div className="mx-auto w-full max-w-[var(--evaluation-summary-max-width)]">
       {(() => {
         const hasVencidas = totalVencidas > 0;
         const hasProximas = totalProximas > 0;
@@ -49,16 +66,16 @@ export function PendingSummary({
           { status: "proximas", label: "Próximas", value: totalProximas, color: "text-warning" },
           { status: "a-tiempo", label: "A tiempo", value: totalATiempo, color: "text-success" },
         ] as const;
-        return <><div className={cn("flex flex-col items-center justify-between gap-6 rounded-xl border p-5 font-sans sm:flex-row", bgClass)}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
+        return <><div className={cn("flex flex-col items-center justify-between gap-6 rounded-xl border p-4 font-sans sm:flex-row", bgClass)}>
+          <div className="flex w-full flex-col items-start gap-4 sm:flex-row sm:items-center">
             <div className={cn("flex shrink-0 rounded-md p-3", iconBgClass)}>
               <ClipboardList className="h-6 w-6" />
             </div>
             <div className="space-y-4 w-full flex-1">
               <div className="space-y-1">
-                <h3 className="text-base font-semibold leading-6 text-foreground">
+                <h2 className="text-base font-semibold leading-6 text-foreground">
                   {titleText}
-                </h3>
+                </h2>
                 <p className="text-sm font-normal leading-5 text-muted-foreground">
                   {descText}
                 </p>
@@ -66,7 +83,7 @@ export function PendingSummary({
 
               <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
                 {stats.map(({ status, label, value, color }) => (
-                  <button key={status} type="button" onClick={() => setActiveStatus(status)} onMouseEnter={() => setHighlightedStatus(status)} onMouseLeave={() => setHighlightedStatus(null)} onFocus={() => setHighlightedStatus(status)} onBlur={() => setHighlightedStatus(null)} aria-haspopup="dialog" aria-label={`${label}: ${value} ${value === 1 ? "evaluación" : "evaluaciones"}. Ver detalle`} className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md border bg-card px-3 py-2.5 text-left transition-colors hover:border-foreground/20 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <button key={status} type="button" onClick={() => setActiveStatus(status)} onMouseEnter={() => setHighlightedStatus(status)} onMouseLeave={() => setHighlightedStatus(null)} onFocus={() => setHighlightedStatus(status)} onBlur={() => setHighlightedStatus(null)} aria-haspopup="dialog" aria-label={`${label}: ${value} ${value === 1 ? "evaluación" : "evaluaciones"}. Ver detalle`} className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 text-left transition-colors hover:border-foreground/20 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     <span className="min-w-0 text-sm font-medium leading-5 text-foreground">{label}</span>
                     <span className="flex shrink-0 items-center gap-2">
                       <span className={cn("text-xl font-semibold leading-7 tabular-nums", color)}>{value}</span>

@@ -104,7 +104,7 @@ export default function HistorialExamenesContent() {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[10px] font-bold text-muted-foreground">FOLIO</span>
-                    <p className="font-mono text-sm">{generarFolioExamen(ex.id, ex.empleado?.numero, ex.created_at)}</p>
+                    <p className="font-sans text-sm">{generarFolioExamen(ex.id, ex.empleado?.numero, ex.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded">
@@ -189,7 +189,7 @@ export default function HistorialExamenesContent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="flex items-center gap-1 text-[11px] font-medium bg-muted rounded-full px-2.5 py-1 font-mono">
+              <span className="flex items-center gap-1 text-[11px] font-medium bg-muted rounded-full px-2.5 py-1 font-sans">
                 FOLIO: {selectedExamen ? generarFolioExamen(selectedExamen.id, selectedExamen.empleado?.numero, selectedExamen.created_at) : ""}
               </span>
               <span className="flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary rounded-full px-2.5 py-1">

@@ -87,7 +87,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
         {canEdit && (
           <label
             htmlFor={selectionId}
-            className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 has-[:disabled]:cursor-not-allowed"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 has-[:disabled]:cursor-not-allowed"
           >
             <Checkbox
               id={selectionId}
@@ -102,18 +102,18 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
         <div className="grid min-w-0 flex-1 gap-4 lg:grid-cols-2 lg:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h3 className="min-w-0 break-words text-sm font-semibold leading-5 text-foreground">
+              <h3 className="min-w-0 break-words text-sm font-medium leading-5 text-foreground">
                 {entry.nombre}
               </h3>
               {entry.numero && (
-                <span className="font-mono text-xs text-muted-foreground">#{entry.numero}</span>
+                <span className="font-sans text-xs text-muted-foreground">#{entry.numero}</span>
               )}
             </div>
           </div>
 
           <dl className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-3 border-t border-border pt-3 sm:grid-cols-2 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
             <div className="min-w-0">
-              <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
+              <dt className="text-xs font-medium uppercase text-muted-foreground">
                 Cumpleaños
               </dt>
               <dd className="mt-0.5 text-sm text-foreground sm:whitespace-nowrap">
@@ -121,7 +121,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
               </dd>
             </div>
             <div className="min-w-0">
-              <dt className="font-mono text-[11px] font-medium uppercase text-muted-foreground">
+              <dt className="text-xs font-medium uppercase text-muted-foreground">
                 Correo
               </dt>
               <dd className="mt-0.5 flex min-w-0 items-start gap-1.5 text-sm text-foreground">
@@ -134,7 +134,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
 
         <div className="flex shrink-0 items-center gap-1">
           {entry.yaEnviado && (
-            <Badge variant="secondary" className="hidden gap-1 text-xs text-[hsl(var(--success))] sm:inline-flex">
+            <Badge variant="success" className="hidden gap-1 text-xs font-medium sm:inline-flex">
               <CheckCircle2 className="size-3" aria-hidden="true" />
               Enviado
             </Badge>
@@ -143,7 +143,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
             <Button
               variant="ghost"
               size="icon"
-              className="size-9"
+              className="size-11"
               disabled={!canSend || sending}
               onClick={() => onSend(entry)}
               aria-label={
@@ -164,7 +164,7 @@ function BirthdayRow({ entry, canEdit, selected, sending, onToggle, onSend }: Bi
 
       {entry.yaEnviado && (
         <div className="mt-3 sm:hidden">
-          <Badge variant="secondary" className="gap-1 text-xs text-[hsl(var(--success))]">
+          <Badge variant="success" className="gap-1 text-xs font-medium">
             <CheckCircle2 className="size-3" aria-hidden="true" />
             Enviado
           </Badge>
@@ -198,24 +198,24 @@ function BirthdaySection({
   return (
     <section
       aria-labelledby={`section-${title.replaceAll(" ", "-").toLowerCase()}`}
-      className="space-y-3"
+      className="space-y-2"
     >
       <div className="flex items-center gap-3 px-1">
-        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary" aria-hidden="true">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground" aria-hidden="true">
           {icon}
         </span>
         <h2
           id={`section-${title.replaceAll(" ", "-").toLowerCase()}`}
-          className="min-w-0 flex-1 text-sm font-semibold text-foreground"
+          className="min-w-0 flex-1 text-xl font-semibold leading-7 tracking-tight text-foreground"
         >
           {title}
         </h2>
-        <Badge variant="secondary" aria-label={`${entries.length} colaboradores`}>
+        <Badge variant="secondary" className="font-medium" aria-label={`${entries.length} colaboradores`}>
           {entries.length}
         </Badge>
       </div>
 
-      <ul className="grid gap-3">
+      <ul className="grid gap-2">
         {entries.map((entry) => {
           const key = birthdayEntryKey(entry)
           return (
@@ -238,9 +238,9 @@ function BirthdaySection({
 function LoadingState() {
   return (
     <div className="space-y-4" role="status" aria-label="Cargando cumpleaños">
-      <Skeleton className="h-24 w-full rounded-lg" />
-      <Skeleton className="h-36 w-full rounded-lg" />
-      <Skeleton className="h-28 w-full rounded-lg" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-36 w-full rounded-xl" />
+      <Skeleton className="h-28 w-full rounded-xl" />
     </div>
   )
 }
@@ -402,7 +402,7 @@ export default function CumpleanosContent() {
         <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center">
           <AlertCircle className="size-5 shrink-0 text-destructive" aria-hidden="true" />
           <p className="flex-1 text-sm">No se pudo cargar la información de cumpleaños.</p>
-          <Button variant="outline" size="sm" onClick={() => void recargar()}>
+          <Button variant="outline" size="sm" className="h-11 min-h-11 px-3 py-0 text-sm" onClick={() => void recargar()}>
             <RefreshCw aria-hidden="true" />
             Reintentar
           </Button>
@@ -453,9 +453,9 @@ export default function CumpleanosContent() {
     : periodGroups
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative w-full lg:max-w-sm">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+        <div className="relative w-full min-w-0 md:min-w-[220px] md:flex-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -468,13 +468,13 @@ export default function CumpleanosContent() {
             onChange={(event) => handleSearchChange(event.target.value)}
             placeholder="Buscar colaborador"
             aria-label="Buscar por nombre, número o correo"
-            className="h-10 pl-9 pr-9"
+            className="h-11 pl-9 pr-11 text-sm"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => handleSearchChange("")}
-              className="absolute right-1 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Limpiar búsqueda"
             >
               <X className="size-4" aria-hidden="true" />
@@ -482,9 +482,9 @@ export default function CumpleanosContent() {
           )}
         </div>
 
-        <div className="min-h-10 lg:ml-1">
+        <div className="min-h-11 md:ml-1">
           {canEdit && selectable.length > 0 && (
-            <label className="flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 text-sm focus-within:ring-2 focus-within:ring-ring">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-2 text-sm focus-within:ring-2 focus-within:ring-ring">
               <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Seleccionar todos los colaboradores disponibles" />
               <span aria-live="polite">
                 {selectedCount > 0 ? `${selectedCount} seleccionados` : "Seleccionar todos"}
@@ -493,20 +493,20 @@ export default function CumpleanosContent() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 md:ml-auto">
           {selectedCount > 0 && (
-            <Button size="sm" disabled={sendingBulk} onClick={() => void handleSendSelected()}>
+            <Button size="sm" className="h-11 min-h-11 px-3 py-0 text-sm" disabled={sendingBulk} onClick={() => void handleSendSelected()}>
               {sendingBulk ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Send aria-hidden="true" />}
               Enviar {selectedCount} {selectedCount === 1 ? "correo" : "correos"}
             </Button>
           )}
           {canEdit && (
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Button variant="outline" size="sm" className="h-11 min-h-11 px-3 py-0 text-sm" onClick={() => setImportOpen(true)}>
               <FileJson aria-hidden="true" />
               Empleados
             </Button>
           )}
-          <Button variant="outline" size="icon" className="size-9" onClick={() => void recargar()} aria-label="Actualizar cumpleaños">
+          <Button variant="outline" size="icon" className="size-11" onClick={() => void recargar()} aria-label="Actualizar cumpleaños">
             <RefreshCw aria-hidden="true" />
           </Button>
         </div>
@@ -519,13 +519,13 @@ export default function CumpleanosContent() {
               <Cake className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold">Sin cumpleaños próximos</h2>
+              <h2 className="text-xl font-semibold leading-7 tracking-tight">Sin cumpleaños próximos</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 No hay registros dentro de los próximos {BIRTHDAY_LOOKAHEAD_DAYS} días.
               </p>
             </div>
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Button variant="outline" size="sm" className="h-11 min-h-11 px-3 py-0 text-sm" onClick={() => setImportOpen(true)}>
                 Importar información
               </Button>
             )}
@@ -538,12 +538,12 @@ export default function CumpleanosContent() {
               <Search className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold">Sin resultados</h2>
+              <h2 className="text-xl font-semibold leading-7 tracking-tight">Sin resultados</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 No encontramos colaboradores que coincidan con “{searchQuery.trim()}”.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => handleSearchChange("")}>
+            <Button variant="outline" size="sm" className="h-11 min-h-11 px-3 py-0 text-sm" onClick={() => handleSearchChange("")}>
               Limpiar búsqueda
             </Button>
           </CardContent>

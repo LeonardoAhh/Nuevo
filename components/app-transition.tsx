@@ -5,6 +5,7 @@ import { useTheme } from "@/components/theme-context"
 
 export const APP_TRANSITION_MIN_MS = 900
 export const APP_TRANSITION_EXIT_MS = 350
+const APP_MARK_MASK = "url('/icons/icon.svg') center / contain no-repeat"
 
 interface AppTransitionProps {
   message: string
@@ -22,11 +23,10 @@ export function AppMark({ className }: { className: string }) {
   const reducedMotion = useAppReducedMotion()
 
   return (
-    <motion.img
-      src="/icons/icon.svg"
-      alt=""
+    <motion.span
       aria-hidden="true"
-      className={className}
+      className={`block bg-foreground ${className}`}
+      style={{ mask: APP_MARK_MASK, WebkitMask: APP_MARK_MASK }}
       initial={false}
       animate={
         reducedMotion
@@ -54,7 +54,7 @@ export function AppTransition({
       role="status"
       aria-live="polite"
       aria-busy="true"
-      initial={reducedMotion ? false : { opacity: 0 }}
+      initial={false}
       animate={{ opacity: leaving ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
@@ -64,9 +64,9 @@ export function AppTransition({
           : "flex min-h-dvh items-center justify-center bg-background text-foreground"
       }
     >
-      <div className="flex flex-col items-center gap-5 px-6 text-center">
-        <AppMark className="size-14" />
-        <p className="text-sm font-medium text-muted-foreground">{message}</p>
+      <div className="flex max-w-[calc(100vw-2rem)] flex-col items-center gap-4 rounded-xl border border-border bg-card px-6 py-6 text-center">
+        <AppMark className="size-12 shrink-0" />
+        <p className="text-sm font-normal leading-5 text-muted-foreground">{message}</p>
       </div>
     </motion.div>
   )

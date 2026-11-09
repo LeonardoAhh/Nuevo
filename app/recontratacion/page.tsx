@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function RecontratacionPage() {
   return (
     <Dashboard
-      pageTitle="Recontratación"
       content={<RecontratacionContent />}
     />
   )

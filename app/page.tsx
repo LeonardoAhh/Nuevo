@@ -66,7 +66,7 @@ export default function LandingPage() {
         {/* Logo Strip */}
         <section className="border-y border-border bg-background py-16">
           <div className="mx-auto max-w-7xl px-6 text-center">
-            <p className="font-mono text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
+            <p className="font-sans text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
               Trusted by the best frontend teams
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-8 opacity-50 grayscale sm:gap-16">
@@ -83,7 +83,7 @@ export default function LandingPage() {
         <section id="features" className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6">
             <div className="mb-16">
-              <h2 className="font-mono text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
+              <h2 className="font-sans text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
                 Features
               </h2>
               <h3 className="mt-2 text-3xl font-semibold tracking-[-1.28px] md:text-4xl">
@@ -127,7 +127,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-6">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
-                <h2 className="font-mono text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
+                <h2 className="font-sans text-[12px] font-medium uppercase tracking-widest text-muted-foreground">
                   Developer Experience
                 </h2>
                 <h3 className="mt-2 text-3xl font-semibold tracking-[-1.28px] md:text-4xl">
@@ -147,11 +147,11 @@ export default function LandingPage() {
                   <div className="h-3 w-3 rounded-full bg-red-500" />
                   <div className="h-3 w-3 rounded-full bg-yellow-500" />
                   <div className="h-3 w-3 rounded-full bg-green-500" />
-                  <div className="ml-2 flex items-center gap-2 font-mono text-sm text-muted-foreground">
+                  <div className="ml-2 flex items-center gap-2 font-sans text-sm text-muted-foreground">
                     <Code2 className="h-4 w-4" /> index.js
                   </div>
                 </div>
-                <pre className="mt-4 overflow-x-auto font-mono text-sm leading-relaxed text-foreground">
+                <pre className="mt-4 overflow-x-auto font-sans text-sm leading-relaxed text-foreground">
                   <code>{`export default function App() {
   return (
     <main>

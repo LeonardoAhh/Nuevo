@@ -1,17 +1,15 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Search, Plus, ChevronRight, X, BookOpen } from "lucide-react"
+import { Search, Plus, X, BookOpen } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import type { Department, Position } from "@/lib/hooks"
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 5
 
 interface CapPositionsTabProps {
   departments: Department[]
@@ -50,10 +48,10 @@ export function CapPositionsTab({
       <div className="pb-6 pt-6 px-6 border-b border-border/60">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-normal tracking-[-0.02em] text-ink">Puestos registrados</h2>
+            <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">Puestos registrados</h2>
           </div>
           {!isReadOnly && (
-            <Button onClick={onNewPosition} className="h-10 px-4 rounded-md bg-primary text-primary-foreground shadow-none font-medium transition-colors" aria-label="Nuevo puesto" title="Nuevo puesto">
+            <Button onClick={onNewPosition} className="h-11 min-h-11 px-3 py-0 text-sm font-medium" aria-label="Nuevo puesto" title="Nuevo puesto">
               <span className="hidden sm:inline">Nuevo puesto</span>
               <Plus className="h-4 w-4 sm:hidden" />
             </Button>
@@ -63,30 +61,30 @@ export function CapPositionsTab({
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               value={posSearch}
               onChange={e => setPosSearch(e.target.value)}
               placeholder="Buscar puesto..."
-              className={`pl-11 h-11 rounded-md border-border/60 bg-transparent shadow-none text-ink text-base focus-visible:ring-1 focus-visible:ring-primary ${posSearch ? "pr-11" : ""}`}
+              className={`h-11 pl-9 text-sm ${posSearch ? "pr-11" : ""}`}
             />
             {posSearch && (
               <button
                 type="button"
                 aria-label="Limpiar búsqueda"
                 onClick={() => setPosSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" aria-hidden="true" />
               </button>
             )}
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
             <Select value={selectedDept} onValueChange={setSelectedDept}>
-              <SelectTrigger className="h-11 flex-1 sm:w-48 sm:flex-none rounded-md border-border/60 bg-transparent shadow-none text-ink text-base">
+              <SelectTrigger className="h-11 flex-1 text-sm sm:w-48 sm:flex-none">
                 <SelectValue placeholder="Departamento" />
               </SelectTrigger>
-              <SelectContent className="rounded-md border-border/60 shadow-sm bg-card">
+              <SelectContent>
                 <SelectItem value="all">Departamentos</SelectItem>
                 {departments.map(d => (
                   <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
@@ -135,7 +133,7 @@ export function CapPositionsTab({
                       <TableCell className="text-center p-2">
                         <Button
                           variant="ghost" size="sm"
-                          className="h-8 mx-auto text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors gap-1.5"
+                          className="mx-auto h-11 min-h-11 px-3 py-0 text-sm"
                           onClick={() => onViewCourses(pos)}
                         >
                           <BookOpen className="h-4 w-4" />

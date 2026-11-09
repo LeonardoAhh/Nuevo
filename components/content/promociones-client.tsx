@@ -1,16 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import {
-    ChevronDown,
-    SlidersHorizontal,
-} from "lucide-react"
 import { notify } from "@/lib/notify"
 import { usePromociones } from "@/lib/hooks/usePromociones"
 import PromocionesContent from "@/components/content/promociones"
 import ReglasPromocionContent from "@/components/content/reglas-promocion"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PROMOTION_ICON } from "@/lib/promociones/icon-styles"
+import { ModalHeader, ResponsiveShell } from "@/components/ui/responsive-shell"
 
 export default function PromocionesClient() {
     const {
@@ -55,36 +51,28 @@ export default function PromocionesClient() {
                 <PromocionesContent
                     empleados={empleados}
                     onDatosActualizados={recargar}
+                    onOpenRules={() => setReglasOpen(true)}
                     guardarDesempeño={guardarDesempeño}
                     promoverEmpleado={promoverEmpleado}
                     guardarExamen={guardarExamen}
                 />
             )}
 
-            {/* Reglas — sección colapsable */}
-            <div className="rounded-lg border bg-background">
-                <button
-                    type="button"
-                    onClick={() => setReglasOpen((v) => !v)}
-                    aria-expanded={reglasOpen}
-                    aria-controls="promotion-rules-panel"
-                    className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors rounded-lg"
-                >
-                    <span className="flex items-center gap-2">
-                        <SlidersHorizontal aria-hidden="true" className={`${PROMOTION_ICON.control} text-muted-foreground`} />
-                        Reglas de Promoción
-                    </span>
-                    <ChevronDown
-                        aria-hidden="true"
-                        className={`${PROMOTION_ICON.control} text-muted-foreground transition-transform ${reglasOpen ? "rotate-180" : ""}`}
-                    />
-                </button>
-                {reglasOpen && (
-                    <div id="promotion-rules-panel" className="border-t px-4 py-4">
-                        <ReglasPromocionContent onChange={recargar} />
-                    </div>
-                )}
-            </div>
+            <ResponsiveShell
+                open={reglasOpen}
+                onClose={() => setReglasOpen(false)}
+                size="xl"
+                title="Reglas de Promoción"
+                description="Consulta y administra los criterios de promoción."
+            >
+                <ModalHeader
+                    title="Reglas de Promoción"
+                    onClose={() => setReglasOpen(false)}
+                />
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+                    <ReglasPromocionContent onChange={recargar} />
+                </div>
+            </ResponsiveShell>
         </div>
     )
 }

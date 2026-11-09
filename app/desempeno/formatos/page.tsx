@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function FormatosPage() {
   return (
     <Dashboard
-      pageTitle="Formatos de Evaluación en Blanco"
       content={<FormatosBlanco />}
     />
   )

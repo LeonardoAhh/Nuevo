@@ -72,7 +72,7 @@ export function CapPositionCoursesDialog({
               <ol className="divide-y divide-border overflow-hidden rounded-md border border-border">
                 {positionCourses.map(positionCourse => (
                   <li key={positionCourse.id} className="flex min-w-0 items-center gap-3 px-3 py-2.5">
-                    <span className="w-5 shrink-0 text-right font-mono text-xs text-muted-foreground">
+                    <span className="w-5 shrink-0 text-right font-sans text-xs text-muted-foreground">
                       {positionCourse.order_index}
                     </span>
                     <BookOpen className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden="true" />

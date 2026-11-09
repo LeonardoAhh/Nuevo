@@ -106,7 +106,7 @@ function EmployeePreviewRow({ group }: { group: PreviewGroup }) {
           isBaja ? 'bg-destructive/5' : 'hover:bg-muted/30'
         }`}
       >
-        <span className="font-mono text-xs text-muted-foreground w-12 shrink-0">
+        <span className="font-sans text-xs text-muted-foreground w-12 shrink-0">
           #{group.numero}
         </span>
         <span className={`text-sm font-medium flex-1 truncate ${
@@ -158,7 +158,7 @@ function EmployeePreviewRow({ group }: { group: PreviewGroup }) {
                           className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-card border border-border ${meta?.color ?? ''}`}
                         >
                           {meta?.shortLabel ?? item.categoria}
-                          <span className="font-mono font-bold">{item.valor}</span>
+                          <span className="font-sans font-bold">{item.valor}</span>
                         </span>
                       )
                     })}
@@ -318,7 +318,7 @@ export function IncidenciasBulkImport({
             value={jsonText}
             onChange={(e) => { setJsonText(e.target.value); setParseResult(null); setImportSuccess(false) }}
             placeholder={`[\n  {\n    "numero_empleado": "123",\n    "mes": "2025-01",\n    "FALTA INJUSTIFICADA": 2,\n    "VACACIÓN": 1\n  },\n  {\n    "numero_empleado": "456",\n    "mes": "2025-01",\n    "INCAPACIDAD": 3\n  }\n]`}
-            className="w-full h-36 text-xs font-mono bg-muted rounded-lg border border-border p-3 resize-y scrollbar-thin focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full h-36 text-xs font-sans bg-muted rounded-lg border border-border p-3 resize-y scrollbar-thin focus:outline-none focus:ring-2 focus:ring-ring"
           />
 
           <Button
@@ -423,7 +423,7 @@ export function IncidenciasBulkImport({
             <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
               ¿Cómo formatear el JSON?
             </summary>
-            <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-xs font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
+            <div className="mt-2 p-3 rounded-lg bg-muted/50 border border-border text-xs font-sans whitespace-pre-wrap text-muted-foreground leading-relaxed">
 {`[
   {
     "numero_empleado": "123",

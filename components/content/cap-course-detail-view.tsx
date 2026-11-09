@@ -9,17 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getTipoCursoByName } from "@/lib/catalogo"
 import type { Course, Position, PositionCourse, Employee, EmployeeCourse } from "@/lib/hooks"
 
-interface EmpleadoConEstado extends Employee {
-  calificacion: number | null
-  fecha: string | null
-  estado: string
-  clase: string
-}
-
-function courseStatus(cal: number | null) {
-  if (cal == null) return { estado: 'pendiente', clase: 'bg-muted text-muted-foreground' }
-  if (cal >= 7) return { estado: 'aprobado', clase: 'bg-green-500/10 text-green-600 hover:bg-green-500/20' }
-  return { estado: 'reprobado', clase: 'bg-red-500/10 text-red-600 hover:bg-red-500/20' }
+function courseStatus(cal: number | null): { estado: string; variant: "secondary" | "success" | "destructive" } {
+  if (cal == null) return { estado: 'pendiente', variant: 'secondary' }
+  if (cal >= 7) return { estado: 'aprobado', variant: 'success' }
+  return { estado: 'reprobado', variant: 'destructive' }
 }
 
 interface CapCourseDetailViewProps {
@@ -55,8 +48,8 @@ export function CapCourseDetailView({
         const match = empCourses.find(ec => ec.course_id === course.id && ec.employee_id === emp.id)
         const calificacion = match?.calificacion ?? null
         const fecha = match?.fecha_aplicacion ?? null
-        const { estado, clase } = courseStatus(calificacion)
-        return { ...emp, calificacion, fecha, estado, clase }
+        const { estado, variant } = courseStatus(calificacion)
+        return { ...emp, calificacion, fecha, estado, variant }
       })
   }, [course.id, employees, positions, positionCourses, empCourses])
 
@@ -74,14 +67,14 @@ export function CapCourseDetailView({
       {/* Encabezado del Detalle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b">
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0" title="Volver">
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-11 w-11 shrink-0 py-0" title="Volver" aria-label="Volver a cursos">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex flex-col justify-center">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-primary shrink-0" />
-                <h2 className="text-xl font-bold leading-tight">{course.name}</h2>
+                <h2 className="text-xl font-semibold leading-7 tracking-tight">{course.name}</h2>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <Badge variant="outline">{courseType}</Badge>
@@ -100,7 +93,7 @@ export function CapCourseDetailView({
           </div>
         </div>
         {!isReadOnly && (
-          <Button onClick={() => onEdit(course)} variant="ghost" className="shrink-0">
+          <Button onClick={() => onEdit(course)} variant="ghost" className="h-11 min-h-11 shrink-0 py-0 text-sm font-medium">
             <Pencil className="h-4 w-4 mr-2" />
             Editar curso
           </Button>
@@ -110,32 +103,32 @@ export function CapCourseDetailView({
       {/* Resumen */}
       <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border bg-card/50">
-          <div className="text-2xl font-bold">{empleadosConEstado.length}</div>
-          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Asignados Totales</div>
+          <div className="text-xl font-semibold">{empleadosConEstado.length}</div>
+          <div className="text-xs text-muted-foreground">Asignados totales</div>
         </div>
         <div className="p-4 rounded-xl border bg-card/50">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-xl font-semibold text-success">
             {empleadosConEstado.filter(e => e.estado === 'aprobado').length}
           </div>
-          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Aprobados</div>
+          <div className="text-xs text-muted-foreground">Aprobados</div>
         </div>
         <div className="p-4 rounded-xl border bg-card/50">
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-xl font-semibold text-destructive">
             {empleadosConEstado.filter(e => e.estado === 'reprobado').length}
           </div>
-          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Reprobados</div>
+          <div className="text-xs text-muted-foreground">Reprobados</div>
         </div>
         <div className="p-4 rounded-xl border bg-card/50">
-          <div className="text-2xl font-bold text-amber-600">
+          <div className="text-xl font-semibold text-warning">
             {empleadosConEstado.filter(e => e.estado === 'pendiente').length}
           </div>
-          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Pendientes</div>
+          <div className="text-xs text-muted-foreground">Pendientes</div>
         </div>
       </div>
 
       {/* Contenido / Tabla de Empleados */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Empleados Asignados</h3>
+        <h3 className="mb-4 text-xl font-semibold leading-7 tracking-tight">Empleados asignados</h3>
         {empleadosConEstado.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground border rounded-xl bg-muted/20">
             Ningún empleado tiene este curso asignado actualmente.
@@ -148,7 +141,7 @@ export function CapCourseDetailView({
                 <div key={row.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2 shadow-sm">
                   <div className="flex justify-between items-start gap-2">
                     <span className="font-semibold text-foreground leading-tight">{row.nombre}</span>
-                    <Badge className={row.clase}>
+                    <Badge variant={row.variant}>
                       {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
                     </Badge>
                   </div>
@@ -192,13 +185,13 @@ export function CapCourseDetailView({
                       </TableCell>
                       <TableCell>
                         {row.calificacion != null ? (
-                          <Badge variant={row.calificacion >= 7 ? 'default' : 'destructive'} className="font-mono">
+                          <Badge variant={row.calificacion >= 7 ? 'success' : 'destructive'}>
                             {row.calificacion}
                           </Badge>
                         ) : '—'}
                       </TableCell>
                       <TableCell>
-                        <Badge className={row.clase}>
+                        <Badge variant={row.variant}>
                           {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
                         </Badge>
                       </TableCell>

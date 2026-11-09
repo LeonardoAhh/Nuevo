@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 export default function DesempenoPendientesPage() {
   return (
     <Dashboard
-      pageTitle={DESEMPENO.pages.pending.title}
       content={<DesempenoPendientes />}
     />
   )

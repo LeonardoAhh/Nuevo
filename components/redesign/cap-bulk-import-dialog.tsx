@@ -107,7 +107,7 @@ export function CapBulkImportDialog({
                   onChange={e => onTextChange(e.target.value)}
                   placeholder={`Ejemplo:\n${COURSE_JSON_EXAMPLE}`}
                   rows={5}
-                  className="min-h-32 resize-y font-mono"
+                  className="min-h-32 resize-y font-sans"
                   aria-label="Contenido JSON"
                 />
               </div>
@@ -155,7 +155,7 @@ export function CapBulkImportDialog({
                               <Input
                                 value={row.numero}
                                 onChange={e => onUpdateRow(row.id, 'numero', e.target.value)}
-                                className={`h-9 font-mono text-sm shadow-none rounded-md border-border/60 bg-transparent ${noEmp ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                className={`h-9 font-sans text-sm shadow-none rounded-md border-border/60 bg-transparent ${noEmp ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                 aria-label={`Número de empleado fila ${row.id}`}
                               />
                               {noEmp && (

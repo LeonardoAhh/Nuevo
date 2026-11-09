@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { isPassingCourseGrade } from '@/lib/capacitacion/utils'
+import { fetchAllRows } from '@/lib/supabase/fetchAll'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaces – catálogo
@@ -423,13 +424,35 @@ export function useCapacitacion() {
   }
 
   const fetchPositionCourses = async (positionId: string): Promise<PositionCourse[]> => {
-    const { data, error } = await supabase
-      .from('position_courses')
-      .select('*, course:courses(name, tipo)')
-      .eq('position_id', positionId)
-      .order('order_index')
-    if (error) throw error
-    return (data ?? []) as unknown as PositionCourse[]
+    return fetchAllRows<PositionCourse>(
+      (from, to) => supabase
+        .from('position_courses')
+        .select('id, position_id, course_id, order_index, course:courses(name, tipo)')
+        .eq('position_id', positionId)
+        .order('order_index')
+        .order('id')
+        .range(from, to),
+    )
+  }
+
+  const fetchAllPositionCourses = async (): Promise<PositionCourse[]> => {
+    return fetchAllRows<PositionCourse>(
+      (from, to) => supabase
+        .from('position_courses')
+        .select('id, position_id, course_id, order_index, course:courses(name, tipo)')
+        .order('id')
+        .range(from, to),
+    )
+  }
+
+  const fetchAllEmployeeCourses = async (): Promise<EmployeeCourse[]> => {
+    return fetchAllRows<EmployeeCourse>(
+      (from, to) => supabase
+        .from('employee_courses')
+        .select('id, employee_id, course_id, raw_course_name, fecha_aplicacion, calificacion, created_at, course:courses(name, tipo)')
+        .order('id')
+        .range(from, to),
+    )
   }
 
   const fetchCourseAliases = async (): Promise<CourseAlias[]> => {
@@ -447,13 +470,15 @@ export function useCapacitacion() {
   }
 
   const fetchEmployeeCourses = async (employeeId: string): Promise<EmployeeCourse[]> => {
-    const { data, error } = await supabase
-      .from('employee_courses')
-      .select('*, course:courses(name, tipo)')
-      .eq('employee_id', employeeId)
-      .order('fecha_aplicacion', { ascending: false })
-    if (error) throw error
-    return (data ?? []) as unknown as EmployeeCourse[]
+    return fetchAllRows<EmployeeCourse>(
+      (from, to) => supabase
+        .from('employee_courses')
+        .select('id, employee_id, course_id, raw_course_name, fecha_aplicacion, calificacion, created_at, course:courses(name, tipo)')
+        .eq('employee_id', employeeId)
+        .order('fecha_aplicacion', { ascending: false, nullsFirst: false })
+        .order('id')
+        .range(from, to),
+    )
   }
 
   // ── Historial: análisis con fuzzy matching ────────────────────────────────
@@ -601,7 +626,10 @@ export function useCapacitacion() {
 
   // ── Progreso: cursos requeridos vs tomados ────────────────────────────────
 
-  const fetchEmployeeProgress = async (employee: Employee): Promise<EmployeeProgress> => {
+  const fetchEmployeeProgress = async (
+    employee: Employee,
+    courseHistoryPromise?: Promise<EmployeeCourse[]>,
+  ): Promise<EmployeeProgress> => {
     const empty: EmployeeProgress = {
       positionFound: false, positionName: null,
       totalRequired: 0, aprobados: 0, reprobados: 0, pendientes: 0, courses: [],
@@ -609,12 +637,17 @@ export function useCapacitacion() {
     if (!employee.puesto) return empty
 
     // Busca departamento (case-insensitive via ilike)
-    const { data: deptData } = await supabase
-      .from('departments')
-      .select('id, name')
-      .ilike('name', employee.departamento?.trim() ?? '')
-      .limit(1)
-      .maybeSingle()
+    const [deptResult, courseHistory] = await Promise.all([
+      supabase
+        .from('departments')
+        .select('id, name')
+        .ilike('name', employee.departamento?.trim() ?? '')
+        .limit(1)
+        .maybeSingle(),
+      courseHistoryPromise ?? fetchEmployeeCourses(employee.id),
+    ])
+    if (deptResult.error) throw new Error(deptResult.error.message)
+    const deptData = deptResult.data
 
     // Busca puesto (ilike para tolerar mayúsculas/espacios)
     const posQuery = supabase
@@ -640,20 +673,11 @@ export function useCapacitacion() {
       return { ...empty, positionFound: true, positionName: posData.name }
     }
 
-    // Cursos tomados por el empleado (solo los que tienen course_id mapeado)
-    const { data: takenData, error: takenError } = await supabase
-      .from('employee_courses')
-      .select('course_id, calificacion, fecha_aplicacion')
-      .eq('employee_id', employee.id)
-      .not('course_id', 'is', null)
-      .order('fecha_aplicacion', { ascending: false, nullsFirst: false })
-    if (takenError) throw new Error(takenError.message)
-
     // La consulta viene de la fecha más nueva a la más antigua. Conservamos
     // la primera fila de cada curso para que el progreso refleje el último
     // intento, incluso si existen variantes de raw_course_name en la tabla.
-    const takenMap = new Map<string, NonNullable<typeof takenData>[number]>()
-    for (const taken of takenData ?? []) {
+    const takenMap = new Map<string, EmployeeCourse>()
+    for (const taken of courseHistory) {
       if (taken.course_id && !takenMap.has(taken.course_id)) {
         takenMap.set(taken.course_id, taken)
       }
@@ -1024,6 +1048,8 @@ export function useCapacitacion() {
     fetchPositions,
     fetchCourses,
     fetchPositionCourses,
+    fetchAllPositionCourses,
+    fetchAllEmployeeCourses,
     // Historial
     fetchCourseAliases,
     fetchEmployees,

@@ -96,7 +96,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
     <p id={percentageHelpId} className="sr-only">Ingresa un porcentaje entero de 0 a 100 o marca No aplica.</p>
     <p id={automaticHelpId} className="sr-only">Calculado por el sistema para el periodo seleccionado.</p>
 
-    {stepError && <div tabIndex={-1} data-step-error={activeView} role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+    {stepError && <div tabIndex={-1} data-step-error={activeView} role="alert" className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />{stepError}
     </div>}
 
@@ -153,7 +153,7 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
       <Card><CardContent className="space-y-5 p-4 sm:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-border pb-4">
           <h3 className="text-sm font-medium text-muted-foreground">Calificación del periodo</h3>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums text-foreground" aria-live="polite" aria-atomic="true">{context.ponderacion.calificacionFinal}%</p>
+          <p className="text-heading-lg font-semibold tabular-nums text-foreground" aria-live="polite" aria-atomic="true">{context.ponderacion.calificacionFinal}%</p>
         </div>
         <div className="space-y-2">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">

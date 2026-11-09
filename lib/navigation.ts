@@ -5,20 +5,29 @@
  * (page titles). Add new routes here once — every consumer updates itself.
  */
 import type { LucideIcon } from "lucide-react"
-import { Award, GraduationCap, LayoutDashboard, UserPlus } from "lucide-react"
+import {
+  BadgeCheck,
+  Cake,
+  ClipboardCheck,
+  ClipboardPenLine,
+  Handshake,
+  LayoutDashboard,
+  TableProperties,
+  Tags,
+  UserPlus,
+  UserRoundCog,
+  UsersRound,
+} from "lucide-react"
 
 export interface NavLeaf {
   label: string
   href: string
+  icon: LucideIcon
 }
 
 export interface NavSection {
   label: string
-  /** Icon shown next to the section name. */
-  icon: LucideIcon
-  /** Direct link when the section has no children. */
-  href?: string
-  items?: NavLeaf[]
+  items: NavLeaf[]
 }
 
 export const HOME_PATH = "/inicio"
@@ -28,34 +37,33 @@ export const ASSIGNMENTS_PATH = "/asignaciones"
 export const MOBILE_NAV_ID = "workspace-mobile-navigation"
 
 export const NAV_SECTIONS: NavSection[] = [
-  { label: "Inicio", icon: LayoutDashboard, href: HOME_PATH },
+  {
+    label: "Inicio",
+    items: [{ label: "Inicio", href: HOME_PATH, icon: LayoutDashboard }],
+  },
   {
     label: "Personal",
-    icon: UserPlus,
     items: [
-      { label: "Nuevos Empleados", href: "/ingresos" },
-      { label: "Recontratación", href: "/recontratacion" },
-      { label: "Cumpleaños", href: "/cumpleanos" },
+      { label: "Nuevos Empleados", href: "/ingresos", icon: UserPlus },
+      { label: "Recontratación", href: "/recontratacion", icon: UserRoundCog },
+      { label: "Cumpleaños", href: "/cumpleanos", icon: Cake },
     ],
   },
   {
     label: "Capacitación",
-    icon: GraduationCap,
     items: [
-      { label: "Plantilla", href: "/capacitacion" },
-      { label: "Categorías", href: "/promociones" },
-      { label: "Exámenes", href: "/examenes" },
-      { label: "Matriz Habilidades", href: "/reportes" },
+      { label: "Plantilla", href: "/plantilla", icon: UsersRound },
+      { label: "Categorías", href: "/promociones", icon: Tags },
+      { label: "Exámenes", href: "/examenes", icon: ClipboardPenLine },
+      { label: "Matriz de Habilidades", href: "/matriz", icon: TableProperties },
     ],
   },
   {
     label: "Desempeño",
-    icon: Award,
     items: [
-      { label: "Evaluaciones", href: "/desempeno" },
-      { label: "Cumplimiento", href: "/desempeno/cumplimiento" },
-      { label: "Compromisos", href: "/desempeno/seguimiento" },
-      { label: "Guía Evaluador", href: "/guia-evaluador" },
+      { label: "Evaluaciones", href: "/desempeno", icon: ClipboardCheck },
+      { label: "Cumplimiento", href: "/desempeno/cumplimiento", icon: BadgeCheck },
+      { label: "Compromisos", href: "/desempeno/seguimiento", icon: Handshake },
     ],
   },
 ]
@@ -64,13 +72,31 @@ export const NAV_SECTIONS: NavSection[] = [
  * Routes that live outside the sidebar menu (public pages, standalone tools)
  * but still need a display title in the header.
  */
-const EXTRA_ROUTE_LABELS: Record<string, string> = {
+const ROUTE_LABEL_OVERRIDES: Record<string, string> = {
   [SETTINGS_PATH]: "Configuración",
+  "/promociones": "Categorías",
+  "/asignaciones": "Asignaciones de evaluación",
+  "/calificaciones": "Calificaciones",
+  "/cursos": "Cursos",
+  "/desempeno": "Evaluación de Desempeño",
+  "/desempeno/cumplimiento": "Cumplimiento de Evaluaciones",
+  "/desempeno/formatos": "Formatos de Evaluación en Blanco",
+  "/desempeno/objetivos": "Historial",
+  "/desempeno/pendientes": "Pendientes",
+  "/desempeno/regularizacion": "Captura tardía",
+  "/desempeno/seguimiento": "Seguimiento de Compromisos",
+}
+
+const EXTRA_ROUTE_LABELS: Record<string, string> = {
   "/ingresos-semanales": "Ingresos Semanales",
   "/whatsapp": "WhatsApp Bot",
-  "/desempeno/pendientes": "Evaluaciones Pendientes",
-  [ASSIGNMENTS_PATH]: "Asignaciones de evaluación",
+  "/guia-evaluador": "Guía Evaluador",
 }
+
+const ROUTE_PREFIX_LABELS = [
+  { prefix: "/plantilla/actas/", label: "Actas y seguimiento" },
+  { prefix: "/plantilla/incidencias/", label: "Incidencias" },
+]
 
 /** True when `pathname` is `href` itself or anywhere below it. */
 export function isActiveRoute(pathname: string, href: string): boolean {
@@ -88,19 +114,20 @@ export function findActiveLeaf(
 }
 
 /**
- * Human title for the current route: checks nav sections (exact match first,
- * then deepest prefix) and finally the extra standalone routes.
+ * Resolve the canonical header title from explicit route labels before
+ * falling back to the shared sidebar navigation labels.
  */
 export function getRouteLabel(pathname: string): string {
-  const leaves: NavLeaf[] = NAV_SECTIONS.flatMap((section) => [
-    ...(section.href ? [{ label: section.label, href: section.href }] : []),
-    ...(section.items ?? []),
-  ])
+  if (ROUTE_LABEL_OVERRIDES[pathname]) return ROUTE_LABEL_OVERRIDES[pathname]
+  if (EXTRA_ROUTE_LABELS[pathname]) return EXTRA_ROUTE_LABELS[pathname]
+
+  const specificPrefix = ROUTE_PREFIX_LABELS.find(({ prefix }) => pathname.startsWith(prefix))
+  if (specificPrefix) return specificPrefix.label
+
+  const leaves = NAV_SECTIONS.flatMap((section) => section.items)
 
   const exact = leaves.find((leaf) => leaf.href === pathname)
   if (exact) return exact.label
-
-  if (EXTRA_ROUTE_LABELS[pathname]) return EXTRA_ROUTE_LABELS[pathname]
 
   const prefixed = leaves
     .filter((leaf) => pathname.startsWith(`${leaf.href}/`))

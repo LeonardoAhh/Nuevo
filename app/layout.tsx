@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
 import "@/app/globals.css"
+import fontSans from "@/lib/fonts"
 import { ThemeProvider } from "@/components/theme-context"
 import { PWARegister } from "@/components/pwa-register"
 import { SonnerProvider } from "@/components/ui/sonner-provider"
@@ -12,27 +12,17 @@ import { MaintenanceGuard } from "@/components/maintenance-guard"
 import { ViewportFix } from "@/components/viewport-fix"
 import { UserProvider } from "@/lib/hooks/useUser"
 import { RoleProvider } from "@/lib/hooks/useRole"
+import { SignOutProvider } from "@/components/signout-overlay"
 import {
   buildThemeBootstrapScript,
-  APP_THEME_COLOR,
+  APP_THEME_COLORS,
 } from "@/lib/theme/constants"
 
-// Geist is the single app type system. Existing `font-serif` consumers are
-// intentionally mapped to Geist Sans in Tailwind while they are migrated.
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-})
-
 export const viewport: Viewport = {
-  themeColor: APP_THEME_COLOR,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: APP_THEME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: APP_THEME_COLORS.dark },
+  ],
   width: "device-width",
   initialScale: 1,
   // Zoom stays enabled (WCAG 1.4.4): users with low vision must be able
@@ -83,22 +73,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body
         suppressHydrationWarning
-        className={`${fontSans.variable} ${fontMono.variable} font-sans`}
+        className={`${fontSans.variable} font-sans`}
       >
         {/* Client-side viewport metrics (--initial/visual-viewport-height) */}
         <ViewportFix />
         <ThemeProvider>
-          <UserProvider>
-            <RoleProvider>
-              <MaintenanceGuard>{children}</MaintenanceGuard>
-              {/* App-wide overlays share the display preferences provider. */}
-              <PWARegister />
-              <UpdateBanner />
-              <SonnerProvider />
-              <ConfirmProvider />
-              <ConnectionStatus />
-            </RoleProvider>
-          </UserProvider>
+          <SignOutProvider>
+            <UserProvider>
+              <RoleProvider>
+                <MaintenanceGuard>{children}</MaintenanceGuard>
+                {/* App-wide overlays share the display preferences provider. */}
+                <PWARegister />
+                <UpdateBanner />
+                <SonnerProvider />
+                <ConfirmProvider />
+                <ConnectionStatus />
+              </RoleProvider>
+            </UserProvider>
+          </SignOutProvider>
         </ThemeProvider>
       </body>
     </html>

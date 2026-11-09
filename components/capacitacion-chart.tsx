@@ -5,11 +5,10 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { GraduationCap, Info, RefreshCw } from "lucide-react"
+import { GraduationCap, Info } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   useCapacitacionChart,
@@ -102,7 +101,7 @@ function SkeletonContent() {
 export default function CapacitacionChart() {
   const {
     loading, departments, selectedDept, setSelectedDept,
-    chartData, yearTotals, refresh,
+    chartData, yearTotals,
   } = useCapacitacionChart()
 
   const prefersReduced = useReducedMotion()
@@ -115,9 +114,9 @@ export default function CapacitacionChart() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-2">
-        <div>
-          <CardTitle className="text-base font-semibold">
+      <CardHeader className="flex flex-col justify-between gap-3 pb-2 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <CardTitle className="text-xl font-semibold tracking-tight">
             Comparación Anual de Cursos Impartidos
           </CardTitle>
           <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -133,23 +132,13 @@ export default function CapacitacionChart() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => refresh()}
-            disabled={loading}
-            title="Actualizar datos"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
+        <div className="w-full min-w-0 sm:w-auto sm:max-w-full">
           <Select value={selectedDept} onValueChange={setSelectedDept}>
-            <SelectTrigger className="w-full sm:w-56 h-8 text-sm">
-              <SelectValue placeholder="" />
+            <SelectTrigger aria-label="Filtrar por departamento" className="h-11 w-full text-sm sm:w-auto sm:max-w-full">
+              <SelectValue placeholder="Departamentos" />
             </SelectTrigger>
-              <SelectContent>
-              <SelectItem value="all">Todos los departamentos</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Departamentos</SelectItem>
               {departments.map(d => (
                 <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
               ))}

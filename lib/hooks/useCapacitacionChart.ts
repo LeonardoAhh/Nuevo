@@ -19,6 +19,8 @@ interface Department { id: string; name: string }
 
 const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
 export const YEARS = ["2024","2025","2026"] as const
+const CHART_START_DATE = `${YEARS[0]}-01-01`
+const CHART_END_DATE = `${Number(YEARS[YEARS.length - 1]) + 1}-01-01`
 
 export const COLORS_CHART: Record<string, string> = {
   "2024": "hsl(var(--chart-3))",
@@ -52,15 +54,31 @@ function buildEmpty(): MonthlyPoint[] {
 // ─── Hook ───────────────────────────────────────────────────────────────────
 
 export function useCapacitacionChart() {
-  const [departments, setDepartments] = useState<Department[]>([])
+  const [departmentState, setDepartmentState] = useState({ items: [] as Department[], loaded: false })
+  const { items: departments, loaded: departmentsLoaded } = departmentState
   const [selectedDept, setSelectedDept] = useState<string>("all")
   const [chartData, setChartData] = useState<MonthlyPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [yearTotals, setYearTotals] = useState<{ year: string; total: number }[]>([])
 
   useEffect(() => {
-    supabase.from("departments").select("id, name").order("name")
-      .then(({ data }) => setDepartments(data ?? []))
+    let active = true
+    const loadDepartments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("departments")
+          .select("id, name")
+          .order("name")
+        if (error) throw new Error(error.message)
+        if (active) setDepartmentState({ items: data ?? [], loaded: true })
+      } catch (err) {
+        console.error("Department load error:", err instanceof Error ? err.message : JSON.stringify(err))
+        notify.error("Error al cargar departamentos")
+        if (active) setDepartmentState({ items: [], loaded: true })
+      }
+    }
+    void loadDepartments()
+    return () => { active = false }
   }, [])
 
   const loadData = useCallback(async (deptId: string) => {
@@ -91,6 +109,8 @@ export function useCapacitacionChart() {
           .from("employee_courses")
           .select("employee_id, course_id, raw_course_name, fecha_aplicacion")
           .not("fecha_aplicacion", "is", null)
+          .gte("fecha_aplicacion", CHART_START_DATE)
+          .lt("fecha_aplicacion", CHART_END_DATE)
           .range(from, from + PAGE_SIZE - 1)
 
         if (employeeIds) {
@@ -143,7 +163,9 @@ export function useCapacitacionChart() {
     }
   }, [departments])
 
-  useEffect(() => { loadData(selectedDept) }, [selectedDept, loadData])
+  useEffect(() => {
+    if (departmentsLoaded) void loadData(selectedDept)
+  }, [departmentsLoaded, selectedDept, loadData])
 
   return {
     loading, departments, selectedDept, setSelectedDept,

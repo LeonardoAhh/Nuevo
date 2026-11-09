@@ -131,7 +131,7 @@ export function PromDatosPreview({
             <TableBody>
               {datosPreview.map((r) => (
                 <TableRow key={r["N.N"]} className="text-sm">
-                  <TableCell className="font-mono font-medium">{r["N.N"]}</TableCell>
+                  <TableCell className="font-sans font-medium">{r["N.N"]}</TableCell>
                   <TableCell>{r["Fecha Inicio Puesto"] || <span className="text-muted-foreground italic">—</span>}</TableCell>
                   <TableCell className="text-center">
                     <span className={r["Desempeño Actual (%)"] && parseFloat(r["Desempeño Actual (%)"]) > 0

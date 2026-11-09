@@ -151,7 +151,7 @@ export default function WhatsAppDashboard() {
             ) : (
               filtered.map((c) => (
                 <TableRow key={c.numero}>
-                  <TableCell className="font-mono font-medium">#{c.numero}</TableCell>
+                  <TableCell className="font-sans font-medium">#{c.numero}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {c.phone?.replace("whatsapp:", "") ?? "—"}
                   </TableCell>

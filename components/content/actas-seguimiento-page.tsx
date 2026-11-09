@@ -360,7 +360,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
   return (
     <>
       <div className="space-y-6">
-        <Link href="/capacitacion" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link href="/plantilla" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <ArrowLeft className="size-4" aria-hidden="true" /> Volver
         </Link>
 

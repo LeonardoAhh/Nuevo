@@ -3,13 +3,12 @@ import Dashboard from "@/components/Dashboard"
 import PromocionesClient from "@/components/content/promociones-client"
 
 export const metadata: Metadata = {
-  title: "Promociones",
+  title: "Categorías",
 }
 
 export default function PromocionesPage() {
   return (
     <Dashboard
-      pageTitle="Promociones"
       content={<PromocionesClient />}
     />
   )

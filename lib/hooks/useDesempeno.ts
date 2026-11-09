@@ -55,6 +55,34 @@ interface EvaluationUiError {
   description: string
 }
 
+function formatFechaProgramada(fecha: string | null | undefined): string {
+  const coincidencia = fecha?.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!coincidencia) return "fecha pendiente"
+
+  const [, anio, mes, dia] = coincidencia
+  const date = new Date(Date.UTC(Number(anio), Number(mes) - 1, Number(dia)))
+  if (
+    date.getUTCFullYear() !== Number(anio) ||
+    date.getUTCMonth() !== Number(mes) - 1 ||
+    date.getUTCDate() !== Number(dia)
+  ) {
+    return "fecha pendiente"
+  }
+
+  const parts = new Intl.DateTimeFormat("es-MX", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).formatToParts(date)
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((value) => value.type === type)?.value ?? ""
+  const capitalize = (value: string) => value.charAt(0).toLocaleUpperCase("es-MX") + value.slice(1)
+
+  return `${capitalize(part("weekday"))} ${part("day")} ${capitalize(part("month"))} ${part("year")}`
+}
+
 /**
  * Un contrato de prueba vigente es la fuente autoritativa aunque el número ya
  * exista en employees. Cuando pasa a indeterminado, employees recupera prioridad.
@@ -83,20 +111,9 @@ export interface BusquedaResultado {
   semestreObjetivo: string
 }
 
-/** Fila de `evaluaciones_desempeno` (campos usados al cargar una evaluación). */
-interface EvalRowFull {
-  id: string
+/** Campos necesarios para detectar si el periodo actual del empleado ya está guardado. */
+interface EvalPeriodRow {
   periodo: string | null
-  hito_nuevo_ingreso: 1 | 2 | 3 | null
-  evaluador_nombre: string | null
-  evaluador_puesto: string | null
-  tipo: string | null
-  objetivos: DesempenoData["objetivos"] | null
-  cumplimiento_responsabilidades: CumplimientoItem[] | null
-  competencias: Competencia[] | null
-  compromisos: string | null
-  fecha_revision: string | null
-  observaciones: string | null
   calificacion_final: number | null
 }
 
@@ -152,7 +169,10 @@ export function useDesempeno() {
       if (term.length < 2) return []
       const like = `%${term.replace(/[%_]/g, "")}%`
 
-      const [{ data: emps }, { data: nuevos }] = await Promise.all([
+      const [
+        { data: emps, error: employeesError },
+        { data: nuevos, error: newHiresError },
+      ] = await Promise.all([
         supabase
           .from("employees")
           .select("numero, nombre, puesto")
@@ -164,6 +184,9 @@ export function useDesempeno() {
           .or(`numero.ilike.${like},nombre.ilike.${like}`)
           .limit(8),
       ])
+
+      if (employeesError) throw employeesError
+      if (newHiresError) throw newHiresError
 
       const empleadosPorNumero = new Map(
         (emps ?? []).filter(e => e.numero).map(e => [e.numero!, e as EmpleadoOrigenData]),
@@ -197,7 +220,10 @@ export function useDesempeno() {
     try {
       // Consulta ambas fuentes: un contrato de prueba activo debe prevalecer
       // sobre una copia del mismo número que ya exista en employees.
-      const [{ data: emp }, { data: ni }] = await Promise.all([
+      const [
+        { data: emp, error: employeeError },
+        { data: ni, error: newHireError },
+      ] = await Promise.all([
         supabase
           .from("employees")
           .select("numero, nombre, puesto, departamento, fecha_ingreso")
@@ -209,6 +235,9 @@ export function useDesempeno() {
           .eq("numero", numero)
           .maybeSingle(),
       ])
+
+      if (employeeError) throw employeeError
+      if (newHireError) throw newHireError
 
       let empleadoData: { numero: string; nombre: string; puesto: string; departamento: string | null; fechaIngreso: string | null } | null = null
       let origenEmpleado: OrigenEmpleado | null = null
@@ -236,12 +265,12 @@ export function useDesempeno() {
       // poder resolver el periodo correcto y cargar la fila de ESE periodo.
       const { data: evalsRaw, error: evalsError } = await supabase
         .from("evaluaciones_desempeno")
-        .select("*")
+        .select("periodo, calificacion_final")
         .eq("numero_empleado", numero)
         .order("created_at", { ascending: false })
 
       if (evalsError) throw evalsError
-      const evals = (evalsRaw ?? []) as EvalRowFull[]
+      const evals = (evalsRaw ?? []) as EvalPeriodRow[]
       // La modalidad y el periodo se asignan al buscar; no se elige un año anterior.
       const { modo, periodo: periodoResuelto, semestreActual: semestreActivo, requiereSemestral: requiereSemestralEmp } =
         periodoVigenteParaEmpleado(origenEmpleado, empleadoData.fechaIngreso)
@@ -275,14 +304,14 @@ export function useDesempeno() {
       if (estadoHito?.estado === "vencido") {
         throw new EvaluationMessageError(
           "Regularización requerida",
-          `El ${estadoHito.hito.etiqueta} venció el ${ni?.[estadoHito.hito.fecha]}. Debe regularizarse antes de continuar con el siguiente hito.`,
+          `El ${estadoHito.hito.etiqueta} venció el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. Debe regularizarse antes de continuar con el siguiente hito.`,
         )
       }
 
       if (estadoHito?.estado === "proximo") {
         throw new EvaluationMessageError(
           "Evaluación aún no disponible",
-          `El ${estadoHito.hito.etiqueta} está programado para el ${ni?.[estadoHito.hito.fecha]}. Los hitos se habilitan en orden, al llegar su fecha.`,
+          `El ${estadoHito.hito.etiqueta} está programado para el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. Las evaluaciones se habilitan en orden, al llegar su fecha.`,
         )
       }
 

@@ -90,7 +90,7 @@ export function SavedHistory({
                     const lastEval = e.evals[0];
                     const isSemestral = Boolean(lastEval?.periodo && esPeriodoSemestral(lastEval.periodo));
                     return <TableRow key={e.numero} className="hover:bg-muted/50">
-                        <TableCell className="py-2 font-mono text-xs">{e.numero}</TableCell>
+                        <TableCell className="py-2 font-sans text-xs">{e.numero}</TableCell>
                         <TableCell className="py-2 font-medium break-words">
                           <div className="flex flex-col items-start gap-1">
                             <button type="button" onClick={() => setSelectedNumero(e.numero)} className="min-h-10 w-full rounded-md text-left font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Ver evaluaciones de ${e.nombre}`}>{e.nombre}</button>

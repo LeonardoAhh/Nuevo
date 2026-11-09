@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionTitle } from "./presentation";
+import Image from "next/image";
 import { DESEMPENO } from "@/lib/desempeno/presentation";
 import type { EvaluationFormContext } from "./use-evaluation-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -40,7 +41,7 @@ export function EmployeeCard({
               {data.hito_nuevo_ingreso && <Badge variant="outline" className="text-xs font-medium">{HITOS_NUEVO_INGRESO[data.hito_nuevo_ingreso - 1].etiqueta}</Badge>}
           </div>
         </div>
-          <img src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" className="h-10 w-auto object-contain" onError={e => {
+          <Image src="/logo-vino-plastic.png" alt="Logotipo de VIÑOPLASTIC" width={400} height={400} className="h-10 w-auto object-contain" onError={e => {
             ;
             (e.currentTarget as HTMLImageElement).style.display = "none";
           }} />

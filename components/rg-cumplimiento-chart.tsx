@@ -9,8 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ShieldCheck, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ShieldCheck } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   useRgCumplimiento, QUARTERS, META_RG as META,
@@ -70,7 +69,7 @@ export default function RgCumplimientoChart() {
   const {
     loading, quarter, setQuarter, año, setAño,
     chartData, totalGeneral, entregadosGeneral, pctGeneral,
-    añosDisponibles, cargar,
+    añosDisponibles,
   } = useRgCumplimiento()
 
   const prefersReduced = useReducedMotion()
@@ -87,10 +86,10 @@ export default function RgCumplimientoChart() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-2">
-        <div>
-          <CardTitle className="text-base font-semibold">Cumplimiento RG-REC-048</CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">Por departamento · Trimestral</p>
+      <CardHeader className="flex flex-col justify-between gap-3 pb-2 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <CardTitle className="text-xl font-semibold tracking-tight">Cumplimiento RG-REC-048</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">Por departamento · Trimestral</p>
           {/* KPI badges — solo cuando hay datos */}
           {!loading && totalGeneral > 0 && (
             <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -109,23 +108,20 @@ export default function RgCumplimientoChart() {
           )}
           {/* Tabs trimestres debajo del título */}
           <Tabs value={quarter} onValueChange={v => setQuarter(v as QuarterId)} className="mt-3">
-            <TabsList className="grid grid-cols-4 h-8">
+            <TabsList className="grid h-auto min-h-11 grid-cols-4">
               {QUARTERS.map(q => (
-                <TabsTrigger key={q.id} value={q.id} className="text-xs px-1">{q.label}</TabsTrigger>
+                <TabsTrigger key={q.id} value={q.id} className="min-h-11 px-2 text-sm">{q.label}</TabsTrigger>
               ))}
             </TabsList>
           </Tabs>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="w-full min-w-0 sm:w-auto sm:max-w-full">
           <Select value={año} onValueChange={setAño}>
-            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar por año" className="h-11 w-full text-sm sm:w-auto sm:max-w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {añosDisponibles.map(y => <SelectItem key={y} value={y!} className="text-xs">{y}</SelectItem>)}
+              {añosDisponibles.map(y => <SelectItem key={y} value={y} className="text-xs">{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cargar} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          </Button>
         </div>
       </CardHeader>
 

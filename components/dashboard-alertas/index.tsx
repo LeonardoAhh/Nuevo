@@ -1,9 +1,5 @@
 "use client"
 
-import {
-    RefreshCw,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ModalHeader, ModalFooter, ResponsiveShell } from "@/components/ui/responsive-shell"
 import {
@@ -22,7 +18,7 @@ import { ListaEvals, ListaFechasPorDepto } from "./listas"
 
 export default function DashboardAlertas() {
     const {
-        loading, dialogTipo, setDialogTipo, cargarDatos,
+        loading, dialogTipo, setDialogTipo,
         eval1Venc, eval1Prox, setEval1Venc, setEval1Prox,
         eval2Venc, eval2Prox, setEval2Venc, setEval2Prox,
         eval3Venc, eval3Prox, setEval3Venc, setEval3Prox,
@@ -90,30 +86,21 @@ export default function DashboardAlertas() {
         <>
             <Card className="bg-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
-                    <div>
-                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <div className="min-w-0">
+                        <CardTitle className="flex items-center gap-2 text-xl font-semibold tracking-tight">
                             Control de Contratos, Evaluaciones, Plan de Formación.
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Haz clic en una seccion para ver el detalle
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Haz clic en una sección para ver el detalle
                         </p>
                     </div>
-                    <Button
-                        variant="ghost" size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={cargarDatos} disabled={loading} title="Actualizar"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                    </Button>
                 </CardHeader>
 
-                <CardContent className="grid grid-cols-1 gap-3 pt-0 md:grid-cols-2">
+                <CardContent className="grid grid-cols-1 gap-2 pt-0 md:grid-cols-2 lg:grid-cols-3">
                     <Seccion
                         label="Evaluación 1er Mes"
-                        vencidas={n(eval1Venc)} colorV="text-red-600"
-                        bordeV="border-red-100"
-                        porVencer={n(eval1Prox)} colorP="text-amber-600"
-                        bordeP="border-amber-100"
+                        vencidas={n(eval1Venc)}
+                        porVencer={n(eval1Prox)}
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval1_vencidas")}
                         onPorVencer={() => setDialogTipo("eval1_por_vencer")}
@@ -121,10 +108,8 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Evaluación 2° Mes"
-                        vencidas={n(eval2Venc)} colorV="text-red-600"
-                        bordeV="border-red-100"
-                        porVencer={n(eval2Prox)} colorP="text-amber-600"
-                        bordeP="border-amber-100"
+                        vencidas={n(eval2Venc)}
+                        porVencer={n(eval2Prox)}
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval2_vencidas")}
                         onPorVencer={() => setDialogTipo("eval2_por_vencer")}
@@ -132,10 +117,8 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Evaluación 3er Mes"
-                        vencidas={n(eval3Venc)} colorV="text-red-600"
-                        bordeV="border-red-100"
-                        porVencer={n(eval3Prox)} colorP="text-amber-600"
-                        bordeP="border-amber-100"
+                        vencidas={n(eval3Venc)}
+                        porVencer={n(eval3Prox)}
                         umbrales={EVAL_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("eval3_vencidas")}
                         onPorVencer={() => setDialogTipo("eval3_por_vencer")}
@@ -143,10 +126,8 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="RG-REC-048"
-                        vencidas={n(rgVenc)} colorV="text-purple-600"
-                        bordeV="border-purple-100"
-                        porVencer={n(rgProx)} colorP="text-violet-600"
-                        bordeP="border-violet-100"
+                        vencidas={n(rgVenc)}
+                        porVencer={n(rgProx)}
                         umbrales={RG_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("rg_vencidas")}
                         onPorVencer={() => setDialogTipo("rg_por_vencer")}
@@ -154,10 +135,8 @@ export default function DashboardAlertas() {
                     />
                     <Seccion
                         label="Término de Contrato"
-                        vencidas={n(termVenc)} colorV="text-orange-600"
-                        bordeV="border-orange-100"
-                        porVencer={n(termProx)} colorP="text-blue-600"
-                        bordeP="border-blue-100"
+                        vencidas={n(termVenc)}
+                        porVencer={n(termProx)}
                         umbrales={TERMINO_UMBRAL_DIAS}
                         onVencidas={() => setDialogTipo("termino_vencidos")}
                         onPorVencer={() => setDialogTipo("termino_por_vencer")}
@@ -165,7 +144,7 @@ export default function DashboardAlertas() {
                     />
 
                     {!loading && totalAlertas === 0 && (
-                        <div className="flex items-center justify-center py-3 text-sm text-green-600 bg-green-50 rounded-lg border border-green-100">
+                        <div className="flex items-center justify-center rounded-md border border-success/20 bg-success/10 py-3 text-sm text-success">
                             <span>Sin alertas pendientes. ¡Todo al día!</span>
                         </div>
                     )}
@@ -211,10 +190,8 @@ export default function DashboardAlertas() {
                                     tipo: "rg_vencidas" as const,
                                     items: rgVenc, setter: setRgVenc,
                                     vacio: "No hay RG-REC-048 pendientes vencidos",
-                                    colorAvatar: "bg-destructive",
                                     colorBadge: "bg-destructive/10 text-destructive",
                                     colorDias: "text-destructive",
-                                    colorBorde: "border-destructive/60",
                                     onEntregado: marcarRgEntregado,
                                     onIndeterminado: undefined,
                                 },
@@ -222,10 +199,8 @@ export default function DashboardAlertas() {
                                     tipo: "rg_por_vencer" as const,
                                     items: rgProx, setter: setRgProx,
                                     vacio: "No hay RG-REC-048 próximos a vencer",
-                                    colorAvatar: "bg-warning",
                                     colorBadge: "bg-warning/10 text-warning-foreground",
                                     colorDias: "text-warning-foreground",
-                                    colorBorde: "border-warning/60",
                                     onEntregado: marcarRgEntregado,
                                     onIndeterminado: undefined,
                                 },
@@ -233,10 +208,8 @@ export default function DashboardAlertas() {
                                     tipo: "termino_vencidos" as const,
                                     items: termVenc, setter: setTermVenc,
                                     vacio: "No hay términos de contrato vencidos",
-                                    colorAvatar: "bg-destructive",
                                     colorBadge: "bg-destructive/10 text-destructive",
                                     colorDias: "text-destructive",
-                                    colorBorde: "border-destructive/60",
                                     onEntregado: undefined,
                                     onIndeterminado: marcarIndeterminado,
                                 },
@@ -244,20 +217,16 @@ export default function DashboardAlertas() {
                                     tipo: "termino_por_vencer" as const,
                                     items: termProx, setter: setTermProx,
                                     vacio: "No hay términos de contrato próximos a vencer",
-                                    colorAvatar: "bg-warning",
                                     colorBadge: "bg-warning/10 text-warning-foreground",
                                     colorDias: "text-warning-foreground",
-                                    colorBorde: "border-warning/60",
                                     onEntregado: undefined,
                                     onIndeterminado: marcarIndeterminado,
                                 },
-                            ] as const).map(({ tipo, items, setter, vacio, colorAvatar, colorBadge, colorDias, colorBorde, onEntregado, onIndeterminado }) =>
+                            ] as const).map(({ tipo, items, setter, vacio, colorBadge, colorDias, onEntregado, onIndeterminado }) =>
                                 dialogTipo === tipo && (
                                     <ListaFechasPorDepto key={tipo} items={items} vacio={vacio}
-                                        colorAvatar={colorAvatar}
                                         colorBadge={colorBadge}
                                         colorDias={colorDias}
-                                        colorBorde={colorBorde}
                                         onEntregado={onEntregado && (async (id) => {
                                             await onEntregado(id)
                                             setter(prev => prev.filter(i => i.id !== id))

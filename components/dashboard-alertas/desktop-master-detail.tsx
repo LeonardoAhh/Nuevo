@@ -1,39 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import {
     dias,
     formatDate,
     type EvalItem,
 } from "@/lib/hooks/useDashboardAlertas"
-import { CalificacionModal, MasterHeader } from "./shared"
-
-// ─── Hook filtrado ────────────────────────────────────────────────────────────
-
-function useMasterState<T extends { id: string; departamento?: string | null; nombre: string }>(
-    items: T[],
-    extraFilter: (item: T, q: string) => boolean,
-) {
-    const [search, setSearch] = useState("")
-    const [depto, setDepto] = useState("")
-
-    const deptos = useMemo(
-        () => Array.from(new Set(items.map(i => i.departamento?.trim() || "Sin departamento"))).sort(),
-        [items],
-    )
-
-    const filtrados = useMemo(() => {
-        const q = search.trim().toLowerCase()
-        return items.filter(i => {
-            const dep = i.departamento?.trim() || "Sin departamento"
-            if (depto && dep !== depto) return false
-            if (!q) return true
-            return i.nombre.toLowerCase().includes(q) || dep.toLowerCase().includes(q) || extraFilter(i, q)
-        })
-    }, [items, search, depto, extraFilter])
-
-    return { search, setSearch, depto, setDepto, deptos, filtrados }
-}
+import { CalificacionModal } from "./shared"
 
 // ─── MasterDetailEvals ────────────────────────────────────────────────────────
 
@@ -46,7 +19,6 @@ interface MasterDetailEvalsProps {
 
 export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: MasterDetailEvalsProps) {
     const toneText = vencida ? "text-destructive" : "text-warning"
-    const accentBg = vencida ? "bg-destructive" : "bg-warning"
 
     const [selected, setSelected] = useState<EvalItem | null>(null)
 
@@ -74,11 +46,8 @@ export function MasterDetailEvals({ items, vencida, evalNum, onCalificar }: Mast
                         <button
                             key={item.id}
                             onClick={() => openCalificacion(item)}
-                            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
+                            className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         >
-                            {/* Acento de color */}
-                            <span className={`h-8 w-1 shrink-0 rounded-full ${accentBg} opacity-75`} />
-
                             {/* Nombre + meta */}
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-medium text-foreground">{item.nombre}</p>

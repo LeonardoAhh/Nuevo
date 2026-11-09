@@ -28,6 +28,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/capacitacion/:path*",
+        destination: "/plantilla/:path*",
+        permanent: true,
+      },
+      {
         source: "/desempeño",
         destination: "/desempeno",
         permanent: false,

@@ -2,14 +2,13 @@
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell, Legend,
+  Tooltip, ResponsiveContainer, Legend,
 } from "recharts"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, RefreshCw } from "lucide-react"
+import { TrendingUp } from "lucide-react"
 import {
   useYearlyCompliance, COLORS_YEARLY as COLORS, type YearStats,
 } from "@/lib/hooks/useYearlyCompliance"
@@ -82,7 +81,7 @@ function SkeletonContent() {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function DashboardYearlyCompliance() {
-  const { loading, yearStats, cargar } = useYearlyCompliance()
+  const { loading, yearStats } = useYearlyCompliance()
 
   const prefersReduced = useReducedMotion()
   const { reducedMotion } = useTheme()
@@ -105,8 +104,8 @@ export default function DashboardYearlyCompliance() {
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-2">
         <div>
-          <CardTitle className="text-base font-semibold">Cumplimiento por Año de Ingreso</CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <CardTitle className="text-xl font-semibold tracking-tight">Cumplimiento por Año de Ingreso</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
             Avance en cursos asignados por puesto según fecha de ingreso
           </p>
           {/* KPI badges inline — mismo patrón CapacitacionChart */}
@@ -122,10 +121,6 @@ export default function DashboardYearlyCompliance() {
             </div>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"
-          onClick={cargar} disabled={loading} aria-label="Actualizar">
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-        </Button>
       </CardHeader>
 
       <CardContent>

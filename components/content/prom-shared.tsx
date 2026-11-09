@@ -30,7 +30,7 @@ export function AptitudBadge({ status }: { status: AptitudStatus }) {
   const cfg = aptitudCfg[status]
   const Icon = cfg.icon
   return (
-    <Badge variant={cfg.variant} className="min-w-24 justify-center px-2.5 py-0.5 text-center font-semibold">
+    <Badge variant={cfg.variant} className="min-w-24 justify-center px-2.5 py-0.5 text-center font-medium">
       <Icon aria-hidden="true" className={`${PROMOTION_ICON.badge} shrink-0`} />
       {cfg.label}
     </Badge>

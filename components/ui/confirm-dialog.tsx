@@ -87,7 +87,7 @@ export function ConfirmationDialog({
         {requireInputText && (
           <div className="mt-4 space-y-2">
             <Label htmlFor="confirm-required-text" className="text-sm font-medium text-foreground">
-              Escribe <span className="font-mono text-xs font-medium">{requireInputText}</span>
+              Escribe <span className="font-sans text-xs font-medium">{requireInputText}</span>
             </Label>
             <Input
               id="confirm-required-text"

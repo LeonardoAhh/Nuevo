@@ -42,11 +42,10 @@ export function ListaEvals({ items, vencida, vacio, evalNum, onCalificar }: List
                                     key={item.id}
                                     item={item}
                                     evalNum={evalNum}
-                                    colorDias={vencida ? "text-red-500" : "text-amber-500"}
+                                    colorDias={vencida ? "text-destructive" : "text-warning"}
                                     colorBadge={vencida
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-amber-100 text-amber-700"}
-                                    colorBorde={vencida ? "border-red-400" : "border-amber-400"}
+                                        ? "bg-destructive/10 text-destructive"
+                                        : "bg-warning/10 text-warning-foreground"}
                                     badgeLabel={vencida ? "Vencida" : "Por vencer"}
                                     onCalificar={onCalificar}
                                 />
@@ -67,7 +66,7 @@ export function ListaEvals({ items, vencida, vacio, evalNum, onCalificar }: List
 
 export function ListaFechasPorDepto({
     items, vacio,
-    colorAvatar, colorBadge, colorDias, colorBorde,
+    colorBadge, colorDias,
     onEntregado, onIndeterminado,
 }: ListaFechasProps) {
     if (items.length === 0) return <EmptyState mensaje={vacio} />
@@ -96,7 +95,6 @@ export function ListaFechasPorDepto({
                                     <FilaFecha key={item.id} item={item}
                                         colorBadge={colorBadge}
                                         colorDias={colorDias}
-                                        colorBorde={colorBorde}
                                         onEntregado={onEntregado}
                                         onIndeterminado={onIndeterminado}
                                     />

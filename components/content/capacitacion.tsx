@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Briefcase, BookOpen, ClipboardList, Upload } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
@@ -37,6 +37,7 @@ export default function CapacitacionContent() {
     importing, importError,
     parseJSON, importData,
     fetchDepartments, fetchPositions, fetchCourses, fetchPositionCourses,
+    fetchAllPositionCourses, fetchAllEmployeeCourses,
     fetchEmployees, fetchEmployeeCourses, fetchEmployeeProgress,
     clearHistorial, deleteEmployee, createEmployeeManual, updateEmployee,
     addCoursesToEmployee, bulkImportCourseRecords,
@@ -54,6 +55,13 @@ export default function CapacitacionContent() {
   const [loadingPositions, setLoadingPositions] = useState(false)
   const [loadingCourses, setLoadingCourses] = useState(false)
   const [loadingEmployees, setLoadingEmployees] = useState(false)
+  const employeesLoaded = useRef(false)
+  const employeesLoadPromise = useRef<Promise<void> | null>(null)
+  const positionsLoaded = useRef(false)
+  const positionsLoadPromise = useRef<Promise<void> | null>(null)
+  const coursesTabDataLoaded = useRef(false)
+  const coursesTabDataVersion = useRef(0)
+  const coursesTabLoadPromise = useRef<Promise<void> | null>(null)
 
   // ── Position-courses dialog ───────────────────────────────────────────────
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -102,68 +110,127 @@ export default function CapacitacionContent() {
   const jsonImport = useJsonImport({ parseJSON, importData })
 
   // ── Data loaders ──────────────────────────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadCoursesData = useCallback(async () => {
     setLoadingCourses(true)
     try { setCourses(await fetchCourses()) }
     catch (err) { console.error("Error loading courses:", err); notify.error("Error al cargar cursos") }
     finally { setLoadingCourses(false) }
-  }, [])
+  }, [fetchCourses])
 
+  const loadEmployees = useCallback((refresh = false) => {
+    if (refresh) employeesLoaded.current = false
+    if (employeesLoaded.current) return Promise.resolve()
+    if (employeesLoadPromise.current) return employeesLoadPromise.current
 
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loadEmployees = useCallback(async () => {
     setLoadingEmployees(true)
-    try {
-      const emps = await fetchEmployees()
-      setEmployees(emps)
-      setLoadingEmployees(false)
-    } catch (err) {
-      console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
-      notify.error("Error al cargar empleados")
-      setLoadingEmployees(false)
-    }
+    const loadPromise = (async () => {
+      try {
+        setEmployees(await fetchEmployees())
+        employeesLoaded.current = true
+      } catch (err) {
+        console.error("Error loading employees:", err instanceof Error ? err.message : JSON.stringify(err))
+        notify.error("Error al cargar empleados")
+      } finally {
+        setLoadingEmployees(false)
+        employeesLoadPromise.current = null
+      }
+    })()
+    employeesLoadPromise.current = loadPromise
+    return loadPromise
   }, [fetchEmployees])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loadPositionData = useCallback(async () => {
+  const loadPositionData = useCallback((refresh = false) => {
+    if (refresh) positionsLoaded.current = false
+    if (positionsLoaded.current) return Promise.resolve()
+    if (positionsLoadPromise.current) return positionsLoadPromise.current
+
     setLoadingPositions(true)
-    try {
-      const [depts, pos] = await Promise.all([fetchDepartments(), fetchPositions()])
-      setDepartments(depts); setPositions(pos)
-    } catch (err) { console.error("Error loading positions:", err); notify.error("Error al cargar puestos") }
-    finally { setLoadingPositions(false) }
+    const loadPromise = (async () => {
+      try {
+        const [depts, pos] = await Promise.all([fetchDepartments(), fetchPositions()])
+        setDepartments(depts); setPositions(pos)
+        positionsLoaded.current = true
+      } catch (err) {
+        console.error("Error loading positions:", err)
+        notify.error("Error al cargar puestos")
+      } finally {
+        setLoadingPositions(false)
+        positionsLoadPromise.current = null
+      }
+    })()
+    positionsLoadPromise.current = loadPromise
+    return loadPromise
+  }, [fetchDepartments, fetchPositions])
+
+  const invalidateCoursesTabData = useCallback(() => {
+    coursesTabDataLoaded.current = false
+    coursesTabDataVersion.current += 1
   }, [])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const importCourseRecords = useCallback(async (records: Parameters<typeof bulkImportCourseRecords>[0]) => {
+    const result = await bulkImportCourseRecords(records)
+    if (result.success) invalidateCoursesTabData()
+    return result
+  }, [bulkImportCourseRecords, invalidateCoursesTabData])
+
+  const loadCoursesTabData = useCallback(() => {
+    if (coursesTabDataLoaded.current) return Promise.resolve()
+    if (coursesTabLoadPromise.current) return coursesTabLoadPromise.current
+
+    const requestVersion = coursesTabDataVersion.current
+    const loadPromise = (async () => {
+      setLoadingCourses(true)
+      setLoadingEmployees(true)
+      try {
+        const [
+          ,
+          ,
+          courseData,
+          positionCourseData,
+          employeeCourseData,
+        ] = await Promise.all([
+          loadEmployees(),
+          loadPositionData(),
+          fetchCourses(),
+          fetchAllPositionCourses(),
+          fetchAllEmployeeCourses(),
+        ])
+        if (
+          requestVersion !== coursesTabDataVersion.current ||
+          !employeesLoaded.current ||
+          !positionsLoaded.current
+        ) return
+        setCourses(courseData)
+        setPositionCourses(positionCourseData)
+        setEmpCourses(employeeCourseData)
+        coursesTabDataLoaded.current = true
+      } catch (err) {
+        console.error("Error loading course tab data:", err)
+        notify.error("Error al cargar los datos de cursos")
+      } finally {
+        setLoadingCourses(false)
+        setLoadingEmployees(false)
+        coursesTabLoadPromise.current = null
+      }
+    })()
+
+    coursesTabLoadPromise.current = loadPromise
+    return loadPromise
+  }, [fetchAllEmployeeCourses, fetchAllPositionCourses, fetchCourses, loadEmployees, loadPositionData])
+
   useEffect(() => {
     loadPositionData()
     loadEmployees()
-  }, [])
+  }, [loadEmployees, loadPositionData])
 
-  const bulkImport = useBulkImport({ employees, courses, bulkImportCourseRecords, onLoadCourses: loadCoursesData })
+  const bulkImport = useBulkImport({ employees, courses, bulkImportCourseRecords: importCourseRecords, onLoadCourses: loadCoursesData })
 
   // ── Tab change ────────────────────────────────────────────────────────────
   const handleTabChange = useCallback(async (v: string) => {
     if (v === "cursos") {
-      loadCoursesData()
-      setLoadingEmployees(true)
-      try {
-        const [emps, poss] = await Promise.all([fetchEmployees(), fetchPositions()])
-        setEmployees(emps); setPositions(poss)
-        const allPosCourses = (await Promise.all(poss.map(p => fetchPositionCourses(p.id)))).flat()
-        setPositionCourses(allPosCourses)
-        const allEmpCourses = (await Promise.all(emps.map(e => fetchEmployeeCourses(e.id)))).flat()
-        setEmpCourses(allEmpCourses)
-      } catch {
-        setEmployees([]); setEmpCourses([]); setPositions([]); setPositionCourses([])
-      } finally {
-        setLoadingEmployees(false)
-      }
+      await loadCoursesTabData()
     }
-    if (v === "historial") loadEmployees()
-  }, [loadCoursesData, loadEmployees, fetchEmployees, fetchPositions, fetchPositionCourses, fetchEmployeeCourses])
+  }, [loadCoursesTabData])
 
   // ── Position handlers ─────────────────────────────────────────────────────
   const reloadPosCoursesDlg = useCallback(async () => {
@@ -191,25 +258,26 @@ export default function CapacitacionContent() {
     const result = await addCourseToPosition(selectedPosition.id, assignCourseId, nextOrder)
     setAssignSaving(false)
     if (result.success) {
+      invalidateCoursesTabData()
       setAssignCourseId(''); await reloadPosCoursesDlg()
       notify.success('Curso asignado correctamente')
     } else {
       setAssignError(result.error ?? 'Error al asignar curso')
       notify.error(result.error ?? 'Error al asignar curso')
     }
-  }, [assignCourseId, selectedPosition, posCoursesDlg, addCourseToPosition, reloadPosCoursesDlg])
+  }, [assignCourseId, selectedPosition, posCoursesDlg, addCourseToPosition, invalidateCoursesTabData, reloadPosCoursesDlg])
 
   const handleRemoveCourseFromPos = useCallback(async (id: string) => {
     const result = await removeCourseFromPosition(id)
-    if (result.success) { await reloadPosCoursesDlg(); notify.success('Curso quitado') }
+    if (result.success) { invalidateCoursesTabData(); await reloadPosCoursesDlg(); notify.success('Curso quitado') }
     else notify.error(result.error ?? 'Error al quitar curso')
-  }, [removeCourseFromPosition, reloadPosCoursesDlg])
+  }, [invalidateCoursesTabData, removeCourseFromPosition, reloadPosCoursesDlg])
 
   const handleSaveNewPos = useCallback(async (name: string, departmentId: string) => {
     setNewPosSaving(true)
     const result = await createPosition(name, departmentId)
     setNewPosSaving(false)
-    if (result.success) { setNewPosOpen(false); loadPositionData(); notify.success('Puesto creado correctamente') }
+    if (result.success) { setNewPosOpen(false); loadPositionData(true); notify.success('Puesto creado correctamente') }
     else notify.error(result.error ?? 'Error al crear puesto')
   }, [createPosition, loadPositionData])
 
@@ -217,21 +285,22 @@ export default function CapacitacionContent() {
     setNewCourseSaving(true)
     const result = await createCourse(name, tipo, durationHours)
     setNewCourseSaving(false)
-    if (result.success) { setNewCourseOpen(false); loadCoursesData(); notify.success('Curso creado correctamente') }
+    if (result.success) { invalidateCoursesTabData(); setNewCourseOpen(false); loadCoursesData(); notify.success('Curso creado correctamente') }
     else notify.error(result.error ?? 'Error al crear curso')
-  }, [createCourse, loadCoursesData])
+  }, [createCourse, invalidateCoursesTabData, loadCoursesData])
 
   const handleSaveEditCourse = useCallback(async (id: string, data: { name: string; tipo: string; duration_hours: number | null }) => {
     setEditCourseSaving(true)
     const result = await updateCourse(id, data)
     setEditCourseSaving(false)
     if (result.success) {
+      invalidateCoursesTabData()
       setEditCourseOpen(false); setEditCourseTarget(null); loadCoursesData()
       notify.success('Curso actualizado')
     } else {
       notify.error(result.error ?? 'Error al actualizar curso')
     }
-  }, [updateCourse, loadCoursesData])
+  }, [invalidateCoursesTabData, updateCourse, loadCoursesData])
 
   // ── Employee handlers ─────────────────────────────────────────────────────
   const handleViewEmployee = useCallback(async (emp: Employee) => {
@@ -239,7 +308,8 @@ export default function CapacitacionContent() {
     setLoadingEmpDlg(true); setEmpProgress(null); setSelectedEmpCourses([])
     setEmpDlgTab('requeridos')
     try {
-      const [c, p] = await Promise.all([fetchEmployeeCourses(emp.id), fetchEmployeeProgress(emp)])
+      const courseHistory = fetchEmployeeCourses(emp.id)
+      const [c, p] = await Promise.all([courseHistory, fetchEmployeeProgress(emp, courseHistory)])
       setSelectedEmpCourses(getLatestEmployeeCourseAttempts(c)); setEmpProgress(p)
     } catch (err) { console.error(err) }
     finally { setLoadingEmpDlg(false) }
@@ -257,12 +327,13 @@ export default function CapacitacionContent() {
     })
     setEditEmpSaving(false)
     if (result.success) {
-      setEditEmpOpen(false); setEditEmpTarget(null); loadEmployees()
+      invalidateCoursesTabData()
+      setEditEmpOpen(false); setEditEmpTarget(null); loadEmployees(true)
       notify.success('Empleado actualizado')
     } else {
       notify.error(result.error ?? 'Error al actualizar')
     }
-  }, [editEmpTarget, updateEmployee, loadEmployees])
+  }, [editEmpTarget, invalidateCoursesTabData, updateEmployee, loadEmployees])
 
   const handleSaveNewEmp = useCallback(async (
     emp: { numero: string; nombre: string; puesto: string; departamento: string; area: string; turno: string; fecha_ingreso: string; jefe_directo: string; evaluacion_desempeno: string },
@@ -279,9 +350,9 @@ export default function CapacitacionContent() {
       []
     )
     setNewEmpSaving(false)
-    if (result.success) { setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(); notify.success('Empleado creado') }
+    if (result.success) { invalidateCoursesTabData(); setNewEmpOpen(false); setNewEmpSuccess(true); loadEmployees(true); notify.success('Empleado creado') }
     else notify.error(result.error ?? 'Error al crear empleado')
-  }, [createEmployeeManual, loadEmployees])
+  }, [createEmployeeManual, invalidateCoursesTabData, loadEmployees])
 
   const handleSaveAddCourses = useCallback(async (rows: { course_id: string; course_name: string; fecha_aplicacion: string | null; calificacion: number | null }[]) => {
     if (!addCoursesDlgEmp || rows.length === 0) return
@@ -291,9 +362,9 @@ export default function CapacitacionContent() {
       rows.map(r => ({ course_id: r.course_id, course_name: r.course_name, fecha_aplicacion: r.fecha_aplicacion, calificacion: r.calificacion }))
     )
     setAddCoursesSaving(false)
-    if (result.success) { setAddCoursesDlgOpen(false); setAddCoursesSuccess(true) }
+    if (result.success) { invalidateCoursesTabData(); setAddCoursesDlgOpen(false); setAddCoursesSuccess(true) }
     else notify.error(result.error ?? 'Error al guardar')
-  }, [addCoursesDlgEmp, addCoursesToEmployee])
+  }, [addCoursesDlgEmp, addCoursesToEmployee, invalidateCoursesTabData])
 
   const handleClearHistorial = useCallback(async () => {
     const ok = await notify.confirm({
@@ -304,9 +375,9 @@ export default function CapacitacionContent() {
     })
     if (!ok) return
     const result = await clearHistorial()
-    if (result.success) { setConfirmClearOpen(false); setEmployees([]); notify.success(`Historial eliminado`) }
+    if (result.success) { invalidateCoursesTabData(); setConfirmClearOpen(false); setEmployees([]); notify.success(`Historial eliminado`) }
     else notify.error(result.error ?? 'Error al eliminar historial')
-  }, [clearHistorial, employees.length])
+  }, [clearHistorial, employees.length, invalidateCoursesTabData])
 
   const handleDeleteEmployee = useCallback(async (emp: Employee) => {
     const ok = await notify.confirm({
@@ -319,27 +390,33 @@ export default function CapacitacionContent() {
     if (!ok) return
     const result = await deleteEmployee(emp.id, emp.numero)
     if (result.success) {
+      invalidateCoursesTabData()
       setEmployees(prev => prev.filter(e => e.id !== emp.id))
       notify.success('Empleado eliminado')
     } else {
       notify.error(result.error ?? 'Error al eliminar')
     }
-  }, [deleteEmployee])
+  }, [deleteEmployee, invalidateCoursesTabData])
+
+  const handleBulkEmployeesCreated = useCallback(() => {
+    invalidateCoursesTabData()
+    loadEmployees(true)
+  }, [invalidateCoursesTabData, loadEmployees])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       <ReadOnlyBanner />
       <Tabs defaultValue="historial" onValueChange={handleTabChange}>
-        <TabsList className="mb-6 flex w-full rounded-md bg-muted p-1">
-          <TabsTrigger value="historial" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
-            <ClipboardList className="mr-2 h-[18px] w-[18px]" /><span>Empleados</span>
+        <TabsList className="mb-6 flex h-12 w-full rounded-md bg-muted p-1">
+          <TabsTrigger value="historial" className="min-h-11 flex-1 gap-2 rounded-md px-2 py-0 text-sm font-medium text-muted-foreground data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-primary">
+            <ClipboardList className="size-4" aria-hidden="true" /><span>Empleados</span>
           </TabsTrigger>
-          <TabsTrigger value="cursos" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
-            <BookOpen className="mr-2 h-[18px] w-[18px]" /><span>Cursos</span>
+          <TabsTrigger value="cursos" className="min-h-11 flex-1 gap-2 rounded-md px-2 py-0 text-sm font-medium text-muted-foreground data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-primary">
+            <BookOpen className="size-4" aria-hidden="true" /><span>Cursos</span>
           </TabsTrigger>
-          <TabsTrigger value="puestos" className="flex-1 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-card data-[state=active]:text-primary">
-            <Briefcase className="mr-2 h-[18px] w-[18px]" /><span>Puestos</span>
+          <TabsTrigger value="puestos" className="min-h-11 flex-1 gap-2 rounded-md px-2 py-0 text-sm font-medium text-muted-foreground data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-primary">
+            <Briefcase className="size-4" aria-hidden="true" /><span>Puestos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -377,7 +454,6 @@ export default function CapacitacionContent() {
             <CapHistorialTab
               employees={employees}
               loadingEmployees={loadingEmployees}
-              isReadOnly={isReadOnly}
               newEmpSuccess={newEmpSuccess}
               addCoursesSuccess={addCoursesSuccess}
               onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
@@ -397,7 +473,7 @@ export default function CapacitacionContent() {
       <CapBulkCreateEmployees
         open={bulkCreateEmpOpen}
         onClose={() => setBulkCreateEmpOpen(false)}
-        onCreated={() => { setBulkCreateEmpOpen(false); loadEmployees() }}
+        onCreated={() => { setBulkCreateEmpOpen(false); handleBulkEmployeesCreated() }}
       />
 
       <CapBulkImportDialog

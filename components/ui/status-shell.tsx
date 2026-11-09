@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  * Design system contract:
  * - Flat hairline card on the neutral canvas.
  * - Compact icon tile tinted only by semantic tone.
- * - Mono uppercase eyebrow + Geist Sans heading.
+ * - Mona Sans typography for eyebrow and heading.
  * - Tokens only: accent color, density spacing and reduced-motion settings
  *   apply automatically. No pill/full-rounded shapes.
  */
@@ -76,7 +76,7 @@ export function StatusShell({
               <span className={cn("grid size-12 shrink-0 place-items-center rounded-md border", TONE[tone].tile)}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
-              <p className="font-mono text-xs font-medium uppercase text-muted-foreground">
+              <p className="font-sans text-xs font-medium uppercase text-muted-foreground">
                 {eyebrow}
               </p>
             </motion.div>
@@ -116,7 +116,7 @@ export function StatusShell({
 /** Small mono caption used under the card / in footer strips. */
 export function StatusCaption({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className={cn("font-mono text-xs font-medium uppercase text-muted-foreground", className)}>
+    <p className={cn("font-sans text-xs font-medium uppercase text-muted-foreground", className)}>
       {children}
     </p>
   )

@@ -16,6 +16,7 @@ import {
 } from "@/lib/hooks/useIncidencias"
 import { supabase } from "@/lib/supabase/client"
 import { notify } from "@/lib/notify"
+import { registerUnsavedChangesGuard } from "@/lib/unsaved-changes"
 
 function currentMonth(): string {
   const date = new Date()
@@ -96,13 +97,18 @@ export function IncidenciasPage({ numeroEmpleado, returnTo }: { numeroEmpleado: 
     }
   }
 
-  const confirmDiscard = () => notify.confirm({
+  const confirmDiscard = useCallback(() => notify.confirm({
     title: "Descartar cambios",
     description: "Los cambios de este mes no se han guardado.",
     confirmLabel: "Descartar",
     tone: "warning",
     size: "xs",
-  })
+  }), [])
+
+  useEffect(() => {
+    if (!dirty) return
+    return registerUnsavedChangesGuard(confirmDiscard)
+  }, [confirmDiscard, dirty])
 
   const selectMonth = async (month: string) => {
     if (month === selectedMonth || saving) return

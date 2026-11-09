@@ -8,6 +8,7 @@ import {
   FileText,
   FilterX,
   Search,
+  SlidersHorizontal,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -47,17 +48,19 @@ import { DesktopTable, MobileList } from "./prom-table-rows"
 // Re-export types for backward compat (page.tsx may import from here)
 export type { AptitudStatus, CursoRequerido, ReglaPromocion, EvaluacionDesempeño, EmpleadoPromocion } from "@/lib/promociones/types"
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 9
 
 export default function PromocionesContent({
   empleados,
   onDatosActualizados,
+  onOpenRules,
   guardarDesempeño,
   promoverEmpleado,
   guardarExamen,
 }: {
   empleados: EmpleadoPromocion[]
   onDatosActualizados?: () => void
+  onOpenRules: () => void
   guardarDesempeño: (numero: string, calificacion: number, periodo?: string) => Promise<void>
   promoverEmpleado: (empleadoId: string, numero: string | undefined, nuevoPuesto: string, datos: ConfirmarPromocionInput) => Promise<void>
   guardarExamen: (numero: string, datos: ExamenPromocionInput) => Promise<void>
@@ -177,108 +180,114 @@ export default function PromocionesContent({
         />
       )}
 
-      {/* Toolbar compacto: search + filtros en 1 línea en desktop */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative flex-1 min-w-0">
+      <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1">
+        <div className="relative min-w-[220px] flex-1">
           <Search aria-hidden="true" className={`absolute left-3 top-1/2 -translate-y-1/2 ${PROMOTION_ICON.control} text-muted-foreground`} />
           <Input
             placeholder="Buscar empleado, puesto, número..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className={`pl-8 h-9 w-full ${busqueda ? "pr-9" : ""}`}
+            className={`h-11 w-full pl-9 text-sm ${busqueda ? "pr-11" : ""}`}
           />
           {busqueda && (
             <button
               type="button"
               aria-label="Limpiar búsqueda"
               onClick={() => setBusqueda("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X aria-hidden="true" className={PROMOTION_ICON.control} />
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="text-sm text-muted-foreground mr-2 font-medium whitespace-nowrap">
-            {todosOrdenados.length} resultado{todosOrdenados.length !== 1 ? 's' : ''}
-          </div>
-          <Select value={filtroDept} onValueChange={setFiltroDept}>
-            <SelectTrigger className="h-9 w-[140px] text-xs">
-              <SelectValue placeholder="Depto." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos deptos.</SelectItem>
-              {departamentos.map((d) => (
-                <SelectItem key={d} value={d}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filtroPuesto} onValueChange={setFiltroPuesto}>
-            <SelectTrigger className="h-9 w-[150px] text-xs">
-              <SelectValue placeholder="Puesto" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos puestos</SelectItem>
-              {puestos.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-            <SelectTrigger className="h-9 w-[130px] text-xs">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="apto">Apto</SelectItem>
-              <SelectItem value="no_apto">No Apto</SelectItem>
-              <SelectItem value="pendiente">Espera</SelectItem>
-              <SelectItem value="pendiente_examen">Examen</SelectItem>
-              <SelectItem value="en_revision">Revisión</SelectItem>
-              <SelectItem value="bloqueado_examen">Penalizado</SelectItem>
-            </SelectContent>
-          </Select>
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => { setBusqueda(""); setFiltroDept("todos"); setFiltroStatus("todos"); setFiltroPuesto("todos") }}
-              aria-label="Limpiar filtros"
-              title="Limpiar filtros"
-            >
-              <FilterX aria-hidden="true" className={PROMOTION_ICON.control} />
-            </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+        <div className="flex shrink-0 items-center gap-2">
+            <Select value={filtroDept} onValueChange={setFiltroDept}>
+              <SelectTrigger className="h-11 w-[140px] text-sm">
+                <SelectValue placeholder="Departamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">DEPTOS.</SelectItem>
+                {departamentos.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtroPuesto} onValueChange={setFiltroPuesto}>
+              <SelectTrigger className="h-11 w-[150px] text-sm">
+                <SelectValue placeholder="Puesto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">PUESTOS</SelectItem>
+                {puestos.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="h-11 w-[130px] text-sm">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">ESTADOS</SelectItem>
+                <SelectItem value="apto">Apto</SelectItem>
+                <SelectItem value="no_apto">No Apto</SelectItem>
+                <SelectItem value="pendiente">Espera</SelectItem>
+                <SelectItem value="pendiente_examen">Examen</SelectItem>
+                <SelectItem value="en_revision">Revisión</SelectItem>
+                <SelectItem value="bloqueado_examen">Penalizado</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasFilters && (
               <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5"
-                disabled={exporting || todosOrdenados.length === 0}
-                data-testid="promociones-export-trigger"
+                variant="ghost"
+                size="icon"
+                className="h-11 w-11"
+                onClick={() => { setBusqueda(""); setFiltroDept("todos"); setFiltroStatus("todos"); setFiltroPuesto("todos") }}
+                aria-label="Limpiar filtros"
+                title="Limpiar filtros"
               >
-                <Download aria-hidden="true" className={PROMOTION_ICON.control} />
-                <span className="hidden sm:inline">{exporting ? "Generando…" : "Descargar"}</span>
+                <FilterX aria-hidden="true" className={PROMOTION_ICON.control} />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                {todosOrdenados.length} registro{todosOrdenados.length !== 1 ? "s" : ""}
-                {hasFilters ? " (filtrados)" : ""}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleExportPDF} data-testid="promociones-export-pdf" className="gap-2 cursor-pointer">
-                <FileText aria-hidden="true" className={`${PROMOTION_ICON.control} text-destructive`} />
-                <span>Reporte PDF</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel} data-testid="promociones-export-excel" className="gap-2 cursor-pointer">
-                <FileSpreadsheet aria-hidden="true" className={`${PROMOTION_ICON.control} text-success`} />
-                <span>Reporte Excel</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-11 min-h-11 gap-1.5 px-3 text-sm"
+                  disabled={exporting || todosOrdenados.length === 0}
+                  data-testid="promociones-export-trigger"
+                >
+                  <Download aria-hidden="true" className={PROMOTION_ICON.control} />
+                  <span>{exporting ? "Generando…" : "Descargar"}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  {todosOrdenados.length} registro{todosOrdenados.length !== 1 ? "s" : ""}
+                  {hasFilters ? " (filtrados)" : ""}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportPDF} data-testid="promociones-export-pdf" className="gap-2 cursor-pointer">
+                  <FileText aria-hidden="true" className={`${PROMOTION_ICON.control} text-destructive`} />
+                  <span>Reporte PDF</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} data-testid="promociones-export-excel" className="gap-2 cursor-pointer">
+                  <FileSpreadsheet aria-hidden="true" className={`${PROMOTION_ICON.control} text-success`} />
+                  <span>Reporte Excel</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 min-h-11 gap-1.5 px-3 text-sm"
+              onClick={onOpenRules}
+              aria-label="Abrir reglas de promoción"
+            >
+              <SlidersHorizontal aria-hidden="true" className={PROMOTION_ICON.control} />
+              <span>Reglas</span>
+            </Button>
         </div>
       </div>
 

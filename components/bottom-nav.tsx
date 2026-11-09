@@ -44,7 +44,7 @@ interface NavItem {
 // "Más" sheet below.
 const PRIMARY: NavItem[] = [
   { label: "Ingresos", href: "/ingresos", icon: UserPlus },
-  { label: "Capacitación", href: "/capacitacion", icon: GraduationCap },
+  { label: "Plantilla", href: "/plantilla", icon: GraduationCap },
   { label: "Desempeño", href: "/desempeno", icon: Award },
 ]
 

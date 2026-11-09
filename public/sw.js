@@ -1,11 +1,11 @@
-// TIMESTAMP: 2026-11-03T21:43:15.013Z
+// TIMESTAMP: 2026-11-09T16:20:15.471Z
 const CACHE_NAME = "vinoplastic-v5"
 const STATIC_CACHE = "vinoplastic-static-v5"
 const API_CACHE = "vinoplastic-api-v5"
 
 // Recursos a pre-cachear en la instalación. `/offline` es la ruta de
 // fallback cuando una navegación falla y no hay copia en caché.
-const PRECACHE_URLS = ["/inicio", "/login", "/offline", "/capacitacion"]
+const PRECACHE_URLS = ["/inicio", "/login", "/offline", "/plantilla"]
 const OFFLINE_URL = "/offline"
 
 // ─── Install ──────────────────────────────────────────────────────────────────

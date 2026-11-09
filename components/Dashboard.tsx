@@ -9,7 +9,6 @@ import { useRole, useUser } from "@/lib/hooks"
 import { isEvaluadorAllowedRoute } from "@/lib/hooks/useRole"
 import { WorkspaceContainer } from "@/components/ui/workspace-container"
 import { SystemInfoFooter } from "@/components/system-info-footer"
-import { cn } from "@/lib/utils"
 
 
 import { AppTransition } from "@/components/app-transition"
@@ -19,16 +18,17 @@ import { MAINTENANCE_NOTICE_EXPIRES_AT, MAINTENANCE_NOTICE_PENDING_KEY } from "@
 
 interface DashboardProps {
   content?: ReactNode
-  pageTitle?: string
   headerTitleHref?: string
   headerTitleHrefLabel?: string
 }
 
-export default function Dashboard({ content, pageTitle, headerTitleHref, headerTitleHrefLabel }: DashboardProps) {
+export default function Dashboard({ content, headerTitleHref, headerTitleHrefLabel }: DashboardProps) {
   const {
     showMobileSidebar,
     setShowMobileSidebar,
     openMobileSidebar,
+    isSidebarCollapsed,
+    toggleSidebar,
   } = useSidebar()
 
   const pathname = usePathname()
@@ -77,18 +77,13 @@ export default function Dashboard({ content, pageTitle, headerTitleHref, headerT
         <Sidebar
           showMobileSidebar={showMobileSidebar}
           setShowMobileSidebar={setShowMobileSidebar}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={toggleSidebar}
         />
       )}
 
-      {/* El documento es el único scroll de la página. */}
-      <div
-        className={cn(
-          "workspace-frame bg-card md:rounded-xl md:border md:border-border",
-          isEvaluador && "workspace-frame--full-width",
-        )}
-      >
+      <div className="workspace-frame bg-card md:rounded-xl md:border md:border-border">
         <Header
-          title={pageTitle}
           titleHref={headerTitleHref}
           titleHrefLabel={headerTitleHrefLabel}
           showMobileSidebar={showMobileSidebar}

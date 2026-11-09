@@ -25,7 +25,7 @@ export function GuiaEvaluadorPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border">
         <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-18">
-          <p className="font-mono text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="font-sans text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Viñoplastic · Evaluación de desempeño
           </p>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -58,7 +58,7 @@ export function GuiaEvaluadorPage() {
         <section className="border-b border-border bg-muted/20" aria-labelledby="antes-heading">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
-              <p className="font-mono text-xs font-medium uppercase tracking-wide text-primary">Antes de iniciar</p>
+              <p className="font-sans text-xs font-medium uppercase tracking-wide text-primary">Antes de iniciar</p>
               <h2 id="antes-heading" className="mt-3 text-2xl font-semibold tracking-tight">
                 Acceso y alcance
               </h2>
@@ -87,7 +87,7 @@ export function GuiaEvaluadorPage() {
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-18">
             <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
               <div className="lg:sticky lg:top-6 lg:self-start">
-                <p className="font-mono text-xs font-medium uppercase tracking-wide text-primary">Flujo vigente</p>
+                <p className="font-sans text-xs font-medium uppercase tracking-wide text-primary">Flujo vigente</p>
                 <h2 id="flujo-heading" className="mt-3 text-2xl font-semibold tracking-tight">
                   {GUIDE_COPY.title}
                 </h2>
@@ -103,7 +103,7 @@ export function GuiaEvaluadorPage() {
                           href={`#paso-${step.id}`}
                           className="flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <span className="font-mono text-xs tabular-nums text-primary">
+                          <span className="font-sans text-xs tabular-nums text-primary">
                             {String(index + 1).padStart(2, "0")}
                           </span>
                           {step.title}
@@ -125,7 +125,7 @@ export function GuiaEvaluadorPage() {
 
         <section className="border-b border-border bg-muted/20" aria-labelledby="vistas-heading">
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-18">
-            <p className="font-mono text-xs font-medium uppercase tracking-wide text-primary">Navegación</p>
+            <p className="font-sans text-xs font-medium uppercase tracking-wide text-primary">Navegación</p>
             <h2 id="vistas-heading" className="mt-3 text-2xl font-semibold tracking-tight">
               Vistas disponibles en Desempeño
             </h2>
@@ -154,7 +154,7 @@ export function GuiaEvaluadorPage() {
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-18">
             <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-start">
               <div>
-                <p className="font-mono text-xs font-medium uppercase tracking-wide text-primary">Cierre del proceso</p>
+                <p className="font-sans text-xs font-medium uppercase tracking-wide text-primary">Cierre del proceso</p>
                 <h2 id="entrega-heading" className="mt-3 text-2xl font-semibold tracking-tight">
                   Impresión y entrega
                 </h2>
@@ -194,11 +194,11 @@ function GuideStepSection({ step, index }: { step: GuideStep; index: number }) {
     >
       <header className="border-b border-border px-5 py-5 sm:px-6">
         <div className="flex items-start gap-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 font-mono text-xs font-semibold text-primary">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 font-sans text-xs font-semibold text-primary">
             {String(index + 1).padStart(2, "0")}
           </span>
           <div>
-            <p className="font-mono text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="font-sans text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {step.label}
             </p>
             <h3 id={`paso-${step.id}-heading`} className="mt-1 text-xl font-semibold tracking-tight">
@@ -214,7 +214,7 @@ function GuideStepSection({ step, index }: { step: GuideStep; index: number }) {
           <ol className="space-y-3">
             {step.instructions.map((instruction, instructionIndex) => (
               <li key={instruction} className="flex items-start gap-3 text-sm leading-relaxed">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/5 font-mono text-[10px] font-semibold text-primary">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/5 font-sans text-[10px] font-semibold text-primary">
                   {instructionIndex + 1}
                 </span>
                 <span>{instruction}</span>
@@ -227,7 +227,7 @@ function GuideStepSection({ step, index }: { step: GuideStep; index: number }) {
               {step.weights.map((weight) => (
                 <div key={weight.label} className="rounded-md border border-border bg-muted/20 p-3">
                   <dt className="text-xs leading-snug text-muted-foreground">{weight.label}</dt>
-                  <dd className="mt-1 font-mono text-lg font-semibold tabular-nums">{weight.value * 100}%</dd>
+                  <dd className="mt-1 font-sans text-lg font-semibold tabular-nums">{weight.value * 100}%</dd>
                 </div>
               ))}
             </dl>
@@ -345,7 +345,7 @@ function StepPreview({ id }: { id: GuideStep["id"] }) {
 function PreviewFrame({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <figure className="overflow-hidden rounded-lg border border-border bg-muted/10">
-      <figcaption className="border-b border-border px-4 py-2 font-mono text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <figcaption className="border-b border-border px-4 py-2 font-sans text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </figcaption>
       {children}
@@ -381,7 +381,7 @@ function DeliveryStep({ n, icon: Icon, text }: { n: string; icon: typeof Printer
   return (
     <li className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-xs font-semibold text-primary">{n.padStart(2, "0")}</span>
+        <span className="font-sans text-xs font-semibold text-primary">{n.padStart(2, "0")}</span>
         <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
       </div>
       <p className="mt-3 text-sm leading-relaxed">{text}</p>
@@ -401,7 +401,7 @@ function MockSearch({ value }: { value: string }) {
 function MockField({ label, value, multiline = false }: { label: string; value: string; multiline?: boolean }) {
   return (
     <div>
-      <p className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mb-1.5 font-sans text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <div className={`rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground ${multiline ? "min-h-16" : "min-h-9"}`}>
         {value}
       </div>

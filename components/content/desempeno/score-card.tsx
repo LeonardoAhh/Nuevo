@@ -12,7 +12,7 @@ export function ScoreCard({
   } = context;
   return <Card className="text-center">
     <CardContent className="pb-6 pt-6">
-      <div className="text-5xl sm:text-6xl font-bold text-primary" aria-live="polite" aria-atomic="true">
+      <div className="text-5xl font-semibold leading-none tabular-nums text-primary" aria-live="polite" aria-atomic="true">
         {ponderacion.calificacionFinal}%
       </div>
       <p className="mt-2 text-sm text-muted-foreground">

@@ -30,7 +30,7 @@ export function ActionButton({
 }: ActionButtonProps) {
   const content = <><span aria-hidden="true">{icon}</span><span>{label}</span>{!!badge && badge > 0 && <span className="rounded-md bg-destructive px-1.5 text-xs tabular-nums text-destructive-foreground">{badge}</span>}</>;
   return <Tooltip><TooltipTrigger asChild>
-      {href && !disabled ? <Button asChild variant={variant} className={className}><Link href={href} aria-label={tooltip}>{content}</Link></Button> : <span tabIndex={disabled ? 0 : undefined} aria-label={disabled ? tooltip : undefined}><Button type="button" className={className} variant={variant} onClick={onClick} disabled={disabled} aria-label={tooltip}>{content}</Button></span>}
+      {href && !disabled ? <Button asChild variant={variant} className={cn("min-h-11", className)}><Link href={href} aria-label={tooltip}>{content}</Link></Button> : <span tabIndex={disabled ? 0 : undefined} aria-label={disabled ? tooltip : undefined}><Button type="button" className={cn("min-h-11", className)} variant={variant} onClick={onClick} disabled={disabled} aria-label={tooltip}>{content}</Button></span>}
     </TooltipTrigger><TooltipContent>{tooltip}</TooltipContent></Tooltip>;
 }
 

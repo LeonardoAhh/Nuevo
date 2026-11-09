@@ -46,7 +46,7 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
       </div>
       <div className="w-full max-w-4xl space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3 px-1">
-          <p className="font-mono text-xs font-medium uppercase text-muted-foreground">Estado del sistema</p>
+          <p className="font-sans text-xs font-medium uppercase text-muted-foreground">Estado del sistema</p>
           <span className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
             <Radio className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
             Mantenimiento activo
@@ -58,8 +58,8 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
               <div aria-hidden="true" className="mb-6 grid size-14 place-items-center rounded-md border border-primary/20 bg-primary/10 text-primary">
                 <Layers3 className="size-7" strokeWidth={1.5} />
               </div>
-              <p className="mb-3 font-mono text-xs font-medium uppercase text-muted-foreground">Sistema en mantenimiento</p>
-              <h1 id={`${id}-heading`} className="text-balance font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+              <p className="mb-3 font-sans text-xs font-medium uppercase text-muted-foreground">Sistema en mantenimiento</p>
+              <h1 id={`${id}-heading`} className="text-balance font-sans text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
                 Actualización en curso
               </h1>
               <p id={`${id}-description`} className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -82,7 +82,7 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
                       return (
                         <div key={label} className="flex min-w-0 flex-col items-center gap-2 rounded-md border border-border bg-card px-2 py-4">
                           <dt className="order-2 text-xs text-muted-foreground">{label}</dt>
-                          <dd className="font-mono text-3xl font-medium leading-none tracking-tight tabular-nums text-foreground">
+                          <dd className="font-sans text-3xl font-medium leading-none tracking-tight tabular-nums text-foreground">
                             {value === null ? "—" : String(value).padStart(2, "0")}
                           </dd>
                         </div>
@@ -91,7 +91,7 @@ export function MaintenanceScreen({ endsAt = null }: { endsAt?: string | null })
                   </dl>
                 </div>
               ) : (
-                <p className="font-serif text-2xl font-semibold tracking-tight">Volvemos en cuanto esté listo.</p>
+                <p className="font-sans text-2xl font-semibold tracking-tight">Volvemos en cuanto esté listo.</p>
               )}
               <div role="status" aria-live="polite" aria-atomic="true" className="text-sm leading-relaxed text-muted-foreground">
                 {estimateElapsed

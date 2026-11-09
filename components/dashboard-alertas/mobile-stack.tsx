@@ -7,19 +7,10 @@ import {
     ChevronLeft,
     Clock,
     Loader2,
-    Search,
     User,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import {
     dias,
     formatDate,
@@ -29,7 +20,6 @@ import {
     CalificacionModal,
     DetalleStat,
     MasterListItem,
-    type MasterHeaderProps,
 } from "./shared"
 
 const SIN_RESULTADOS = (
@@ -37,57 +27,6 @@ const SIN_RESULTADOS = (
         Sin resultados con los filtros actuales.
     </p>
 )
-
-// ─── Mobile toolbar (sticky top): search + depto filter ──────────────────────
-
-function MobileToolbar({
-    total, filtrados, search, onSearchChange, depto, onDeptoChange, deptos,
-}: MasterHeaderProps) {
-    return (
-        <div className="sticky top-0 z-10 flex flex-col gap-2 border-b bg-card/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-            <div className="relative">
-                <Search
-                    size={16}
-                    aria-hidden
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                    value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Buscar..."
-                    inputMode="search"
-                    className="h-11 pl-9 text-sm"
-                    aria-label="Buscar en alertas"
-                />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-                <Select
-                    value={depto || "__all__"}
-                    onValueChange={(v) => onDeptoChange(v === "__all__" ? "" : v)}
-                >
-                    <SelectTrigger
-                        aria-label="Filtrar por departamento"
-                        className="h-10 max-w-[60%] flex-1 truncate rounded-md px-2 text-sm"
-                    >
-                        <SelectValue placeholder="Todos los departamentos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="__all__">Deptos.</SelectItem>
-                        {deptos.map((d) => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <span
-                    aria-live="polite"
-                    className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
-                >
-                    {filtrados}{filtrados !== total ? ` / ${total}` : ""}
-                </span>
-            </div>
-        </div>
-    )
-}
 
 function MobileDetailHeader({
     nombre, badgeLabel, badgeClass, onBack, action,
@@ -100,7 +39,7 @@ function MobileDetailHeader({
                 size="icon"
                 onClick={onBack}
                 aria-label="Volver a la lista"
-                className="h-10 w-10"
+                className="h-11 w-11 rounded-md"
             >
                 <ChevronLeft size={20} aria-hidden />
             </Button>

@@ -26,7 +26,10 @@ export function PendingSummaryDetail({ status, groups, onOpenChange }: {
     if (!open) setSelected(null);
     onOpenChange(open);
   }}>
-    {selected ? <DetailModal item={selected} onBack={() => setSelected(null)} /> : <DialogContent>
+    {selected ? <DetailModal item={selected} onBack={() => setSelected(null)} onEvaluate={() => {
+      setSelected(null);
+      onOpenChange(false);
+    }} /> : <DialogContent>
       <DialogHeader>
         <DialogTitle>{status ? titles[status] : "Evaluaciones pendientes"}</DialogTitle>
         <DialogDescription>{entries.length} {entries.length === 1 ? "evaluación pendiente" : "evaluaciones pendientes"} en este estado.</DialogDescription>

@@ -60,7 +60,7 @@ export function birthdayEmailHtml({ nombre }: BirthdayTemplateProps): string {
     <meta name="color-scheme" content="light" />
     <title>Feliz cumpleaños</title>
   </head>
-  <body style="box-sizing:border-box;margin:0;background:${EMAIL_THEME.background};color:${EMAIL_THEME.foreground};font-family:Arial,Helvetica,sans-serif;">
+  <body style="box-sizing:border-box;margin:0;background:${EMAIL_THEME.background};color:${EMAIL_THEME.foreground};font-family:'Mona Sans';">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
       Todo el equipo de ${companyName} celebra contigo este día especial.
     </div>

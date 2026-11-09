@@ -56,9 +56,9 @@ export function DesktopTable({
   onDesempeño: (emp: EmpleadoPromocion) => void
 }) {
   return (
-    <div className="hidden md:block rounded-lg border overflow-hidden bg-background">
-      <Table aria-label={PROMOTION_TABLE_COPY.accessibleName}>
-        <TableHeader>
+    <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+      <Table aria-label={PROMOTION_TABLE_COPY.accessibleName} className="min-w-[64rem] [&_td]:!px-4 [&_td]:!py-2">
+        <TableHeader className="[&_th]:h-11 [&_th]:py-0 [&_th]:text-sm [&_th]:font-medium">
           <TableRow className="bg-muted">
             <TableHead>{PROMOTION_TABLE_COPY.employee}</TableHead>
             <TableHead>{PROMOTION_TABLE_COPY.department}</TableHead>
@@ -192,18 +192,18 @@ function DesktopRow({
   return (
       <TableRow>
         <TableCell>
-          <div className="font-medium text-sm text-foreground">
+          <div className="text-sm font-medium text-foreground">
             {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
             {emp.nombre}
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">{emp.puesto}</div>
+          <div className="mt-1 text-xs text-muted-foreground">{emp.puesto}</div>
         </TableCell>
         <TableCell>
           <div className="text-sm text-foreground">
             {emp.departamento}
           </div>
           {emp.area && emp.area !== emp.departamento && (
-            <div className="text-xs text-muted-foreground mt-0.5">{emp.area}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{emp.area}</div>
           )}
         </TableCell>
         <TableCell className="text-center">
@@ -222,7 +222,7 @@ function DesktopRow({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="font-medium">{formatMeses(meses)}</p>
-                {regla && <p className="text-xs text-muted-foreground mt-0.5">{PROMOTION_TABLE_COPY.required}: {formatMeses(regla.minTemporalidadMeses)}</p>}
+                {regla && <p className="mt-1 text-xs text-muted-foreground">{PROMOTION_TABLE_COPY.required}: {formatMeses(regla.minTemporalidadMeses)}</p>}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -241,7 +241,7 @@ function DesktopRow({
                   <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-destructive`} />
                 ))}
               <span
-                className={`text-sm font-semibold ${getCriterionTone(cumpleCursos)}`}
+                className={`text-sm font-medium ${getCriterionTone(cumpleCursos)}`}
               >
                 {pctCursos}%
               </span>
@@ -251,7 +251,7 @@ function DesktopRow({
                 {cursosCompletados} de {emp.cursosRequeridos.length} cursos completados
               </p>
               {regla && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {PROMOTION_TABLE_COPY.required}: {regla.minPorcentajeCursos}%
                 </p>
               )}
@@ -269,7 +269,7 @@ function DesktopRow({
                     <CircleX aria-hidden="true" className={`${PROMOTION_ICON.control} shrink-0 text-destructive`} />
                   ))}
                 <span
-                  className={`text-sm font-semibold ${getCriterionTone(cumpleEval)}`}
+                  className={`text-sm font-medium ${getCriterionTone(cumpleEval)}`}
                 >
                   {evalActual.calificacion}
                 </span>
@@ -277,14 +277,14 @@ function DesktopRow({
               <TooltipContent>
                 {evalActual.periodo && <p className="font-medium uppercase tracking-wide">{evalActual.periodo}</p>}
                 {regla && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {PROMOTION_TABLE_COPY.required}: {regla.minCalificacionEvaluacion}
                   </p>
                 )}
               </TooltipContent>
             </Tooltip>
           ) : (
-            <span className="text-xs text-muted-foreground italic">
+            <span className="text-xs text-muted-foreground">
               {PROMOTION_TABLE_COPY.noEvaluation}
             </span>
           )}
@@ -293,7 +293,7 @@ function DesktopRow({
           {emp.calificacionExamen != null ? (
             <div className="flex flex-col items-center justify-center leading-tight">
               <span
-                className={`text-sm font-semibold ${
+                className={`text-sm font-medium ${
                   getCriterionTone(cumpleExamen)
                 }`}
               >
@@ -306,7 +306,7 @@ function DesktopRow({
               )}
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground italic">
+            <span className="text-xs text-muted-foreground">
               {PROMOTION_TABLE_COPY.unavailableValue}
             </span>
           )}
@@ -342,11 +342,11 @@ function DesktopRowInhabilitado({
   return (
     <TableRow className="bg-muted/20">
       <TableCell>
-        <div className="font-medium text-sm text-foreground">
+        <div className="text-sm font-medium text-foreground">
           {emp.numero && <span className="text-muted-foreground font-normal mr-1.5">#{emp.numero}</span>}
           {emp.nombre}
         </div>
-        <div className="text-xs text-muted-foreground mt-0.5">{emp.puesto}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{emp.puesto}</div>
       </TableCell>
       <TableCell>
         <span className="text-sm text-muted-foreground">{emp.departamento}</span>
@@ -356,12 +356,12 @@ function DesktopRowInhabilitado({
       <TableCell className="text-center">
         {evalActual ? (
           <span
-            className="text-sm font-semibold text-foreground"
+            className="text-sm font-medium text-foreground"
           >
             {evalActual.calificacion}
           </span>
         ) : (
-          <span className="text-xs italic text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {PROMOTION_TABLE_COPY.noEvaluation}
           </span>
         )}
@@ -506,7 +506,7 @@ function MobileRow({
                   {emp.calificacionExamen}
                 </span>
                 {emp.fechaExamenGuardada && (
-                  <span className={`${PROMOTION_TABLE_STYLE.supportingText} mt-0.5 leading-none`}>
+                  <span className={`${PROMOTION_TABLE_STYLE.supportingText} mt-1 leading-none`}>
                     {formatShortPromotionDate(emp.fechaExamenGuardada)}
                   </span>
                 )}

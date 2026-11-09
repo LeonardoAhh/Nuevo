@@ -5,5 +5,5 @@ import EvaluatorAssignments from "@/components/content/desempeno/evaluator-assig
 export const metadata: Metadata = { title: "Asignaciones de evaluación" }
 
 export default function EvaluatorAssignmentsPage() {
-  return <Dashboard pageTitle="Asignaciones de evaluación" content={<EvaluatorAssignments />} />
+  return <Dashboard content={<EvaluatorAssignments />} />
 }

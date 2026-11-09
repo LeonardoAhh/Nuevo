@@ -23,14 +23,15 @@ const config: Config = {
   theme: {
     extend: {
       spacing: dynamicSpacing,
+      fontSize: {
+        "heading-md": ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "-0.02em" }],
+        "heading-lg": ["2rem", { lineHeight: "2.5rem", letterSpacing: "-0.04em" }],
+      },
       screens: {
         xs: "480px",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Arial", "sans-serif"],
-        // Temporary compatibility alias for existing editorial screens.
-        serif: ["var(--font-sans)", "Arial", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["var(--font-sans)"],
       },
       colors: {
         // ── Tokens base — sin <alpha-value> porque se usan como valores
@@ -75,6 +76,16 @@ const config: Config = {
         card: {
           DEFAULT:    "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground))",
+        },
+        sidebar: {
+          DEFAULT:    "hsl(var(--sidebar) / <alpha-value>)",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary:    "hsl(var(--sidebar-primary) / <alpha-value>)",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent:     "hsl(var(--sidebar-accent) / <alpha-value>)",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border:     "hsl(var(--sidebar-border))",
+          ring:       "hsl(var(--sidebar-ring))",
         },
 
         // ── Tokens de estado — necesitan opacidad para badges y fondos sutiles

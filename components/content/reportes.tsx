@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useId } from "react"
 import { Search, FileText, CheckSquare, Square, Loader2 } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -14,7 +14,6 @@ import { addReportFooter } from "@/lib/pdf-footer"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 
 export default function ReportesContent() {
   const { fetchEmployees, fetchEmployeeProgress } = useCapacitacion()
@@ -23,6 +22,7 @@ export default function ReportesContent() {
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
+  const searchId = useId()
 
   useEffect(() => {
     loadEmployees()
@@ -187,42 +187,30 @@ export default function ReportesContent() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Reportes de Colaboradores</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Busca y selecciona colaboradores para descargar el reporte de cursos asignados, tomados y pendientes.
-          </p>
-        </div>
-        <Button 
-          onClick={handleDownload} 
-          disabled={selected.size === 0 || generating}
-          className="w-full sm:w-auto"
-        >
-          {generating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <FileText className="mr-2 h-4 w-4" />
-          )}
-          {generating ? "Generando PDF..." : `Descargar PDF (${selected.size})`}
-        </Button>
-      </div>
-
+    <div className="flex w-full min-w-0 flex-col gap-6 pb-10">
       <Card className="border-border">
-        <CardHeader className="p-4 border-b border-border/50 bg-muted/20 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar por nombre, número o puesto..." 
+        <CardHeader className="flex-shrink-0 border-b border-border/50 bg-muted/20 p-4 sm:p-6">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1">
+              <label htmlFor={searchId} className="sr-only">
+                Buscar por nombre, número o puesto
+              </label>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                id={searchId}
+                placeholder="Buscar por nombre, número o puesto..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-full bg-background"
+                className="h-11 min-h-11 bg-background pl-10 text-sm"
               />
             </div>
-            <div className="flex items-center gap-2 text-sm w-full sm:w-auto justify-end">
-              <Button variant="outline" size="sm" onClick={toggleSelectAll} className="h-9 w-full sm:w-auto">
+            <div className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="h-11 min-h-11 w-full px-3 py-0 text-sm sm:w-auto"
+              >
                 {selected.size === filtered.length && filtered.length > 0 ? (
                   <CheckSquare className="mr-2 h-4 w-4" />
                 ) : (
@@ -231,6 +219,18 @@ export default function ReportesContent() {
                 {selected.size === filtered.length && filtered.length > 0 ? "Deseleccionar Todos" : "Seleccionar Todos"}
               </Button>
             </div>
+            <Button
+              onClick={handleDownload}
+              disabled={selected.size === 0 || generating}
+              className="h-11 min-h-11 w-full px-3 py-0 text-sm font-medium sm:w-auto"
+            >
+              {generating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="mr-2 h-4 w-4" />
+              )}
+              {generating ? "Generando PDF..." : `Descargar PDF (${selected.size})`}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -239,40 +239,43 @@ export default function ReportesContent() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/50" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex min-h-48 items-center justify-center text-muted-foreground">
+            <div className="flex min-h-48 items-center justify-center px-4 text-center text-sm text-muted-foreground">
               <p>No se encontraron colaboradores.</p>
             </div>
           ) : (
-            <div className="divide-y divide-border/50">
-              {filtered.map(emp => (
-                <div 
-                  key={emp.id} 
-                  className={`flex items-center gap-4 p-4 hover:bg-muted/40 transition-colors cursor-pointer ${selected.has(emp.id) ? 'bg-muted/30' : ''}`}
-                  onClick={() => toggleSelect(emp.id)}
-                >
-                  <Checkbox 
-                    checked={selected.has(emp.id)} 
-                    onCheckedChange={() => toggleSelect(emp.id)}
-                    className="mt-0.5"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{emp.nombre}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium text-foreground/70">Nº:</span> {emp.numero || "N/A"}
+            <ul className="grid grid-cols-1 md:grid-cols-2">
+              {filtered.map((emp) => (
+                <li key={emp.id} className="border-b border-border/50 md:odd:border-r md:odd:border-r-border/50">
+                  <button
+                    type="button"
+                    aria-label={`Seleccionar a ${emp.nombre}`}
+                    aria-pressed={selected.has(emp.id)}
+                    onClick={() => toggleSelect(emp.id)}
+                    className={`flex h-full min-h-11 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:gap-4 sm:px-6 ${selected.has(emp.id) ? "bg-muted/30" : ""}`}
+                  >
+                    {selected.has(emp.id) ? (
+                      <CheckSquare className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                    ) : (
+                      <Square className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-foreground">{emp.nombre}</span>
+                      <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>
+                          <span className="font-medium text-foreground/70">Nº:</span> {emp.numero || "N/A"}
+                        </span>
+                        <span>
+                          <span className="font-medium text-foreground/70">Puesto:</span> {emp.puesto || "N/A"}
+                        </span>
+                        <span>
+                          <span className="font-medium text-foreground/70">Depto:</span> {emp.departamento || "N/A"}
+                        </span>
                       </span>
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium text-foreground/70">Puesto:</span> {emp.puesto || "N/A"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium text-foreground/70">Depto:</span> {emp.departamento || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                    </span>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </CardContent>
       </Card>

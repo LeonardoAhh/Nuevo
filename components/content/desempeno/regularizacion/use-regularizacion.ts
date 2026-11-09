@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { confirm } from "@/components/ui/confirm-dialog"
+import { registerUnsavedChangesGuard } from "@/lib/unsaved-changes"
 import { supabase } from "@/lib/supabase/client"
 import { crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
 import { cargarEvaluacionesVencidas, guardarEvaluacionTardia, type EvaluacionVencida } from "@/lib/desempeno/regularizacion/servicio"
@@ -34,6 +35,11 @@ export function useRegularizacion(enabled: boolean) {
       appearance: "minimal",
     })
   }, [dirty])
+
+  useEffect(() => {
+    if (!enabled || !dirty) return
+    return registerUnsavedChangesGuard(confirmarSalida)
+  }, [enabled, dirty, confirmarSalida])
 
   useEffect(() => {
     if (!dirty) return

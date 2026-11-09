@@ -22,11 +22,11 @@ export const LOGIN = {
 
 /** Layout and typography use the system spacing scale and semantic theme tokens. */
 export const loginStyles = {
-  page: "flex min-h-dvh items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 safe-bottom-content",
-  container: "w-full max-w-md",
-  formRegion: "min-w-0 rounded-xl border border-border bg-card p-6 text-card-foreground sm:p-8",
-  form: "w-full space-y-7",
-  heading: "text-xl font-semibold leading-7 tracking-tight text-foreground",
+  page: "min-h-dvh bg-background text-foreground safe-bottom-content sm:h-dvh sm:min-h-0 sm:flex-row sm:items-stretch sm:px-[var(--workspace-inset)] md:px-0",
+  container: "grid min-h-dvh w-full flex-1 grid-cols-1 bg-card sm:my-[var(--workspace-inset)] sm:min-h-0 sm:grid-cols-2 sm:rounded-xl sm:border sm:border-border md:my-0",
+  formRegion: "flex min-h-dvh min-w-0 items-center justify-center px-4 py-8 text-card-foreground sm:min-h-0 sm:px-6 md:px-8 lg:px-12",
+  form: "mx-auto w-full max-w-md space-y-7",
+  heading: "text-xl font-semibold leading-7 tracking-[-0.4px] text-foreground",
   description: "text-sm leading-relaxed text-muted-foreground",
   fields: "space-y-4",
   field: "space-y-2",

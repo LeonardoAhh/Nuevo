@@ -68,7 +68,7 @@ function CategoriaCover({
         <div className="rounded-md bg-white/15 p-3 ring-1 ring-white/10">
           <Icon className="text-white" size={iconSize} strokeWidth={1.5} />
         </div>
-        <span className="mt-2 font-mono text-[10px] font-medium uppercase text-white/80">
+        <span className="mt-2 font-sans text-[10px] font-medium uppercase text-white/80">
           {cat.label}
         </span>
       </div>

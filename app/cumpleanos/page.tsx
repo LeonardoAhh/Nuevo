@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function CumpleanosPage() {
   return (
     <Dashboard
-      pageTitle="Cumpleaños"
       content={<CumpleanosContent />}
     />
   )

@@ -10,6 +10,7 @@ import { useMaintenanceNoticeStatus } from "@/components/maintenance-notice-stat
 import { useRole } from "@/lib/hooks";
 import { usePendingEvals } from "@/lib/hooks/usePendingEvals";
 import { confirm } from "@/components/ui/confirm-dialog";
+import { registerUnsavedChangesGuard } from "@/lib/unsaved-changes";
 export function useEvaluationSearch() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -35,6 +36,7 @@ export function useEvaluationSearch() {
     canEdit,
   } = useRole();
   const {
+    loading: pendingLoading,
     deptGroups,
     totalEvals,
     totalVencidas,
@@ -62,6 +64,7 @@ export function useEvaluationSearch() {
     puesto: string;
   }>>([]);
   const [suggLoading, setSuggLoading] = useState(false);
+  const [suggestionError, setSuggestionError] = useState(false);
   const [showSugg, setShowSugg] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   // Gate de impresión: solo se puede imprimir una evaluación ya guardada y sin ediciones posteriores.
@@ -115,17 +118,27 @@ export function useEvaluationSearch() {
     if (term.length < SEARCH_OPTIONS.minLength) {
       setSuggestions([]);
       setSuggLoading(false);
+      setSuggestionError(false);
       return;
     }
     setSuggLoading(true);
+    setSuggestionError(false);
     setSuggestions([]);
     setActiveIdx(-1);
     const t = setTimeout(async () => {
-      const res = await buscarSugerencias(term);
-      if (cancelled) return;
-      setSuggestions(res);
-      setActiveIdx(-1);
-      setSuggLoading(false);
+      try {
+        const res = await buscarSugerencias(term);
+        if (cancelled) return;
+        setSuggestions(res);
+        setActiveIdx(-1);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("useEvaluationSearch suggestions:", error);
+        setSuggestions([]);
+        setSuggestionError(true);
+      } finally {
+        if (!cancelled) setSuggLoading(false);
+      }
     }, SEARCH_OPTIONS.debounceMs);
     return () => {
       cancelled = true;
@@ -168,6 +181,11 @@ export function useEvaluationSearch() {
       appearance: "minimal",
     });
   }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    return registerUnsavedChangesGuard(confirmDiscard);
+  }, [confirmDiscard, hasUnsavedChanges]);
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -291,6 +309,7 @@ export function useEvaluationSearch() {
     isEvaluador,
     canEdit,
     deptGroups,
+    pendingLoading,
     totalEvals,
     totalVencidas,
     totalProximas,
@@ -304,6 +323,7 @@ export function useEvaluationSearch() {
     suggestions,
     setSuggestions,
     suggLoading,
+    suggestionError,
     setSuggLoading,
     showSugg,
     setShowSugg,

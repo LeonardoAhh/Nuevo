@@ -34,13 +34,13 @@ export function SystemInfoFooter({ variant = "sidebar", className }: {
 
   const version = <div className={cn("flex items-center gap-2", variant === "sidebar" && "justify-between")}>
     <span>Versión del sistema</span>
-    <span className="font-mono tabular-nums">1.0.5</span>
+    <span className="font-sans tabular-nums">2.0.0</span>
   </div>
 
   const credit = <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" aria-label={`${CREDIT_PREFIX}${CREDIT_NAME}`} className="flex min-h-8 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button type="button" aria-label={`${CREDIT_PREFIX}${CREDIT_NAME}`} className="flex min-h-11 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Code2 className="size-3.5 shrink-0" aria-hidden="true" />
           <span className="relative inline-block whitespace-nowrap">
             <span aria-hidden="true" className="invisible">{CREDIT_PREFIX}<span className="font-medium">{CREDIT_NAME}</span></span>
@@ -55,14 +55,14 @@ export function SystemInfoFooter({ variant = "sidebar", className }: {
     </Tooltip>
   </TooltipProvider>
 
-  return <footer className={cn("shrink-0 border-t border-border text-xs text-muted-foreground", variant === "sidebar" && "px-4 py-3", className)}>
+  return <footer className={cn("shrink-0 border-t border-border text-xs text-muted-foreground", variant === "sidebar" && "px-4 py-2", className)}>
     {variant === "workspace" ? (
       <WorkspaceContainer className="safe-bottom-content flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-3">
         {version}
         {credit}
       </WorkspaceContainer>
     ) : (
-      <div className="space-y-2">
+      <div className="space-y-1">
         {version}
         {credit}
       </div>

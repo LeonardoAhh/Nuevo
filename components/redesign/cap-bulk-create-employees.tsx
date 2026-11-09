@@ -345,7 +345,7 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
                 onChange={(e) => setText(e.target.value)}
                 placeholder={`Ejemplo:\n${EMPLOYEE_JSON_EXAMPLE}`}
                 rows={5}
-                className="min-h-32 resize-y font-mono"
+                className="min-h-32 resize-y font-sans"
                 aria-label="Contenido JSON"
               />
             </div>
@@ -393,7 +393,7 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
                     <TableBody>
                       {valid.map((v, i) => (
                         <TableRow key={i}>
-                          <TableCell className="font-mono text-xs">{v.numero ?? "—"}</TableCell>
+                          <TableCell className="font-sans text-xs">{v.numero ?? "—"}</TableCell>
                           <TableCell className="text-xs">{v.nombre}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{v.puesto ?? "—"}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{v.departamento ?? "—"}</TableCell>
@@ -422,7 +422,7 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
                     <TableBody>
                       {duplicates.map((d, i) => (
                         <TableRow key={i}>
-                          <TableCell className="font-mono text-xs">{d.numero}</TableCell>
+                          <TableCell className="font-sans text-xs">{d.numero}</TableCell>
                           <TableCell className="text-xs">{d.nombre}</TableCell>
                         </TableRow>
                       ))}
@@ -450,7 +450,7 @@ export function CapBulkCreateEmployees({ open, onClose, onCreated }: Props) {
                     <TableBody>
                       {invalid.map((inv) => (
                         <TableRow key={inv.index}>
-                          <TableCell className="font-mono text-xs">{inv.index + 1}</TableCell>
+                          <TableCell className="font-sans text-xs">{inv.index + 1}</TableCell>
                           <TableCell className="text-xs">{inv.raw.nombre ?? "—"}</TableCell>
                           <TableCell className="text-xs text-destructive">
                             <ul className="list-disc list-inside space-y-0.5">

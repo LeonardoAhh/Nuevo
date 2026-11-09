@@ -11,7 +11,11 @@ import { getPeriodoActual } from "@/lib/catalogo";
 import { periodoMensualDeFecha } from "@/lib/desempeno/evaluaciones-guardadas";
 import { periodoLabel } from "./pending-presentation";
 
-export function DetailModal({ item, onBack }: { item: EmployeePending; onBack?: () => void }) {
+export function DetailModal({ item, onBack, onEvaluate }: {
+  item: EmployeePending;
+  onBack?: () => void;
+  onEvaluate?: () => void;
+}) {
   const router = useRouter();
   const planEntregado = item.rg_rec_048 === "Entregado";
   const tienePendienteVigente = item.evals.some(entry => periodoMensualDeFecha(entry.fecha) === getPeriodoActual("mensuales"));
@@ -20,7 +24,9 @@ export function DetailModal({ item, onBack }: { item: EmployeePending; onBack?: 
     className="sm:max-w-lg"
     footer={<DialogFooter>
       {tienePendienteVigente && item.numero ? <Button className="min-h-11 w-full sm:w-auto" onClick={() => {
-        if (item.numero) router.push(`/desempeno?q=${encodeURIComponent(item.numero)}`);
+        if (!item.numero) return;
+        onEvaluate?.();
+        router.push(`/desempeno?q=${encodeURIComponent(item.numero)}`);
       }}>
         Evaluar empleado
       </Button> : <p className="text-sm leading-5 text-muted-foreground">{!item.numero ? "Falta el número de empleado." : "No hay una evaluación pendiente del periodo vigente."}</p>}

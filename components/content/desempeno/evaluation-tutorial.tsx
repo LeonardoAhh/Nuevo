@@ -172,7 +172,7 @@ export function EvaluationTutorial({ onFinish }: { onFinish: () => void }) {
       </div>
 
       <div id="tutorial-action" role="status" className="rounded-md border border-border border-l-2 border-l-primary bg-muted/40 px-4 py-3">
-        <p className="font-mono text-xs font-medium uppercase text-muted-foreground">Haz esto ahora</p>
+        <p className="font-sans text-xs font-medium uppercase text-muted-foreground">Haz esto ahora</p>
         <p className="mt-1 text-sm font-medium">{nextAction}</p>
       </div>
 

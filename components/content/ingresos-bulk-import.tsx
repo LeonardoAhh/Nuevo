@@ -412,7 +412,7 @@ export function IngresosBulkImport({ open, onClose, onImported }: IngresosBulkIm
                       <TableBody>
                         {validRecords.map((record, index) => (
                           <TableRow key={index}>
-                            <TableCell className="font-mono text-xs">{record.numero ?? "—"}</TableCell>
+                            <TableCell className="font-sans text-xs">{record.numero ?? "—"}</TableCell>
                             <TableCell className="text-sm">{record.nombre}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">{record.departamento ?? "—"}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">{record.turno ?? "—"}</TableCell>

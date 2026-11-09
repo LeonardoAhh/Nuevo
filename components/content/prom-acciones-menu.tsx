@@ -52,6 +52,7 @@ export function PromAccionesMenu({
         <Button
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           aria-label={`Acciones para ${empleado.nombre}`}
         >
           <EllipsisVertical aria-hidden="true" className={PROMOTION_ICON.control} />

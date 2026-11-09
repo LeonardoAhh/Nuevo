@@ -64,7 +64,7 @@ export function ErrorState({
 
       <div className="space-y-2">
         {code ? (
-          <p className="font-mono text-xs font-medium uppercase text-muted-foreground">{code}</p>
+          <p className="font-sans text-xs font-medium uppercase text-muted-foreground">{code}</p>
         ) : null}
         <h1 className="text-xl font-semibold text-foreground sm:text-2xl">{title}</h1>
         {description ? (

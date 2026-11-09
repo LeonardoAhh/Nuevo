@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function DesempenoCumplimientoPage() {
   return (
     <Dashboard
-      pageTitle="Cumplimiento de Evaluaciones"
       content={<DesempenoCumplimientoContent />}
     />
   )

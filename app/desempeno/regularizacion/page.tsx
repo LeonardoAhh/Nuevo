@@ -6,5 +6,5 @@ import { DESEMPENO } from "@/lib/desempeno/presentation"
 export const metadata: Metadata = { title: "Captura tardía | Evaluación de Desempeño" }
 
 export default function RegularizacionPage() {
-  return <Dashboard pageTitle="Captura tardía" headerTitleHref={DESEMPENO.routes.home} headerTitleHrefLabel="Volver a Evaluar" content={<RegularizacionContenido />} />
+  return <Dashboard headerTitleHref={DESEMPENO.routes.home} headerTitleHrefLabel="Volver a Evaluar" content={<RegularizacionContenido />} />
 }

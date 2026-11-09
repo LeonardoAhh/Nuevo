@@ -8,10 +8,9 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { GraduationCap, RefreshCw, CheckCircle2, XCircle, Clock, BookOpen, TrendingUp, Users } from "lucide-react"
+import { GraduationCap, TrendingUp, Users } from "lucide-react"
 import {
   colorPct, META,
   COLORS_CUMPLIMIENTO as COLORS, type DeptCumplimiento,
@@ -81,7 +80,7 @@ function SkeletonContent() {
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function DashboardCumplimiento() {
   const {
-    loading, departments, deptData, cargar,
+    loading, departments, deptData,
     totalAsignados, totalAprobados, totalReprobados, totalPendientes,
     totalEmpleados, totalEmpleadosConPuesto,
   } = useCumplimientoShared()
@@ -121,12 +120,12 @@ export default function DashboardCumplimiento() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-2">
-        <div>
-          <CardTitle className="text-base font-semibold">
+      <CardHeader className="flex flex-col justify-between gap-3 pb-2 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <CardTitle className="text-xl font-semibold tracking-tight">
             Cumplimiento General de Capacitación
           </CardTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">Cursos asignados vs aprobados por puesto</p>
+          <p className="mt-1 text-sm text-muted-foreground">Cursos asignados vs aprobados por puesto</p>
           {/* KPI badges inline — igual que CapacitacionChart */}
           <div className="flex flex-wrap items-center gap-3 mt-2">
             {kpiBadges.map(({ color, label, value }) => (
@@ -138,21 +137,18 @@ export default function DashboardCumplimiento() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="w-full min-w-0 sm:w-auto sm:max-w-full">
           <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="w-full sm:w-56 h-8 text-xs">
+            <SelectTrigger aria-label="Filtrar por departamento" className="h-11 w-full text-sm sm:w-auto sm:max-w-full">
               <SelectValue placeholder="Departamento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los departamentos</SelectItem>
+              <SelectItem value="all">Departamentos</SelectItem>
               {departments.map(d => (
                 <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cargar} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          </Button>
         </div>
       </CardHeader>
 

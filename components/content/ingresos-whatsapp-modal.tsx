@@ -215,7 +215,7 @@ function buildEmailMessage({
   const titleHtml = titleText.replace(/\*(.*?)\*/g, "<strong>$1</strong>")
   const footerHtml = t.footer.replace(/_(.*?)_/g, "<em>$1</em>")
 
-  let html = `<div style="font-family: var(--font-sans, sans-serif); line-height: 1.6; color: hsl(var(--foreground));">`
+  let html = `<div style="font-family: var(--font-sans); line-height: 1.6; color: hsl(var(--foreground));">`
   html += `<p style="font-size: 0.9375rem; font-weight: 600; margin-bottom: 1rem;">${titleHtml}</p>`
 
   if (filterDept !== "all" || filterTurno !== "all") {
@@ -596,19 +596,19 @@ const MessagePreview = memo(function MessagePreview({
           {format === "whatsapp" && (
             <Badge
               variant={isOverLimit ? "destructive" : "secondary"}
-              className="text-[10px] font-mono h-5 gap-1"
+              className="text-[10px] font-sans h-5 gap-1"
               title={`Límite WhatsApp: ${WA_CHAR_LIMIT.toLocaleString("es-MX")} caracteres`}
             >
               {isOverLimit && <AlertCircle className="h-2.5 w-2.5" aria-hidden="true" />}
               <span>{chars.toLocaleString("es-MX")} / {WA_CHAR_LIMIT.toLocaleString("es-MX")}</span>
             </Badge>
           )}
-          <Badge variant="secondary" className="text-[10px] font-mono h-5 gap-1" aria-label={`${employeeCount} empleados`}>
+          <Badge variant="secondary" className="text-[10px] font-sans h-5 gap-1" aria-label={`${employeeCount} empleados`}>
             <Users className="h-2.5 w-2.5" aria-hidden="true" />
             {employeeCount}
           </Badge>
           {vencidasCount > 0 && (
-            <Badge variant="destructive" className="text-[10px] font-mono h-5 gap-1" aria-label={`${vencidasCount} vencidas`}>
+            <Badge variant="destructive" className="text-[10px] font-sans h-5 gap-1" aria-label={`${vencidasCount} vencidas`}>
               <Clock className="h-2.5 w-2.5" aria-hidden="true" />
               {vencidasCount} vencida{vencidasCount !== 1 ? "s" : ""}
             </Badge>
@@ -626,7 +626,7 @@ const MessagePreview = memo(function MessagePreview({
           "flex-1 overflow-y-auto p-4 scrollbar-thin",
           "min-h-[160px] max-h-[clamp(160px,35vh,280px)]",
           format === "whatsapp"
-            ? "whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground"
+            ? "whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground"
             : "text-sm text-foreground"
         )}
       >

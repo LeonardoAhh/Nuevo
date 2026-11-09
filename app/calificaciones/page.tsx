@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function CalificacionesPage() {
   return (
     <Dashboard
-      pageTitle="Calificaciones"
       content={<CalificacionesMural />}
     />
   )
