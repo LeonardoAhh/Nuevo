@@ -94,8 +94,9 @@ const EXTRA_ROUTE_LABELS: Record<string, string> = {
 }
 
 const ROUTE_PREFIX_LABELS = [
-  { prefix: "/plantilla/actas/", label: "Actas y seguimiento" },
+  { prefix: "/plantilla/actas/", label: "Actas administrativas" },
   { prefix: "/plantilla/incidencias/", label: "Incidencias" },
+  { prefix: "/plantilla/incumplimientos/", label: "Incumplimientos" },
 ]
 
 /** True when `pathname` is `href` itself or anywhere below it. */

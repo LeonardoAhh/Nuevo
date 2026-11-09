@@ -6,12 +6,12 @@ import { motion, useReducedMotion } from "framer-motion"
 import {
   AlertTriangle, CalendarClock, CheckCircle2, Clock,
   ExternalLink, Filter, RefreshCw, Search,
-  UserX, X, TrendingDown,
+  UserX, X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Select, SelectContent, SelectItem,
@@ -274,36 +274,6 @@ function EvalTable({ rows }: { rows: EvalRow[] }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Summary cards
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SummaryCards({ rows }: { rows: EvalRow[] }) {
-  const reprobados = rows.filter(r => r.calificacion_final < UMBRAL_CALIFICACION_APROBATORIA).length
-  const vencidos   = rows.filter(r => getRevisionStatus(r.fecha_revision) === "vencido").length
-  const proximos   = rows.filter(r => getRevisionStatus(r.fecha_revision) === "proximo").length
-  const sinFecha   = rows.filter(r => !r.fecha_revision).length
-
-  const items = [
-    { label: "Total",         value: rows.length, color: "text-primary" },
-    { label: "Reprobados",    value: reprobados,  color: "text-destructive" },
-    { label: "Vencidos",      value: vencidos,    color: "text-destructive" },
-    { label: "Próximos 14 d", value: proximos,    color: "text-warning" },
-    { label: "Sin fecha",     value: sinFecha,    color: "text-muted-foreground" },
-  ]
-
-  return (
-    <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {items.map(({ label, value, color }) => (
-        <div key={label} className="flex flex-col gap-1 rounded-md border border-border bg-card p-3">
-          <dt className="text-xs text-muted-foreground">{label}</dt>
-          <dd className={`text-2xl font-bold tabular-nums ${color}`}>{value}</dd>
-        </div>
-      ))}
-    </dl>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Status filter options (sin emojis — accesibles para screen readers)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -439,29 +409,6 @@ export default function DesempenoSeguimiento() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Header */}
-      <Card className="border-destructive/20">
-        <CardHeader className="pb-3">
-          <div className="flex items-start gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-destructive/20 bg-destructive/10 text-destructive">
-              <TrendingDown size={18} aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <CardTitle className="text-base">Seguimiento de Compromisos</CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Evaluaciones con compromisos registrados. Reprobados
-                (calificación &lt; {UMBRAL_CALIFICACION_APROBATORIA}) se muestran primero.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        {!loading && rows.length > 0 && (
-          <CardContent className="pt-0">
-            <SummaryCards rows={rows} />
-          </CardContent>
-        )}
-      </Card>
-
       {/* Error */}
       {error && (
         <Alert variant="destructive">

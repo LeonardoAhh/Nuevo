@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
-  BadgeCheck, BookPlus, CalendarClock, EllipsisVertical, FilePenLine,
+  BadgeCheck, BookPlus, CalendarClock, ChevronDown, EllipsisVertical, FilePenLine, FileText,
   LayoutGrid, Layers, Search, ShieldAlert, Trash2, UserPlus, UserRoundPen, Users, X,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,8 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { PaginationBar } from "@/components/ui/pagination-bar"
-import { Badge } from "@/components/ui/badge"
 import { CATALOGO_ORGANIZACIONAL, TURNOS } from "@/lib/catalogo"
 import type { Employee } from "@/lib/hooks"
 
@@ -23,10 +23,13 @@ const employeeActionItemClass = "gap-1 px-1 text-sm font-normal"
 interface CapHistorialTabProps {
   employees: Employee[]
   loadingEmployees: boolean
+  canEdit: boolean
   newEmpSuccess: boolean
   addCoursesSuccess: boolean
   onNewEmployee: () => void
   onBulkImport: () => void
+  onBulkImportIncumplimientos: () => void
+  onBulkImportActas: () => void
   onBulkCreateEmployees: () => void
   onViewEmployee: (emp: Employee) => void
   onEditEmployee: (emp: Employee) => void
@@ -35,9 +38,9 @@ interface CapHistorialTabProps {
 }
 
 export function CapHistorialTab({
-  employees, loadingEmployees,
+  employees, loadingEmployees, canEdit,
   newEmpSuccess, addCoursesSuccess,
-  onNewEmployee, onBulkImport, onBulkCreateEmployees,
+  onNewEmployee, onBulkImport, onBulkImportIncumplimientos, onBulkImportActas, onBulkCreateEmployees,
   onViewEmployee, onEditEmployee, onAddCourses, onDeleteEmployee,
 }: CapHistorialTabProps) {
   const [empSearch, setEmpSearch]         = useState("")
@@ -79,18 +82,45 @@ export function CapHistorialTab({
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-semibold leading-7 tracking-tight text-foreground">Empleados</h2>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Button variant="outline" className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onBulkImport} aria-label="Cargar cursos" title="Cargar cursos">
-                <span className="hidden sm:inline">Cargar cursos</span>
-                <Layers className="h-4 w-4 sm:hidden" />
-              </Button>
-              <Button variant="outline" className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onBulkCreateEmployees} aria-label="Cargar empleados" title="Cargar empleados">
-                <span className="hidden sm:inline">Cargar empleados</span>
-                <Users className="h-4 w-4 sm:hidden" />
-              </Button>
-              <Button className="h-11 min-h-11 px-3 py-0 text-sm font-medium" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
-                <span className="hidden sm:inline">Nuevo empleado</span>
-                <UserPlus className="h-4 w-4 sm:hidden" />
+            <div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-11 min-h-11 px-3 py-0 text-sm font-medium" aria-label="Abrir opciones de carga" title="Abrir opciones de carga">
+                    <span>Importar</span>
+                    <ChevronDown className="ml-1 size-4" aria-hidden="true" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-64 p-3">
+                  <div className="mb-2 px-1">
+                    <h3 className="text-sm font-semibold text-foreground">Cargar información</h3>
+                  </div>
+                  <div className="grid gap-1">
+                    <Button variant="ghost" className="min-h-11 justify-start gap-2 px-2" onClick={onBulkImport}>
+                      <Layers className="size-4" aria-hidden="true" />
+                      Cursos
+                    </Button>
+                    <Button variant="ghost" className="min-h-11 justify-start gap-2 px-2" onClick={onBulkCreateEmployees}>
+                      <Users className="size-4" aria-hidden="true" />
+                      Empleados
+                    </Button>
+                    {canEdit && (
+                      <Button variant="ghost" className="min-h-11 justify-start gap-2 px-2" onClick={onBulkImportIncumplimientos}>
+                        <ShieldAlert className="size-4" aria-hidden="true" />
+                        Incumplimientos
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <Button variant="ghost" className="min-h-11 justify-start gap-2 px-2" onClick={onBulkImportActas}>
+                        <FileText className="size-4" aria-hidden="true" />
+                        Actas
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button className="h-11 min-h-11 min-w-11 px-3 py-0 text-sm font-medium" onClick={onNewEmployee} aria-label="Nuevo empleado" title="Nuevo empleado">
+                <span className="hidden lg:inline">Nuevo empleado</span>
+                <UserPlus className="h-4 w-4 lg:hidden" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -231,18 +261,14 @@ export function CapHistorialTab({
                                     </DropdownMenuItem>
                                   </>
                                 )}
-                                <DropdownMenuItem
-                                  disabled
-                                  className={`${employeeActionItemClass} relative min-h-12 items-end pb-1 pt-4 text-muted-foreground data-[disabled]:opacity-100`}
-                                >
-                                  <span className="flex items-center gap-1">
-                                    <ShieldAlert />
-                                    Incumplimiento
-                                  </span>
-                                  <Badge variant="secondary" size="sm" className="absolute right-2 top-1 font-normal">
-                                    Próximamente
-                                  </Badge>
-                                </DropdownMenuItem>
+                                {emp.numero && (
+                                  <DropdownMenuItem asChild className={employeeActionItemClass}>
+                                    <Link href={`/plantilla/incumplimientos/${encodeURIComponent(emp.numero)}`}>
+                                      <ShieldAlert />
+                                      <span>Incumplimiento</span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className={employeeActionItemClass} onClick={() => onEditEmployee(emp)}>
                                   <UserRoundPen />

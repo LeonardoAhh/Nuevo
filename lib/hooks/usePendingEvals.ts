@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client"
 import { daysFromToday } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
 import { normalizeDepartamento } from "@/lib/catalogo"
+import { estadoVentanaEvaluacion, type HitoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -12,15 +13,18 @@ export type EvalPeriodo = "1er Mes" | "2° Mes" | "3er Mes"
 
 export interface PendingEvalEntry {
   periodo: EvalPeriodo
+  numeroEvaluacion: HitoNuevoIngreso
   fecha: string
   diasDiff: number
 }
 
 export type PendingEvalStatus = "vencidas" | "proximas" | "a-tiempo"
 
-export function pendingEvalStatus(diasDiff: number): PendingEvalStatus {
-  if (diasDiff < 0) return "vencidas"
-  if (diasDiff <= 7) return "proximas"
+export function pendingEvalStatus(diasDiff: number, numeroEvaluacion: HitoNuevoIngreso): PendingEvalStatus {
+  const estadoVentana = estadoVentanaEvaluacion(numeroEvaluacion, diasDiff)
+  if (estadoVentana === "vencido") return "vencidas"
+  if (diasDiff < 0) return "a-tiempo"
+  if (diasDiff <= (numeroEvaluacion === 3 ? 15 : 7)) return "proximas"
   return "a-tiempo"
 }
 
@@ -38,7 +42,7 @@ export interface EmployeePending {
   fecha_vencimiento_rg: string | null
   rg_dias_diff: number | null
   evals: PendingEvalEntry[]
-  /** true if any eval is vencida (diasDiff < 0) */
+  /** true if any evaluation is outside its allowed application window. */
   hasVencida: boolean
 }
 
@@ -136,20 +140,20 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
         // Empleados con contrato indeterminado ya no requieren evaluaciones de nuevo ingreso
         if (r.tipo_contrato === "Indeterminado") continue
 
-        const evalDefs: [string | null, number | null, EvalPeriodo][] = [
-          [r.eval_1_fecha, r.eval_1_calificacion, "1er Mes"],
-          [r.eval_2_fecha, r.eval_2_calificacion, "2° Mes"],
-          [r.eval_3_fecha, r.eval_3_calificacion, "3er Mes"],
+        const evalDefs: [string | null, number | null, EvalPeriodo, HitoNuevoIngreso][] = [
+          [r.eval_1_fecha, r.eval_1_calificacion, "1er Mes", 1],
+          [r.eval_2_fecha, r.eval_2_calificacion, "2° Mes", 2],
+          [r.eval_3_fecha, r.eval_3_calificacion, "3er Mes", 3],
         ]
 
         const pendingEvals: PendingEvalEntry[] = []
-        for (const [fecha, cal, periodo] of evalDefs) {
+        for (const [fecha, cal, periodo, numeroEvaluacion] of evalDefs) {
           if (!fecha || cal != null) continue
           const diff = daysFromToday(fecha)
           if (diff === null) continue
-          pendingEvals.push({ periodo, fecha, diasDiff: diff })
+          pendingEvals.push({ periodo, numeroEvaluacion, fecha, diasDiff: diff })
           
-          const status = pendingEvalStatus(diff)
+          const status = pendingEvalStatus(diff, numeroEvaluacion)
           if (status === "vencidas") vencidasCount++
           else if (status === "proximas") proximasCount++
           else aTiempoCount++
@@ -173,8 +177,10 @@ export function usePendingEvals(filterDepartamentos?: string[] | null) {
           rg_rec_048: r.rg_rec_048,
           fecha_vencimiento_rg: r.fecha_vencimiento_rg,
           rg_dias_diff: rgDiff,
-          evals: pendingEvals.sort((a, b) => a.diasDiff - b.diasDiff),
-          hasVencida: pendingEvals.some((e) => e.diasDiff < 0),
+          evals: pendingEvals.sort((a, b) =>
+            b.numeroEvaluacion - a.numeroEvaluacion || a.diasDiff - b.diasDiff
+          ),
+          hasVencida: pendingEvals.some((e) => pendingEvalStatus(e.diasDiff, e.numeroEvaluacion) === "vencidas"),
         })
       }
 

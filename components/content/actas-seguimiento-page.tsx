@@ -23,8 +23,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { PaginationBar } from "@/components/ui/pagination-bar"
 import {
   useActasSeguimiento,
-  ACTA_TIPOS, ACTA_ESTATUSES,
-  type ActaSeguimiento, type ActaTipo, type ActaEstatus,
+  ACTA_ESTATUSES,
+  type ActaSeguimiento, type ActaEstatus,
 } from "@/lib/hooks/useActasSeguimiento"
 import { useRole } from "@/lib/hooks"
 import { notify } from "@/lib/notify"
@@ -85,7 +85,6 @@ function EstatusBadge({ estatus }: { estatus: ActaEstatus }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface FormState {
-  tipo: ActaTipo
   fecha: string
   descripcion: string
   fecha_seguimiento: string
@@ -94,7 +93,6 @@ interface FormState {
 
 function blankForm(): FormState {
   return {
-    tipo: "ACTA ADMINISTRATIVA",
     fecha: today(),
     descripcion: "",
     fecha_seguimiento: "",
@@ -244,7 +242,7 @@ function ActasDialogHeader({ nombreEmpleado, children }: { nombreEmpleado: strin
           <FilePenLine size={18} aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">Actas y seguimiento</DialogTitle>
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">Actas administrativas</DialogTitle>
           <DialogDescription className="mt-0.5 break-words text-xs leading-4 text-muted-foreground">{nombreEmpleado}</DialogDescription>
         </div>
       </div>
@@ -276,7 +274,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
   const [form, setForm] = useState<FormState>(blankForm)
   const [formError, setFormError] = useState<string | null>(null)
   const formId = useId()
-  const tipoRef = useRef<HTMLButtonElement>(null)
+  const fechaRef = useRef<HTMLInputElement>(null)
   const newRecordRef = useRef<HTMLButtonElement>(null)
 
   const load = useCallback(async () => {
@@ -306,7 +304,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
     setFormError(null)
     const result = await create({
       numero_empleado: numeroEmpleado,
-      tipo: form.tipo,
+      tipo: "ACTA ADMINISTRATIVA",
       fecha: form.fecha,
       descripcion: form.descripcion || null,
       fecha_seguimiento: form.fecha_seguimiento || null,
@@ -360,7 +358,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
   return (
     <>
       <div className="space-y-6">
-        <Link href="/plantilla" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link href="/plantilla" className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <ArrowLeft className="size-4" aria-hidden="true" /> Volver
         </Link>
 
@@ -383,7 +381,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
 
         <section aria-labelledby="actas-registros-title" className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-            <h3 id="actas-registros-title" className="text-xl font-semibold tracking-tight text-foreground">Registros</h3>
+            <h3 id="actas-registros-title" className="text-xl font-semibold tracking-tight text-foreground">Actas administrativas</h3>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="border-border bg-card font-medium text-muted-foreground">{countLabel(records.length, "registro", "registros")}</Badge>
               {activos > 0 && <Badge variant="outline" className="border-border bg-card font-medium text-muted-foreground">{countLabel(activos, "activo", "activos")}</Badge>}
@@ -405,7 +403,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
             <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-6 py-12 text-center">
               <FileQuestion className="size-8 text-muted-foreground" aria-hidden="true" />
               <p className="font-medium text-foreground">Sin registros</p>
-              <p className="text-sm text-muted-foreground">No hay actas ni planes de seguimiento para este empleado.</p>
+              <p className="text-sm text-muted-foreground">No hay actas administrativas para este empleado.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -427,7 +425,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
         <Dialog open={showForm} onOpenChange={v => { if (!v) setShowForm(false) }}>
           <DialogContent
             raw
-            onOpenAutoFocus={event => { event.preventDefault(); tipoRef.current?.focus() }}
+            onOpenAutoFocus={event => { event.preventDefault(); fechaRef.current?.focus() }}
             onCloseAutoFocus={event => { event.preventDefault(); newRecordRef.current?.focus() }}
             className={actasDialogContentClassName}
           >
@@ -435,7 +433,7 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
             <ActasDialogHeader nombreEmpleado={displayName} />
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-6" style={actasDialogScrollStyle}>
               <form onSubmit={event => { event.preventDefault(); void handleSave() }} className="space-y-5">
-                <h3 className="text-base font-semibold tracking-tight text-foreground">Nuevo registro</h3>
+                <h3 className="text-base font-semibold tracking-tight text-foreground">Nueva acta administrativa</h3>
 
                 {formError && (
                   <Alert variant="destructive" className="py-2" role="alert">
@@ -445,28 +443,11 @@ export function ActasSeguimientoPage({ numeroEmpleado }: ActasSeguimientoPagePro
                 )}
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* Tipo */}
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor={`${formId}-tipo`} className="text-sm font-medium text-foreground">Tipo <span aria-hidden="true">*</span><span className="sr-only"> (obligatorio)</span></Label>
-                    <Select
-                      value={form.tipo}
-                      onValueChange={v => setForm(f => ({ ...f, tipo: v as ActaTipo }))}
-                    >
-                      <SelectTrigger ref={tipoRef} id={`${formId}-tipo`} aria-required="true" className="h-10 border-border bg-card text-sm focus-visible:ring-offset-0">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ACTA_TIPOS.map(t => (
-                          <SelectItem key={t} value={t} className="text-sm">{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* Fecha */}
                   <div className="min-w-0 space-y-2">
                     <Label htmlFor={`${formId}-fecha`} className="text-sm font-medium text-foreground">Fecha <span aria-hidden="true">*</span><span className="sr-only"> (obligatoria)</span></Label>
                     <Input
+                      ref={fechaRef}
                       id={`${formId}-fecha`}
                       type="date"
                       required

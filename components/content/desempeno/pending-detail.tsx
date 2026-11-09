@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { type EmployeePending } from "@/lib/hooks/usePendingEvals";
 import { formatDate } from "@/lib/hooks/useNuevoIngreso";
 import { dias } from "@/lib/hooks/useDashboardAlertas";
-import { getPeriodoActual } from "@/lib/catalogo";
-import { periodoMensualDeFecha } from "@/lib/desempeno/evaluaciones-guardadas";
+import { estadoVentanaEvaluacion } from "@/lib/desempeno/hitos-nuevo-ingreso";
+import { pendingEvalStatus } from "@/lib/hooks/usePendingEvals";
 import { periodoLabel } from "./pending-presentation";
 
 export function DetailModal({ item, onBack, onEvaluate }: {
@@ -18,7 +18,9 @@ export function DetailModal({ item, onBack, onEvaluate }: {
 }) {
   const router = useRouter();
   const planEntregado = item.rg_rec_048 === "Entregado";
-  const tienePendienteVigente = item.evals.some(entry => periodoMensualDeFecha(entry.fecha) === getPeriodoActual("mensuales"));
+  const tienePendienteVigente = item.evals.some(entry =>
+    estadoVentanaEvaluacion(entry.numeroEvaluacion, entry.diasDiff) === "disponible"
+  );
 
   return <DialogContent
     className="sm:max-w-lg"
@@ -50,8 +52,8 @@ export function DetailModal({ item, onBack, onEvaluate }: {
               {periodoLabel(entry.fecha).toLocaleLowerCase("es-MX")} · {formatDate(entry.fecha)}
             </p>
           </div>
-          <span className={`shrink-0 text-xs font-medium leading-5 ${entry.diasDiff < 0 ? "text-destructive" : "text-success"}`}>
-            {dias(entry.diasDiff)}
+          <span className={`shrink-0 text-xs font-medium leading-5 ${pendingEvalStatus(entry.diasDiff, entry.numeroEvaluacion) === "vencidas" ? "text-destructive" : "text-success"}`}>
+            {estadoVentanaEvaluacion(entry.numeroEvaluacion, entry.diasDiff) === "disponible" ? "Disponible" : dias(entry.diasDiff)}
           </span>
         </li>)}
       </ul> : <p className="mt-2 text-sm leading-5 text-muted-foreground">No hay evaluaciones pendientes. Revisa el plan de formación.</p>}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/hooks/useNuevoIngreso";
 import { pendingEvalStatus, type DeptGroup, type EmployeePending, type PendingEvalStatus } from "@/lib/hooks/usePendingEvals";
+import { estadoVentanaEvaluacion } from "@/lib/desempeno/hitos-nuevo-ingreso";
 import { DetailModal } from "./pending-detail";
 
 const titles: Record<PendingEvalStatus, string> = {
@@ -19,9 +20,13 @@ export function PendingSummaryDetail({ status, groups, onOpenChange }: {
 }) {
   const [selected, setSelected] = useState<EmployeePending | null>(null);
   const entries = groups.flatMap(group => group.items.flatMap(employee =>
-    employee.evals.filter(entry => pendingEvalStatus(entry.diasDiff) === status)
+    employee.evals.filter(entry => pendingEvalStatus(entry.diasDiff, entry.numeroEvaluacion) === status)
       .map(entry => ({ employee, entry, departamento: group.departamento }))
-  )).sort((a, b) => a.entry.diasDiff - b.entry.diasDiff || a.employee.nombre.localeCompare(b.employee.nombre, "es"));
+  )).sort((a, b) =>
+    b.entry.numeroEvaluacion - a.entry.numeroEvaluacion
+    || a.entry.diasDiff - b.entry.diasDiff
+    || a.employee.nombre.localeCompare(b.employee.nombre, "es")
+  );
   return <Dialog open={status !== null} onOpenChange={open => {
     if (!open) setSelected(null);
     onOpenChange(open);
@@ -42,7 +47,7 @@ export function PendingSummaryDetail({ status, groups, onOpenChange }: {
               <span className="text-xs tabular-nums text-muted-foreground">#{employee.numero ?? "—"}</span>
             </span>
             <span className="block text-sm text-muted-foreground">{entry.periodo} · {departamento}</span>
-            <span className="block text-xs text-muted-foreground">Fecha límite: <time dateTime={entry.fecha}>{formatDate(entry.fecha)}</time> · {entry.diasDiff < 0 ? `Hace ${-entry.diasDiff} ${entry.diasDiff === -1 ? "día" : "días"}` : entry.diasDiff === 0 ? "Hoy" : `En ${entry.diasDiff} ${entry.diasDiff === 1 ? "día" : "días"}`}</span>
+            <span className="block text-xs text-muted-foreground">Fecha límite: <time dateTime={entry.fecha}>{formatDate(entry.fecha)}</time> · {estadoVentanaEvaluacion(entry.numeroEvaluacion, entry.diasDiff) === "disponible" ? "Disponible para captura" : entry.diasDiff < 0 ? `Hace ${-entry.diasDiff} ${entry.diasDiff === -1 ? "día" : "días"}` : entry.diasDiff === 0 ? "Hoy" : `En ${entry.diasDiff} ${entry.diasDiff === 1 ? "día" : "días"}`}</span>
           </button>
         </li>)}
       </ul> : <p role="status" className="rounded-lg border px-4 py-6 text-center text-sm text-muted-foreground">

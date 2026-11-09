@@ -3,15 +3,15 @@
 import { useCallback, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { describeSupabaseError } from "@/lib/supabase/errors"
+import type { EmployeeDayCountImport } from "@/lib/imports/employee-day-count-json"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ActaTipo = "ACTA ADMINISTRATIVA" | "PLAN DE SEGUIMIENTO"
+export type ActaTipo = "ACTA ADMINISTRATIVA"
 export type ActaEstatus = "ACTIVO" | "EN SEGUIMIENTO" | "CERRADO"
 
-export const ACTA_TIPOS: ActaTipo[] = ["ACTA ADMINISTRATIVA", "PLAN DE SEGUIMIENTO"]
 export const ACTA_ESTATUSES: ActaEstatus[] = ["ACTIVO", "EN SEGUIMIENTO", "CERRADO"]
 
 export interface ActaSeguimiento {
@@ -39,7 +39,7 @@ export function useActasSeguimiento() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  /** Fetch all actas/planes for a given employee number, newest first */
+  /** Fetch administrative actas for a given employee number, newest first */
   const fetchByEmpleado = useCallback(async (numero: string): Promise<ActaSeguimiento[]> => {
     setLoading(true)
     setError(null)
@@ -48,11 +48,12 @@ export function useActasSeguimiento() {
         .from("actas_seguimiento")
         .select("*")
         .eq("numero_empleado", numero)
+        .eq("tipo", "ACTA ADMINISTRATIVA")
         .order("fecha", { ascending: false })
       if (dbError) throw new Error(dbError.message)
       return (data ?? []) as ActaSeguimiento[]
     } catch (err) {
-      const msg = describeSupabaseError(err, "Error al cargar actas/planes")
+      const msg = describeSupabaseError(err, "Error al cargar actas administrativas")
       setError(msg)
       return []
     } finally {
@@ -60,7 +61,28 @@ export function useActasSeguimiento() {
     }
   }, [])
 
-  /** Insert a new acta or plan de seguimiento */
+  const replaceMonths = useCallback(async (payload: EmployeeDayCountImport) => {
+    setSaving(true)
+    setError(null)
+    try {
+      const { error: dbError } = await supabase.rpc(
+        "reemplazar_meses_actas_administrativas",
+        {
+          p_periodos: payload.meses.map(({ mes, registros }) => ({ mes, registros })),
+        },
+      )
+      if (dbError) throw dbError
+      return { success: true }
+    } catch (caught) {
+      const message = describeSupabaseError(caught, "Error al reemplazar las actas del mes")
+      setError(message)
+      return { success: false, error: message }
+    } finally {
+      setSaving(false)
+    }
+  }, [])
+
+  /** Insert a new administrative acta. */
   const create = useCallback(
     async (payload: ActaSeguimientoInsert): Promise<{ success: boolean; error?: string }> => {
       setSaving(true)
@@ -105,7 +127,7 @@ export function useActasSeguimiento() {
     [],
   )
 
-  /** Delete an acta/plan by id */
+  /** Delete an administrative acta by id. */
   const remove = useCallback(
     async (id: string): Promise<{ success: boolean; error?: string }> => {
       setSaving(true)
@@ -128,10 +150,10 @@ export function useActasSeguimiento() {
     [],
   )
 
-  return { loading, saving, error, fetchByEmpleado, create, update, remove }
+  return { loading, saving, error, fetchByEmpleado, replaceMonths, create, update, remove }
 }
 
-/** Fetch all open actas/planes across all employees (for global dashboard) */
+/** Fetch all open administrative actas across all employees. */
 export async function fetchActasAbiertas(): Promise<ActaSeguimiento[]> {
   const { data, error } = await supabase
     .from("actas_seguimiento")

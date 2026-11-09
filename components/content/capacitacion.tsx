@@ -26,13 +26,18 @@ import { CapCoursesTab } from "@/components/content/cap-courses-tab"
 import { CapHistorialTab } from "@/components/content/cap-historial-tab"
 import { CapBulkImportDialog } from "@/components/redesign/cap-bulk-import-dialog"
 import { CapBulkCreateEmployees } from "@/components/redesign/cap-bulk-create-employees"
+import { EmployeeDayCountImportDialog } from "@/components/content/employee-day-count-import-dialog"
+import { useActasSeguimiento } from "@/lib/hooks/useActasSeguimiento"
+import { useReglamentoIncumplimientos } from "@/lib/hooks/useReglamentoIncumplimientos"
 
 // Hooks
 import { useBulkImport } from "@/lib/hooks/useBulkImport"
 import { useJsonImport } from "@/lib/hooks/useJsonImport"
 
 export default function CapacitacionContent() {
-  const { isReadOnly } = useRole()
+  const { canEdit, isReadOnly } = useRole()
+  const { replaceMonths: replaceActasMonths } = useActasSeguimiento()
+  const { replaceMonths: replaceIncumplimientosMonths } = useReglamentoIncumplimientos()
   const {
     importing, importError,
     parseJSON, importData,
@@ -100,6 +105,8 @@ export default function CapacitacionContent() {
   const [bulkCreateEmpOpen, setBulkCreateEmpOpen] = useState(false)
   const [newEmpSaving, setNewEmpSaving] = useState(false)
   const [newEmpSuccess, setNewEmpSuccess] = useState(false)
+  const [reglamentoImportOpen, setReglamentoImportOpen] = useState(false)
+  const [actasImportOpen, setActasImportOpen] = useState(false)
 
   const [addCoursesDlgOpen, setAddCoursesDlgOpen] = useState(false)
   const [addCoursesDlgEmp, setAddCoursesDlgEmp] = useState<Employee | null>(null)
@@ -454,10 +461,13 @@ export default function CapacitacionContent() {
             <CapHistorialTab
               employees={employees}
               loadingEmployees={loadingEmployees}
+              canEdit={canEdit}
               newEmpSuccess={newEmpSuccess}
               addCoursesSuccess={addCoursesSuccess}
               onNewEmployee={() => { setNewEmpSuccess(false); setNewEmpOpen(true) }}
               onBulkImport={bulkImport.openDialog}
+              onBulkImportIncumplimientos={() => setReglamentoImportOpen(true)}
+              onBulkImportActas={() => setActasImportOpen(true)}
               onBulkCreateEmployees={() => setBulkCreateEmpOpen(true)}
               onViewEmployee={handleViewEmployee}
               onEditEmployee={(emp) => { setEditEmpTarget(emp); setEditEmpOpen(true) }}
@@ -475,6 +485,29 @@ export default function CapacitacionContent() {
         onClose={() => setBulkCreateEmpOpen(false)}
         onCreated={() => { setBulkCreateEmpOpen(false); handleBulkEmployeesCreated() }}
       />
+
+      {canEdit && (
+        <EmployeeDayCountImportDialog
+          open={reglamentoImportOpen}
+          onOpenChange={setReglamentoImportOpen}
+          title="Cargar incumplimientos"
+          description="Importa registros del reglamento interno desde un archivo JSON."
+          itemSingular="incumplimiento"
+          itemPlural="incumplimientos"
+          onReplaceMonths={replaceIncumplimientosMonths}
+        />
+      )}
+      {canEdit && (
+        <EmployeeDayCountImportDialog
+          open={actasImportOpen}
+          onOpenChange={setActasImportOpen}
+          title="Cargar actas administrativas"
+          description="Importa las cantidades de actas administrativas por empleado y día desde un archivo JSON."
+          itemSingular="acta administrativa"
+          itemPlural="actas administrativas"
+          onReplaceMonths={replaceActasMonths}
+        />
+      )}
 
       <CapBulkImportDialog
         open={bulkImport.open}

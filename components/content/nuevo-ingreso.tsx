@@ -4,11 +4,11 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import dynamic from "next/dynamic"
 import {
   Search, CheckCircle2, AlertCircle, Clock, Loader2,
-  Info, UserPlus, X, FileUp, Upload,
+  UserPlus, X, FileUp, Upload,
 } from "lucide-react"
-import { EvalBadge, ContratoTerminoBadge, EVAL_STATUS_META } from "@/components/content/shared/eval-badges"
+import { EvalBadge, ContratoTerminoBadge } from "@/components/content/shared/eval-badges"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -402,15 +402,15 @@ export default function NuevoIngresoContent() {
                       <div className="flex gap-2">
                         <div className="flex-1 flex flex-col items-center gap-1">
                           <span className="text-xs text-muted-foreground">1er mes</span>
-                          <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
+                          <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} numeroEvaluacion={1} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-1">
                           <span className="text-xs text-muted-foreground">2do mes</span>
-                          <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
+                          <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} numeroEvaluacion={2} />
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-1">
                           <span className="text-xs text-muted-foreground">3er mes</span>
-                          <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
+                          <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} numeroEvaluacion={3} />
                         </div>
                       </div>
                     </div>
@@ -461,17 +461,17 @@ export default function NuevoIngresoContent() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="[&_svg]:hidden">
-                              <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} />
+                              <EvalBadge fecha={r.eval_1_fecha} calificacion={r.eval_1_calificacion} numeroEvaluacion={1} />
                             </div>
                           </TableCell>
                           <TableCell className="hidden text-center xl:table-cell">
                             <div className="[&_svg]:hidden">
-                              <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} />
+                              <EvalBadge fecha={r.eval_2_fecha} calificacion={r.eval_2_calificacion} numeroEvaluacion={2} />
                             </div>
                           </TableCell>
                           <TableCell className="hidden text-center 2xl:table-cell">
                             <div className="[&_svg]:hidden">
-                              <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} />
+                              <EvalBadge fecha={r.eval_3_fecha} calificacion={r.eval_3_calificacion} numeroEvaluacion={3} />
                             </div>
                           </TableCell>
                           <TableCell className="hidden xl:table-cell">

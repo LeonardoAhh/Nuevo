@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation"
 import { confirm } from "@/components/ui/confirm-dialog"
 import { registerUnsavedChangesGuard } from "@/lib/unsaved-changes"
 import { supabase } from "@/lib/supabase/client"
+import {
+  aplicarActasDelPeriodo,
+  aplicarIncumplimientosReglamentoDelPeriodo,
+} from "@/lib/desempeno/actas-evaluacion"
 import { crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
 import { cargarEvaluacionesVencidas, guardarEvaluacionTardia, type EvaluacionVencida } from "@/lib/desempeno/regularizacion/servicio"
 import { validarEvaluacion, type DesempenoData } from "@/lib/types/desempeno"
@@ -97,7 +101,10 @@ export function useRegularizacion(enabled: boolean) {
         .eq("numero_empleado", entry.numero)
       if (queryError) throw queryError
       if (id !== request.current) return
-      const draft = crearBorradorEvaluacion(entry, entry.periodo, incidencias ?? [], entry.hito_nuevo_ingreso)
+      const baseDraft = crearBorradorEvaluacion(entry, entry.periodo, incidencias ?? [], entry.hito_nuevo_ingreso)
+      const withActas = await aplicarActasDelPeriodo(baseDraft)
+      const draft = await aplicarIncumplimientosReglamentoDelPeriodo(withActas)
+      if (id !== request.current) return
       setBaseline(JSON.stringify(draft))
       setData(draft)
     } catch (cause) {

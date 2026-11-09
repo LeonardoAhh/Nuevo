@@ -34,7 +34,19 @@ export function useEvaluationForm({ data, onUpdate, onGuardar, guardarDisabled, 
   const focusStep = () => requestAnimationFrame(() => {
     const heading = document.getElementById(headingId);
     heading?.focus({ preventScroll: true });
-    heading?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    const scrollContainer = heading?.closest<HTMLElement>("#main-content");
+    const headingRect = heading?.getBoundingClientRect();
+    const containerRect = scrollContainer?.getBoundingClientRect();
+
+    if (!heading || !scrollContainer || !headingRect || !containerRect) return;
+
+    const isOutsideContainer = headingRect.top < containerRect.top || headingRect.bottom > containerRect.bottom;
+    if (isOutsideContainer) {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollTop + headingRect.top - containerRect.top,
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+    }
   });
 
   const goNextView = () => {

@@ -18,6 +18,11 @@ import {
 } from "@/lib/types/desempeno"
 import { getTipoDesempenoByPuesto, normalizarPeriodoDesempeno, type PeriodoModo } from "@/lib/catalogo"
 import { periodoVigenteParaEmpleado, type OrigenEmpleado } from "@/lib/desempeno/periodo-empleado"
+import { periodoMensualDeFecha } from "@/lib/desempeno/evaluaciones-guardadas"
+import {
+  aplicarActasDelPeriodo,
+  aplicarIncumplimientosReglamentoDelPeriodo,
+} from "@/lib/desempeno/actas-evaluacion"
 import { calcularAsistenciaPorcentaje, crearBorradorEvaluacion } from "@/lib/desempeno/crear-borrador"
 import { resolverHitoNuevoIngreso, type SeguimientoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
@@ -275,9 +280,13 @@ export function useDesempeno() {
       const { modo, periodo: periodoResuelto, semestreActual: semestreActivo, requiereSemestral: requiereSemestralEmp } =
         periodoVigenteParaEmpleado(origenEmpleado, empleadoData.fechaIngreso)
       const estadoHito = origenEmpleado === "nuevo_ingreso" && ni
-        ? resolverHitoNuevoIngreso(ni as SeguimientoNuevoIngreso, periodoResuelto)
+        ? resolverHitoNuevoIngreso(ni as SeguimientoNuevoIngreso)
         : null
       const hitoPendiente = estadoHito?.estado === "disponible" ? estadoHito.hito : null
+      const periodoProgramado = hitoPendiente && ni
+        ? periodoMensualDeFecha(ni[hitoPendiente.fecha])
+        : null
+      const periodoEvaluacion = periodoProgramado ?? periodoResuelto
 
       // Buscar solo detecta las evaluaciones guardadas; no carga el formulario para editarlas.
       const periodoNormalizado = normalizarPeriodoDesempeno(periodoResuelto)
@@ -304,14 +313,17 @@ export function useDesempeno() {
       if (estadoHito?.estado === "vencido") {
         throw new EvaluationMessageError(
           "Regularización requerida",
-          `El ${estadoHito.hito.etiqueta} venció el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. Debe regularizarse antes de continuar con el siguiente hito.`,
+          `La evaluación del ${estadoHito.hito.etiqueta} venció el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. Debe regularizarse antes de continuar con la siguiente evaluación.`,
         )
       }
 
       if (estadoHito?.estado === "proximo") {
+        const ventana = estadoHito.hito.numero === 3
+          ? "Estará disponible desde 15 días antes de la fecha programada y hasta ese día."
+          : "Estará disponible desde un día antes y hasta un día después de la fecha programada."
         throw new EvaluationMessageError(
           "Evaluación aún no disponible",
-          `El ${estadoHito.hito.etiqueta} está programado para el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. Las evaluaciones se habilitan en orden, al llegar su fecha.`,
+          `La evaluación del ${estadoHito.hito.etiqueta} está programada para el ${formatFechaProgramada(ni?.[estadoHito.hito.fecha])}. ${ventana}`,
         )
       }
 
@@ -327,12 +339,22 @@ export function useDesempeno() {
 
       if (incidenciaError) throw incidenciaError
 
-      const result = crearBorradorEvaluacion(
+      let result = crearBorradorEvaluacion(
         empleadoData,
-        periodoResuelto,
+        periodoEvaluacion,
         incidenciaData ?? [],
         hitoPendiente?.numero,
       )
+      try {
+        result = await aplicarActasDelPeriodo(result)
+        result = await aplicarIncumplimientosReglamentoDelPeriodo(result)
+      } catch (error) {
+        console.error("[buscarEmpleado] No se pudieron consultar las actas o los incumplimientos del periodo:", error)
+        throw new EvaluationMessageError(
+          "Datos automáticos no disponibles",
+          "No se pudieron consultar las actas administrativas o los incumplimientos del periodo. Inténtalo de nuevo antes de continuar.",
+        )
+      }
 
       if (requestId !== searchRequest.current) return null
       lastEvalId.current = null
@@ -345,7 +367,7 @@ export function useDesempeno() {
       return {
         origen: origenEmpleado,
         modo,
-        periodo: periodoResuelto,
+        periodo: periodoEvaluacion,
         requiereSemestral: requiereSemestralEmp,
         semestreObjetivo: semestreActivo,
       } satisfies BusquedaResultado
@@ -412,7 +434,7 @@ export function useDesempeno() {
           .eq("id", lastEvalId.current)
         if (err) throw err
       } else {
-        if (!origen || normalizarPeriodoDesempeno(evalData.periodo) !== normalizarPeriodoDesempeno(periodoVigenteParaEmpleado(origen, fechaIngreso).periodo)) {
+        if (!origen || (origen !== "nuevo_ingreso" && normalizarPeriodoDesempeno(evalData.periodo) !== normalizarPeriodoDesempeno(periodoVigenteParaEmpleado(origen, fechaIngreso).periodo))) {
           throw new EvaluationMessageError("Periodo fuera de vigencia", "Busca de nuevo al empleado para evaluar el periodo vigente.")
         }
         if (origen === "nuevo_ingreso") {
@@ -422,8 +444,13 @@ export function useDesempeno() {
             .eq("numero", evalData.numero_empleado)
             .maybeSingle()
           if (seguimientoError) throw seguimientoError
-          const estadoHito = seguimiento ? resolverHitoNuevoIngreso(seguimiento, evalData.periodo) : null
-          if (!estadoHito || estadoHito.estado !== "disponible" || estadoHito.hito.numero !== evalData.hito_nuevo_ingreso) {
+          const estadoHito = seguimiento ? resolverHitoNuevoIngreso(seguimiento) : null
+          const fechaProgramada = estadoHito?.estado === "disponible"
+            ? seguimiento?.[estadoHito.hito.fecha] ?? null
+            : null
+          const periodoProgramado = periodoMensualDeFecha(fechaProgramada)
+          if (!estadoHito || estadoHito.estado !== "disponible" || estadoHito.hito.numero !== evalData.hito_nuevo_ingreso
+            || !periodoProgramado || normalizarPeriodoDesempeno(evalData.periodo) !== normalizarPeriodoDesempeno(periodoProgramado)) {
             throw new EvaluationMessageError("Evaluación no disponible", "Esta evaluación ya se registró o su fecha programada cambió. Busca de nuevo al empleado.")
           }
         }

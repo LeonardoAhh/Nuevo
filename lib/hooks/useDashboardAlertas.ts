@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client"
 import { daysFromToday, formatDate } from "@/lib/hooks/useNuevoIngreso"
 import { notify } from "@/lib/notify"
 import type { NuevoIngreso } from "@/lib/hooks/useNuevoIngreso"
+import { estadoVentanaEvaluacion, type HitoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ function clasificarEval(
     fechaKey: keyof NuevoIngreso,
     calKey: keyof NuevoIngreso,
     sufijo: string,
+    numeroEvaluacion: HitoNuevoIngreso,
 ): { vencidas: EvalItem[]; porVencer: EvalItem[] } {
     const vencidas: EvalItem[] = []
     const porVencer: EvalItem[] = []
@@ -86,8 +88,9 @@ function clasificarEval(
             diasDiff: diff,
             fechaIngreso: r.fecha_ingreso,
         }
-        if (diff < 0) vencidas.push(item)
-        else if (diff <= EVAL_UMBRAL_DIAS) porVencer.push(item)
+        const estadoVentana = estadoVentanaEvaluacion(numeroEvaluacion, diff)
+        if (estadoVentana === "vencido") vencidas.push(item)
+        else if (estadoVentana === "disponible" || diff <= EVAL_UMBRAL_DIAS) porVencer.push(item)
     }
 
     vencidas.sort((a, b) => a.diasDiff - b.diasDiff)
@@ -143,9 +146,9 @@ export function useDashboardAlertas() {
 
             if (error) throw new Error(error.message)
             const registros = (data ?? []) as unknown as NuevoIngreso[]
-            const e1 = clasificarEval(registros, "eval_1_fecha", "eval_1_calificacion", "e1")
-            const e2 = clasificarEval(registros, "eval_2_fecha", "eval_2_calificacion", "e2")
-            const e3 = clasificarEval(registros, "eval_3_fecha", "eval_3_calificacion", "e3")
+            const e1 = clasificarEval(registros, "eval_1_fecha", "eval_1_calificacion", "e1", 1)
+            const e2 = clasificarEval(registros, "eval_2_fecha", "eval_2_calificacion", "e2", 2)
+            const e3 = clasificarEval(registros, "eval_3_fecha", "eval_3_calificacion", "e3", 3)
 
             setEval1Venc(e1.vencidas); setEval1Prox(e1.porVencer)
             setEval2Venc(e2.vencidas); setEval2Prox(e2.porVencer)

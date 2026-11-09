@@ -68,7 +68,7 @@ function PercentageControl({ id, label, value, noAplica, automatic, helpId, show
 
 function StepHeading({ context, title, description }: { context: EvaluationFormContext; title: string; description: string }) {
   return <div className="space-y-1 xl:flex xl:items-baseline xl:justify-between xl:gap-6 xl:space-y-0">
-    <h2 id={context.headingId} tabIndex={-1} className="scroll-mt-24 text-xl font-semibold tracking-tight outline-none xl:shrink-0">{title}</h2>
+    <h2 id={context.headingId} tabIndex={-1} className="text-xl font-semibold tracking-tight outline-none xl:shrink-0">{title}</h2>
     <p className="text-sm leading-relaxed text-muted-foreground xl:min-w-0 xl:text-right">{description}</p>
   </div>;
 }
@@ -116,9 +116,14 @@ export function DesempenoForm({ data, onUpdate, onGuardar, guardarDisabled, guar
     </div>}
 
     {activeView === 3 && <div className="space-y-4">
-      <StepHeading context={context} title={`Responsabilidades (${EVALUATION_WEIGHTS.cumplimiento * 100}%)`} description="Ingresa de 0 a 100% o marca No aplica. Los datos automáticos permanecen bloqueados." />
+      <StepHeading context={context} title={`Responsabilidades (${EVALUATION_WEIGHTS.cumplimiento * 100}%)`} description="Completa cada responsabilidad con un porcentaje o marca No aplica cuando corresponda." />
       <div className="grid gap-3 lg:auto-rows-fr lg:grid-cols-2">{data.cumplimiento_responsabilidades.map((item, index) => {
-        const automatic = data.tipo !== "jefe" && index === CumplimientoOperativoIndex.Asistencia;
+        const automatic = data.tipo !== "jefe"
+          && (
+            index === CumplimientoOperativoIndex.Compromisos
+            || index === CumplimientoOperativoIndex.Reglamento
+            || index === CumplimientoOperativoIndex.Asistencia
+          );
         return <PercentageCriterionCard
           key={`${item.descripcion}-${index}`}
           title={`Responsabilidad ${index + 1}`}

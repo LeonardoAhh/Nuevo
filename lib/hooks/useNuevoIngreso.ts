@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notify'
 import { describeSupabaseError } from '@/lib/supabase/errors'
+import { estadoVentanaEvaluacion, type HitoNuevoIngreso } from '@/lib/desempeno/hitos-nuevo-ingreso'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaces
@@ -72,12 +73,15 @@ export function daysFromToday(iso: string | null): number | null {
   return Math.round((target - todayUTC) / 86400000)
 }
 
-export type EvalStatus = 'completada' | 'proxima' | 'hoy' | 'vencida' | 'pendiente'
+export type EvalStatus = 'completada' | 'disponible' | 'proxima' | 'hoy' | 'vencida' | 'pendiente'
 
-export function evalStatus(fecha: string | null, calificacion: number | null): EvalStatus {
+export function evalStatus(fecha: string | null, calificacion: number | null, numeroEvaluacion: HitoNuevoIngreso): EvalStatus {
   if (calificacion != null) return 'completada'
   const diff = daysFromToday(fecha)
   if (diff === null) return 'pendiente'
+  const estadoVentana = estadoVentanaEvaluacion(numeroEvaluacion, diff)
+  if (estadoVentana === 'disponible') return 'disponible'
+  if (estadoVentana === 'vencido') return 'vencida'
   if (diff < 0) return 'vencida'
   if (diff === 0) return 'hoy'
   if (diff <= 7) return 'proxima'

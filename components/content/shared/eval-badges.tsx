@@ -2,6 +2,7 @@ import React from "react"
 import { CheckCircle2, AlertTriangle, CalendarCheck, XCircle, Clock } from "lucide-react"
 import { formatDate, daysFromToday, evalStatus } from "@/lib/hooks"
 import type { EvalStatus } from "@/lib/hooks"
+import type { HitoNuevoIngreso } from "@/lib/desempeno/hitos-nuevo-ingreso"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Metadata para estados de evaluación
@@ -9,6 +10,7 @@ import type { EvalStatus } from "@/lib/hooks"
 
 export const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.ElementType; classes: string }> = {
   completada: { label: 'Completada', icon: CheckCircle2, classes: 'text-success' },
+  disponible: { label: 'Disponible', icon: CalendarCheck, classes: 'text-success' },
   proxima: { label: 'Próxima', icon: AlertTriangle, classes: 'text-warning' },
   hoy: { label: 'Hoy', icon: CalendarCheck, classes: 'text-warning' },
   vencida: { label: 'Vencida', icon: XCircle, classes: 'text-destructive' },
@@ -19,8 +21,12 @@ export const EVAL_STATUS_META: Record<EvalStatus, { label: string; icon: React.E
 // EvalBadge — indicador visual de estado de evaluación
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function EvalBadge({ fecha, calificacion }: { fecha: string | null; calificacion: number | null }) {
-  const status = evalStatus(fecha, calificacion)
+export function EvalBadge({ fecha, calificacion, numeroEvaluacion }: {
+  fecha: string | null
+  calificacion: number | null
+  numeroEvaluacion: HitoNuevoIngreso
+}) {
+  const status = evalStatus(fecha, calificacion, numeroEvaluacion)
   const { icon: Icon, classes } = EVAL_STATUS_META[status]
   const diff = daysFromToday(fecha)
 
@@ -33,10 +39,13 @@ export function EvalBadge({ fecha, calificacion }: { fecha: string | null; calif
           : 'bg-destructive/10 text-destructive'
           }`}>{calificacion}</span>
       )}
-      {calificacion == null && diff !== null && diff >= 0 && (
+      {calificacion == null && status === 'disponible' && (
+        <span className="text-xs opacity-70">Disponible</span>
+      )}
+      {calificacion == null && status !== 'disponible' && diff !== null && diff >= 0 && (
         <span className="text-xs opacity-70">{diff === 0 ? 'hoy' : `en ${diff}d`}</span>
       )}
-      {calificacion == null && diff !== null && diff < 0 && (
+      {calificacion == null && status !== 'disponible' && diff !== null && diff < 0 && (
         <span className="text-xs opacity-70">{Math.abs(diff)}d atrás</span>
       )}
     </div>
